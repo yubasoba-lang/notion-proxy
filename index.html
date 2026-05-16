@@ -2,272 +2,356 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#080c14">
+<meta name="theme-color" content="#0a0a0f">
 <title>Hunter System</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #080c14;
-    --bg-card: #0d1220;
-    --bg-mid: #111827;
-    --border: #1e2d45;
-    --border-hi: #2a4a6e;
-    --blue: #3b82f6;
-    --purple: #7c3aed;
-    --purple-hi: #8b5cf6;
-    --text: #e2e8f0;
-    --text-dim: #64748b;
-    --text-faint: #2d3f55;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; }
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
-  }
+:root {
+  --bg: #0a0a0f;
+  --bg-card: #12121a;
+  --bg-mid: #1a1a26;
+  --border: #1e1e2e;
+  --border-hi: #2a2a3e;
+  --text: #e8e8f0;
+  --text-dim: #5a5a7a;
+  --text-faint: #2a2a3e;
+  --orange: #ff6b2b;
+  --orange-dim: #cc4a1a;
+  --blue: #4a9eff;
+  --green: #4ade80;
+  --red: #f87171;
 
-  #app { max-width: 430px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+  /* Rank colours */
+  --bronze: #cd7f32;
+  --silver: #c0c0c0;
+  --gold: #ffd700;
+  --platinum: #4fd6d6;
+  --diamond: #a855f7;
+  --champion: #3b82f6;
+  --titan: #ef4444;
+  --olympian: #f59e0b;
+}
 
-  /* Header */
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px;
-    background: rgba(8,12,20,0.97);
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    flex-shrink: 0;
-  }
-  .header-title {
-    font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .header-sub { font-family: 'Rajdhani', sans-serif; font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; margin-top: 1px; }
-  .sync-btn {
-    background: transparent; border: 1px solid var(--border-hi);
-    color: var(--text-dim); font-family: 'Rajdhani', sans-serif;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-    padding: 6px 14px; cursor: pointer; text-transform: uppercase;
-    border-radius: 4px; transition: all 0.2s;
-  }
-  .sync-btn:hover { color: var(--blue); border-color: var(--blue); }
-  .sync-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
 
-  /* Nav */
-  .nav {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    background: rgba(8,12,20,0.98);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .nav-btn {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 10px 4px 8px; background: none; border: none; cursor: pointer;
-    color: var(--text-dim); transition: all 0.2s; position: relative;
-    font-family: 'Rajdhani', sans-serif;
-  }
-  .nav-btn.active { color: var(--blue); }
-  .nav-btn.active::after {
-    content: ''; position: absolute; bottom: 0; left: 15%; right: 15%;
-    height: 2px; background: linear-gradient(90deg, var(--blue), var(--purple));
-    border-radius: 2px 2px 0 0; box-shadow: 0 0 8px var(--blue);
-  }
-  .nav-icon { font-size: 16px; line-height: 1; }
-  .nav-label { font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+/* Grid bg */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(circle at 20% 50%, rgba(74,158,255,0.03) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,107,43,0.03) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
 
-  /* Scroll */
-  .scroll { flex: 1; overflow-y: auto; padding: 16px 14px 100px; -webkit-overflow-scrolling: touch; }
+#app { max-width: 430px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
 
-  /* Tab panels */
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 12px;
+  background: rgba(10,10,15,0.97); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.header-wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.1em; color: var(--text); }
+.header-wordmark span { color: var(--orange); }
+.sync-btn {
+  background: transparent; border: 1px solid var(--border-hi);
+  color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; padding: 6px 14px; cursor: pointer; border-radius: 6px; transition: all 0.2s;
+}
+.sync-btn:hover { color: var(--orange); border-color: var(--orange); }
+.sync-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-  /* Loader */
-  .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 70px 20px; gap: 14px; }
-  .loader-ring { width: 48px; height: 48px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.9s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loader-text { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
+/* ── Nav ── */
+.nav {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: rgba(10,10,15,0.98); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 4px 8px; background: none; border: none; cursor: pointer;
+  color: var(--text-dim); transition: all 0.2s; position: relative; font-family: 'Inter', sans-serif;
+}
+.nav-btn.active { color: var(--orange); }
+.nav-btn.active::after {
+  content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
+  height: 2px; background: var(--orange); border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 8px var(--orange);
+}
+.nav-icon { font-size: 17px; line-height: 1; }
+.nav-label { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 
-  /* Error */
-  .error-bar { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; color: #f87171; padding: 12px 14px; font-size: 12px; font-family: 'Rajdhani', sans-serif; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+/* ── Scroll ── */
+.scroll { flex: 1; overflow-y: auto; padding: 14px 14px 100px; -webkit-overflow-scrolling: touch; }
 
-  /* Section title */
-  .section-title {
-    font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim);
-    display: flex; align-items: center; gap: 10px; margin: 20px 0 12px;
-  }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
+/* ── Loader ── */
+.loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 70px 20px; gap: 14px; }
+.loader-ring { width: 40px; height: 40px; border: 2px solid var(--border-hi); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-text { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; }
 
-  /* Rank hero */
-  .rank-hero {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 28px 20px 24px; display: flex; flex-direction: column; align-items: center;
-    position: relative; overflow: hidden; margin-bottom: 12px;
-  }
-  .rank-hero::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.08) 0%, transparent 60%);
-    pointer-events: none;
-  }
-  .rank-badge-wrap { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
-  .rank-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid; opacity: 0.3; animation: ring-pulse 3s ease-in-out infinite; }
-  .rank-ring-2 { position: absolute; inset: 8px; border-radius: 50%; border: 1px solid; opacity: 0.15; }
-  @keyframes ring-pulse { 0%,100% { transform:scale(1); opacity:0.3; } 50% { transform:scale(1.04); opacity:0.5; } }
-  .rank-inner { width: 84px; height: 84px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: var(--bg); position: relative; z-index: 1; }
-  .rank-letter { font-family: 'Orbitron', monospace; font-size: 36px; font-weight: 900; line-height: 1; }
-  .rank-label { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-  .rank-xp { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 700; }
-  .rank-xp-unit { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.1em; margin-left: 4px; }
-  .xp-bar-wrap { width: 100%; margin-top: 16px; }
-  .xp-bar-meta { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .xp-bar-text { font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; }
-  .xp-bar-track { height: 6px; background: var(--bg-mid); border-radius: 3px; overflow: hidden; }
-  .xp-bar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
-  .xp-bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); animation: shimmer 2s linear infinite; }
-  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+/* ── Error ── */
+.error-bar { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; color: var(--red); padding: 12px 14px; font-size: 12px; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
 
-  /* Stat cards */
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .stat-mini { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 12px; position: relative; }
-  .stat-mini::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border-hi), transparent); }
-  .stat-mini-label { font-family: 'Rajdhani', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-  .stat-mini-value { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 600; line-height: 1; }
-  .stat-mini-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: 'Rajdhani', sans-serif; font-weight: 500; }
+/* ── Section label ── */
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-dim); display: flex; align-items: center; gap: 10px; margin: 18px 0 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
 
-  /* Rival dash */
-  .rival-dash { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; position: relative; overflow: hidden; }
-  .rival-dash::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 100% 0%, rgba(124,58,237,0.06) 0%, transparent 60%); pointer-events: none; }
-  .rival-dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .rival-dash-name { font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 700; background: linear-gradient(135deg,#7c3aed,#3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .pill { font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 20px; border: 1px solid; text-transform: uppercase; }
-  .pill-ahead { color: #4ade80; border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
-  .pill-behind { color: #f87171; border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
-  .pill-tied { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); }
-  .rival-xp-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
-  .rival-xp-label { font-family: 'Rajdhani', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; }
-  .rival-xp-val { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 600; }
-  .rival-vs { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700; color: var(--text-faint); text-align: center; }
-  .rival-gap-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-family: 'Rajdhani', sans-serif; font-size: 12px; color: var(--text-dim); display: flex; justify-content: space-between; }
-  .rival-gap-val { font-family: 'Orbitron', monospace; font-size: 13px; color: var(--text); }
+/* ── Rank badge system ── */
+.rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 50%; border: 2px solid; position: relative;
+  font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 0.05em;
+  flex-direction: column; gap: 0; line-height: 1;
+}
+.rank-badge-sm {
+  width: 36px; height: 36px; font-size: 9px; border-width: 1.5px;
+}
+.rank-badge-lg {
+  width: 72px; height: 72px; font-size: 14px; border-width: 2.5px;
+}
+.rank-badge::before {
+  content: ''; position: absolute; inset: -4px; border-radius: 50%;
+  border: 1px solid; opacity: 0.2;
+}
 
-  /* Tasks */
-  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
-  .action-btn {
-    background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 8px;
-    color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; padding: 14px 10px; cursor: pointer;
-    transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px;
-  }
-  .action-btn:hover { background: var(--bg-mid); border-color: var(--blue); color: var(--blue); }
-  .action-btn:active { transform: scale(0.97); }
-  .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .action-icon { font-size: 20px; }
-  .cat-header {
-    font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    display: flex; align-items: center; gap: 8px; margin: 18px 0 8px;
-  }
-  .cat-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
-  .cat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .task-item {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
-    margin-bottom: 6px; cursor: pointer; transition: all 0.15s; user-select: none;
-  }
-  .task-item:active { transform: scale(0.99); opacity: 0.8; }
-  .task-item.done { opacity: 0.35; }
-  .task-item.done .task-name { text-decoration: line-through; color: var(--text-dim); }
-  .task-cb { width: 20px; height: 20px; border-radius: 4px; border: 2px solid var(--border-hi); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; color: var(--blue); transition: all 0.15s; }
-  .task-item.done .task-cb { background: rgba(59,130,246,0.2); border-color: var(--blue); }
-  .task-body { flex: 1; min-width: 0; }
-  .task-name { font-size: 14px; font-weight: 500; line-height: 1.3; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .tag { font-family: 'Rajdhani', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; border: 1px solid; }
-  .tag-due { font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 500; color: var(--text-dim); }
-  .tag-due.overdue { color: #f87171; }
-  .empty { text-align: center; padding: 50px 20px; color: var(--text-faint); font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; }
+/* Rank colours */
+.rank-Bronze   { border-color: var(--bronze); color: var(--bronze); background: rgba(205,127,50,0.08); }
+.rank-Bronze::before { border-color: var(--bronze); }
+.rank-Silver   { border-color: var(--silver); color: var(--silver); background: rgba(192,192,192,0.08); }
+.rank-Silver::before { border-color: var(--silver); }
+.rank-Gold     { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+.rank-Gold::before { border-color: var(--gold); }
+.rank-Platinum { border-color: var(--platinum); color: var(--platinum); background: rgba(79,214,214,0.08); }
+.rank-Platinum::before { border-color: var(--platinum); }
+.rank-Diamond  { border-color: var(--diamond); color: var(--diamond); background: rgba(168,85,247,0.08); }
+.rank-Diamond::before { border-color: var(--diamond); }
+.rank-Champion { border-color: var(--champion); color: var(--champion); background: rgba(59,130,246,0.08); }
+.rank-Champion::before { border-color: var(--champion); }
+.rank-Titan    { border-color: var(--titan); color: var(--titan); background: rgba(239,68,68,0.08); }
+.rank-Titan::before { border-color: var(--titan); }
+.rank-Olympian { border-color: var(--olympian); color: var(--olympian); background: rgba(245,158,11,0.12); }
+.rank-Olympian::before { border-color: var(--olympian); }
 
-  /* Stats */
-  .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .body-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 12px; position: relative; }
-  .body-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border-hi), transparent); }
-  .body-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .body-card-name { font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; }
-  .body-rank { font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 700; }
-  .body-xp { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 600; margin-bottom: 8px; line-height: 1; }
-  .body-xp-unit { font-size: 9px; font-family: 'Rajdhani', sans-serif; font-weight: 600; color: var(--text-dim); letter-spacing: 0.1em; margin-left: 2px; }
-  .body-bar { height: 3px; background: var(--bg-mid); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-  .body-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
-  .body-last { font-size: 10px; color: var(--text-faint); font-family: 'Rajdhani', sans-serif; font-weight: 500; }
+/* Roman numeral sub */
+.rank-numeral { font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 600; letter-spacing: 0.05em; opacity: 0.8; }
 
-  /* Rivals full */
-  .rival-full { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
-  .rival-full::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% -20%, rgba(124,58,237,0.07) 0%, transparent 60%); pointer-events: none; }
-  .rival-full-name { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 800; background: linear-gradient(135deg,#7c3aed,#3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
-  .rival-personality { font-size: 12px; color: var(--text-dim); font-style: italic; margin-bottom: 16px; }
-  .rival-stat-grid { display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr; background: var(--bg-mid); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
-  .rival-stat-div { background: var(--border); }
-  .rival-stat-cell { padding: 12px 8px; text-align: center; }
-  .rival-stat-label { font-family: 'Rajdhani', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: var(--text-faint); text-transform: uppercase; margin-bottom: 5px; }
-  .rival-stat-val { font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 600; }
+/* ── HOME TAB ── */
+.streak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.streak-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 14px 12px; position: relative; overflow: hidden;
+}
+.streak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.streak-card.fire::before { background: linear-gradient(90deg, var(--orange), #ff9500); }
+.streak-card.mind::before { background: linear-gradient(90deg, var(--blue), #7c3aed); }
+.streak-card.sleep::before { background: linear-gradient(90deg, #7c3aed, #4fd6d6); }
+.streak-card.quest::before { background: linear-gradient(90deg, var(--green), #16a34a); }
 
-  /* Toast */
-  .toast {
-    position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
-    background: var(--bg-mid); border: 1px solid var(--border-hi); color: var(--text);
-    padding: 10px 20px; border-radius: 6px; font-family: 'Rajdhani', sans-serif;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    z-index: 100; white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-    animation: toast-up 0.2s ease; pointer-events: none;
-  }
-  @keyframes toast-up { from { opacity:0; transform:translateX(-50%) translateY(6px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+.streak-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; letter-spacing: 0.02em; }
+.streak-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+
+.streak-card-wide {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; grid-column: span 2; display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ── TASKS TAB ── */
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.action-btn {
+  background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 10px;
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; padding: 13px 10px; cursor: pointer;
+  transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.action-btn:hover { border-color: var(--orange); color: var(--orange); }
+.action-btn:active { transform: scale(0.97); }
+.action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.action-icon { font-size: 20px; }
+
+.date-group { margin-bottom: 4px; }
+.date-header {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--orange); display: flex; align-items: center; gap: 8px; margin: 16px 0 8px;
+}
+.date-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(255,107,43,0.3), transparent); }
+
+.cat-sub {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-dim); margin: 10px 0 6px 2px; display: flex; align-items: center; gap: 6px;
+}
+.cat-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+.task-item {
+  display: flex; align-items: center; gap: 10px; padding: 11px 12px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 5px; cursor: pointer; transition: all 0.15s; user-select: none;
+}
+.task-item:hover { border-color: var(--border-hi); }
+.task-item:active { transform: scale(0.99); }
+.task-item.done { opacity: 0.3; }
+.task-item.done .task-name { text-decoration: line-through; }
+
+.task-cb {
+  width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--border-hi);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; color: var(--orange); transition: all 0.15s;
+}
+.task-item.done .task-cb { background: rgba(255,107,43,0.15); border-color: var(--orange); }
+
+.task-body { flex: 1; min-width: 0; }
+.task-name { font-size: 13px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.diff-pill {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 4px; border: 1px solid; cursor: pointer; transition: all 0.15s;
+}
+.diff-pill:hover { opacity: 0.8; }
+
+.diff-Maintenance { color: #64748b; border-color: #64748b40; background: #64748b10; }
+.diff-Normal      { color: var(--green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
+.diff-Heavy       { color: var(--red); border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
+.diff-Daily       { color: var(--orange); border-color: rgba(255,107,43,0.3); background: rgba(255,107,43,0.08); }
+.diff-Important   { color: var(--diamond); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.08); }
+
+.task-due { font-size: 10px; font-weight: 500; color: var(--text-dim); }
+.task-due.overdue { color: var(--red); }
+
+.empty { text-align: center; padding: 50px 20px; color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; }
+
+/* ── STATS TAB ── */
+/* Body silhouette */
+.silhouette-wrap {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin-bottom: 14px; position: relative; overflow: hidden;
+}
+.silhouette-wrap::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(255,107,43,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.silhouette-title { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+.silhouette-container { position: relative; width: 100%; max-width: 260px; margin: 0 auto; }
+.silhouette-svg { width: 100%; height: auto; }
+
+/* muscle hotspot buttons */
+.muscle-btn {
+  position: absolute; width: 32px; height: 32px; border-radius: 50%;
+  border: 1.5px solid; background: rgba(10,10,15,0.7); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+  transition: all 0.2s; transform: translate(-50%, -50%); line-height: 1.1; text-align: center;
+}
+.muscle-btn:hover { transform: translate(-50%, -50%) scale(1.15); z-index: 10; }
+.muscle-btn.active { transform: translate(-50%, -50%) scale(1.15); z-index: 10; box-shadow: 0 0 12px currentColor; }
+
+/* Body part cards */
+.muscle-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.muscle-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.muscle-card:hover { border-color: var(--border-hi); }
+.muscle-card.selected { border-color: var(--orange); }
+.muscle-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+
+.muscle-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.muscle-card-name { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+
+.muscle-xp { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.02em; margin-bottom: 6px; line-height: 1; }
+.muscle-xp-unit { font-size: 9px; font-weight: 600; color: var(--text-dim); margin-left: 2px; font-family: 'Inter', sans-serif; }
+
+.prog-track { height: 4px; background: var(--bg-mid); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; position: relative; overflow: hidden; }
+.prog-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); animation: shimmer 2s linear infinite; }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+.muscle-meta { display: flex; align-items: center; justify-content: space-between; }
+.muscle-pct { font-size: 9px; font-weight: 600; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.rival-diff { font-size: 9px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+/* Detail panel */
+.detail-panel {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin-bottom: 12px; display: none;
+}
+.detail-panel.visible { display: block; }
+.detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.detail-name { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.05em; }
+.detail-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.detail-stat { background: var(--bg-card); padding: 10px 8px; text-align: center; }
+.detail-stat-label { font-size: 8px; font-weight: 700; letter-spacing: 0.15em; color: var(--text-faint); text-transform: uppercase; margin-bottom: 4px; }
+.detail-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
+  background: var(--bg-mid); border: 1px solid var(--border-hi); color: var(--text);
+  padding: 10px 20px; border-radius: 8px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; z-index: 200; white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5); animation: toast-up 0.2s ease; pointer-events: none;
+}
+@keyframes toast-up { from { opacity:0; transform:translateX(-50%) translateY(6px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+/* ── RANK UP OVERLAY ── */
+.rankup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.rankup-overlay.visible { opacity: 1; pointer-events: all; }
+.rankup-label { font-size: 12px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+.rankup-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; letter-spacing: 0.08em; color: var(--orange); margin-bottom: 8px; text-align: center; animation: pulse-big 0.6s ease; }
+.rankup-new { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.15em; margin-top: 16px; }
+.rankup-tap { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; margin-top: 30px; animation: blink 1.5s ease infinite; }
+@keyframes pulse-big { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes blink { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+.rankup-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; animation: particle-fly 1.5s ease forwards; }
+@keyframes particle-fly { 0% { transform: translateY(100vh); opacity: 1; } 100% { transform: translateY(-20vh); opacity: 0; } }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
-    <div>
-      <div class="header-title">Hunter System</div>
-      <div class="header-sub">Level Up · Every Day</div>
-    </div>
+    <div class="header-wordmark">HUNTER <span>SYS</span></div>
     <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
   </div>
-
   <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('dashboard', this)">
-      <span class="nav-icon">⚡</span>
-      <span class="nav-label">Home</span>
+    <button class="nav-btn active" onclick="switchTab('home',this)">
+      <span class="nav-icon">🔥</span><span class="nav-label">Home</span>
     </button>
-    <button class="nav-btn" onclick="switchTab('tasks', this)">
-      <span class="nav-icon">📋</span>
-      <span class="nav-label">Tasks</span>
+    <button class="nav-btn" onclick="switchTab('tasks',this)">
+      <span class="nav-icon">📋</span><span class="nav-label">Tasks</span>
     </button>
-    <button class="nav-btn" onclick="switchTab('stats', this)">
-      <span class="nav-icon">📈</span>
-      <span class="nav-label">Stats</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('rivals', this)">
-      <span class="nav-icon">⚔️</span>
-      <span class="nav-label">Rivals</span>
+    <button class="nav-btn" onclick="switchTab('stats',this)">
+      <span class="nav-icon">💪</span><span class="nav-label">Stats</span>
     </button>
   </div>
-
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
-    <div id="tab-dashboard" class="tab-panel active"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Syncing data…</div></div></div>
-    <div id="tab-tasks" class="tab-panel"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading quests…</div></div></div>
-    <div id="tab-stats" class="tab-panel"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Reading stats…</div></div></div>
-    <div id="tab-rivals" class="tab-panel"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading rivals…</div></div></div>
+    <div id="tab-home"  class="tab-panel active"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div></div>
+    <div id="tab-tasks" class="tab-panel" style="display:none"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div></div>
+    <div id="tab-stats" class="tab-panel" style="display:none"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div></div>
   </div>
+</div>
+
+<!-- Rank-up overlay -->
+<div class="rankup-overlay" id="rankupOverlay" onclick="closeRankup()">
+  <div class="rankup-particles" id="rankupParticles"></div>
+  <div class="rankup-label">RANK UP!</div>
+  <div class="rankup-title" id="rankupTitle">RANK UP</div>
+  <div id="rankupBadge"></div>
+  <div class="rankup-new" id="rankupNew"></div>
+  <div class="rankup-tap">tap to continue</div>
 </div>
 
 <script>
@@ -277,59 +361,77 @@ const DB = {
   rivals:    'f925bdca42f3428fa6f2c61594ae512a',
   tasks:     '34163a0b4e7c81a5a8aefb94b96a6b36',
   templates: '34163a0b4e7c81a08eefdcd464d0a5a6',
+  dailyLog:  '35063a0b4e7c80c9889cf67fa1166d90',
 };
 
 const RANKS = [
-  { name:'E',   min:0,     color:'#9e9e9e', glow:'rgba(158,158,158,0.3)'  },
-  { name:'D',   min:100,   color:'#78909c', glow:'rgba(120,144,156,0.3)'  },
-  { name:'C',   min:300,   color:'#66bb6a', glow:'rgba(102,187,106,0.35)' },
-  { name:'B',   min:700,   color:'#42a5f5', glow:'rgba(66,165,245,0.4)'   },
-  { name:'A',   min:1500,  color:'#ab47bc', glow:'rgba(171,71,188,0.4)'   },
-  { name:'S',   min:3000,  color:'#7e57c2', glow:'rgba(126,87,194,0.45)'  },
-  { name:'SS',  min:6000,  color:'#5c6bc0', glow:'rgba(92,107,192,0.5)'   },
-  { name:'SSS', min:12000, color:'#ef5350', glow:'rgba(239,83,80,0.5)'    },
+  { name:'Bronze',   roman:'I',   min:0,     color:'#cd7f32' },
+  { name:'Bronze',   roman:'II',  min:50,    color:'#cd7f32' },
+  { name:'Bronze',   roman:'III', min:120,   color:'#cd7f32' },
+  { name:'Silver',   roman:'I',   min:220,   color:'#c0c0c0' },
+  { name:'Silver',   roman:'II',  min:360,   color:'#c0c0c0' },
+  { name:'Silver',   roman:'III', min:550,   color:'#c0c0c0' },
+  { name:'Gold',     roman:'I',   min:800,   color:'#ffd700' },
+  { name:'Gold',     roman:'II',  min:1100,  color:'#ffd700' },
+  { name:'Gold',     roman:'III', min:1500,  color:'#ffd700' },
+  { name:'Platinum', roman:'I',   min:2000,  color:'#4fd6d6' },
+  { name:'Platinum', roman:'II',  min:2700,  color:'#4fd6d6' },
+  { name:'Platinum', roman:'III', min:3600,  color:'#4fd6d6' },
+  { name:'Diamond',  roman:'I',   min:4800,  color:'#a855f7' },
+  { name:'Diamond',  roman:'II',  min:6300,  color:'#a855f7' },
+  { name:'Diamond',  roman:'III', min:8100,  color:'#a855f7' },
+  { name:'Champion', roman:'I',   min:10200, color:'#3b82f6' },
+  { name:'Champion', roman:'II',  min:12600, color:'#3b82f6' },
+  { name:'Champion', roman:'III', min:15300, color:'#3b82f6' },
+  { name:'Titan',    roman:'I',   min:18300, color:'#ef4444' },
+  { name:'Titan',    roman:'II',  min:21600, color:'#ef4444' },
+  { name:'Titan',    roman:'III', min:25200, color:'#ef4444' },
+  { name:'Olympian', roman:'I',   min:29100, color:'#f59e0b' },
+  { name:'Olympian', roman:'II',  min:33300, color:'#f59e0b' },
+  { name:'Olympian', roman:'III', min:38000, color:'#f59e0b' },
 ];
-const CAT_COLOR = { Body:'#ef5350', Mind:'#42a5f5', Life:'#66bb6a', German:'#ffa726' };
-const DIFF_COLOR = { Daily:'#ffa726', Important:'#ab47bc', Heavy:'#ef5350', Normal:'#66bb6a', Maintenance:'#42a5f5' };
 
-function getRank(xp) {
+// If notion already has rank as string, use it directly
+const NOTION_RANK_MAP = {};
+
+function getRankFromNotion(rankStr) {
+  if (!rankStr) return RANKS[0];
+  // try matching "Gold III" style
+  const found = RANKS.find(r => `${r.name} ${r.roman}` === rankStr || r.name === rankStr);
+  return found ?? RANKS[0];
+}
+
+function getRankFromXP(xp) {
   let r = RANKS[0], next = RANKS[1];
   for (let i = RANKS.length-1; i >= 0; i--) {
     if (xp >= RANKS[i].min) { r = RANKS[i]; next = RANKS[i+1] ?? null; break; }
   }
-  const pct = next ? Math.min(((xp - r.min) / (next.min - r.min)) * 100, 100) : 100;
+  const pct = next ? Math.min(((xp - r.min)/(next.min - r.min))*100, 100) : 100;
   return { rank: r, next, pct };
 }
 
-// State
-let state = { stats:[], rivals:[], tasks:[], templates:[], loading:false };
-let currentTab = 'dashboard';
+const CAT_COLOR = { Body:'#ef5350', Mind:'#42a5f5', Life:'#66bb6a', German:'#ffa726' };
+const DIFF_ORDER = ['Maintenance','Normal','Heavy','Daily','Important'];
 
+// ── State ──
+let state = { stats:[], rivals:[], tasks:[], templates:[], streaks:null, loading:false };
+let currentTab = 'home';
+let selectedMuscle = null;
+let prevRanks = {};
+
+// ── Notion helpers ──
 async function notionFetch(path, method='GET', body) {
   const res = await fetch(PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, method, body }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? `Error ${res.status}`);
-  }
+  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error ?? `Error ${res.status}`); }
   return res.json();
 }
-
-const notionQuery = (dbId, filter, sorts) =>
-  notionFetch(`/databases/${dbId}/query`, 'POST', {
-    page_size: 100,
-    ...(filter ? { filter } : {}),
-    ...(sorts  ? { sorts  } : {}),
-  }).then(d => d.results ?? []);
-
-const notionPatch = (pageId, props) =>
-  notionFetch(`/pages/${pageId}`, 'PATCH', { properties: props });
-
-const notionCreate = (dbId, props) =>
-  notionFetch('/pages', 'POST', { parent: { database_id: dbId }, properties: props });
+const notionQuery = (dbId, filter, sorts) => notionFetch(`/databases/${dbId}/query`,'POST',{ page_size:100, ...(filter?{filter}:{}), ...(sorts?{sorts}:{}) }).then(d=>d.results??[]);
+const notionPatch = (pageId, props) => notionFetch(`/pages/${pageId}`,'PATCH',{properties:props});
+const notionCreate = (dbId, props) => notionFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
 
 const g = {
   title:    v => v?.title?.[0]?.plain_text    ?? '',
@@ -338,47 +440,112 @@ const g = {
   select:   v => v?.select?.name              ?? null,
   checkbox: v => v?.checkbox                  ?? false,
   date:     v => v?.date?.start               ?? null,
-  formula:  v => { const f = v?.formula; if (!f) return null; return f.number ?? f.string ?? f.boolean ?? null; },
-  rollup:   v => { const r = v?.rollup; if (!r) return null; if (r.type==='number') return r.number; if (r.type==='array') { const f=r.array?.[0]; return f?.formula?.number ?? f?.formula?.string ?? f?.number ?? null; } return null; },
+  formula:  v => { const f=v?.formula; if(!f) return null; return f.number??f.string??f.boolean??null; },
+  rollup:   v => { const r=v?.rollup; if(!r) return null; if(r.type==='number') return r.number; if(r.type==='array'){const f=r.array?.[0]; return f?.formula?.number??f?.formula?.string??f?.number??null;} return null; },
+  rollupStr:v => { const r=v?.rollup; if(!r) return null; if(r.type==='array'){const f=r.array?.[0]; return f?.formula?.string??f?.title?.[0]?.plain_text??null;} return null; },
 };
 
-const toStat = p => ({ id:p.id, name:g.title(p.properties.Name), finalXP:g.formula(p.properties['Final XP'])??0, weeklyGain:g.formula(p.properties['Weekly gain'])??0, lastTrained:g.rollup(p.properties['Last day trained']), cat:g.select(p.properties.Cat), description:g.text(p.properties.Description) });
-const toRival = p => ({ id:p.id, name:g.title(p.properties.Name), totalXP:g.formula(p.properties['Total XP'])??0, rank:g.formula(p.properties.Rank)??'', gap:g.formula(p.properties.Gap)??'', myCurrentXP:g.rollup(p.properties['My current XP'])??0, personality:g.text(p.properties.Personality), bodyPart:g.select(p.properties['Body Part']) });
-const toTask = p => ({ id:p.id, name:g.title(p.properties.Task), cat:g.select(p.properties.Cat), difficulty:g.select(p.properties.Difficulty), status:g.checkbox(p.properties.Status), dueDate:g.date(p.properties['Due Date']) });
-const toTemplate = p => ({ id:p.id, name:g.title(p.properties.Name), cat:g.select(p.properties.Cat), type:g.select(p.properties.Type) });
+const toStat = p => ({
+  id: p.id,
+  name:        g.title(p.properties.Name),
+  finalXP:     g.formula(p.properties['Final XP'])    ?? 0,
+  weeklyGain:  g.formula(p.properties['Weekly gain']) ?? 0,
+  rank:        g.formula(p.properties.Rank)           ?? '',
+  rivalGap:    g.rollup(p.properties['Rival Gap']),
+  rivalRank:   g.rollupStr(p.properties['Rival Rank']),
+  rivalXP:     g.rollup(p.properties['Rival XP'])     ?? 0,
+  lastTrained: g.rollup(p.properties['Last day trained']),
+  cat:         g.select(p.properties.Cat),
+});
 
+const toTask = p => ({
+  id: p.id,
+  name:       g.title(p.properties.Task),
+  cat:        g.select(p.properties.Cat),
+  difficulty: g.select(p.properties.Difficulty),
+  status:     g.checkbox(p.properties.Status),
+  dueDate:    g.date(p.properties['Due Date']),
+});
+
+const toTemplate = p => ({
+  id: p.id, name: g.title(p.properties.Name),
+  cat: g.select(p.properties.Cat), type: g.select(p.properties.Type),
+});
+
+const toStreak = p => ({
+  workout: g.formula(p.properties['Workout streak']) ?? 0,
+  mind:    g.formula(p.properties['Mind streak'])    ?? 0,
+  sleep:   g.formula(p.properties['Sleep streak'])   ?? 0,
+  quest:   g.formula(p.properties['Quest Perfect Day']) ?? 0,
+  date:    g.date(p.properties.Date),
+});
+
+// ── UI helpers ──
 function setError(msg) {
   const el = document.getElementById('error-bar');
-  if (msg) { el.textContent = msg; el.style.display = 'block'; }
-  else el.style.display = 'none';
+  if (msg) { el.textContent = msg; el.style.display='block'; } else el.style.display='none';
 }
-
 function showToast(msg, ms=2500) {
-  document.querySelectorAll('.toast').forEach(t => t.remove());
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), ms);
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(), ms);
 }
-
-function setSyncBusy(busy) {
+function setSyncBusy(b) {
   const btn = document.getElementById('syncBtn');
-  btn.disabled = busy; btn.textContent = busy ? 'Syncing…' : '↺ Sync';
+  btn.disabled=b; btn.textContent=b?'Syncing…':'↺ Sync';
 }
 
-// ── Load functions ──
+function badgeHTML(rankStr, sizeClass='') {
+  const r = getRankFromNotion(rankStr);
+  return `<div class="rank-badge rank-${r.name} ${sizeClass}">
+    <span>${r.name.slice(0,3).toUpperCase()}</span>
+    <span class="rank-numeral">${r.roman}</span>
+  </div>`;
+}
+
+// ── Rank-up detection & overlay ──
+function checkRankUps(newStats) {
+  newStats.forEach(s => {
+    const oldRank = prevRanks[s.id];
+    if (oldRank && oldRank !== s.rank && s.rank) {
+      showRankUp(s.name, s.rank);
+    }
+    prevRanks[s.id] = s.rank;
+  });
+}
+
+function showRankUp(muscleName, newRank) {
+  const r = getRankFromNotion(newRank);
+  document.getElementById('rankupTitle').textContent = `${muscleName}`;
+  document.getElementById('rankupNew').textContent = `${newRank}`;
+  document.getElementById('rankupBadge').innerHTML = badgeHTML(newRank, 'rank-badge-lg');
+
+  const particles = document.getElementById('rankupParticles');
+  particles.innerHTML = '';
+  for (let i=0; i<30; i++) {
+    const p = document.createElement('div'); p.className='particle';
+    p.style.cssText = `left:${Math.random()*100}%;background:${r.color};animation-delay:${Math.random()*0.8}s;animation-duration:${1+Math.random()*0.8}s;width:${2+Math.random()*4}px;height:${2+Math.random()*4}px`;
+    particles.appendChild(p);
+  }
+  document.getElementById('rankupOverlay').classList.add('visible');
+}
+function closeRankup() { document.getElementById('rankupOverlay').classList.remove('visible'); }
+
+// ── Loaders ──
 async function loadStats() {
   try {
     const pages = await notionQuery(DB.stats);
-    state.stats = pages.map(toStat);
-  } catch(e) { setError('Stats: ' + e.message); }
+    const newStats = pages.map(toStat);
+    checkRankUps(newStats);
+    state.stats = newStats;
+  } catch(e) { setError('Stats: '+e.message); }
 }
 
 async function loadRivals() {
   try {
     const pages = await notionQuery(DB.rivals);
-    state.rivals = pages.map(toRival);
-  } catch(e) { setError('Rivals: ' + e.message); }
+    state.rivals = pages;
+  } catch(e) { setError('Rivals: '+e.message); }
 }
 
 async function loadTasks() {
@@ -394,262 +561,342 @@ async function loadTasks() {
       ],
     }, [{ property:'Due Date', direction:'ascending' }]);
     state.tasks = pages.map(toTask);
-  } catch(e) { setError('Tasks: ' + e.message); }
+  } catch(e) { setError('Tasks: '+e.message); }
 }
 
 async function loadTemplates() {
+  try { const pages = await notionQuery(DB.templates); state.templates = pages.map(toTemplate); }
+  catch(e) { console.error(e); }
+}
+
+async function loadStreaks() {
   try {
-    const pages = await notionQuery(DB.templates);
-    state.templates = pages.map(toTemplate);
-  } catch(e) { console.error(e); }
+    const today = new Date().toISOString().split('T')[0];
+    const pages = await notionQuery(DB.dailyLog, {
+      property:'Date', date:{ equals:today }
+    });
+    if (pages.length) state.streaks = toStreak(pages[0]);
+    else {
+      // fallback: get most recent
+      const all = await notionQuery(DB.dailyLog, undefined, [{ property:'Date', direction:'descending' }]);
+      if (all.length) state.streaks = toStreak(all[0]);
+    }
+  } catch(e) { setError('Streaks: '+e.message); }
 }
 
 async function refresh() {
   setError(null); setSyncBusy(true);
-  if (currentTab === 'dashboard') { await Promise.all([loadStats(), loadRivals()]); renderDashboard(); }
-  if (currentTab === 'tasks')     { await Promise.all([loadTasks(), loadTemplates()]); renderTasks(); }
-  if (currentTab === 'stats')     { await loadStats(); renderStats(); }
-  if (currentTab === 'rivals')    { await loadRivals(); renderRivals(); }
+  if (currentTab==='home')  { await Promise.all([loadStreaks(), loadStats()]); renderHome(); }
+  if (currentTab==='tasks') { await Promise.all([loadTasks(), loadTemplates()]); renderTasks(); }
+  if (currentTab==='stats') { await Promise.all([loadStats(), loadRivals()]); renderStats(); }
   setSyncBusy(false);
 }
 
 // ── Tab switching ──
 function switchTab(tab, btn) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>{ p.style.display='none'; p.classList.remove('active'); });
   btn.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
-  currentTab = tab;
-  refresh();
+  const panel = document.getElementById('tab-'+tab);
+  panel.style.display='block'; panel.classList.add('active');
+  currentTab = tab; refresh();
 }
 
 // ── Renderers ──
-function renderDashboard() {
-  const bodyStat = state.stats.find(s => s.cat === 'Body') ?? state.stats[0];
-  const rival    = state.rivals[0];
-  const xp       = bodyStat?.finalXP ?? 0;
-  const weekly   = bodyStat?.weeklyGain ?? 0;
-  const { rank, next, pct } = getRank(xp);
-  const myXP  = rival?.myCurrentXP ?? xp;
-  const rivXP = rival?.totalXP ?? 0;
-  const isAhead  = myXP > rivXP;
-  const isBehind = myXP < rivXP;
-  const pillClass = isAhead ? 'pill-ahead' : isBehind ? 'pill-behind' : 'pill-tied';
-  const pillText  = isAhead ? '▲ Ahead'   : isBehind ? '▼ Behind'   : '= Tied';
+function renderHome() {
+  const s = state.streaks;
+  const workout = s?.workout ?? 0;
+  const mind    = s?.mind    ?? 0;
+  const sleep   = s?.sleep   ?? 0;
+  const quest   = s?.quest   ?? 0;
 
-  document.getElementById('tab-dashboard').innerHTML = `
-    <div class="rank-hero">
-      <div class="rank-badge-wrap">
-        <div class="rank-ring" style="border-color:${rank.color};box-shadow:0 0 20px ${rank.glow}"></div>
-        <div class="rank-ring-2" style="border-color:${rank.color}"></div>
-        <div class="rank-inner" style="border-color:${rank.color};box-shadow:0 0 16px ${rank.glow}">
-          <span class="rank-letter" style="color:${rank.color};filter:drop-shadow(0 0 8px ${rank.color})">${rank.name}</span>
-        </div>
+  // overall summary from body stats
+  const bodyStats = state.stats.filter(x => x.cat==='Body');
+  const topRankStat = bodyStats.reduce((best, s) => {
+    const { rank } = getRankFromXP(s.finalXP);
+    const idx = RANKS.indexOf(rank);
+    const bestIdx = best ? RANKS.indexOf(getRankFromXP(best.finalXP).rank) : -1;
+    return idx > bestIdx ? s : best;
+  }, null);
+
+  document.getElementById('tab-home').innerHTML = `
+    <div class="section-label">Streaks</div>
+    <div class="streak-grid">
+      <div class="streak-card fire">
+        <span class="streak-icon">🔥</span>
+        <div class="streak-number" style="color:var(--orange)">${workout}</div>
+        <div class="streak-label">Workout</div>
       </div>
-      <div class="rank-label">Current Rank</div>
-      <div><span class="rank-xp" style="color:${rank.color}">${Number(xp).toLocaleString()}</span><span class="rank-xp-unit">XP</span></div>
-      <div class="xp-bar-wrap">
-        <div class="xp-bar-meta">
-          <span class="xp-bar-text">Rank ${rank.name}</span>
-          <span class="xp-bar-text">${next ? Math.round(pct)+'% → '+next.name : 'Max Rank'}</span>
-        </div>
-        <div class="xp-bar-track">
-          <div class="xp-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${rank.color}88,${rank.color});box-shadow:0 0 8px ${rank.glow}"></div>
-        </div>
+      <div class="streak-card mind">
+        <span class="streak-icon">🧠</span>
+        <div class="streak-number" style="color:var(--blue)">${mind}</div>
+        <div class="streak-label">Mind</div>
+      </div>
+      <div class="streak-card sleep">
+        <span class="streak-icon">🌙</span>
+        <div class="streak-number" style="color:#a855f7">${sleep}</div>
+        <div class="streak-label">Sleep</div>
+      </div>
+      <div class="streak-card quest">
+        <span class="streak-icon">⚔️</span>
+        <div class="streak-number" style="color:var(--green)">${quest}</div>
+        <div class="streak-label">Quest Days</div>
       </div>
     </div>
 
-    <div class="stat-grid">
-      <div class="stat-mini">
-        <div class="stat-mini-label">Weekly XP</div>
-        <div class="stat-mini-value" style="color:${weekly>0?'#4ade80':'var(--text-dim)'}">${weekly>0?'+':''}${Number(weekly).toLocaleString()}</div>
-        <div class="stat-mini-sub">this week</div>
-      </div>
-      <div class="stat-mini">
-        <div class="stat-mini-label">vs Rival</div>
-        <div class="stat-mini-value" style="color:${isAhead?'#4ade80':isBehind?'#f87171':'var(--blue)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(myXP-rivXP).toLocaleString()}</div>
-        <div class="stat-mini-sub">${isAhead?'ahead':isBehind?'behind':'tied'}</div>
-      </div>
-    </div>
-
-    ${rival ? `
-    <div class="section-title">Rival</div>
-    <div class="rival-dash">
-      <div class="rival-dash-header">
-        <div class="rival-dash-name">${rival.name}</div>
-        <span class="pill ${pillClass}">${pillText}</span>
-      </div>
-      <div class="rival-xp-row">
-        <div>
-          <div class="rival-xp-label">You</div>
-          <div class="rival-xp-val" style="color:${isAhead?'#4ade80':isBehind?'#f87171':'var(--blue)'}">${Number(myXP).toLocaleString()}</div>
-        </div>
-        <div class="rival-vs">VS</div>
-        <div>
-          <div class="rival-xp-label">${rival.name}</div>
-          <div class="rival-xp-val">${Number(rivXP).toLocaleString()}</div>
-        </div>
-      </div>
-      ${rival.gap ? `<div class="rival-gap-row"><span>Gap</span><span class="rival-gap-val">${rival.gap}</span></div>` : ''}
+    ${bodyStats.length ? `
+    <div class="section-label">Body Overview</div>
+    <div class="muscle-cards">
+      ${bodyStats.map(stat => {
+        const { rank, next, pct } = getRankFromXP(stat.finalXP);
+        const rivalDiff = stat.rivalGap;
+        const isAhead = rivalDiff !== null && rivalDiff > 0;
+        const isBehind = rivalDiff !== null && rivalDiff < 0;
+        return `<div class="muscle-card" onclick="switchTab('stats', document.querySelectorAll('.nav-btn')[2]); setTimeout(()=>selectMuscle('${stat.id}'),400)">
+          <div class="muscle-card-top">
+            <span class="muscle-card-name">${stat.name}</span>
+            ${badgeHTML(stat.rank || (rank.name+' '+rank.roman), 'rank-badge-sm')}
+          </div>
+          <div class="muscle-xp" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}<span class="muscle-xp-unit">xp</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${rank.color}66,${rank.color})"></div></div>
+          <div class="muscle-meta">
+            <span class="muscle-pct">${Math.round(pct)}% → ${next?.name??'MAX'}</span>
+            ${rivalDiff !== null ? `<span class="rival-diff" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
     </div>` : ''}
   `;
 }
 
 function renderTasks() {
+  const today = new Date(); today.setHours(0,0,0,0);
   const CATS = ['Body','Mind','Life','German'];
-  const grouped = {};
-  CATS.forEach(c => { grouped[c] = state.tasks.filter(t => t.cat === c); });
-  const other = state.tasks.filter(t => !t.cat || !CATS.includes(t.cat));
-  if (other.length) grouped['Other'] = other;
 
-  let html = `
-    <div class="action-row">
-      <button class="action-btn" onclick="addDailyTasks()">
-        <span class="action-icon">☀️</span>Daily Tasks
-      </button>
-      <button class="action-btn" onclick="addWorkout()">
-        <span class="action-icon">🏋️</span>Workout
-      </button>
-    </div>
-  `;
-
-  if (!state.tasks.length) {
-    html += '<div class="empty">No pending tasks</div>';
-  } else {
-    for (const [cat, tasks] of Object.entries(grouped)) {
-      if (!tasks.length) continue;
-      const color = CAT_COLOR[cat] ?? 'var(--text-dim)';
-      html += `<div class="cat-header" style="color:${color}">
-        <div class="cat-dot" style="background:${color};box-shadow:0 0 6px ${color}"></div>
-        ${cat} <span style="color:var(--text-faint);font-weight:400">(${tasks.length})</span>
-      </div>`;
-      for (const task of tasks) {
-        const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0));
-        const dueStr  = task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : null;
-        const dc = task.difficulty ? DIFF_COLOR[task.difficulty] : null;
-        html += `<div class="task-item ${task.status?'done':''}" onclick="toggleTask('${task.id}',${task.status})">
-          <div class="task-cb">${task.status?'✓':''}</div>
-          <div class="task-body">
-            <div class="task-name">${task.name||'Unnamed'}</div>
-            <div class="task-tags">
-              ${dc ? `<span class="tag" style="color:${dc};border-color:${dc}40;background:${dc}10">${task.difficulty}</span>` : ''}
-              ${dueStr ? `<span class="tag-due ${overdue?'overdue':''}">${overdue?'⚠ ':''}${dueStr}</span>` : ''}
-            </div>
-          </div>
-        </div>`;
-      }
+  // Group by date
+  const dateGroups = {};
+  state.tasks.forEach(t => {
+    let label = 'No Date';
+    if (t.dueDate) {
+      const d = new Date(t.dueDate); d.setHours(0,0,0,0);
+      const diff = Math.round((today-d)/(1000*60*60*24));
+      if (diff === 0) label = 'Today';
+      else if (diff === 1) label = 'Yesterday';
+      else if (diff > 1) label = `${diff} Days Ago`;
+      else label = 'Upcoming';
     }
+    if (!dateGroups[label]) dateGroups[label] = [];
+    dateGroups[label].push(t);
+  });
+
+  // Sort date groups: Today first, then by days
+  const dateOrder = ['Today','Yesterday'];
+  const sorted = Object.keys(dateGroups).sort((a,b) => {
+    const ai = dateOrder.indexOf(a); const bi = dateOrder.indexOf(b);
+    if (ai>-1 && bi>-1) return ai-bi;
+    if (ai>-1) return -1; if (bi>-1) return 1;
+    const aN = parseInt(a); const bN = parseInt(b);
+    if (!isNaN(aN) && !isNaN(bN)) return bN-aN;
+    return 0;
+  });
+
+  let html = `<div class="action-row">
+    <button class="action-btn" onclick="addDailyTasks()"><span class="action-icon">☀️</span>Daily Tasks</button>
+    <button class="action-btn" onclick="addWorkout()"><span class="action-icon">🏋️</span>Workout</button>
+  </div>`;
+
+  if (!state.tasks.length) { html += '<div class="empty">No pending tasks</div>'; }
+  else {
+    sorted.forEach(dateLabel => {
+      const dateTasks = dateGroups[dateLabel];
+      html += `<div class="date-header">${dateLabel}</div>`;
+      // sub-group by cat within date
+      CATS.forEach(cat => {
+        const catTasks = dateTasks.filter(t => t.cat===cat);
+        if (!catTasks.length) return;
+        const color = CAT_COLOR[cat] ?? 'var(--text-dim)';
+        html += `<div class="cat-sub"><div class="cat-dot" style="background:${color}"></div>${cat}</div>`;
+        catTasks.forEach(task => {
+          const overdue = task.dueDate && new Date(task.dueDate) < today;
+          const dueStr  = task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : null;
+          const diff = task.difficulty;
+          html += `<div class="task-item ${task.status?'done':''}" id="task-${task.id}">
+            <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'✓':''}</div>
+            <div class="task-body">
+              <div class="task-name">${task.name||'Unnamed'}</div>
+              <div class="task-tags">
+                ${diff ? `<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>` : ''}
+                ${dueStr ? `<span class="task-due ${overdue?'overdue':''}">${overdue?'⚠ ':''}${dueStr}</span>` : ''}
+              </div>
+            </div>
+          </div>`;
+        });
+      });
+      // uncategorised
+      const other = dateTasks.filter(t => !t.cat || !CATS.includes(t.cat));
+      if (other.length) {
+        html += `<div class="cat-sub"><div class="cat-dot" style="background:var(--text-dim)"></div>Other</div>`;
+        other.forEach(task => {
+          html += `<div class="task-item ${task.status?'done':''}" id="task-${task.id}">
+            <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'✓':''}</div>
+            <div class="task-body">
+              <div class="task-name">${task.name||'Unnamed'}</div>
+              <div class="task-tags">
+                ${task.difficulty ? `<span class="diff-pill diff-${task.difficulty}" onclick="cycleDiff(event,'${task.id}','${task.difficulty}')">${task.difficulty}</span>` : ''}
+              </div>
+            </div>
+          </div>`;
+        });
+      }
+    });
   }
   document.getElementById('tab-tasks').innerHTML = html;
 }
 
 function renderStats() {
-  const bodyStats  = state.stats.filter(s => s.cat === 'Body');
-  const otherStats = state.stats.filter(s => s.cat !== 'Body');
-  if (!state.stats.length) { document.getElementById('tab-stats').innerHTML = '<div class="empty">No stats found</div>'; return; }
+  const bodyStats = state.stats.filter(s => s.cat==='Body');
+  const otherStats = state.stats.filter(s => s.cat!=='Body');
 
-  const cardHTML = stat => {
-    const { rank, pct } = getRank(stat.finalXP);
+  const cardHTML = (stat, isSelected) => {
+    const { rank, next, pct } = getRankFromXP(stat.finalXP);
     const lastStr = stat.lastTrained ? new Date(stat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—';
-    return `<div class="body-card">
-      <div class="body-card-top">
-        <span class="body-card-name">${stat.name}</span>
-        <span class="body-rank" style="color:${rank.color};filter:drop-shadow(0 0 4px ${rank.color})">${rank.name}</span>
+    const rivalDiff = stat.rivalGap;
+    const isAhead = rivalDiff !== null && rivalDiff > 0;
+    const isBehind = rivalDiff !== null && rivalDiff < 0;
+    return `<div class="muscle-card ${isSelected?'selected':''}" onclick="selectMuscle('${stat.id}')" id="mcard-${stat.id}" style="${isSelected?`border-color:${rank.color}`:''}">
+      <div class="muscle-card-top">
+        <span class="muscle-card-name">${stat.name}</span>
+        ${badgeHTML(stat.rank || (rank.name+' '+rank.roman), 'rank-badge-sm')}
       </div>
-      <div class="body-xp" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}<span class="body-xp-unit">xp</span></div>
-      <div class="body-bar"><div class="body-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${rank.color}66,${rank.color})"></div></div>
-      <div class="body-last">Last: ${lastStr}</div>
+      <div class="muscle-xp" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}<span class="muscle-xp-unit">xp</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${rank.color}66,${rank.color})"></div></div>
+      <div class="muscle-meta">
+        <span class="muscle-pct">${Math.round(pct)}% → ${next?next.name+' '+next.roman:'MAX'}</span>
+        ${rivalDiff !== null ? `<span class="rival-diff" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)}</span>` : ''}
+      </div>
     </div>`;
   };
 
-  let html = '';
-  if (bodyStats.length) html += `<div class="section-title">Body Parts</div><div class="body-grid">${bodyStats.map(cardHTML).join('')}</div>`;
-  if (otherStats.length) html += `<div class="section-title">Other Stats</div><div class="body-grid">${otherStats.map(cardHTML).join('')}</div>`;
-  document.getElementById('tab-stats').innerHTML = html;
-}
-
-function renderRivals() {
-  if (!state.rivals.length) { document.getElementById('tab-rivals').innerHTML = '<div class="empty">No rivals found</div>'; return; }
-  let html = '';
-  for (const rival of state.rivals) {
-    const myXP  = rival.myCurrentXP ?? 0;
-    const rivXP = rival.totalXP ?? 0;
-    const isAhead  = myXP > rivXP;
-    const isBehind = myXP < rivXP;
-    const { rank } = getRank(rivXP);
-    const pillClass = isAhead ? 'pill-ahead' : isBehind ? 'pill-behind' : 'pill-tied';
-    const pillText  = isAhead ? '▲ Ahead'   : isBehind ? '▼ Behind'   : 'Tied';
-    html += `<div class="rival-full">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="rival-full-name">${rival.name}</div>
-        <span class="pill ${pillClass}">${pillText}</span>
+  const detailHTML = (stat) => {
+    if (!stat) return '';
+    const { rank, next, pct } = getRankFromXP(stat.finalXP);
+    const lastStr = stat.lastTrained ? new Date(stat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—';
+    const rivalDiff = stat.rivalGap;
+    const isAhead = rivalDiff !== null && rivalDiff > 0;
+    const isBehind = rivalDiff !== null && rivalDiff < 0;
+    return `<div class="detail-panel visible" id="detailPanel">
+      <div class="detail-header">
+        <div class="detail-name" style="color:${rank.color}">${stat.name}</div>
+        ${badgeHTML(stat.rank||(rank.name+' '+rank.roman), 'rank-badge-lg')}
       </div>
-      ${rival.personality ? `<div class="rival-personality">"${rival.personality}"</div>` : ''}
-      <div class="rival-stat-grid">
-        <div class="rival-stat-cell"><div class="rival-stat-label">Their XP</div><div class="rival-stat-val">${Number(rivXP).toLocaleString()}</div></div>
-        <div class="rival-stat-div"></div>
-        <div class="rival-stat-cell"><div class="rival-stat-label">Your XP</div><div class="rival-stat-val" style="color:${isAhead?'#4ade80':isBehind?'#f87171':'var(--blue)'}">${Number(myXP).toLocaleString()}</div></div>
-        <div class="rival-stat-div"></div>
-        <div class="rival-stat-cell"><div class="rival-stat-label">Their Rank</div><div class="rival-stat-val" style="color:${rank.color}">${rival.rank||rank.name}</div></div>
+      <div class="detail-stats">
+        <div class="detail-stat">
+          <div class="detail-stat-label">XP</div>
+          <div class="detail-stat-val" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">vs 影</div>
+          <div class="detail-stat-val" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${rivalDiff!==null?(isAhead?'▲':'▼')+Math.abs(rivalDiff):'—'}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Last</div>
+          <div class="detail-stat-val" style="color:var(--text-dim);font-size:11px">${lastStr}</div>
+        </div>
       </div>
-      ${rival.gap ? `<div class="rival-gap-row"><span>Gap</span><span class="rival-gap-val">${rival.gap}</span></div>` : ''}
     </div>`;
+  };
+
+  const selectedStat = selectedMuscle ? state.stats.find(s=>s.id===selectedMuscle) : null;
+
+  let html = '';
+  if (selectedStat) html += detailHTML(selectedStat);
+
+  if (bodyStats.length) {
+    html += `<div class="section-label">Body Parts</div><div class="muscle-cards">`;
+    html += bodyStats.map(s => cardHTML(s, s.id===selectedMuscle)).join('');
+    html += '</div>';
   }
-  document.getElementById('tab-rivals').innerHTML = html;
+  if (otherStats.length) {
+    html += `<div class="section-label">Other Stats</div><div class="muscle-cards">`;
+    html += otherStats.map(s => cardHTML(s, s.id===selectedMuscle)).join('');
+    html += '</div>';
+  }
+
+  document.getElementById('tab-stats').innerHTML = html || '<div class="empty">No stats found</div>';
 }
 
-// ── Actions ──
-async function toggleTask(taskId, currentStatus) {
-  const newStatus = !currentStatus;
-  state.tasks = state.tasks.map(t => t.id === taskId ? {...t, status: newStatus} : t);
+function selectMuscle(id) {
+  selectedMuscle = selectedMuscle===id ? null : id;
+  renderStats();
+  if (selectedMuscle) {
+    const panel = document.getElementById('detailPanel');
+    if (panel) panel.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
+
+// ── Task actions ──
+async function toggleTask(taskId, current) {
+  const next = !current;
+  state.tasks = state.tasks.map(t => t.id===taskId ? {...t, status:next} : t);
   renderTasks();
   try {
-    await notionPatch(taskId, { Status: { checkbox: newStatus } });
-    showToast(newStatus ? '✓ Quest complete' : 'Task reopened');
-    if (newStatus) {
-      setTimeout(() => { state.tasks = state.tasks.filter(t => t.id !== taskId); renderTasks(); }, 600);
-    }
+    await notionPatch(taskId, { Status:{ checkbox:next } });
+    showToast(next ? '✓ Done' : 'Reopened');
+    if (next) setTimeout(()=>{ state.tasks=state.tasks.filter(t=>t.id!==taskId); renderTasks(); }, 700);
   } catch(e) {
-    state.tasks = state.tasks.map(t => t.id === taskId ? {...t, status: currentStatus} : t);
+    state.tasks = state.tasks.map(t => t.id===taskId ? {...t, status:current} : t);
+    renderTasks(); showToast('Update failed');
+  }
+}
+
+async function cycleDiff(e, taskId, currentDiff) {
+  e.stopPropagation();
+  const idx = DIFF_ORDER.indexOf(currentDiff);
+  const nextDiff = DIFF_ORDER[(idx+1) % DIFF_ORDER.length];
+  state.tasks = state.tasks.map(t => t.id===taskId ? {...t, difficulty:nextDiff} : t);
+  renderTasks();
+  try {
+    await notionPatch(taskId, { Difficulty:{ select:{ name:nextDiff } } });
+    showToast(`→ ${nextDiff}`);
+  } catch(e) {
+    state.tasks = state.tasks.map(t => t.id===taskId ? {...t, difficulty:currentDiff} : t);
     renderTasks(); showToast('Update failed');
   }
 }
 
 async function addDailyTasks() {
   const today = new Date().toISOString().split('T')[0];
-  const daily = state.templates.filter(t => t.type === 'Daily');
+  const daily = state.templates.filter(t=>t.type==='Daily');
   if (!daily.length) { showToast('No daily templates found'); return; }
   try {
-    await Promise.all(daily.map(t => notionCreate(DB.tasks, {
-      Task:       { title:[{ text:{ content:t.name } }] },
-      ...(t.cat ? { Cat:{ select:{ name:t.cat } } } : {}),
-      Difficulty: { select:{ name:'Daily' } },
-      Status:     { checkbox:false },
-      'Due Date': { date:{ start:today } },
+    await Promise.all(daily.map(t => notionCreate(DB.tasks,{
+      Task:{ title:[{text:{content:t.name}}] },
+      ...(t.cat?{Cat:{select:{name:t.cat}}}:{}),
+      Difficulty:{select:{name:'Daily'}}, Status:{checkbox:false},
+      'Due Date':{date:{start:today}},
     })));
     showToast(`${daily.length} daily tasks added`);
     await loadTasks(); renderTasks();
-  } catch(e) { showToast('Failed to add tasks'); }
+  } catch(e) { showToast('Failed'); }
 }
 
 async function addWorkout() {
   const today = new Date().toISOString().split('T')[0];
-  const workout = state.templates.filter(t => t.type === 'Weekly' || t.cat === 'Body');
+  const workout = state.templates.filter(t=>t.type==='Weekly'||t.cat==='Body');
   if (!workout.length) { showToast('No workout templates found'); return; }
   try {
-    await Promise.all(workout.map(t => notionCreate(DB.tasks, {
-      Task:       { title:[{ text:{ content:t.name } }] },
-      Cat:        { select:{ name:'Body' } },
-      Difficulty: { select:{ name:'Heavy' } },
-      Status:     { checkbox:false },
-      'Due Date': { date:{ start:today } },
+    await Promise.all(workout.map(t => notionCreate(DB.tasks,{
+      Task:{ title:[{text:{content:t.name}}] },
+      Cat:{select:{name:'Body'}}, Difficulty:{select:{name:'Heavy'}},
+      Status:{checkbox:false}, 'Due Date':{date:{start:today}},
     })));
     showToast(`${workout.length} workout tasks added`);
     await loadTasks(); renderTasks();
-  } catch(e) { showToast('Failed to add workout'); }
+  } catch(e) { showToast('Failed'); }
 }
 
 // Init
+document.querySelectorAll('.tab-panel').forEach((p,i) => { if(i>0) p.style.display='none'; });
 refresh();
 </script>
 </body>
