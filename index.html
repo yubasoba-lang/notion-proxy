@@ -10,313 +10,185 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a0f;
-  --bg-card: #12121a;
-  --bg-mid: #1a1a26;
-  --border: #1e1e2e;
-  --border-hi: #2a2a3e;
-  --text: #e8e8f0;
-  --text-dim: #5a5a7a;
-  --text-faint: #2a2a3e;
-  --orange: #ff6b2b;
-  --orange-dim: #cc4a1a;
-  --blue: #4a9eff;
-  --green: #4ade80;
-  --red: #f87171;
-
-  /* Rank colours */
-  --bronze: #cd7f32;
-  --silver: #c0c0c0;
-  --gold: #ffd700;
-  --platinum: #4fd6d6;
-  --diamond: #a855f7;
-  --champion: #3b82f6;
-  --titan: #ef4444;
-  --olympian: #f59e0b;
+  --bg:#0a0a0f; --bg-card:#12121a; --bg-mid:#1a1a26;
+  --border:#1e1e2e; --border-hi:#2a2a3e;
+  --text:#e8e8f0; --text-dim:#5a5a7a; --text-faint:#2a2a3e;
+  --orange:#ff6b2b; --blue:#4a9eff; --green:#4ade80; --red:#f87171;
+  --bronze:#cd7f32; --silver:#c0c0c0; --gold:#ffd700;
+  --platinum:#4fd6d6; --diamond:#a855f7; --champion:#3b82f6;
+  --titan:#ef4444; --olympian:#f59e0b;
 }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 50%,rgba(74,158,255,0.03) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(255,107,43,0.03) 0%,transparent 50%);pointer-events:none;z-index:0;}
+#app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative;z-index:1;}
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;background:rgba(10,10,15,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;}
+.header-wordmark{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.1em;color:var(--text);}
+.header-wordmark span{color:var(--orange);}
+.sync-btn{background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;padding:6px 14px;cursor:pointer;border-radius:6px;transition:all 0.2s;}
+.sync-btn:hover{color:var(--orange);border-color:var(--orange);}
+.sync-btn:disabled{opacity:0.3;cursor:not-allowed;}
 
-/* Grid bg */
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background-image: radial-gradient(circle at 20% 50%, rgba(74,158,255,0.03) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,107,43,0.03) 0%, transparent 50%);
-  pointer-events: none; z-index: 0;
-}
+/* Nav */
+.nav{display:grid;grid-template-columns:repeat(3,1fr);background:rgba(10,10,15,0.98);border-bottom:1px solid var(--border);flex-shrink:0;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;cursor:pointer;color:var(--text-dim);transition:all 0.2s;position:relative;font-family:'Inter',sans-serif;}
+.nav-btn.active{color:var(--orange);}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--orange);border-radius:2px 2px 0 0;box-shadow:0 0 8px var(--orange);}
+.nav-icon{font-size:17px;line-height:1;}
+.nav-label{font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
 
-#app { max-width: 430px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+/* Scroll */
+.scroll{flex:1;overflow-y:auto;padding:14px 14px 100px;-webkit-overflow-scrolling:touch;}
 
-/* ── Header ── */
-.header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 18px 12px;
-  background: rgba(10,10,15,0.97); backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border); flex-shrink: 0;
-}
-.header-wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.1em; color: var(--text); }
-.header-wordmark span { color: var(--orange); }
-.sync-btn {
-  background: transparent; border: 1px solid var(--border-hi);
-  color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
-  letter-spacing: 0.08em; padding: 6px 14px; cursor: pointer; border-radius: 6px; transition: all 0.2s;
-}
-.sync-btn:hover { color: var(--orange); border-color: var(--orange); }
-.sync-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+/* Loader */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;gap:14px;}
+.loader-ring{width:40px;height:40px;border:2px solid var(--border-hi);border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{font-size:11px;font-weight:600;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;}
 
-/* ── Nav ── */
-.nav {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  background: rgba(10,10,15,0.98); border-bottom: 1px solid var(--border); flex-shrink: 0;
-}
-.nav-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 10px 4px 8px; background: none; border: none; cursor: pointer;
-  color: var(--text-dim); transition: all 0.2s; position: relative; font-family: 'Inter', sans-serif;
-}
-.nav-btn.active { color: var(--orange); }
-.nav-btn.active::after {
-  content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
-  height: 2px; background: var(--orange); border-radius: 2px 2px 0 0;
-  box-shadow: 0 0 8px var(--orange);
-}
-.nav-icon { font-size: 17px; line-height: 1; }
-.nav-label { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+/* Error */
+.error-bar{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:8px;color:var(--red);padding:12px 14px;font-size:12px;font-weight:500;margin-bottom:12px;line-height:1.5;}
 
-/* ── Scroll ── */
-.scroll { flex: 1; overflow-y: auto; padding: 14px 14px 100px; -webkit-overflow-scrolling: touch; }
+/* Section label */
+.section-label{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:10px;margin:18px 0 10px;}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent);}
 
-/* ── Loader ── */
-.loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 70px 20px; gap: 14px; }
-.loader-ring { width: 40px; height: 40px; border: 2px solid var(--border-hi); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-text { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; }
+/* Rank badge */
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid;position:relative;flex-direction:column;gap:0;line-height:1;width:52px;height:52px;}
+.rank-badge-sm{width:38px;height:38px;border-width:1.5px;}
+.rank-badge-lg{width:80px;height:80px;border-width:3px;}
+.rank-badge::before{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid;opacity:0.15;}
+.rank-name-text{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:0.03em;}
+.rank-badge-sm .rank-name-text{font-size:8px;}
+.rank-badge-lg .rank-name-text{font-size:14px;}
+.rank-numeral{font-family:'Inter',sans-serif;font-size:7px;font-weight:700;letter-spacing:0.05em;opacity:0.85;}
+.rank-badge-sm .rank-numeral{font-size:6px;}
+.rank-badge-lg .rank-numeral{font-size:10px;}
 
-/* ── Error ── */
-.error-bar { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; color: var(--red); padding: 12px 14px; font-size: 12px; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+.rank-Bronze  {border-color:var(--bronze);color:var(--bronze);background:rgba(205,127,50,0.08);}
+.rank-Bronze::before{border-color:var(--bronze);}
+.rank-Silver  {border-color:var(--silver);color:var(--silver);background:rgba(192,192,192,0.08);}
+.rank-Silver::before{border-color:var(--silver);}
+.rank-Gold    {border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.08);}
+.rank-Gold::before{border-color:var(--gold);}
+.rank-Platinum{border-color:var(--platinum);color:var(--platinum);background:rgba(79,214,214,0.08);}
+.rank-Platinum::before{border-color:var(--platinum);}
+.rank-Diamond {border-color:var(--diamond);color:var(--diamond);background:rgba(168,85,247,0.08);}
+.rank-Diamond::before{border-color:var(--diamond);}
+.rank-Champion{border-color:var(--champion);color:var(--champion);background:rgba(59,130,246,0.08);}
+.rank-Champion::before{border-color:var(--champion);}
+.rank-Titan   {border-color:var(--titan);color:var(--titan);background:rgba(239,68,68,0.08);}
+.rank-Titan::before{border-color:var(--titan);}
+.rank-Olympian{border-color:var(--olympian);color:var(--olympian);background:rgba(245,158,11,0.12);}
+.rank-Olympian::before{border-color:var(--olympian);}
 
-/* ── Section label ── */
-.section-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--text-dim); display: flex; align-items: center; gap: 10px; margin: 18px 0 10px;
-}
-.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
+/* HOME */
+.streak-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.streak-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;position:relative;overflow:hidden;}
+.streak-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.streak-card.fire::before{background:linear-gradient(90deg,var(--orange),#ff9500);}
+.streak-card.mind::before{background:linear-gradient(90deg,var(--blue),#7c3aed);}
+.streak-card.sleep::before{background:linear-gradient(90deg,#7c3aed,var(--platinum));}
+.streak-card.quest::before{background:linear-gradient(90deg,var(--green),#16a34a);}
+.streak-icon{font-size:20px;margin-bottom:4px;display:block;}
+.streak-number{font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;letter-spacing:0.02em;}
+.streak-label{font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;margin-top:2px;}
 
-/* ── Rank badge system ── */
-.rank-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 52px; height: 52px; border-radius: 50%; border: 2px solid; position: relative;
-  font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 0.05em;
-  flex-direction: column; gap: 0; line-height: 1;
-}
-.rank-badge-sm {
-  width: 36px; height: 36px; font-size: 9px; border-width: 1.5px;
-}
-.rank-badge-lg {
-  width: 72px; height: 72px; font-size: 14px; border-width: 2.5px;
-}
-.rank-badge::before {
-  content: ''; position: absolute; inset: -4px; border-radius: 50%;
-  border: 1px solid; opacity: 0.2;
-}
+/* TASKS */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.action-btn{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:13px 10px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.action-btn:hover{border-color:var(--orange);color:var(--orange);}
+.action-btn:active{transform:scale(0.97);}
+.action-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.action-icon{font-size:18px;}
 
-/* Rank colours */
-.rank-Bronze   { border-color: var(--bronze); color: var(--bronze); background: rgba(205,127,50,0.08); }
-.rank-Bronze::before { border-color: var(--bronze); }
-.rank-Silver   { border-color: var(--silver); color: var(--silver); background: rgba(192,192,192,0.08); }
-.rank-Silver::before { border-color: var(--silver); }
-.rank-Gold     { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
-.rank-Gold::before { border-color: var(--gold); }
-.rank-Platinum { border-color: var(--platinum); color: var(--platinum); background: rgba(79,214,214,0.08); }
-.rank-Platinum::before { border-color: var(--platinum); }
-.rank-Diamond  { border-color: var(--diamond); color: var(--diamond); background: rgba(168,85,247,0.08); }
-.rank-Diamond::before { border-color: var(--diamond); }
-.rank-Champion { border-color: var(--champion); color: var(--champion); background: rgba(59,130,246,0.08); }
-.rank-Champion::before { border-color: var(--champion); }
-.rank-Titan    { border-color: var(--titan); color: var(--titan); background: rgba(239,68,68,0.08); }
-.rank-Titan::before { border-color: var(--titan); }
-.rank-Olympian { border-color: var(--olympian); color: var(--olympian); background: rgba(245,158,11,0.12); }
-.rank-Olympian::before { border-color: var(--olympian); }
+/* Quick add templates */
+.template-section{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.template-section-title{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.template-dot{width:5px;height:5px;border-radius:50%;}
+.template-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.template-pill{background:var(--bg-mid);border:1px solid var(--border-hi);border-radius:6px;padding:6px 10px;font-size:11px;font-weight:500;color:var(--text);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.template-pill:hover{border-color:var(--orange);color:var(--orange);}
+.template-pill:active{transform:scale(0.97);}
 
-/* Roman numeral sub */
-.rank-numeral { font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 600; letter-spacing: 0.05em; opacity: 0.8; }
+.date-header{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--orange);display:flex;align-items:center;gap:8px;margin:16px 0 8px;}
+.date-header::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(255,107,43,0.3),transparent);}
+.cat-sub{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin:8px 0 5px 2px;display:flex;align-items:center;gap:6px;}
+.cat-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 
-/* ── HOME TAB ── */
-.streak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.streak-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px 14px 12px; position: relative; overflow: hidden;
-}
-.streak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-.streak-card.fire::before { background: linear-gradient(90deg, var(--orange), #ff9500); }
-.streak-card.mind::before { background: linear-gradient(90deg, var(--blue), #7c3aed); }
-.streak-card.sleep::before { background: linear-gradient(90deg, #7c3aed, #4fd6d6); }
-.streak-card.quest::before { background: linear-gradient(90deg, var(--green), #16a34a); }
+.task-item{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;transition:all 0.15s;user-select:none;}
+.task-item:active{transform:scale(0.99);}
+.task-item.done{opacity:0.28;}
+.task-item.done .task-name{text-decoration:line-through;}
+.task-cb{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border-hi);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--orange);cursor:pointer;transition:all 0.15s;}
+.task-item.done .task-cb{background:rgba(255,107,43,0.15);border-color:var(--orange);}
+.task-body{flex:1;min-width:0;}
+.task-name{font-size:13px;font-weight:500;line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.task-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.diff-pill{font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid;cursor:pointer;transition:all 0.15s;}
+.diff-pill:active{transform:scale(0.95);}
+.diff-Maintenance{color:#64748b;border-color:#64748b40;background:#64748b10;}
+.diff-Normal{color:var(--green);border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.08);}
+.diff-Heavy{color:var(--red);border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.08);}
+.diff-Daily{color:var(--orange);border-color:rgba(255,107,43,0.3);background:rgba(255,107,43,0.08);}
+.diff-Important{color:var(--diamond);border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.08);}
+.task-due{font-size:10px;font-weight:500;color:var(--text-dim);}
+.task-due.overdue{color:var(--red);}
+.empty{text-align:center;padding:40px 20px;color:var(--text-faint);font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;}
 
-.streak-icon { font-size: 22px; margin-bottom: 6px; display: block; }
-.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; letter-spacing: 0.02em; }
-.streak-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+/* STATS */
+/* Silhouette */
+.silhouette-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;}
+.silhouette-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(255,107,43,0.04) 0%,transparent 60%);pointer-events:none;}
+.silhouette-title{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.silhouette-legend{display:flex;gap:14px;margin-top:10px;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-dim);}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
 
-.streak-card-wide {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px; grid-column: span 2; display: flex; align-items: center; justify-content: space-between;
-}
-
-/* ── TASKS TAB ── */
-.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-.action-btn {
-  background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 10px;
-  color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
-  letter-spacing: 0.06em; text-transform: uppercase; padding: 13px 10px; cursor: pointer;
-  transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px;
-}
-.action-btn:hover { border-color: var(--orange); color: var(--orange); }
-.action-btn:active { transform: scale(0.97); }
-.action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.action-icon { font-size: 20px; }
-
-.date-group { margin-bottom: 4px; }
-.date-header {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--orange); display: flex; align-items: center; gap: 8px; margin: 16px 0 8px;
-}
-.date-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(255,107,43,0.3), transparent); }
-
-.cat-sub {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--text-dim); margin: 10px 0 6px 2px; display: flex; align-items: center; gap: 6px;
-}
-.cat-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-
-.task-item {
-  display: flex; align-items: center; gap: 10px; padding: 11px 12px;
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
-  margin-bottom: 5px; cursor: pointer; transition: all 0.15s; user-select: none;
-}
-.task-item:hover { border-color: var(--border-hi); }
-.task-item:active { transform: scale(0.99); }
-.task-item.done { opacity: 0.3; }
-.task-item.done .task-name { text-decoration: line-through; }
-
-.task-cb {
-  width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--border-hi);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  font-size: 11px; color: var(--orange); transition: all 0.15s;
-}
-.task-item.done .task-cb { background: rgba(255,107,43,0.15); border-color: var(--orange); }
-
-.task-body { flex: 1; min-width: 0; }
-.task-name { font-size: 13px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.task-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-
-.diff-pill {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 2px 7px; border-radius: 4px; border: 1px solid; cursor: pointer; transition: all 0.15s;
-}
-.diff-pill:hover { opacity: 0.8; }
-
-.diff-Maintenance { color: #64748b; border-color: #64748b40; background: #64748b10; }
-.diff-Normal      { color: var(--green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
-.diff-Heavy       { color: var(--red); border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
-.diff-Daily       { color: var(--orange); border-color: rgba(255,107,43,0.3); background: rgba(255,107,43,0.08); }
-.diff-Important   { color: var(--diamond); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.08); }
-
-.task-due { font-size: 10px; font-weight: 500; color: var(--text-dim); }
-.task-due.overdue { color: var(--red); }
-
-.empty { text-align: center; padding: 50px 20px; color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; }
-
-/* ── STATS TAB ── */
-/* Body silhouette */
-.silhouette-wrap {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 16px; margin-bottom: 14px; position: relative; overflow: hidden;
-}
-.silhouette-wrap::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 30%, rgba(255,107,43,0.04) 0%, transparent 60%);
-  pointer-events: none;
-}
-.silhouette-title { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
-.silhouette-container { position: relative; width: 100%; max-width: 260px; margin: 0 auto; }
-.silhouette-svg { width: 100%; height: auto; }
-
-/* muscle hotspot buttons */
-.muscle-btn {
-  position: absolute; width: 32px; height: 32px; border-radius: 50%;
-  border: 1.5px solid; background: rgba(10,10,15,0.7); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 7px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
-  transition: all 0.2s; transform: translate(-50%, -50%); line-height: 1.1; text-align: center;
-}
-.muscle-btn:hover { transform: translate(-50%, -50%) scale(1.15); z-index: 10; }
-.muscle-btn.active { transform: translate(-50%, -50%) scale(1.15); z-index: 10; box-shadow: 0 0 12px currentColor; }
-
-/* Body part cards */
-.muscle-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.muscle-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-  padding: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
-}
-.muscle-card:hover { border-color: var(--border-hi); }
-.muscle-card.selected { border-color: var(--orange); }
-.muscle-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-
-.muscle-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.muscle-card-name { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
-
-.muscle-xp { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.02em; margin-bottom: 6px; line-height: 1; }
-.muscle-xp-unit { font-size: 9px; font-weight: 600; color: var(--text-dim); margin-left: 2px; font-family: 'Inter', sans-serif; }
-
-.prog-track { height: 4px; background: var(--bg-mid); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-.prog-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; position: relative; overflow: hidden; }
-.prog-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); animation: shimmer 2s linear infinite; }
-@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-
-.muscle-meta { display: flex; align-items: center; justify-content: space-between; }
-.muscle-pct { font-size: 9px; font-weight: 600; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
-.rival-diff { font-size: 9px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+/* Muscle cards */
+.muscle-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.muscle-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.muscle-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.muscle-card:hover{border-color:var(--border-hi);}
+.muscle-card.selected{border-width:1.5px;}
+.muscle-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.muscle-card-name{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);}
+.muscle-rank-pct{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;margin-bottom:4px;}
+.muscle-rank-label{font-size:9px;color:var(--text-dim);margin-bottom:8px;font-weight:500;}
+.prog-track{height:4px;background:var(--bg-mid);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.8s ease;position:relative;overflow:hidden;}
+.prog-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);animation:shimmer 2s linear infinite;}
+@keyframes shimmer{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+.muscle-rival{font-size:9px;font-weight:600;font-family:'JetBrains Mono',monospace;text-align:right;}
 
 /* Detail panel */
-.detail-panel {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 16px; margin-bottom: 12px; display: none;
-}
-.detail-panel.visible { display: block; }
-.detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.detail-name { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.05em; }
-.detail-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.detail-stat { background: var(--bg-card); padding: 10px 8px; text-align: center; }
-.detail-stat-label { font-size: 8px; font-weight: 700; letter-spacing: 0.15em; color: var(--text-faint); text-transform: uppercase; margin-bottom: 4px; }
-.detail-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+.detail-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+.detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.detail-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;}
+.detail-stats{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.detail-stat-div{background:var(--border);}
+.detail-stat{background:var(--bg-card);padding:11px 8px;text-align:center;}
+.detail-stat-label{font-size:8px;font-weight:700;letter-spacing:0.15em;color:var(--text-faint);text-transform:uppercase;margin-bottom:5px;}
+.detail-stat-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
 
-/* ── TOAST ── */
-.toast {
-  position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
-  background: var(--bg-mid); border: 1px solid var(--border-hi); color: var(--text);
-  padding: 10px 20px; border-radius: 8px; font-size: 11px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase; z-index: 200; white-space: nowrap;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.5); animation: toast-up 0.2s ease; pointer-events: none;
-}
-@keyframes toast-up { from { opacity:0; transform:translateX(-50%) translateY(6px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+/* Toast */
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--bg-mid);border:1px solid var(--border-hi);color:var(--text);padding:10px 20px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;z-index:200;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,0.5);animation:toast-up 0.2s ease;pointer-events:none;}
+@keyframes toast-up{from{opacity:0;transform:translateX(-50%) translateY(6px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
-/* ── RANK UP OVERLAY ── */
-.rankup-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-}
-.rankup-overlay.visible { opacity: 1; pointer-events: all; }
-.rankup-label { font-size: 12px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
-.rankup-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; letter-spacing: 0.08em; color: var(--orange); margin-bottom: 8px; text-align: center; animation: pulse-big 0.6s ease; }
-.rankup-new { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.15em; margin-top: 16px; }
-.rankup-tap { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; margin-top: 30px; animation: blink 1.5s ease infinite; }
-@keyframes pulse-big { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-@keyframes blink { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
-.rankup-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; animation: particle-fly 1.5s ease forwards; }
-@keyframes particle-fly { 0% { transform: translateY(100vh); opacity: 1; } 100% { transform: translateY(-20vh); opacity: 0; } }
+/* Rank-up overlay */
+.rankup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.rankup-overlay.visible{opacity:1;pointer-events:all;}
+.rankup-eyebrow{font-size:11px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.rankup-muscle{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:0.06em;color:var(--orange);animation:pop-in 0.5s cubic-bezier(0.175,0.885,0.32,1.275);}
+.rankup-new{font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-top:16px;color:var(--text-dim);}
+.rankup-tap{font-size:11px;color:var(--text-faint);letter-spacing:0.1em;margin-top:32px;animation:blink 1.5s ease infinite;}
+@keyframes pop-in{0%{transform:scale(0.4);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+@keyframes blink{0%,100%{opacity:0.3;}50%{opacity:1;}}
+.rankup-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.particle{position:absolute;border-radius:50%;animation:fly-up 1.5s ease forwards;}
+@keyframes fly-up{0%{transform:translateY(100vh) rotate(0deg);opacity:1;}100%{transform:translateY(-20vh) rotate(360deg);opacity:0;}}
 </style>
 </head>
 <body>
@@ -326,30 +198,23 @@ body::before {
     <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
   </div>
   <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('home',this)">
-      <span class="nav-icon">🔥</span><span class="nav-label">Home</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('tasks',this)">
-      <span class="nav-icon">📋</span><span class="nav-label">Tasks</span>
-    </button>
-    <button class="nav-btn" onclick="switchTab('stats',this)">
-      <span class="nav-icon">💪</span><span class="nav-label">Stats</span>
-    </button>
+    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">🔥</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">📋</span><span class="nav-label">Tasks</span></button>
+    <button class="nav-btn" onclick="switchTab('stats',this)"><span class="nav-icon">💪</span><span class="nav-label">Stats</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
-    <div id="tab-home"  class="tab-panel active"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div></div>
-    <div id="tab-tasks" class="tab-panel" style="display:none"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div></div>
-    <div id="tab-stats" class="tab-panel" style="display:none"><div class="loader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div></div>
+    <div id="tab-home"  class="tab-panel active"></div>
+    <div id="tab-tasks" class="tab-panel" style="display:none"></div>
+    <div id="tab-stats" class="tab-panel" style="display:none"></div>
   </div>
 </div>
 
-<!-- Rank-up overlay -->
 <div class="rankup-overlay" id="rankupOverlay" onclick="closeRankup()">
   <div class="rankup-particles" id="rankupParticles"></div>
-  <div class="rankup-label">RANK UP!</div>
-  <div class="rankup-title" id="rankupTitle">RANK UP</div>
-  <div id="rankupBadge"></div>
+  <div class="rankup-eyebrow">RANK UP</div>
+  <div class="rankup-muscle" id="rankupMuscle"></div>
+  <div id="rankupBadge" style="margin-top:16px"></div>
   <div class="rankup-new" id="rankupNew"></div>
   <div class="rankup-tap">tap to continue</div>
 </div>
@@ -357,269 +222,337 @@ body::before {
 <script>
 const PROXY = '/api/notion';
 const DB = {
-  stats:     '34163a0b4e7c81abb22ae7e6bccdf2c2',
-  rivals:    'f925bdca42f3428fa6f2c61594ae512a',
-  tasks:     '34163a0b4e7c81a5a8aefb94b96a6b36',
-  templates: '34163a0b4e7c81a08eefdcd464d0a5a6',
-  dailyLog:  '35063a0b4e7c80c9889cf67fa1166d90',
+  stats:    '34163a0b4e7c81abb22ae7e6bccdf2c2',
+  tasks:    '34163a0b4e7c81a5a8aefb94b96a6b36',
+  templates:'34163a0b4e7c81a08eefdcd464d0a5a6',
+  dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
 };
 
-const RANKS = [
-  { name:'Bronze',   roman:'I',   min:0,     color:'#cd7f32' },
-  { name:'Bronze',   roman:'II',  min:50,    color:'#cd7f32' },
-  { name:'Bronze',   roman:'III', min:120,   color:'#cd7f32' },
-  { name:'Silver',   roman:'I',   min:220,   color:'#c0c0c0' },
-  { name:'Silver',   roman:'II',  min:360,   color:'#c0c0c0' },
-  { name:'Silver',   roman:'III', min:550,   color:'#c0c0c0' },
-  { name:'Gold',     roman:'I',   min:800,   color:'#ffd700' },
-  { name:'Gold',     roman:'II',  min:1100,  color:'#ffd700' },
-  { name:'Gold',     roman:'III', min:1500,  color:'#ffd700' },
-  { name:'Platinum', roman:'I',   min:2000,  color:'#4fd6d6' },
-  { name:'Platinum', roman:'II',  min:2700,  color:'#4fd6d6' },
-  { name:'Platinum', roman:'III', min:3600,  color:'#4fd6d6' },
-  { name:'Diamond',  roman:'I',   min:4800,  color:'#a855f7' },
-  { name:'Diamond',  roman:'II',  min:6300,  color:'#a855f7' },
-  { name:'Diamond',  roman:'III', min:8100,  color:'#a855f7' },
-  { name:'Champion', roman:'I',   min:10200, color:'#3b82f6' },
-  { name:'Champion', roman:'II',  min:12600, color:'#3b82f6' },
-  { name:'Champion', roman:'III', min:15300, color:'#3b82f6' },
-  { name:'Titan',    roman:'I',   min:18300, color:'#ef4444' },
-  { name:'Titan',    roman:'II',  min:21600, color:'#ef4444' },
-  { name:'Titan',    roman:'III', min:25200, color:'#ef4444' },
-  { name:'Olympian', roman:'I',   min:29100, color:'#f59e0b' },
-  { name:'Olympian', roman:'II',  min:33300, color:'#f59e0b' },
-  { name:'Olympian', roman:'III', min:38000, color:'#f59e0b' },
+// Rank tiers — each has 3 sub-ranks (I, II, III)
+const RANK_TIERS = [
+  { name:'Bronze',   color:'#cd7f32', thresholds:[0,    50,   120]  },
+  { name:'Silver',   color:'#c0c0c0', thresholds:[220,  360,  550]  },
+  { name:'Gold',     color:'#ffd700', thresholds:[800,  1100, 1500] },
+  { name:'Platinum', color:'#4fd6d6', thresholds:[2000, 2700, 3600] },
+  { name:'Diamond',  color:'#a855f7', thresholds:[4800, 6300, 8100] },
+  { name:'Champion', color:'#3b82f6', thresholds:[10200,12600,15300]},
+  { name:'Titan',    color:'#ef4444', thresholds:[18300,21600,25200]},
+  { name:'Olympian', color:'#f59e0b', thresholds:[29100,33300,38000]},
 ];
-
-// If notion already has rank as string, use it directly
-const NOTION_RANK_MAP = {};
-
-function getRankFromNotion(rankStr) {
-  if (!rankStr) return RANKS[0];
-  // try matching "Gold III" style
-  const found = RANKS.find(r => `${r.name} ${r.roman}` === rankStr || r.name === rankStr);
-  return found ?? RANKS[0];
-}
+const ROMANS = ['I','II','III'];
+const ALL_RANKS = [];
+RANK_TIERS.forEach(t => {
+  t.thresholds.forEach((min,i) => {
+    ALL_RANKS.push({ name:t.name, roman:ROMANS[i], color:t.color, min,
+      full:`${t.name} ${ROMANS[i]}` });
+  });
+});
 
 function getRankFromXP(xp) {
-  let r = RANKS[0], next = RANKS[1];
-  for (let i = RANKS.length-1; i >= 0; i--) {
-    if (xp >= RANKS[i].min) { r = RANKS[i]; next = RANKS[i+1] ?? null; break; }
+  let r = ALL_RANKS[0], next = ALL_RANKS[1];
+  for (let i = ALL_RANKS.length-1; i >= 0; i--) {
+    if (xp >= ALL_RANKS[i].min) { r=ALL_RANKS[i]; next=ALL_RANKS[i+1]??null; break; }
   }
-  const pct = next ? Math.min(((xp - r.min)/(next.min - r.min))*100, 100) : 100;
-  return { rank: r, next, pct };
+  const pct = next ? Math.min(((xp-r.min)/(next.min-r.min))*100,100) : 100;
+  return { rank:r, next, pct };
+}
+
+// Parse notion rank string e.g. "🥉BRONZE III🥉" or "Bronze III"
+function parseRankStr(str) {
+  if (!str) return null;
+  // strip emoji and extra chars
+  const clean = str.replace(/[^\w\s]/g,'').trim();
+  const found = ALL_RANKS.find(r => clean.toLowerCase().includes(r.name.toLowerCase()) &&
+    (clean.includes(r.roman) || clean.toLowerCase().includes(r.roman.toLowerCase())));
+  return found ?? null;
+}
+
+function badgeHTML(rankObj, sizeClass='') {
+  if (!rankObj) return '';
+  return `<div class="rank-badge rank-${rankObj.name} ${sizeClass}">
+    <span class="rank-name-text">${rankObj.name.slice(0,4).toUpperCase()}</span>
+    <span class="rank-numeral">${rankObj.roman}</span>
+  </div>`;
 }
 
 const CAT_COLOR = { Body:'#ef5350', Mind:'#42a5f5', Life:'#66bb6a', German:'#ffa726' };
 const DIFF_ORDER = ['Maintenance','Normal','Heavy','Daily','Important'];
+const MUSCLE_NAMES = ['Chest','Back','Shoulder','Biceps','Triceps','Forearms','Core','Legs','Plyometrics','Cardio'];
 
-// ── State ──
-let state = { stats:[], rivals:[], tasks:[], templates:[], streaks:null, loading:false };
+// Silhouette muscle positions (as % of SVG width/height)
+const MUSCLE_POSITIONS = {
+  Chest:      { x:50,  y:28 },
+  Back:       { x:50,  y:35 },
+  Shoulder:   { x:33,  y:25 },
+  Biceps:     { x:25,  y:35 },
+  Triceps:    { x:75,  y:35 },
+  Forearms:   { x:22,  y:48 },
+  Core:       { x:50,  y:42 },
+  Legs:       { x:50,  y:62 },
+  Plyometrics:{ x:38,  y:70 },
+  Cardio:     { x:62,  y:70 },
+};
+
+let state = { stats:[], tasks:[], templates:[], streaks:null };
 let currentTab = 'home';
 let selectedMuscle = null;
 let prevRanks = {};
 
-// ── Notion helpers ──
+// ── Notion ──
 async function notionFetch(path, method='GET', body) {
-  const res = await fetch(PROXY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, method, body }),
-  });
-  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error ?? `Error ${res.status}`); }
+  const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,body})});
+  if (!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error??`Error ${res.status}`);}
   return res.json();
 }
-const notionQuery = (dbId, filter, sorts) => notionFetch(`/databases/${dbId}/query`,'POST',{ page_size:100, ...(filter?{filter}:{}), ...(sorts?{sorts}:{}) }).then(d=>d.results??[]);
-const notionPatch = (pageId, props) => notionFetch(`/pages/${pageId}`,'PATCH',{properties:props});
-const notionCreate = (dbId, props) => notionFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
+const notionQuery=(dbId,filter,sorts)=>notionFetch(`/databases/${dbId}/query`,'POST',{page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{})}).then(d=>d.results??[]);
+const notionPatch=(pageId,props)=>notionFetch(`/pages/${pageId}`,'PATCH',{properties:props});
+const notionCreate=(dbId,props)=>notionFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
 
-const g = {
-  title:    v => v?.title?.[0]?.plain_text    ?? '',
-  text:     v => v?.rich_text?.[0]?.plain_text ?? '',
-  number:   v => v?.number                    ?? 0,
-  select:   v => v?.select?.name              ?? null,
-  checkbox: v => v?.checkbox                  ?? false,
-  date:     v => v?.date?.start               ?? null,
-  formula:  v => { const f=v?.formula; if(!f) return null; return f.number??f.string??f.boolean??null; },
-  rollup:   v => { const r=v?.rollup; if(!r) return null; if(r.type==='number') return r.number; if(r.type==='array'){const f=r.array?.[0]; return f?.formula?.number??f?.formula?.string??f?.number??null;} return null; },
-  rollupStr:v => { const r=v?.rollup; if(!r) return null; if(r.type==='array'){const f=r.array?.[0]; return f?.formula?.string??f?.title?.[0]?.plain_text??null;} return null; },
+const g={
+  title:v=>v?.title?.[0]?.plain_text??(v?.rich_text?.[0]?.plain_text??''),
+  text:v=>v?.rich_text?.[0]?.plain_text??'',
+  number:v=>v?.number??0,
+  select:v=>v?.select?.name??null,
+  checkbox:v=>v?.checkbox??false,
+  date:v=>v?.date?.start??null,
+  formula:v=>{const f=v?.formula;if(!f)return null;return f.number??f.string??f.boolean??null;},
+  rollup:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='number')return r.number;if(r.type==='array'){const f=r.array?.[0];return f?.formula?.number??f?.formula?.string??f?.number??null;}return null;},
+  rollupStr:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='array'){const f=r.array?.[0];return f?.formula?.string??f?.title?.[0]?.plain_text??null;}return null;},
 };
 
-const toStat = p => ({
-  id: p.id,
-  name:        g.title(p.properties.Name),
-  finalXP:     g.formula(p.properties['Final XP'])    ?? 0,
-  weeklyGain:  g.formula(p.properties['Weekly gain']) ?? 0,
-  rank:        g.formula(p.properties.Rank)           ?? '',
-  rivalGap:    g.rollup(p.properties['Rival Gap']),
-  rivalRank:   g.rollupStr(p.properties['Rival Rank']),
-  rivalXP:     g.rollup(p.properties['Rival XP'])     ?? 0,
-  lastTrained: g.rollup(p.properties['Last day trained']),
-  cat:         g.select(p.properties.Cat),
+const toStat=p=>({
+  id:p.id, name:g.title(p.properties.Name),
+  finalXP:g.formula(p.properties['Final XP'])??0,
+  rankStr:g.formula(p.properties.Rank)??'',
+  rivalGap:g.rollup(p.properties['Rival Gap']),
+  rivalXP:g.rollup(p.properties['Rival XP'])??0,
+  lastTrained:g.rollup(p.properties['Last day trained']),
+  cat:g.select(p.properties.Cat),
 });
 
-const toTask = p => ({
-  id: p.id,
-  name:       g.title(p.properties.Task),
-  cat:        g.select(p.properties.Cat),
-  difficulty: g.select(p.properties.Difficulty),
-  status:     g.checkbox(p.properties.Status),
-  dueDate:    g.date(p.properties['Due Date']),
+const toTask=p=>({
+  id:p.id, name:g.title(p.properties.Task),
+  cat:g.select(p.properties.Cat), difficulty:g.select(p.properties.Difficulty),
+  status:g.checkbox(p.properties.Status),
+  missed:g.checkbox(p.properties['Missed check1']),
+  dueDate:g.date(p.properties['Due Date']),
 });
 
-const toTemplate = p => ({
-  id: p.id, name: g.title(p.properties.Name),
-  cat: g.select(p.properties.Cat), type: g.select(p.properties.Type),
+const toTemplate=p=>({
+  id:p.id, name:g.title(p.properties.Name),
+  cat:g.select(p.properties.Cat), type:g.select(p.properties.Type),
 });
 
-const toStreak = p => ({
-  workout: g.formula(p.properties['Workout streak']) ?? 0,
-  mind:    g.formula(p.properties['Mind streak'])    ?? 0,
-  sleep:   g.formula(p.properties['Sleep streak'])   ?? 0,
-  quest:   g.formula(p.properties['Quest Perfect Day']) ?? 0,
-  date:    g.date(p.properties.Date),
+const toStreak=p=>({
+  workout:g.formula(p.properties['Workout streak'])??0,
+  mind:g.formula(p.properties['Mind streak'])??0,
+  sleep:g.formula(p.properties['Sleep streak'])??0,
+  quest:g.formula(p.properties['Quest Perfect Day'])??0,
 });
 
-// ── UI helpers ──
-function setError(msg) {
-  const el = document.getElementById('error-bar');
-  if (msg) { el.textContent = msg; el.style.display='block'; } else el.style.display='none';
-}
-function showToast(msg, ms=2500) {
-  document.querySelectorAll('.toast').forEach(t=>t.remove());
-  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(), ms);
-}
-function setSyncBusy(b) {
-  const btn = document.getElementById('syncBtn');
-  btn.disabled=b; btn.textContent=b?'Syncing…':'↺ Sync';
-}
+// ── UI ──
+function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
+function showToast(msg,ms=2500){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);}
+function setSyncBusy(b){const btn=document.getElementById('syncBtn');btn.disabled=b;btn.textContent=b?'Syncing…':'↺ Sync';}
 
-function badgeHTML(rankStr, sizeClass='') {
-  const r = getRankFromNotion(rankStr);
-  return `<div class="rank-badge rank-${r.name} ${sizeClass}">
-    <span>${r.name.slice(0,3).toUpperCase()}</span>
-    <span class="rank-numeral">${r.roman}</span>
-  </div>`;
-}
-
-// ── Rank-up detection & overlay ──
-function checkRankUps(newStats) {
-  newStats.forEach(s => {
-    const oldRank = prevRanks[s.id];
-    if (oldRank && oldRank !== s.rank && s.rank) {
-      showRankUp(s.name, s.rank);
-    }
-    prevRanks[s.id] = s.rank;
+// Rank-up
+function checkRankUps(newStats){
+  newStats.forEach(s=>{
+    const old=prevRanks[s.id];
+    if(old&&old!==s.rankStr&&s.rankStr){triggerRankUp(s.name,s.rankStr);}
+    prevRanks[s.id]=s.rankStr;
   });
 }
-
-function showRankUp(muscleName, newRank) {
-  const r = getRankFromNotion(newRank);
-  document.getElementById('rankupTitle').textContent = `${muscleName}`;
-  document.getElementById('rankupNew').textContent = `${newRank}`;
-  document.getElementById('rankupBadge').innerHTML = badgeHTML(newRank, 'rank-badge-lg');
-
-  const particles = document.getElementById('rankupParticles');
-  particles.innerHTML = '';
-  for (let i=0; i<30; i++) {
-    const p = document.createElement('div'); p.className='particle';
-    p.style.cssText = `left:${Math.random()*100}%;background:${r.color};animation-delay:${Math.random()*0.8}s;animation-duration:${1+Math.random()*0.8}s;width:${2+Math.random()*4}px;height:${2+Math.random()*4}px`;
-    particles.appendChild(p);
+function triggerRankUp(muscleName,rankStr){
+  const r=parseRankStr(rankStr)??ALL_RANKS[0];
+  document.getElementById('rankupMuscle').textContent=muscleName.toUpperCase();
+  document.getElementById('rankupNew').textContent=r.full;
+  document.getElementById('rankupBadge').innerHTML=badgeHTML(r,'rank-badge-lg');
+  const container=document.getElementById('rankupParticles');
+  container.innerHTML='';
+  for(let i=0;i<35;i++){
+    const p=document.createElement('div');p.className='particle';
+    const size=3+Math.random()*5;
+    p.style.cssText=`left:${Math.random()*100}%;bottom:0;width:${size}px;height:${size}px;background:${r.color};animation-delay:${Math.random()*0.6}s;animation-duration:${1+Math.random()}s;`;
+    container.appendChild(p);
   }
   document.getElementById('rankupOverlay').classList.add('visible');
 }
-function closeRankup() { document.getElementById('rankupOverlay').classList.remove('visible'); }
+function closeRankup(){document.getElementById('rankupOverlay').classList.remove('visible');}
 
 // ── Loaders ──
-async function loadStats() {
-  try {
-    const pages = await notionQuery(DB.stats);
-    const newStats = pages.map(toStat);
-    checkRankUps(newStats);
-    state.stats = newStats;
-  } catch(e) { setError('Stats: '+e.message); }
+async function loadStats(){
+  try{const pages=await notionQuery(DB.stats);const ns=pages.map(toStat);checkRankUps(ns);state.stats=ns;}
+  catch(e){setError('Stats: '+e.message);}
 }
-
-async function loadRivals() {
-  try {
-    const pages = await notionQuery(DB.rivals);
-    state.rivals = pages;
-  } catch(e) { setError('Rivals: '+e.message); }
-}
-
-async function loadTasks() {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const pages = await notionQuery(DB.tasks, {
-      and: [
-        { property:'Status', checkbox:{ equals:false } },
-        { or:[
-          { property:'Due Date', date:{ on_or_before:today } },
-          { property:'Due Date', date:{ is_empty:true } },
+async function loadTasks(){
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const pages=await notionQuery(DB.tasks,{
+      and:[
+        {property:'Status',checkbox:{equals:false}},
+        {property:'Missed check1',checkbox:{equals:false}},
+        {or:[
+          {property:'Due Date',date:{on_or_before:today}},
+          {property:'Due Date',date:{is_empty:true}},
         ]},
       ],
-    }, [{ property:'Due Date', direction:'ascending' }]);
-    state.tasks = pages.map(toTask);
-  } catch(e) { setError('Tasks: '+e.message); }
+    },[{property:'Due Date',direction:'ascending'}]);
+    state.tasks=pages.map(toTask);
+  }catch(e){setError('Tasks: '+e.message);}
+}
+async function loadTemplates(){
+  try{const pages=await notionQuery(DB.templates);state.templates=pages.map(toTemplate);}
+  catch(e){console.error(e);}
+}
+async function loadStreaks(){
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    let pages=await notionQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
+    if(!pages.length)pages=await notionQuery(DB.dailyLog,undefined,[{property:'Date',direction:'descending'}]);
+    if(pages.length)state.streaks=toStreak(pages[0]);
+  }catch(e){setError('Streaks: '+e.message);}
 }
 
-async function loadTemplates() {
-  try { const pages = await notionQuery(DB.templates); state.templates = pages.map(toTemplate); }
-  catch(e) { console.error(e); }
-}
-
-async function loadStreaks() {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const pages = await notionQuery(DB.dailyLog, {
-      property:'Date', date:{ equals:today }
-    });
-    if (pages.length) state.streaks = toStreak(pages[0]);
-    else {
-      // fallback: get most recent
-      const all = await notionQuery(DB.dailyLog, undefined, [{ property:'Date', direction:'descending' }]);
-      if (all.length) state.streaks = toStreak(all[0]);
-    }
-  } catch(e) { setError('Streaks: '+e.message); }
-}
-
-async function refresh() {
-  setError(null); setSyncBusy(true);
-  if (currentTab==='home')  { await Promise.all([loadStreaks(), loadStats()]); renderHome(); }
-  if (currentTab==='tasks') { await Promise.all([loadTasks(), loadTemplates()]); renderTasks(); }
-  if (currentTab==='stats') { await Promise.all([loadStats(), loadRivals()]); renderStats(); }
+async function refresh(){
+  setError(null);setSyncBusy(true);
+  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats()]);renderHome();}
+  if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
+  if(currentTab==='stats'){await loadStats();renderStats();}
   setSyncBusy(false);
 }
 
-// ── Tab switching ──
-function switchTab(tab, btn) {
+function switchTab(tab,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p=>{ p.style.display='none'; p.classList.remove('active'); });
+  document.querySelectorAll('.tab-panel').forEach(p=>{p.style.display='none';p.classList.remove('active');});
   btn.classList.add('active');
-  const panel = document.getElementById('tab-'+tab);
-  panel.style.display='block'; panel.classList.add('active');
-  currentTab = tab; refresh();
+  const panel=document.getElementById('tab-'+tab);
+  panel.style.display='block';panel.classList.add('active');
+  currentTab=tab;refresh();
+}
+
+// ── Silhouette SVG ──
+function buildSilhouette(bodyStats) {
+  // map name -> stat
+  const statMap = {};
+  bodyStats.forEach(s=>{ statMap[s.name]=s; });
+
+  const today = new Date();
+  function isActive(stat) {
+    if (!stat?.lastTrained) return false;
+    const d = new Date(stat.lastTrained);
+    return (today-d)/(1000*60*60*24) <= 5;
+  }
+
+  function getRankColor(stat) {
+    if (!stat) return '#2a2a3e';
+    const r = parseRankStr(stat.rankStr) ?? getRankFromXP(stat.finalXP).rank;
+    return r.color;
+  }
+
+  // Simple human silhouette SVG paths
+  const svgContent = `
+  <svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px;display:block;margin:0 auto;">
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <!-- Body silhouette base -->
+    <!-- Head -->
+    <ellipse cx="100" cy="30" rx="22" ry="26" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Neck -->
+    <rect x="90" y="54" width="20" height="14" rx="4" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Torso -->
+    <path d="M60 68 Q50 72 46 110 L50 180 L150 180 L154 110 Q150 72 140 68 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Left arm upper -->
+    <path d="M62 70 Q42 75 36 115 Q32 130 36 148 L52 148 L58 108 L66 76 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Right arm upper -->
+    <path d="M138 70 Q158 75 164 115 Q168 130 164 148 L148 148 L142 108 L134 76 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Left forearm -->
+    <path d="M36 148 Q28 165 30 188 L46 188 L52 168 L52 148 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Right forearm -->
+    <path d="M164 148 Q172 165 170 188 L154 188 L148 168 L148 148 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Left hand -->
+    <ellipse cx="36" cy="196" rx="10" ry="12" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Right hand -->
+    <ellipse cx="164" cy="196" rx="10" ry="12" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Hips -->
+    <path d="M50 178 Q48 192 50 210 L150 210 Q152 192 150 178 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Left leg upper -->
+    <path d="M50 208 Q44 230 46 270 L74 270 Q76 230 78 208 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Right leg upper -->
+    <path d="M150 208 Q156 230 154 270 L126 270 Q124 230 122 208 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Left leg lower -->
+    <path d="M46 268 Q42 300 44 330 L70 330 Q72 300 74 268 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Right leg lower -->
+    <path d="M154 268 Q158 300 156 330 L130 330 Q128 300 126 268 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Left foot -->
+    <ellipse cx="55" cy="338" rx="16" ry="9" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Right foot -->
+    <ellipse cx="145" cy="338" rx="16" ry="9" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+
+    <!-- Muscle highlights -->
+    <!-- Chest -->
+    ${muscleHighlight(statMap.Chest,  'M70 80 Q100 78 130 80 Q128 106 100 112 Q72 106 70 80', isActive, getRankColor)}
+    <!-- Core -->
+    ${muscleHighlight(statMap.Core,   'M72 112 Q100 116 128 112 Q126 150 100 154 Q74 150 72 112', isActive, getRankColor)}
+    <!-- Back (shown same area, diff color cue) -->
+    <!-- Shoulders left -->
+    ${muscleHighlight(statMap.Shoulder,'M60 68 Q50 62 44 78 Q50 90 62 88 Z', isActive, getRankColor)}
+    <!-- Shoulders right -->
+    ${muscleHighlight(statMap.Shoulder,'M140 68 Q150 62 156 78 Q150 90 138 88 Z', isActive, getRankColor)}
+    <!-- Left bicep -->
+    ${muscleHighlight(statMap.Biceps, 'M40 95 Q34 110 36 128 L50 128 L56 108 Z', isActive, getRankColor)}
+    <!-- Right bicep -->
+    ${muscleHighlight(statMap.Biceps, 'M160 95 Q166 110 164 128 L150 128 L144 108 Z', isActive, getRankColor)}
+    <!-- Left tricep -->
+    ${muscleHighlight(statMap.Triceps,'M44 110 Q36 125 36 148 L46 148 L52 128 Z', isActive, getRankColor)}
+    <!-- Right tricep -->
+    ${muscleHighlight(statMap.Triceps,'M156 110 Q164 125 164 148 L154 148 L148 128 Z', isActive, getRankColor)}
+    <!-- Left forearm -->
+    ${muscleHighlight(statMap.Forearms,'M36 148 Q28 168 30 188 L44 188 L50 168 L50 148 Z', isActive, getRankColor)}
+    <!-- Right forearm -->
+    ${muscleHighlight(statMap.Forearms,'M164 148 Q172 168 170 188 L156 188 L150 168 L150 148 Z', isActive, getRankColor)}
+    <!-- Legs left -->
+    ${muscleHighlight(statMap.Legs,   'M50 210 Q44 240 46 270 L72 270 Q76 240 78 210 Z', isActive, getRankColor)}
+    <!-- Legs right -->
+    ${muscleHighlight(statMap.Legs,   'M150 210 Q156 240 154 270 L128 270 Q124 240 122 210 Z', isActive, getRankColor)}
+
+    <!-- Muscle tap buttons -->
+    ${Object.entries(MUSCLE_POSITIONS).map(([name,pos])=>{
+      const stat=statMap[name];
+      const active=isActive(stat);
+      const color=getRankColor(stat);
+      const sel=selectedMuscle===stat?.id;
+      return `<circle cx="${pos.x*2}" cy="${pos.y*4}" r="14"
+        fill="rgba(10,10,15,0.8)" stroke="${active?color:'#2a2a3e'}"
+        stroke-width="${sel?2.5:1.5}"
+        style="cursor:pointer;${active?`filter:drop-shadow(0 0 4px ${color})`:''}${sel?`;filter:drop-shadow(0 0 6px ${color})`:''};"
+        onclick="selectMuscle('${stat?.id??''}','${name}')"
+      />
+      <text x="${pos.x*2}" y="${pos.y*4+4}" text-anchor="middle"
+        font-family="Inter,sans-serif" font-size="6.5" font-weight="700"
+        fill="${active?color:'#3a3a5a'}" pointer-events="none"
+        style="text-transform:uppercase;letter-spacing:0.02em"
+      >${name.slice(0,4).toUpperCase()}</text>`;
+    }).join('')}
+  </svg>`;
+  return svgContent;
+}
+
+function muscleHighlight(stat, path, isActiveFn, getColorFn) {
+  const active = isActiveFn(stat);
+  const color = getColorFn(stat);
+  if (!stat) return `<path d="${path}" fill="rgba(42,42,62,0.3)" stroke="none"/>`;
+  return `<path d="${path}" fill="${active?color+'22':'#1e1e2e'}" stroke="${active?color:'#2a2a3e'}" stroke-width="${active?1.5:0.5}" ${active?`filter="url(#glow)"`:''} style="transition:all 0.3s"/>`;
 }
 
 // ── Renderers ──
 function renderHome() {
-  const s = state.streaks;
-  const workout = s?.workout ?? 0;
-  const mind    = s?.mind    ?? 0;
-  const sleep   = s?.sleep   ?? 0;
-  const quest   = s?.quest   ?? 0;
+  const s=state.streaks;
+  const workout=s?.workout??0, mind=s?.mind??0, sleep=s?.sleep??0, quest=s?.quest??0;
+  const bodyStats=state.stats.filter(x=>x.cat==='Body');
 
-  // overall summary from body stats
-  const bodyStats = state.stats.filter(x => x.cat==='Body');
-  const topRankStat = bodyStats.reduce((best, s) => {
-    const { rank } = getRankFromXP(s.finalXP);
-    const idx = RANKS.indexOf(rank);
-    const bestIdx = best ? RANKS.indexOf(getRankFromXP(best.finalXP).rank) : -1;
-    return idx > bestIdx ? s : best;
-  }, null);
-
-  document.getElementById('tab-home').innerHTML = `
+  document.getElementById('tab-home').innerHTML=`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
       <div class="streak-card fire">
@@ -640,263 +573,282 @@ function renderHome() {
       <div class="streak-card quest">
         <span class="streak-icon">⚔️</span>
         <div class="streak-number" style="color:var(--green)">${quest}</div>
-        <div class="streak-label">Quest Days</div>
+        <div class="streak-label">Perfect Days</div>
       </div>
     </div>
-
-    ${bodyStats.length ? `
-    <div class="section-label">Body Overview</div>
+    ${bodyStats.length?`
+    <div class="section-label">Body</div>
     <div class="muscle-cards">
-      ${bodyStats.map(stat => {
-        const { rank, next, pct } = getRankFromXP(stat.finalXP);
-        const rivalDiff = stat.rivalGap;
-        const isAhead = rivalDiff !== null && rivalDiff > 0;
-        const isBehind = rivalDiff !== null && rivalDiff < 0;
-        return `<div class="muscle-card" onclick="switchTab('stats', document.querySelectorAll('.nav-btn')[2]); setTimeout(()=>selectMuscle('${stat.id}'),400)">
+      ${bodyStats.map(stat=>{
+        const r=parseRankStr(stat.rankStr)??getRankFromXP(stat.finalXP).rank;
+        const {pct,next}=getRankFromXP(stat.finalXP);
+        const rivalDiff=stat.rivalGap;
+        const isAhead=rivalDiff!==null&&rivalDiff>0;
+        const isBehind=rivalDiff!==null&&rivalDiff<0;
+        return `<div class="muscle-card" onclick="switchTab('stats',document.querySelectorAll('.nav-btn')[2]);setTimeout(()=>selectMuscle('${stat.id}','${stat.name}'),400)">
           <div class="muscle-card-top">
             <span class="muscle-card-name">${stat.name}</span>
-            ${badgeHTML(stat.rank || (rank.name+' '+rank.roman), 'rank-badge-sm')}
+            ${badgeHTML(r,'rank-badge-sm')}
           </div>
-          <div class="muscle-xp" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}<span class="muscle-xp-unit">xp</span></div>
-          <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${rank.color}66,${rank.color})"></div></div>
-          <div class="muscle-meta">
-            <span class="muscle-pct">${Math.round(pct)}% → ${next?.name??'MAX'}</span>
-            ${rivalDiff !== null ? `<span class="rival-diff" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)}</span>` : ''}
-          </div>
+          <div class="muscle-rank-pct" style="color:${r.color}">${Math.round(pct)}%</div>
+          <div class="muscle-rank-label">of ${r.full}</div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}55,${r.color})"></div></div>
+          ${rivalDiff!==null?`<div class="muscle-rival" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)} vs 影</div>`:''}
         </div>`;
       }).join('')}
-    </div>` : ''}
+    </div>`:''}
   `;
 }
 
 function renderTasks() {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const CATS = ['Body','Mind','Life','German'];
+  const today=new Date(); today.setHours(0,0,0,0);
+  const CATS=['Body','Mind','Life','German'];
 
-  // Group by date
-  const dateGroups = {};
-  state.tasks.forEach(t => {
-    let label = 'No Date';
-    if (t.dueDate) {
-      const d = new Date(t.dueDate); d.setHours(0,0,0,0);
-      const diff = Math.round((today-d)/(1000*60*60*24));
-      if (diff === 0) label = 'Today';
-      else if (diff === 1) label = 'Yesterday';
-      else if (diff > 1) label = `${diff} Days Ago`;
-      else label = 'Upcoming';
+  // Build quick-add groups from templates (non-daily/weekly — those have their own buttons)
+  const quickTemplates={};
+  state.templates.forEach(t=>{
+    const cat=t.cat??'Other';
+    if(!quickTemplates[cat])quickTemplates[cat]=[];
+    quickTemplates[cat].push(t);
+  });
+
+  let html=`
+    <div class="action-row">
+      <button class="action-btn" onclick="addDailyTasks()"><span class="action-icon">☀️</span>Daily Tasks</button>
+      <button class="action-btn" onclick="addWorkout()"><span class="action-icon">🏋️</span>Workout</button>
+    </div>`;
+
+  // Quick add templates
+  const templateCats=Object.entries(quickTemplates).filter(([,ts])=>ts.length>0);
+  if(templateCats.length){
+    html+=`<div class="section-label">Quick Add</div>`;
+    templateCats.forEach(([cat,ts])=>{
+      const color=CAT_COLOR[cat]??'var(--text-dim)';
+      html+=`<div class="template-section">
+        <div class="template-section-title">
+          <div class="template-dot" style="background:${color}"></div>${cat}
+        </div>
+        <div class="template-grid">
+          ${ts.map(t=>`<div class="template-pill" onclick="quickAddTemplate('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.cat??''}','${t.type??''}')">${t.name}</div>`).join('')}
+        </div>
+      </div>`;
+    });
+  }
+
+  // Tasks grouped by date
+  const dateGroups={};
+  state.tasks.forEach(t=>{
+    let label='No Date';
+    if(t.dueDate){
+      const d=new Date(t.dueDate); d.setHours(0,0,0,0);
+      const diff=Math.round((today-d)/(1000*60*60*24));
+      if(diff===0)label='Today';
+      else if(diff===1)label='Yesterday';
+      else if(diff>1)label=`${diff} Days Ago`;
+      else label='Upcoming';
     }
-    if (!dateGroups[label]) dateGroups[label] = [];
+    if(!dateGroups[label])dateGroups[label]=[];
     dateGroups[label].push(t);
   });
 
-  // Sort date groups: Today first, then by days
-  const dateOrder = ['Today','Yesterday'];
-  const sorted = Object.keys(dateGroups).sort((a,b) => {
-    const ai = dateOrder.indexOf(a); const bi = dateOrder.indexOf(b);
-    if (ai>-1 && bi>-1) return ai-bi;
-    if (ai>-1) return -1; if (bi>-1) return 1;
-    const aN = parseInt(a); const bN = parseInt(b);
-    if (!isNaN(aN) && !isNaN(bN)) return bN-aN;
+  const dateOrder=['Today','Yesterday'];
+  const sorted=Object.keys(dateGroups).sort((a,b)=>{
+    const ai=dateOrder.indexOf(a),bi=dateOrder.indexOf(b);
+    if(ai>-1&&bi>-1)return ai-bi;
+    if(ai>-1)return -1;if(bi>-1)return 1;
+    const aN=parseInt(a),bN=parseInt(b);
+    if(!isNaN(aN)&&!isNaN(bN))return bN-aN;
     return 0;
   });
 
-  let html = `<div class="action-row">
-    <button class="action-btn" onclick="addDailyTasks()"><span class="action-icon">☀️</span>Daily Tasks</button>
-    <button class="action-btn" onclick="addWorkout()"><span class="action-icon">🏋️</span>Workout</button>
-  </div>`;
-
-  if (!state.tasks.length) { html += '<div class="empty">No pending tasks</div>'; }
-  else {
-    sorted.forEach(dateLabel => {
-      const dateTasks = dateGroups[dateLabel];
-      html += `<div class="date-header">${dateLabel}</div>`;
-      // sub-group by cat within date
-      CATS.forEach(cat => {
-        const catTasks = dateTasks.filter(t => t.cat===cat);
-        if (!catTasks.length) return;
-        const color = CAT_COLOR[cat] ?? 'var(--text-dim)';
-        html += `<div class="cat-sub"><div class="cat-dot" style="background:${color}"></div>${cat}</div>`;
-        catTasks.forEach(task => {
-          const overdue = task.dueDate && new Date(task.dueDate) < today;
-          const dueStr  = task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : null;
-          const diff = task.difficulty;
-          html += `<div class="task-item ${task.status?'done':''}" id="task-${task.id}">
-            <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'✓':''}</div>
-            <div class="task-body">
-              <div class="task-name">${task.name||'Unnamed'}</div>
-              <div class="task-tags">
-                ${diff ? `<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>` : ''}
-                ${dueStr ? `<span class="task-due ${overdue?'overdue':''}">${overdue?'⚠ ':''}${dueStr}</span>` : ''}
-              </div>
-            </div>
-          </div>`;
-        });
+  if(!state.tasks.length){html+=`<div class="section-label">Tasks</div><div class="empty">No pending tasks</div>`;}
+  else{
+    html+=`<div class="section-label">Tasks</div>`;
+    sorted.forEach(dateLabel=>{
+      const dateTasks=dateGroups[dateLabel];
+      html+=`<div class="date-header">${dateLabel}</div>`;
+      CATS.forEach(cat=>{
+        const catTasks=dateTasks.filter(t=>t.cat===cat);
+        if(!catTasks.length)return;
+        const color=CAT_COLOR[cat]??'var(--text-dim)';
+        html+=`<div class="cat-sub"><div class="cat-dot" style="background:${color}"></div>${cat}</div>`;
+        catTasks.forEach(t=>{ html+=taskHTML(t,today); });
       });
-      // uncategorised
-      const other = dateTasks.filter(t => !t.cat || !CATS.includes(t.cat));
-      if (other.length) {
-        html += `<div class="cat-sub"><div class="cat-dot" style="background:var(--text-dim)"></div>Other</div>`;
-        other.forEach(task => {
-          html += `<div class="task-item ${task.status?'done':''}" id="task-${task.id}">
-            <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'✓':''}</div>
-            <div class="task-body">
-              <div class="task-name">${task.name||'Unnamed'}</div>
-              <div class="task-tags">
-                ${task.difficulty ? `<span class="diff-pill diff-${task.difficulty}" onclick="cycleDiff(event,'${task.id}','${task.difficulty}')">${task.difficulty}</span>` : ''}
-              </div>
-            </div>
-          </div>`;
-        });
+      const other=dateTasks.filter(t=>!t.cat||!CATS.includes(t.cat));
+      if(other.length){
+        html+=`<div class="cat-sub"><div class="cat-dot" style="background:var(--text-dim)"></div>Other</div>`;
+        other.forEach(t=>{ html+=taskHTML(t,today); });
       }
     });
   }
-  document.getElementById('tab-tasks').innerHTML = html;
+
+  document.getElementById('tab-tasks').innerHTML=html;
+}
+
+function taskHTML(task, today) {
+  const overdue=task.dueDate&&new Date(task.dueDate)<today;
+  const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
+  const diff=task.difficulty;
+  return `<div class="task-item ${task.status?'done':''}" id="task-${task.id}">
+    <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'✓':''}</div>
+    <div class="task-body">
+      <div class="task-name">${task.name||'Unnamed'}</div>
+      <div class="task-tags">
+        ${diff?`<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>`:''}
+        ${dueStr?`<span class="task-due ${overdue?'overdue':''}">${overdue?'⚠ ':''}${dueStr}</span>`:''}
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderStats() {
-  const bodyStats = state.stats.filter(s => s.cat==='Body');
-  const otherStats = state.stats.filter(s => s.cat!=='Body');
+  const bodyStats=state.stats.filter(s=>s.cat==='Body');
+  if(!bodyStats.length){document.getElementById('tab-stats').innerHTML='<div class="empty">No body stats found</div>';return;}
 
-  const cardHTML = (stat, isSelected) => {
-    const { rank, next, pct } = getRankFromXP(stat.finalXP);
-    const lastStr = stat.lastTrained ? new Date(stat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—';
-    const rivalDiff = stat.rivalGap;
-    const isAhead = rivalDiff !== null && rivalDiff > 0;
-    const isBehind = rivalDiff !== null && rivalDiff < 0;
-    return `<div class="muscle-card ${isSelected?'selected':''}" onclick="selectMuscle('${stat.id}')" id="mcard-${stat.id}" style="${isSelected?`border-color:${rank.color}`:''}">
-      <div class="muscle-card-top">
-        <span class="muscle-card-name">${stat.name}</span>
-        ${badgeHTML(stat.rank || (rank.name+' '+rank.roman), 'rank-badge-sm')}
-      </div>
-      <div class="muscle-xp" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}<span class="muscle-xp-unit">xp</span></div>
-      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${rank.color}66,${rank.color})"></div></div>
-      <div class="muscle-meta">
-        <span class="muscle-pct">${Math.round(pct)}% → ${next?next.name+' '+next.roman:'MAX'}</span>
-        ${rivalDiff !== null ? `<span class="rival-diff" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)}</span>` : ''}
-      </div>
-    </div>`;
-  };
+  const selectedStat=selectedMuscle?bodyStats.find(s=>s.id===selectedMuscle):null;
 
-  const detailHTML = (stat) => {
-    if (!stat) return '';
-    const { rank, next, pct } = getRankFromXP(stat.finalXP);
-    const lastStr = stat.lastTrained ? new Date(stat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—';
-    const rivalDiff = stat.rivalGap;
-    const isAhead = rivalDiff !== null && rivalDiff > 0;
-    const isBehind = rivalDiff !== null && rivalDiff < 0;
-    return `<div class="detail-panel visible" id="detailPanel">
+  let html='';
+
+  // Silhouette
+  html+=`<div class="silhouette-wrap">
+    <div class="silhouette-title">Body Map — tap a muscle</div>
+    ${buildSilhouette(bodyStats)}
+    <div class="silhouette-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Active (≤5 days)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--border-hi)"></div>Inactive</div>
+    </div>
+  </div>`;
+
+  // Detail panel
+  if(selectedStat){
+    const r=parseRankStr(selectedStat.rankStr)??getRankFromXP(selectedStat.finalXP).rank;
+    const {pct,next}=getRankFromXP(selectedStat.finalXP);
+    const rivalDiff=selectedStat.rivalGap;
+    const isAhead=rivalDiff!==null&&rivalDiff>0;
+    const isBehind=rivalDiff!==null&&rivalDiff<0;
+    const lastStr=selectedStat.lastTrained?new Date(selectedStat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
+    html+=`<div class="detail-panel" id="detailPanel">
       <div class="detail-header">
-        <div class="detail-name" style="color:${rank.color}">${stat.name}</div>
-        ${badgeHTML(stat.rank||(rank.name+' '+rank.roman), 'rank-badge-lg')}
+        <div class="detail-name" style="color:${r.color}">${selectedStat.name}</div>
+        ${badgeHTML(r,'rank-badge-lg')}
       </div>
       <div class="detail-stats">
         <div class="detail-stat">
-          <div class="detail-stat-label">XP</div>
-          <div class="detail-stat-val" style="color:${rank.color}">${Number(stat.finalXP).toLocaleString()}</div>
+          <div class="detail-stat-label">Progress</div>
+          <div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div>
         </div>
+        <div class="detail-stat-div"></div>
         <div class="detail-stat">
           <div class="detail-stat-label">vs 影</div>
           <div class="detail-stat-val" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${rivalDiff!==null?(isAhead?'▲':'▼')+Math.abs(rivalDiff):'—'}</div>
         </div>
+        <div class="detail-stat-div"></div>
         <div class="detail-stat">
           <div class="detail-stat-label">Last</div>
           <div class="detail-stat-val" style="color:var(--text-dim);font-size:11px">${lastStr}</div>
         </div>
       </div>
     </div>`;
-  };
-
-  const selectedStat = selectedMuscle ? state.stats.find(s=>s.id===selectedMuscle) : null;
-
-  let html = '';
-  if (selectedStat) html += detailHTML(selectedStat);
-
-  if (bodyStats.length) {
-    html += `<div class="section-label">Body Parts</div><div class="muscle-cards">`;
-    html += bodyStats.map(s => cardHTML(s, s.id===selectedMuscle)).join('');
-    html += '</div>';
-  }
-  if (otherStats.length) {
-    html += `<div class="section-label">Other Stats</div><div class="muscle-cards">`;
-    html += otherStats.map(s => cardHTML(s, s.id===selectedMuscle)).join('');
-    html += '</div>';
   }
 
-  document.getElementById('tab-stats').innerHTML = html || '<div class="empty">No stats found</div>';
+  // Muscle grid
+  html+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
+  bodyStats.forEach(stat=>{
+    const r=parseRankStr(stat.rankStr)??getRankFromXP(stat.finalXP).rank;
+    const {pct,next}=getRankFromXP(stat.finalXP);
+    const rivalDiff=stat.rivalGap;
+    const isAhead=rivalDiff!==null&&rivalDiff>0;
+    const isBehind=rivalDiff!==null&&rivalDiff<0;
+    const sel=selectedMuscle===stat.id;
+    html+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${r.color};`:''}">
+      <div style="${sel?`position:absolute;top:0;left:0;right:0;height:2px;background:${r.color};`:''}"></div>
+      <div class="muscle-card-top">
+        <span class="muscle-card-name">${stat.name}</span>
+        ${badgeHTML(r,'rank-badge-sm')}
+      </div>
+      <div class="muscle-rank-pct" style="color:${r.color}">${Math.round(pct)}%</div>
+      <div class="muscle-rank-label">of ${r.full}</div>
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}55,${r.color})"></div></div>
+      ${rivalDiff!==null?`<div class="muscle-rival" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)}</div>`:''}
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('tab-stats').innerHTML=html;
 }
 
-function selectMuscle(id) {
+function selectMuscle(id, name) {
+  if (!id) return;
   selectedMuscle = selectedMuscle===id ? null : id;
   renderStats();
   if (selectedMuscle) {
-    const panel = document.getElementById('detailPanel');
-    if (panel) panel.scrollIntoView({ behavior:'smooth', block:'start' });
+    const panel=document.getElementById('detailPanel');
+    if(panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
   }
 }
 
 // ── Task actions ──
 async function toggleTask(taskId, current) {
-  const next = !current;
-  state.tasks = state.tasks.map(t => t.id===taskId ? {...t, status:next} : t);
+  const next=!current;
+  state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:next}:t);
   renderTasks();
-  try {
-    await notionPatch(taskId, { Status:{ checkbox:next } });
-    showToast(next ? '✓ Done' : 'Reopened');
-    if (next) setTimeout(()=>{ state.tasks=state.tasks.filter(t=>t.id!==taskId); renderTasks(); }, 700);
-  } catch(e) {
-    state.tasks = state.tasks.map(t => t.id===taskId ? {...t, status:current} : t);
-    renderTasks(); showToast('Update failed');
-  }
+  try{
+    await notionPatch(taskId,{Status:{checkbox:next}});
+    showToast(next?'✓ Done':'Reopened');
+    if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
+  }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:current}:t);renderTasks();showToast('Update failed');}
 }
 
 async function cycleDiff(e, taskId, currentDiff) {
   e.stopPropagation();
-  const idx = DIFF_ORDER.indexOf(currentDiff);
-  const nextDiff = DIFF_ORDER[(idx+1) % DIFF_ORDER.length];
-  state.tasks = state.tasks.map(t => t.id===taskId ? {...t, difficulty:nextDiff} : t);
+  const idx=DIFF_ORDER.indexOf(currentDiff);
+  const nextDiff=DIFF_ORDER[(idx+1)%DIFF_ORDER.length];
+  state.tasks=state.tasks.map(t=>t.id===taskId?{...t,difficulty:nextDiff}:t);
   renderTasks();
-  try {
-    await notionPatch(taskId, { Difficulty:{ select:{ name:nextDiff } } });
+  try{
+    await notionPatch(taskId,{Difficulty:{select:{name:nextDiff}}});
     showToast(`→ ${nextDiff}`);
-  } catch(e) {
-    state.tasks = state.tasks.map(t => t.id===taskId ? {...t, difficulty:currentDiff} : t);
-    renderTasks(); showToast('Update failed');
-  }
+  }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,difficulty:currentDiff}:t);renderTasks();showToast('Update failed');}
 }
 
-async function addDailyTasks() {
-  const today = new Date().toISOString().split('T')[0];
-  const daily = state.templates.filter(t=>t.type==='Daily');
-  if (!daily.length) { showToast('No daily templates found'); return; }
-  try {
-    await Promise.all(daily.map(t => notionCreate(DB.tasks,{
-      Task:{ title:[{text:{content:t.name}}] },
-      ...(t.cat?{Cat:{select:{name:t.cat}}}:{}),
-      Difficulty:{select:{name:'Daily'}}, Status:{checkbox:false},
+async function quickAddTemplate(templateId, name, cat, type) {
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    await notionCreate(DB.tasks,{
+      Task:{title:[{text:{content:name}}]},
+      ...(cat?{Cat:{select:{name:cat}}}:{}),
+      ...(type==='Daily'?{Difficulty:{select:{name:'Daily'}}}:type==='Weekly'?{Difficulty:{select:{name:'Heavy'}}}:{}),
+      Status:{checkbox:false},
       'Due Date':{date:{start:today}},
-    })));
-    showToast(`${daily.length} daily tasks added`);
-    await loadTasks(); renderTasks();
-  } catch(e) { showToast('Failed'); }
+    });
+    showToast(`✓ ${name} added`);
+    await loadTasks();renderTasks();
+  }catch(e){showToast('Failed to add');}
 }
 
-async function addWorkout() {
-  const today = new Date().toISOString().split('T')[0];
-  const workout = state.templates.filter(t=>t.type==='Weekly'||t.cat==='Body');
-  if (!workout.length) { showToast('No workout templates found'); return; }
-  try {
-    await Promise.all(workout.map(t => notionCreate(DB.tasks,{
-      Task:{ title:[{text:{content:t.name}}] },
-      Cat:{select:{name:'Body'}}, Difficulty:{select:{name:'Heavy'}},
-      Status:{checkbox:false}, 'Due Date':{date:{start:today}},
-    })));
+async function addDailyTasks(){
+  const today=new Date().toISOString().split('T')[0];
+  const daily=state.templates.filter(t=>t.type==='Daily');
+  if(!daily.length){showToast('No daily templates found');return;}
+  try{
+    await Promise.all(daily.map(t=>notionCreate(DB.tasks,{Task:{title:[{text:{content:t.name}}]},...(t.cat?{Cat:{select:{name:t.cat}}}:{}),Difficulty:{select:{name:'Daily'}},Status:{checkbox:false},'Due Date':{date:{start:today}}})));
+    showToast(`${daily.length} daily tasks added`);
+    await loadTasks();renderTasks();
+  }catch(e){showToast('Failed');}
+}
+
+async function addWorkout(){
+  const today=new Date().toISOString().split('T')[0];
+  const workout=state.templates.filter(t=>t.type==='Weekly'||t.cat==='Body');
+  if(!workout.length){showToast('No workout templates found');return;}
+  try{
+    await Promise.all(workout.map(t=>notionCreate(DB.tasks,{Task:{title:[{text:{content:t.name}}]},Cat:{select:{name:'Body'}},Difficulty:{select:{name:'Heavy'}},Status:{checkbox:false},'Due Date':{date:{start:today}}})));
     showToast(`${workout.length} workout tasks added`);
-    await loadTasks(); renderTasks();
-  } catch(e) { showToast('Failed'); }
+    await loadTasks();renderTasks();
+  }catch(e){showToast('Failed');}
 }
 
 // Init
-document.querySelectorAll('.tab-panel').forEach((p,i) => { if(i>0) p.style.display='none'; });
+document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
 refresh();
 </script>
 </body>
