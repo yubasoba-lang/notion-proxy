@@ -635,6 +635,7 @@ const g={
   formula:v=>{const f=v?.formula;if(!f)return null;return f.number??f.string??f.boolean??null;},
   rollup:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='number')return r.number;if(r.type==='array'){const f=r.array?.[0];if(!f)return null;if(f.type==='formula'){const ff=f.formula;return ff.number??ff.string??null;}if(f.type==='number')return f.number;}return null;},
   rollupStr:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='array'){const f=r.array?.[0];if(!f)return null;if(f.type==='formula'&&f.formula?.type==='string')return f.formula.string;if(f.type==='title')return f.title?.[0]?.plain_text??null;}return null;},
+  num:v=>typeof v?.number==="number"?v.number:null
 };
 
 const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalXP:g.formula(q['Final XP'])??0,rankStr:g.formula(q.Rank)??'',rivalGap:g.rollup(q['Rival Gap']),rivalXP:g.rollup(q['Rival XP'])??0,lastTrained:g.rollup(q['Last day trained']),daysInactive:g.num(q['Days inactive']),cat:g.select(q.Cat)};};
