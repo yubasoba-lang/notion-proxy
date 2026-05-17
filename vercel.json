@@ -1,6 +1,8 @@
 {
-  "rewrites": [
-    { "source": "/api/notion", "destination": "/api/notion" },
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
+  "functions": {
+    "api/notion.js": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+  }
 }
