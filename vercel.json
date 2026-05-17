@@ -1,8 +1,23 @@
 {
-  "functions": {
-    "api/notion.js": {
-      "memory": 128,
-      "maxDuration": 10
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/notion.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "**/*.{png,html,json}",
+      "use": "@vercel/static"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/notion",
+      "dest": "/api/notion.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
 }
