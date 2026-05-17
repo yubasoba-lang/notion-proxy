@@ -498,40 +498,59 @@ function buildSilhouette(bodyStats){
 
   // Coordinates in original 612x612 image pixel space
   // Front figure: center x≈152, Back figure: center x≈460
-  const FC=152; // front center x
-  const BC=460; // back center x
+  // Image 612x612. Front figure center x≈152, back center x≈460
+  // ViewBox crops: front x=10-295, back x=318-602, y=15-610
+  // Hotspot positions in original image pixel space
+  const FC=152;
+  const BC=460;
   const frontMuscles = [
-    { name:'Chest',       cx:FC,     cy:178, rx:38, ry:22 },
-    { name:'Core',        cx:FC,     cy:270, rx:25, ry:38 },
-    { name:'Cardio',      cx:FC,     cy:155, rx:18, ry:14 },
-    { name:'Shoulder',    cx:FC-70,  cy:148, rx:22, ry:18 },
-    { name:'Shoulder',    cx:FC+70,  cy:148, rx:22, ry:18 },
-    { name:'Biceps',      cx:FC-88,  cy:210, rx:16, ry:22 },
-    { name:'Biceps',      cx:FC+88,  cy:210, rx:16, ry:22 },
-    { name:'Triceps',     cx:FC-96,  cy:210, rx:12, ry:20 },
-    { name:'Triceps',     cx:FC+96,  cy:210, rx:12, ry:20 },
-    { name:'Forearms',    cx:FC-100, cy:285, rx:13, ry:22 },
-    { name:'Forearms',    cx:FC+100, cy:285, rx:13, ry:22 },
-    { name:'Legs',        cx:FC-25,  cy:405, rx:22, ry:40 },
-    { name:'Legs',        cx:FC+25,  cy:405, rx:22, ry:40 },
-    { name:'Plyometrics', cx:FC-24,  cy:500, rx:18, ry:28 },
-    { name:'Plyometrics', cx:FC+24,  cy:500, rx:18, ry:28 },
+    // Chest — centre of pec area
+    { name:'Chest',       cx:FC,     cy:200 },
+    // Core — centre of abs
+    { name:'Core',        cx:FC,     cy:290 },
+    // Cardio — upper right chest (heart)
+    { name:'Cardio',      cx:FC+38,  cy:185 },
+    // Shoulders — on the deltoid caps
+    { name:'Shoulder',    cx:FC-62,  cy:168 },
+    { name:'Shoulder',    cx:FC+62,  cy:168 },
+    // Biceps — middle of upper arm
+    { name:'Biceps',      cx:FC-82,  cy:230 },
+    { name:'Biceps',      cx:FC+82,  cy:230 },
+    // Triceps — just behind bicep (show on opposite side)
+    { name:'Triceps',     cx:FC-92,  cy:260 },
+    { name:'Triceps',     cx:FC+92,  cy:260 },
+    // Forearms — lower arm
+    { name:'Forearms',    cx:FC-95,  cy:310 },
+    { name:'Forearms',    cx:FC+95,  cy:310 },
+    // Legs — quad centre
+    { name:'Legs',        cx:FC-28,  cy:420 },
+    { name:'Legs',        cx:FC+28,  cy:420 },
+    // Plyometrics — calves
+    { name:'Plyometrics', cx:FC-26,  cy:520 },
+    { name:'Plyometrics', cx:FC+26,  cy:520 },
   ];
 
   const backMuscles = [
-    { name:'Back',        cx:BC,     cy:200, rx:42, ry:40 },
-    { name:'Shoulder',    cx:BC-68,  cy:145, rx:22, ry:18 },
-    { name:'Shoulder',    cx:BC+68,  cy:145, rx:22, ry:18 },
-    { name:'Triceps',     cx:BC-88,  cy:210, rx:16, ry:22 },
-    { name:'Triceps',     cx:BC+88,  cy:210, rx:16, ry:22 },
-    { name:'Biceps',      cx:BC-98,  cy:210, rx:12, ry:20 },
-    { name:'Biceps',      cx:BC+98,  cy:210, rx:12, ry:20 },
-    { name:'Forearms',    cx:BC-104, cy:285, rx:13, ry:22 },
-    { name:'Forearms',    cx:BC+104, cy:285, rx:13, ry:22 },
-    { name:'Legs',        cx:BC-25,  cy:405, rx:22, ry:40 },
-    { name:'Legs',        cx:BC+25,  cy:405, rx:22, ry:40 },
-    { name:'Plyometrics', cx:BC-24,  cy:500, rx:18, ry:28 },
-    { name:'Plyometrics', cx:BC+24,  cy:500, rx:18, ry:28 },
+    // Back — lat centre
+    { name:'Back',        cx:BC,     cy:215 },
+    // Shoulders — rear delt
+    { name:'Shoulder',    cx:BC-62,  cy:165 },
+    { name:'Shoulder',    cx:BC+62,  cy:165 },
+    // Triceps — back of upper arm
+    { name:'Triceps',     cx:BC-85,  cy:235 },
+    { name:'Triceps',     cx:BC+85,  cy:235 },
+    // Biceps — inner arm visible from back
+    { name:'Biceps',      cx:BC-95,  cy:255 },
+    { name:'Biceps',      cx:BC+95,  cy:255 },
+    // Forearms
+    { name:'Forearms',    cx:BC-98,  cy:310 },
+    { name:'Forearms',    cx:BC+98,  cy:310 },
+    // Legs — hamstring centre
+    { name:'Legs',        cx:BC-28,  cy:420 },
+    { name:'Legs',        cx:BC+28,  cy:420 },
+    // Plyometrics — calves back
+    { name:'Plyometrics', cx:BC-26,  cy:520 },
+    { name:'Plyometrics', cx:BC+26,  cy:520 },
   ];
 
   const muscles = silView==='front' ? frontMuscles : backMuscles;
@@ -543,42 +562,39 @@ function buildSilhouette(bodyStats){
     if(!seen[m.name]){seen[m.name]=true;hotspots.push(m);}
   });
 
-  // Overlays — coords already in image pixel space
-  const overlays = muscles.map(m=>{
-    const name=m.name, active=isActive(name), col=rankColor(name), id=sid(name), sel=selectedMuscle===id;
-    const level=getInactiveLevel(name);
-    if(!col) return '';
-    const fillOp = level===0?0.35:level===1?0.22:level===2?0.08:0;
-    const strokeOp = level===0?1:level===1?0.7:level===2?0.3:0;
-    return `<ellipse cx="${m.cx}" cy="${m.cy}" rx="${m.rx}" ry="${m.ry}"
-      fill="${col}" opacity="${sel?0.4:fillOp}"
-      stroke="${col}" stroke-width="${sel?3:1.5}" stroke-opacity="${sel?1:strokeOp}"
-      style="cursor:pointer;transition:all 0.3s;"
-      onclick="selectMuscle('${id}','${name}')"
-      ${level<=1||sel?`filter="url(#mglow)"`:''}/>`;
-  }).join('');
+  const overlays = ''; // removed — hotspot circles handle all interaction
 
   // Label hotspots — placed directly on muscle centers
-  const HS=18;
+  const HS=22;
   const labels = hotspots.map(m=>{
-    const name=m.name, active=isActive(name), col=rankColor(name)??(active?'#888':'#1e1e28');
-    const id=sid(name), sel=selectedMuscle===id, roman=getRoman(name);
+    const name=m.name;
+    const col=rankColor(name)??(isActive(name)?'#888':'#1e1e28');
+    const id=sid(name), sel=selectedMuscle===id;
     const lx=m.cx, ly=m.cy;
     const s=statMap[name.toLowerCase()];
     const di=s?.daysInactive;
-    const diLabel=di===0?'·':di!=null?di+'d':'';
     const level=getInactiveLevel(name);
-    const borderCol=level===0?col:level===1?col+'99':level===2?col+'44':'#1e1e28';
+    const diLabel=di===0?'NOW':di!=null?di+'d':'—';
+
+    // Visual state based on activity level
+    const fillCol = level===0?col+'33':level===1?col+'1a':'rgba(12,12,15,0.85)';
+    const strokeCol = level===0?col:level===1?col+'cc':level===2?col+'55':'#1e1e28';
+    const strokeW = sel?3:level===0?2.5:level===1?2:1;
+    const textCol = level<=1?col:level===2?col+'77':'#252535';
+    const subCol = level===0?col:level===1?col+'99':level===2?col+'44':'#1a1a28';
+    const useGlow = level<=1||sel;
+
     return `<g style="cursor:pointer;" onclick="selectMuscle('${id}','${name}')">
+      ${useGlow?`<circle cx="${lx}" cy="${ly}" r="${HS+6}" fill="${col}" opacity="${level===0?0.15:0.08}"/>`:'' }
       <circle cx="${lx}" cy="${ly}" r="${HS}"
-        fill="rgba(12,12,15,0.9)" stroke="${sel?col:borderCol}"
-        stroke-width="${sel?2.5:1.2}" ${level<=1||sel?`filter="url(#mglow)"`:''}/>
+        fill="${fillCol}" stroke="${sel?col:strokeCol}"
+        stroke-width="${strokeW}" ${useGlow?`filter="url(#mglow)"`:''}/>
       <text x="${lx}" y="${ly-3}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Bebas Neue',sans-serif" font-size="9"
-        fill="${level<=2?col:'#2a2a3a'}">${name.slice(0,4).toUpperCase()}</text>
-      <text x="${lx}" y="${ly+6}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Inter',sans-serif" font-size="6.5" font-weight="700"
-        fill="${level<=1?col+'cc':level===2?col+'66':'#1e1e28'}">${diLabel}</text>
+        font-family="'Bebas Neue',sans-serif" font-size="9" letter-spacing="0.5"
+        fill="${textCol}">${name.slice(0,4).toUpperCase()}</text>
+      <text x="${lx}" y="${ly+7}" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Inter',sans-serif" font-size="6" font-weight="700"
+        fill="${subCol}">${diLabel}</text>
     </g>`;
   }).join('');
 
