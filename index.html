@@ -55,7 +55,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 /* 
    RANK BADGE SVG — hexagonal shield
     */
-.badge-wrap{display:inline-flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;}
+.badge-wrap{display:inline-flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5));}
 .badge-wrap svg{display:block;}
 
 /*  HOME — Streaks  */
@@ -75,9 +75,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* Body mini cards on home */
 .muscle-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.muscle-mini{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:11px;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden;}
+.muscle-mini{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:11px;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden;min-height:110px;}
 .muscle-mini:hover{border-color:var(--border-hi);}
-.muscle-mini-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.muscle-mini-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:4px;}
 .muscle-mini-name{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);}
 .muscle-pct-big{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;margin-bottom:2px;}
 .muscle-of{font-size:9px;color:var(--text-dim);margin-bottom:7px;font-weight:500;}
@@ -155,7 +155,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .muscle-card-name{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);}
 
 .detail-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
-.detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.detail-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;}
 .detail-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.05em;}
 .detail-stats{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;background:var(--border);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
 .detail-stat-div{background:var(--border);}
@@ -270,13 +270,13 @@ function badgeSVG(rankObj, size=40){
   const w   = size;
   const h   = size;
   const cx  = w / 2;
-  const numY = h * 0.80;
+  const numY = h * 0.82;
 
   // Pill dimensions
-  const pillW = Math.max(18, size * 0.44);
-  const pillH = Math.max(9,  size * 0.20);
+  const pillW = Math.max(22, size * 0.42);
+  const pillH = Math.max(11, size * 0.18);
   const pillR = pillH / 2;
-  const fontSize = Math.max(7, Math.round(size * 0.19));
+  const fontSize = Math.max(8, Math.round(size * 0.17));
 
   // Unique filter id per badge instance
   const uid = name + roman + Math.round(size);
@@ -321,7 +321,7 @@ function badgeSVG(rankObj, size=40){
   </svg>`;
 }
 
-function badgeHTML(rankObj,size=38){
+function badgeHTML(rankObj,size=56){
   return `<div class="badge-wrap">${badgeSVG(rankObj,size)}</div>`;
 }
 
@@ -516,7 +516,7 @@ function checkRankUps(ns){ns.forEach(s=>{const old=prevRanks[s.id];if(old&&old!=
 function triggerRankUp(name,ro){
   document.getElementById('rankupMuscle').textContent=name.toUpperCase();
   document.getElementById('rankupNew').textContent=ro.full;
-  document.getElementById('rankupBadge').innerHTML=badgeHTML(ro,64);
+  document.getElementById('rankupBadge').innerHTML=badgeHTML(ro,120);
   const c=document.getElementById('rankupParticles');c.innerHTML='';
   for(let i=0;i<35;i++){const p=document.createElement('div');p.className='particle';const sz=3+Math.random()*5;p.style.cssText=`left:${Math.random()*100}%;bottom:0;width:${sz}px;height:${sz}px;background:${ro.color};animation-delay:${Math.random()*0.6}s;animation-duration:${1+Math.random()}s;`;c.appendChild(p);}
   document.getElementById('rankupOverlay').classList.add('visible');
@@ -590,7 +590,7 @@ function renderHome(){
       const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
       return `<div class="muscle-mini" onclick="switchTab('stats',document.querySelectorAll('.nav-btn')[2]);setTimeout(()=>selectMuscle('${stat.id}','${stat.name}'),400)">
         <div style="position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,${r.color}55,transparent)"></div>
-        <div class="muscle-mini-top"><span class="muscle-mini-name">${stat.name}</span>${badgeHTML(r,34)}</div>
+        <div class="muscle-mini-top"><span class="muscle-mini-name">${stat.name}</span>${badgeHTML(r,56)}</div>
         <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
         <div class="muscle-of">of ${r.full}</div>
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
@@ -705,7 +705,7 @@ function renderStats(){
     html+=`<div class="detail-panel" id="detailPanel">
       <div class="detail-header">
         <div><div class="detail-name" style="color:${r.color}">${selStat.name}</div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-weight:600;letter-spacing:0.1em">${Math.round(pct)}% of ${r.full}</div></div>
-        ${badgeHTML(r,60)}
+        ${badgeHTML(r,96)}
       </div>
       <div class="detail-stats">
         <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
@@ -729,7 +729,7 @@ function renderStats(){
     const sel=selectedMuscle===stat.id;
     html+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${r.color};`:''}">
       <div class="muscle-card-top-bar" style="background:${sel?r.color:'transparent'}"></div>
-      <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,34)}</div>
+      <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,56)}</div>
       <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
       <div class="muscle-of">of ${r.full}</div>
       <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
