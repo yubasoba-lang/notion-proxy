@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#070810">
-<title>System</title>
+<title>GRIND</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -123,11 +123,7 @@ body::before {
   padding: 16px 14px 14px;
   position: relative; overflow: hidden;
 }
-.streak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; }
-.streak-card.fire::before  { background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); }
-.streak-card.mind::before  { background: linear-gradient(90deg, transparent, #283060, transparent); }
-.streak-card.sleep::before { background: linear-gradient(90deg, transparent, #281848, transparent); }
-.streak-card.quest::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+.streak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border-glow), transparent); }
 
 /* Clean geometric streak icons */
 .streak-ico { width: 20px; height: 20px; margin-bottom: 10px; flex-shrink: 0; }
@@ -136,7 +132,7 @@ body::before {
 .sleep-ico { background: #5030a0; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); opacity: 0.8; }
 .quest-ico { background: var(--green-text); clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); opacity: 0.8; }
 
-.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; letter-spacing: 0.01em; }
+.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; letter-spacing: 0.01em; color: var(--text); }
 .streak-label  { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; color: var(--text-dim); text-transform: uppercase; margin-top: 4px; }
 
 /* ── Body mini cards ── */
@@ -271,19 +267,19 @@ body::before {
 .particle { position: absolute; border-radius: 50%; animation: fly-up 1.5s ease forwards; }
 @keyframes fly-up { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; } }
 
-/* Streak icon CSS */
-.streak-ico { width: 20px; height: 20px; margin-bottom: 10px; flex-shrink: 0; }
-.fire-ico  { background: var(--gold); clip-path: polygon(50% 0%, 80% 30%, 95% 60%, 75% 85%, 50% 100%, 25% 85%, 5% 60%, 20% 30%); opacity: 0.75; }
-.mind-ico  { background: #2a4a8a; border-radius: 50%; opacity: 0.75; }
-.sleep-ico { background: #3a2070; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); opacity: 0.75; }
-.quest-ico { background: #1e4a2a; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); opacity: 0.75; }
+/* Streak icon CSS — monochrome */
+.streak-ico { width: 6px; height: 6px; margin-bottom: 12px; border-radius: 50%; background: var(--border-glow); flex-shrink: 0; }
+.fire-ico  { }
+.mind-ico  { }
+.sleep-ico { }
+.quest-ico { }
 
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
-    <div class="wordmark">SYS</div>
+    <div class="wordmark">GRIND</div>
     <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
   </div>
   <div class="nav">
@@ -701,10 +697,10 @@ function renderHome(){
   document.getElementById('tab-home').innerHTML=`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,var(--gold-dim),var(--gold))"></div><div class="streak-ico fire-ico"></div><div class="streak-number" style="color:var(--gold)">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,#1a3060,#3060c0)"></div><div class="streak-ico mind-ico"></div><div class="streak-number" style="color:#4a80d8">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,#1a1060,#5040c0)"></div><div class="streak-ico sleep-ico"></div><div class="streak-number" style="color:#7060d0">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,var(--green),var(--green-hi))"></div><div class="streak-ico quest-ico"></div><div class="streak-number" style="color:var(--green-hi)">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
+      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
+      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
+      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
+      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
     </div>
     ${bodyStats.length?`<div class="section-label">Body</div><div class="muscle-grid">${bodyStats.map(stat=>{
       const parsed=parseRankStr(stat.rankStr);
