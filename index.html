@@ -150,6 +150,13 @@ body::before {
 .muscle-of       { font-size: 9px; color: var(--text-dim); margin-bottom: 8px; font-weight: 500; letter-spacing: 0.04em; }
 .prog-track      { height: 2px; background: var(--bg-hi); border-radius: 1px; overflow: hidden; margin-bottom: 5px; }
 .prog-fill       { height: 100%; border-radius: 1px; transition: width 0.9s ease; }
+
+/* Days inactive badge */
+.muscle-bottom-row { display: flex; align-items: center; justify-content: space-between; }
+.days-inactive { font-size: 9px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-faint); letter-spacing: 0.04em; }
+.days-inactive.active { color: var(--green-text); }
+.days-inactive.recent { color: var(--text-dim); }
+.days-inactive.stale  { color: var(--text-faint); }
 .muscle-vs       { font-size: 9px; font-weight: 600; font-family: 'JetBrains Mono', monospace; text-align: right; }
 
 /* ── TASKS ── */
@@ -444,8 +451,21 @@ function buildSilhouette(bodyStats){
 
   function isActive(name){
     const s=statMap[name.toLowerCase()];
-    if(!s?.lastTrained)return false;
+    if(!s)return false;
+    // Use Days inactive formula if available
+    if(s.daysInactive!==null&&s.daysInactive!==undefined) return s.daysInactive<=5;
+    if(!s.lastTrained)return false;
     return(today-new Date(s.lastTrained))/(1000*60*60*24)<=5;
+  }
+  function getInactiveLevel(name){
+    // 0=today, 1=recent(1-5d), 2=stale(6-14d), 3=cold(15d+)
+    const s=statMap[name.toLowerCase()];
+    if(!s)return 3;
+    const d=s.daysInactive??999;
+    if(d===0)return 0;
+    if(d<=5)return 1;
+    if(d<=14)return 2;
+    return 3;
   }
   function rankColor(name){
     const s=statMap[name.toLowerCase()];
@@ -526,31 +546,39 @@ function buildSilhouette(bodyStats){
   // Overlays — coords already in image pixel space
   const overlays = muscles.map(m=>{
     const name=m.name, active=isActive(name), col=rankColor(name), id=sid(name), sel=selectedMuscle===id;
+    const level=getInactiveLevel(name);
     if(!col) return '';
+    const fillOp = level===0?0.35:level===1?0.22:level===2?0.08:0;
+    const strokeOp = level===0?1:level===1?0.7:level===2?0.3:0;
     return `<ellipse cx="${m.cx}" cy="${m.cy}" rx="${m.rx}" ry="${m.ry}"
-      fill="${active?col:'transparent'}" opacity="${active?0.3:0}"
-      stroke="${active||sel?col:'transparent'}" stroke-width="${sel?3:2}"
+      fill="${col}" opacity="${sel?0.4:fillOp}"
+      stroke="${col}" stroke-width="${sel?3:1.5}" stroke-opacity="${sel?1:strokeOp}"
       style="cursor:pointer;transition:all 0.3s;"
       onclick="selectMuscle('${id}','${name}')"
-      ${active?`filter="url(#mglow)"`:''}/>`;
+      ${level<=1||sel?`filter="url(#mglow)"`:''}/>`;
   }).join('');
 
   // Label hotspots — placed directly on muscle centers
   const HS=18;
   const labels = hotspots.map(m=>{
-    const name=m.name, active=isActive(name), col=rankColor(name)??(active?'#888':'#2a3050');
+    const name=m.name, active=isActive(name), col=rankColor(name)??(active?'#888':'#1e1e28');
     const id=sid(name), sel=selectedMuscle===id, roman=getRoman(name);
     const lx=m.cx, ly=m.cy;
+    const s=statMap[name.toLowerCase()];
+    const di=s?.daysInactive;
+    const diLabel=di===0?'·':di!=null?di+'d':'';
+    const level=getInactiveLevel(name);
+    const borderCol=level===0?col:level===1?col+'99':level===2?col+'44':'#1e1e28';
     return `<g style="cursor:pointer;" onclick="selectMuscle('${id}','${name}')">
       <circle cx="${lx}" cy="${ly}" r="${HS}"
-        fill="rgba(7,8,16,0.85)" stroke="${active||sel?col:'#252a42'}"
-        stroke-width="${sel?2.5:1.5}" ${active||sel?`filter="url(#mglow)"`:''}/>
+        fill="rgba(12,12,15,0.9)" stroke="${sel?col:borderCol}"
+        stroke-width="${sel?2.5:1.2}" ${level<=1||sel?`filter="url(#mglow)"`:''}/>
       <text x="${lx}" y="${ly-3}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Bebas Neue',sans-serif" font-size="10"
-        fill="${active?col:'#3a4060'}">${name.slice(0,4).toUpperCase()}</text>
-      <text x="${lx}" y="${ly+7}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Inter',sans-serif" font-size="7" font-weight="700"
-        fill="${active?col+'cc':'#252a42'}">${roman}</text>
+        font-family="'Bebas Neue',sans-serif" font-size="9"
+        fill="${level<=2?col:'#2a2a3a'}">${name.slice(0,4).toUpperCase()}</text>
+      <text x="${lx}" y="${ly+6}" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Inter',sans-serif" font-size="6.5" font-weight="700"
+        fill="${level<=1?col+'cc':level===2?col+'66':'#1e1e28'}">${diLabel}</text>
     </g>`;
   }).join('');
 
@@ -715,7 +743,10 @@ function renderHome(){
         <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
         <div class="muscle-of">of ${r.full}</div>
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
-        ${gap!==null?`<div class="muscle-vs" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'':isBehind?'':'='} ${Math.abs(gap)} vs </div>`:''}
+        <div class="muscle-bottom-row">
+          ${stat.daysInactive!=null?`<span class="days-inactive ${stat.daysInactive===0?'active':stat.daysInactive<=5?'recent':'stale'}">${stat.daysInactive===0?'Today':stat.daysInactive+'d ago'}</span>`:''}
+          ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--green-text)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)}</span>`:''}
+        </div>
       </div>`;}).join('')}</div>`:''}`;
 }
 
@@ -854,8 +885,11 @@ function renderStats(){
       <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
       <div class="muscle-of">of ${r.full}</div>
       <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
-      ${gap!==null?`<div class="muscle-vs" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'':isBehind?'':'='} ${Math.abs(gap)}</div>`:''}
-    </div>`;
+      <div class="muscle-bottom-row">
+        ${stat.daysInactive!=null?`<span class="days-inactive ${stat.daysInactive===0?'active':stat.daysInactive<=5?'recent':'stale'}">${stat.daysInactive===0?'Today':stat.daysInactive+'d ago'}</span>`:''}
+        ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--green-text)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)}</span>`:''}
+      </div>
+      </div>`;
   });
   html+='</div>';
   document.getElementById('tab-stats').innerHTML=html;
