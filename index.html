@@ -554,7 +554,7 @@ async function loadTasks(){
 async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){console.error(e);}}
 async function loadStreaks(){
   try{
-    // Try Streaks DB first (has Work streak, Mind streak, Sleep streak, Quest streak)
+    // Streaks DB has single "Shite" row with all computed streak formulas
     const pages=await nQuery(DB.streaks);
     if(pages.length){
       const q=pages[0].properties;
@@ -563,23 +563,6 @@ async function loadStreaks(){
         mind:    g.formula(q['Mind streak'])  ?? 0,
         sleep:   g.formula(q['Sleep streak']) ?? 0,
         quest:   g.formula(q['Quest streak']) ?? 0,
-      };
-      return;
-    }
-  }catch(e){
-    // Streaks DB not accessible — fall back to Daily Log
-  }
-  try{
-    const today=new Date().toISOString().split('T')[0];
-    let pages=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
-    if(!pages.length) pages=await nQuery(DB.dailyLog,undefined,[{property:'Date',direction:'descending'}]);
-    if(pages.length){
-      const q=pages[0].properties;
-      state.streaks={
-        workout: g.formula(q['Workout streak'])??0,
-        mind:    g.formula(q['Mind streak'])??0,
-        sleep:   g.formula(q['Sleep streak'])??0,
-        quest:   0,
       };
     }
   }catch(e){setError('Streaks: '+e.message);}
