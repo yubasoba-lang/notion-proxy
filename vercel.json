@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/api/notion", "destination": "/api/notion" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
