@@ -447,7 +447,6 @@ let silView='front';
 function buildSilhouette(bodyStats){
   const statMap={};
   bodyStats.forEach(s=>{statMap[s.name.toLowerCase()]=s;});
-  console.log('statMap sample:', Object.values(statMap).slice(0,2).map(s=>({name:s.name,di:s.daysInactive,rank:s.rankStr})));
   const today=new Date();
 
   function isActive(name){
@@ -505,30 +504,31 @@ function buildSilhouette(bodyStats){
   const FC=152;
   const BC=460;
   const frontMuscles = [
-    // Chest — centre of pec area
-    { name:'Chest',       cx:FC,     cy:200 },
-    // Core — centre of abs
-    { name:'Core',        cx:FC,     cy:290 },
-    // Cardio — upper right chest (heart)
-    { name:'Cardio',      cx:FC+38,  cy:185 },
-    // Shoulders — on the deltoid caps
-    { name:'Shoulder',    cx:FC-62,  cy:168 },
-    { name:'Shoulder',    cx:FC+62,  cy:168 },
-    // Biceps — middle of upper arm
-    { name:'Biceps',      cx:FC-82,  cy:230 },
-    { name:'Biceps',      cx:FC+82,  cy:230 },
-    // Triceps — just behind bicep (show on opposite side)
-    { name:'Triceps',     cx:FC-92,  cy:260 },
-    { name:'Triceps',     cx:FC+92,  cy:260 },
-    // Forearms — lower arm
-    { name:'Forearms',    cx:FC-95,  cy:310 },
-    { name:'Forearms',    cx:FC+95,  cy:310 },
-    // Legs — quad centre
-    { name:'Legs',        cx:FC-28,  cy:420 },
-    { name:'Legs',        cx:FC+28,  cy:420 },
-    // Plyometrics — calves
-    { name:'Plyometrics', cx:FC-26,  cy:520 },
-    { name:'Plyometrics', cx:FC+26,  cy:520 },
+    // Place right-side instances FIRST so deduplication picks them (less crowded)
+    // Shoulder — right deltoid
+    { name:'Shoulder',    cx:FC+65,  cy:165 },
+    { name:'Shoulder',    cx:FC-65,  cy:165 },
+    // Chest — centre pec
+    { name:'Chest',       cx:FC,     cy:205 },
+    // Cardio — upper left chest
+    { name:'Cardio',      cx:FC-35,  cy:188 },
+    // Core — abs centre
+    { name:'Core',        cx:FC,     cy:295 },
+    // Biceps — right upper arm
+    { name:'Biceps',      cx:FC+86,  cy:232 },
+    { name:'Biceps',      cx:FC-86,  cy:232 },
+    // Triceps — right arm slightly lower/behind
+    { name:'Triceps',     cx:FC+94,  cy:258 },
+    { name:'Triceps',     cx:FC-94,  cy:258 },
+    // Forearms — right lower arm
+    { name:'Forearms',    cx:FC+96,  cy:308 },
+    { name:'Forearms',    cx:FC-96,  cy:308 },
+    // Legs — right quad
+    { name:'Legs',        cx:FC+30,  cy:425 },
+    { name:'Legs',        cx:FC-30,  cy:425 },
+    // Plyometrics — right calf
+    { name:'Plyometrics', cx:FC+28,  cy:522 },
+    { name:'Plyometrics', cx:FC-28,  cy:522 },
   ];
 
   const backMuscles = [
