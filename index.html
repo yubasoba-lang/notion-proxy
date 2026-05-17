@@ -216,6 +216,7 @@ const DB={
   tasks:    '34163a0b4e7c81a5a8aefb94b96a6b36',
   templates:'34163a0b4e7c81a08eefdcd464d0a5a6',
   dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
+  streaks:  '35163a0b4e7c80eba737000b27f75c5f',
 };
 
 /* 
@@ -262,7 +263,7 @@ function parseRankStr(str){
 function badgeSVG(rankObj, size=40){
   if(!rankObj) rankObj=ALL_RANKS[0];
   const {name, roman} = rankObj;
-  const imgSrc = `/badges/${name}.png`;
+  const imgSrc = `https://notion-proxy-red-one.vercel.app/badges/${name}.png`;
 
   // All badges are square images on black bg
   // Numeral sits at ~78% height — below the main emblem, above the bottom tip
@@ -506,7 +507,8 @@ const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalX
 const toRival=p=>{const q=p.properties;return{id:p.id,bodyPart:g.select(q['Body Part']),totalXP:g.formula(q['Total XP'])??0,gapNumber:g.formula(q['Gap in numbers'])??0,myCurrentXP:g.rollup(q['My current XP'])??0};};
 const toTask=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Task),cat:g.select(q.Cat),difficulty:g.select(q.Difficulty),status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),isQuest:g.formula(q['Is Quest'])??false};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
-const toStreak=p=>{const q=p.properties;return{workout:g.formula(q['Workout streak'])??0,mind:g.formula(q['Mind streak'])??0,sleep:g.formula(q['Sleep streak'])??0,quest:g.formula(q['Quest Perfect Day'])??0};};
+
+};
 
 function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
 function showToast(msg,ms=2500){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);}
@@ -542,10 +544,17 @@ async function loadTasks(){
 async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){console.error(e);}}
 async function loadStreaks(){
   try{
-    const today=new Date().toISOString().split('T')[0];
-    let p=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
-    if(!p.length)p=await nQuery(DB.dailyLog,undefined,[{property:'Date',direction:'descending'}]);
-    if(p.length)state.streaks=toStreak(p[0]);
+    // Query the Streaks database — single row with all streak counts
+    const pages=await nQuery(DB.streaks);
+    if(pages.length){
+      const q=pages[0].properties;
+      state.streaks={
+        workout: g.formula(q['Work streak'])  ?? 0,
+        mind:    g.formula(q['Mind streak'])  ?? 0,
+        sleep:   g.formula(q['Sleep streak']) ?? 0,
+        quest:   g.formula(q['Quest streak']) ?? 0,
+      };
+    }
   }catch(e){setError('Streaks: '+e.message);}
 }
 
