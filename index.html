@@ -23,7 +23,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.04) 0%,transparent 60%);pointer-events:none;z-index:0;}
 #app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative;z-index:1;}
 
-/* ── Header ── */
+/*  Header  */
 .header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;background:rgba(7,8,16,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);flex-shrink:0;}
 .wordmark{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.15em;color:var(--text);}
 .wordmark em{color:var(--gold);font-style:normal;}
@@ -31,7 +31,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sync-btn:hover{color:var(--gold);border-color:var(--gold-dim);}
 .sync-btn:disabled{opacity:0.3;cursor:not-allowed;}
 
-/* ── Nav ── */
+/*  Nav  */
 .nav{display:grid;grid-template-columns:repeat(3,1fr);background:rgba(7,8,16,0.98);border-bottom:1px solid var(--border);flex-shrink:0;}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 7px;background:none;border:none;cursor:pointer;color:var(--text-dim);transition:all 0.2s;position:relative;}
 .nav-btn.active{color:var(--gold);}
@@ -41,7 +41,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 .scroll{flex:1;overflow-y:auto;padding:14px 14px 100px;-webkit-overflow-scrolling:touch;}
 
-/* ── Loader ── */
+/*  Loader  */
 .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;gap:14px;}
 .loader-ring{width:36px;height:36px;border:2px solid var(--border-hi);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -52,14 +52,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent);}
 .empty{text-align:center;padding:40px 20px;color:var(--text-faint);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;}
 
-/* ══════════════════════════════════
+/* 
    RANK BADGE SVG — hexagonal shield
-   ══════════════════════════════════ */
+    */
 .badge-wrap{display:inline-flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;}
 .badge-wrap svg{display:block;}
 
-/* ── HOME — Streaks ── */
+/*  HOME — Streaks  */
 .streak-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* Streak icons — clean geometric */
+.streak-ico { width:28px; height:28px; margin-bottom:6px; border-radius:4px; position:relative; display:flex; align-items:center; justify-content:center; }
+.fire-ico  { background:linear-gradient(135deg,#7a3000,#ff6b00); clip-path:polygon(50% 0%,80% 30%,100% 60%,80% 85%,50% 100%,20% 85%,0% 60%,20% 30%); }
+.mind-ico  { background:linear-gradient(135deg,#001a40,#2060c0); border-radius:50%; border:1.5px solid #3070d8; }
+.sleep-ico { background:linear-gradient(135deg,#100828,#6030b0); clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); }
+.quest-ico { background:linear-gradient(135deg,#1a2800,#3a6010); clip-path:polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%); }
 .streak-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px 12px 12px;position:relative;overflow:hidden;}
 .streak-top-bar{position:absolute;top:0;left:0;right:0;height:1.5px;}
 .streak-icon{font-size:18px;margin-bottom:4px;display:block;}
@@ -80,7 +87,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 @keyframes shimmer{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
 .muscle-vs{font-size:9px;font-weight:600;font-family:'JetBrains Mono',monospace;text-align:right;}
 
-/* ── TASKS ── */
+/*  TASKS  */
 .action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
 .action-btn{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:8px;color:var(--text-dim);font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:12px 8px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;}
 .action-btn:hover{border-color:var(--gold-dim);color:var(--gold);}
@@ -127,7 +134,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .task-due{font-size:9px;font-weight:500;color:var(--text-dim);}
 .task-due.overdue{color:#c43030;}
 
-/* ── STATS — Silhouette ── */
+/*  STATS — Silhouette  */
 .sil-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden;}
 .sil-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 20%,rgba(201,168,76,0.03) 0%,transparent 60%);pointer-events:none;}
 .sil-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -181,9 +188,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
   </div>
   <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">🔥</span><span class="nav-label">Home</span></button>
-    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">📋</span><span class="nav-label">Tasks</span></button>
-    <button class="nav-btn" onclick="switchTab('stats',this)"><span class="nav-icon">💪</span><span class="nav-label">Stats</span></button>
+    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon"></span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">≡</span><span class="nav-label">Tasks</span></button>
+    <button class="nav-btn" onclick="switchTab('stats',this)"><span class="nav-icon"></span><span class="nav-label">Stats</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
@@ -211,9 +218,9 @@ const DB={
   dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
 };
 
-/* ════════════════════════════
+/* 
    RANK SYSTEM
-   ════════════════════════════ */
+    */
 const TIER_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Champion','Titan','Olympian'];
 const TIER_COLORS={
   Bronze:'#cd7f32',Silver:'#a8a8a8',Gold:'#d4a800',
@@ -249,70 +256,156 @@ function parseRankStr(str){
   return null;
 }
 
-/* ════════════════════════════
+/* 
    RANK BADGE SVG (shield shape)
-   ════════════════════════════ */
+    */
 function badgeSVG(rankObj, size=40){
-  if(!rankObj)rankObj=ALL_RANKS[0];
-  const c=rankObj.color, g=rankObj.glow, name=rankObj.name, roman=rankObj.roman;
-  const s=size, h=size, cx=size/2, cy=size/2;
-  // Shield path scaled to size
-  const pct=s/40; // scale factor
-  const shield=`M${cx},${2*pct} L${s-4*pct},${10*pct} L${s-2*pct},${28*pct} Q${s-2*pct},${s-4*pct} ${cx},${s-2*pct} Q${2*pct},${s-4*pct} ${2*pct},${28*pct} L${4*pct},${10*pct} Z`;
+  if(!rankObj) rankObj=ALL_RANKS[0];
+  const {name, roman, color} = rankObj;
+  const tierIdx = TIER_NAMES.indexOf(name);
+  const s = size;
+  const cx = s/2;
 
-  // Metallic gradient stops by tier
-  const gradStops={
-    Bronze:`<stop offset="0%" stop-color="#8B4513"/><stop offset="40%" stop-color="#cd7f32"/><stop offset="70%" stop-color="#e8a84a"/><stop offset="100%" stop-color="#8B4513"/>`,
-    Silver:`<stop offset="0%" stop-color="#606060"/><stop offset="40%" stop-color="#c0c0c0"/><stop offset="70%" stop-color="#e0e0e0"/><stop offset="100%" stop-color="#707070"/>`,
-    Gold:`<stop offset="0%" stop-color="#7a5800"/><stop offset="40%" stop-color="#d4a800"/><stop offset="70%" stop-color="#f0d060"/><stop offset="100%" stop-color="#8a6200"/>`,
-    Platinum:`<stop offset="0%" stop-color="#1a6060"/><stop offset="40%" stop-color="#3ab8b8"/><stop offset="70%" stop-color="#70e0e0"/><stop offset="100%" stop-color="#1a7070"/>`,
-    Diamond:`<stop offset="0%" stop-color="#4a1880"/><stop offset="40%" stop-color="#9040d0"/><stop offset="70%" stop-color="#c080f0"/><stop offset="100%" stop-color="#4a1880"/>`,
-    Champion:`<stop offset="0%" stop-color="#102080"/><stop offset="40%" stop-color="#2860d0"/><stop offset="70%" stop-color="#60a0f8"/><stop offset="100%" stop-color="#102080"/>`,
-    Titan:`<stop offset="0%" stop-color="#600808"/><stop offset="40%" stop-color="#c82020"/><stop offset="70%" stop-color="#f05050"/><stop offset="100%" stop-color="#600808"/>`,
-    Olympian:`<stop offset="0%" stop-color="#603000"/><stop offset="40%" stop-color="#d08000"/><stop offset="70%" stop-color="#f8c040"/><stop offset="100%" stop-color="#603000"/>`,
+  const GRAD = {
+    Bronze:   ['#2a1000','#a05c20','#e8a050','#6a3010'],
+    Silver:   ['#1a1a1a','#808080','#d8d8d8','#484848'],
+    Gold:     ['#2a1c00','#b07800','#f0cc30','#684800'],
+    Platinum: ['#001c1c','#189090','#50d8d8','#004848'],
+    Diamond:  ['#0e0020','#6010a8','#b050e8','#300060'],
+    Champion: ['#000c28','#1030a0','#3060e0','#001850'],
+    Titan:    ['#1a0000','#880808','#e03030','#400000'],
+    Olympian: ['#1c0c00','#906000','#e8b010','#503000'],
   };
+  const [dark, mid, light, sdw] = GRAD[name] ?? GRAD.Bronze;
 
-  // Wings for Diamond+ tiers
-  const tierIdx=TIER_NAMES.indexOf(name);
-  const hasWings=tierIdx>=4;
-  const wingColor=c;
-  const leftWing=hasWings?`<path d="M${3*pct},${18*pct} Q${-4*pct},${12*pct} ${-2*pct},${24*pct} Q${0*pct},${28*pct} ${4*pct},${26*pct}" fill="${wingColor}" opacity="0.6" stroke="${c}" stroke-width="0.5"/>`:'';
-  const rightWing=hasWings?`<path d="M${(s-3)*pct},${18*pct} Q${(s+4)*pct},${12*pct} ${(s+2)*pct},${24*pct} Q${s*pct},${28*pct} ${(s-4)*pct},${26*pct}" fill="${wingColor}" opacity="0.6" stroke="${c}" stroke-width="0.5"/>`:'';
+  // Sharp Valorant-style angular badge
+  // Flat top, angled sides, pointed bottom
+  const pad = s * 0.06;
+  const W = s - pad*2;
+  const H = s;
+  const ox = pad;
+  const oy = 0;
+  const topCut = W * 0.18;
+  const sideCut = H * 0.14;
 
-  // Crown for Titan/Olympian
-  const hasCrown=tierIdx>=6;
-  const crown=hasCrown?`<path d="M${cx-5*pct},${5*pct} L${cx-3*pct},${2*pct} L${cx},${4*pct} L${cx+3*pct},${2*pct} L${cx+5*pct},${5*pct}" fill="none" stroke="${c}" stroke-width="${1.2*pct}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`:'';
+  // Main polygon points
+  const mainPts = [
+    `${(ox+topCut).toFixed(1)},${oy}`,
+    `${(ox+W-topCut).toFixed(1)},${oy}`,
+    `${(ox+W).toFixed(1)},${(oy+sideCut).toFixed(1)}`,
+    `${(ox+W).toFixed(1)},${(oy+H*0.58).toFixed(1)}`,
+    `${(ox+W*0.5).toFixed(1)},${(oy+H).toFixed(1)}`,
+    `${ox.toFixed(1)},${(oy+H*0.58).toFixed(1)}`,
+    `${ox.toFixed(1)},${(oy+sideCut).toFixed(1)}`,
+  ].join(' ');
 
-  const nameSize=Math.max(6,Math.round(6*pct));
-  const romanSize=Math.max(5,Math.round(5*pct));
-  const idSuffix=`${name}${roman}${size}`;
+  const ip = s * 0.07;
+  const innerPts = [
+    `${(ox+topCut+ip).toFixed(1)},${(oy+ip).toFixed(1)}`,
+    `${(ox+W-topCut-ip).toFixed(1)},${(oy+ip).toFixed(1)}`,
+    `${(ox+W-ip).toFixed(1)},${(oy+sideCut+ip).toFixed(1)}`,
+    `${(ox+W-ip).toFixed(1)},${(oy+H*0.58-ip*0.3).toFixed(1)}`,
+    `${(ox+W*0.5).toFixed(1)},${(oy+H-ip*1.5).toFixed(1)}`,
+    `${(ox+ip).toFixed(1)},${(oy+H*0.58-ip*0.3).toFixed(1)}`,
+    `${(ox+ip).toFixed(1)},${(oy+sideCut+ip).toFixed(1)}`,
+  ].join(' ');
 
-  return `<svg width="${s+12*pct}" height="${s+4*pct}" viewBox="${-6*pct} ${-2*pct} ${s+12*pct} ${s+4*pct}" xmlns="http://www.w3.org/2000/svg">
+  // Horizontal divider line
+  const divY = (oy + H*0.42).toFixed(1);
+  const divX1 = (ox + ip*1.2).toFixed(1);
+  const divX2 = (ox + W - ip*1.2).toFixed(1);
+
+  // Wings for Diamond+ (angular, not curved)
+  const hasWings = tierIdx >= 4;
+  const wingSize = s * 0.18;
+  const wY = oy + H * 0.38;
+  const wings = hasWings ? `
+    <polygon points="${(ox-2).toFixed(1)},${(wY).toFixed(1)} ${(ox-wingSize).toFixed(1)},${(wY+wingSize*0.4).toFixed(1)} ${(ox-2).toFixed(1)},${(wY+wingSize*0.8).toFixed(1)}"
+      fill="${color}" opacity="0.55" stroke="${color}" stroke-width="0.5"/>
+    <polygon points="${(ox+W+2).toFixed(1)},${(wY).toFixed(1)} ${(ox+W+wingSize).toFixed(1)},${(wY+wingSize*0.4).toFixed(1)} ${(ox+W+2).toFixed(1)},${(wY+wingSize*0.8).toFixed(1)}"
+      fill="${color}" opacity="0.55" stroke="${color}" stroke-width="0.5"/>` : '';
+
+  // Crown for Titan/Olympian — 3 angular spikes above badge
+  const hasCrown = tierIdx >= 6;
+  const crownPts = [
+    `${(ox+W*0.32).toFixed(1)},${oy}`,
+    `${(ox+W*0.38).toFixed(1)},${(oy-s*0.14).toFixed(1)}`,
+    `${(ox+W*0.5).toFixed(1)},${(oy-s*0.08).toFixed(1)}`,
+    `${(ox+W*0.62).toFixed(1)},${(oy-s*0.14).toFixed(1)}`,
+    `${(ox+W*0.68).toFixed(1)},${oy}`,
+  ].join(' ');
+  const crown = hasCrown ? `<polyline points="${crownPts}" fill="none" stroke="${color}" stroke-width="${(s*0.04).toFixed(1)}" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>` : '';
+
+  // Accent tick marks (Platinum+)
+  const hasAccent = tierIdx >= 3;
+  const accent = hasAccent ? `
+    <line x1="${(ox+W*0.3).toFixed(1)}" y1="${(oy+ip*1.2).toFixed(1)}" x2="${(ox+W*0.5).toFixed(1)}" y2="${(oy+ip*0.4).toFixed(1)}" stroke="${light}" stroke-width="0.8" opacity="0.5"/>
+    <line x1="${(ox+W*0.7).toFixed(1)}" y1="${(oy+ip*1.2).toFixed(1)}" x2="${(ox+W*0.5).toFixed(1)}" y2="${(oy+ip*0.4).toFixed(1)}" stroke="${light}" stroke-width="0.8" opacity="0.5"/>` : '';
+
+  const nfs = Math.max(7, (s*0.185)).toFixed(1);
+  const rfs = Math.max(5, (s*0.13)).toFixed(1);
+  const textCX = (ox + W*0.5).toFixed(1);
+  const textY1 = (oy + H*0.43).toFixed(1);
+  const textY2 = (oy + H*0.62).toFixed(1);
+  const uid = name+roman+Math.round(s);
+
+  return `<svg width="${(s+wingSize*2+4).toFixed(0)}" height="${(s + (hasCrown?s*0.18:0) + 2).toFixed(0)}"
+    viewBox="${(-wingSize-2).toFixed(1)} ${(hasCrown?-s*0.18:0).toFixed(1)} ${(s+wingSize*2+4).toFixed(0)} ${(s+(hasCrown?s*0.18:0)+2).toFixed(0)}"
+    xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="mg${idSuffix}" x1="0%" y1="0%" x2="100%" y2="100%">${gradStops[name]??gradStops.Bronze}</linearGradient>
-      <filter id="gf${idSuffix}"><feGaussianBlur stdDeviation="${2*pct}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="glow${idSuffix}"><feGaussianBlur stdDeviation="${3*pct}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <linearGradient id="mg${uid}" x1="15%" y1="0%" x2="85%" y2="100%">
+        <stop offset="0%"   stop-color="${dark}"/>
+        <stop offset="40%"  stop-color="${mid}"/>
+        <stop offset="72%"  stop-color="${light}"/>
+        <stop offset="100%" stop-color="${sdw}"/>
+      </linearGradient>
+      <linearGradient id="sh${uid}" x1="0%" y1="0%" x2="50%" y2="80%">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+      </linearGradient>
+      <filter id="dr${uid}">
+        <feDropShadow dx="0" dy="${(s*0.05).toFixed(1)}" stdDeviation="${(s*0.07).toFixed(1)}"
+          flood-color="${color}" flood-opacity="0.55"/>
+      </filter>
+      <filter id="gl${uid}">
+        <feGaussianBlur stdDeviation="${(s*0.07).toFixed(1)}" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
     </defs>
-    <!-- Glow layer -->
-    <path d="${shield}" fill="${c}" opacity="0.15" filter="url(#glow${idSuffix})"/>
-    <!-- Wings -->
-    ${leftWing}${rightWing}
-    <!-- Shield body -->
-    <path d="${shield}" fill="url(#mg${idSuffix})" stroke="${c}" stroke-width="${1.2*pct}"/>
-    <!-- Inner border -->
-    <path d="M${cx},${5*pct} L${s-7*pct},${12*pct} L${s-5*pct},${27*pct} Q${s-5*pct},${s-7*pct} ${cx},${s-5*pct} Q${5*pct},${s-7*pct} ${5*pct},${27*pct} L${7*pct},${12*pct} Z" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="${0.7*pct}"/>
-    <!-- Shine streak -->
-    <path d="M${cx-5*pct},${6*pct} L${cx+2*pct},${6*pct} L${cx-2*pct},${18*pct} L${cx-9*pct},${18*pct} Z" fill="rgba(255,255,255,0.12)"/>
+
+    <!-- Glow halo -->
+    <polygon points="${mainPts}" fill="${color}" opacity="0.14" filter="url(#gl${uid})"/>
+
     <!-- Crown -->
     ${crown}
+
+    <!-- Wings -->
+    ${wings}
+
+    <!-- Main badge body -->
+    <polygon points="${mainPts}" fill="url(#mg${uid})" stroke="${color}" stroke-width="${(s*0.035).toFixed(1)}" filter="url(#dr${uid})"/>
+
+    <!-- Inner border -->
+    <polygon points="${innerPts}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.7"/>
+
+    <!-- Top shine -->
+    <polygon points="${mainPts}" fill="url(#sh${uid})"/>
+
+    <!-- Horizontal divider -->
+    <line x1="${divX1}" y1="${divY}" x2="${divX2}" y2="${divY}" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
+
+    <!-- Accent -->
+    ${accent}
+
     <!-- Rank name -->
-    <text x="${cx}" y="${cy-1*pct}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Bebas Neue',sans-serif" font-size="${nameSize}" font-weight="700"
-      fill="rgba(255,255,255,0.95)" filter="url(#gf${idSuffix})">${name.toUpperCase()}</text>
+    <text x="${textCX}" y="${textY1}" text-anchor="middle" dominant-baseline="middle"
+      font-family="'Bebas Neue',sans-serif" font-size="${nfs}" letter-spacing="0.8"
+      fill="rgba(255,255,255,0.95)" filter="url(#gl${uid})">${name.toUpperCase()}</text>
+
     <!-- Roman numeral -->
-    <text x="${cx}" y="${cy+nameSize*0.8}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Inter',sans-serif" font-size="${romanSize}" font-weight="700"
-      fill="rgba(255,255,255,0.7)">${roman}</text>
+    <text x="${textCX}" y="${textY2}" text-anchor="middle" dominant-baseline="middle"
+      font-family="'Inter',sans-serif" font-size="${rfs}" font-weight="700" letter-spacing="2"
+      fill="rgba(255,255,255,0.6)">${roman}</text>
   </svg>`;
 }
 
@@ -320,9 +413,9 @@ function badgeHTML(rankObj,size=38){
   return `<div class="badge-wrap">${badgeSVG(rankObj,size)}</div>`;
 }
 
-/* ════════════════════════════
+/* 
    BODY SILHOUETTE — image-based
-   ════════════════════════════ */
+    */
 let silView='front';
 
 function buildSilhouette(bodyStats){
@@ -469,9 +562,9 @@ function buildSilhouette(bodyStats){
   </div>`;
 }
 
-/* ════════════════════════════
+/* 
    STATE & DATA
-   ════════════════════════════ */
+    */
 let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null};
 let currentTab='home';
 let selectedMuscle=null;
@@ -518,9 +611,9 @@ function triggerRankUp(name,ro){
 }
 function closeRankup(){document.getElementById('rankupOverlay').classList.remove('visible');}
 
-/* ════════════════════════════
+/* 
    LOADERS
-   ════════════════════════════ */
+    */
 async function loadStats(){try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}catch(e){setError('Stats: '+e.message);}}
 async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){console.error(e);}}
 async function loadTasks(){
@@ -561,20 +654,20 @@ function switchTab(tab,btn){
 
 function getRivalFor(name){return state.rivals.find(r=>r.bodyPart?.toLowerCase()===name.toLowerCase())??null;}
 
-/* ════════════════════════════
+/* 
    RENDERERS
-   ════════════════════════════ */
+    */
 function renderHome(){
   const s=state.streaks;
-  const bodyStats=state.stats.filter(x=>x.cat==='Body');
+  const bodyStats=state.stats.filter(x=>x.cat==='Body'&&x.name!=='Rest');
 
   document.getElementById('tab-home').innerHTML=`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,var(--gold-dim),var(--gold))"></div><span class="streak-icon">🔥</span><div class="streak-number" style="color:var(--gold)">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,#1a3060,#3060c0)"></div><span class="streak-icon">🧠</span><div class="streak-number" style="color:#4a80d8">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,#1a1060,#5040c0)"></div><span class="streak-icon">🌙</span><div class="streak-number" style="color:#7060d0">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
-      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,var(--green),var(--green-hi))"></div><span class="streak-icon">⚔️</span><div class="streak-number" style="color:var(--green-hi)">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
+      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,var(--gold-dim),var(--gold))"></div><div class="streak-ico fire-ico"></div><div class="streak-number" style="color:var(--gold)">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
+      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,#1a3060,#3060c0)"></div><div class="streak-ico mind-ico"></div><div class="streak-number" style="color:#4a80d8">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
+      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,#1a1060,#5040c0)"></div><div class="streak-ico sleep-ico"></div><div class="streak-number" style="color:#7060d0">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
+      <div class="streak-card"><div class="streak-top-bar" style="background:linear-gradient(90deg,var(--green),var(--green-hi))"></div><div class="streak-ico quest-ico"></div><div class="streak-number" style="color:var(--green-hi)">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
     </div>
     ${bodyStats.length?`<div class="section-label">Body</div><div class="muscle-grid">${bodyStats.map(stat=>{
       const parsed=parseRankStr(stat.rankStr);
@@ -589,7 +682,7 @@ function renderHome(){
         <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
         <div class="muscle-of">of ${r.full}</div>
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
-        ${gap!==null?`<div class="muscle-vs" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)} vs 影</div>`:''}
+        ${gap!==null?`<div class="muscle-vs" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'':isBehind?'':'='} ${Math.abs(gap)} vs </div>`:''}
       </div>`;}).join('')}</div>`:''}`;
 }
 
@@ -604,8 +697,8 @@ function renderTasks(){
   state.templates.forEach(t=>{const c=t.cat??'Other';if(!tGroups[c])tGroups[c]=[];tGroups[c].push(t);});
 
   let html=`<div class="action-row">
-    <button class="action-btn gold-btn" onclick="addDailyLog()"><span class="action-btn-icon">📅</span>Daily Log</button>
-    <button class="action-btn" onclick="addWorkout()"><span class="action-btn-icon">🏋️</span>Workout</button>
+    <button class="action-btn gold-btn" onclick="addDailyLog()"><span class="action-btn-icon"></span>Daily Log</button>
+    <button class="action-btn" onclick="addWorkout()"><span class="action-btn-icon"></span>Workout</button>
   </div>`;
 
   // Quick add
@@ -652,15 +745,15 @@ function taskHTML(task,today){
   const overdue=task.dueDate&&new Date(task.dueDate)<today;
   const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
   const diff=task.difficulty;
-  const isQ=task.isQuest===true||task.isQuest==='🔥 QUEST';
+  const isQ=task.isQuest===true||task.isQuest===' QUEST';
   return `<div class="task-item ${task.status?'done':''} ${isQ?'is-quest':''}" id="task-${task.id}">
-    <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'✓':''}</div>
+    <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'':''}</div>
     <div class="task-body">
       <div class="task-name">${task.name||'Unnamed'}</div>
       <div class="task-tags">
-        ${isQ?'<span class="quest-tag">⚔ QUEST</span>':''}
+        ${isQ?'<span class="quest-tag"> QUEST</span>':''}
         ${diff?`<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>`:''}
-        ${dueStr?`<span class="task-due ${overdue?'overdue':''}">${overdue?'⚠ ':''}${dueStr}</span>`:''}
+        ${dueStr?`<span class="task-due ${overdue?'overdue':''}">${overdue?' ':''}${dueStr}</span>`:''}
       </div>
     </div>
   </div>`;
@@ -705,7 +798,7 @@ function renderStats(){
       <div class="detail-stats">
         <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
         <div class="detail-stat-div"></div>
-        <div class="detail-stat"><div class="detail-stat-label">vs 影</div><div class="detail-stat-val" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'▲':'▼')+Math.abs(gap):'—'}</div></div>
+        <div class="detail-stat"><div class="detail-stat-label">vs </div><div class="detail-stat-val" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'':'')+Math.abs(gap):'—'}</div></div>
         <div class="detail-stat-div"></div>
         <div class="detail-stat"><div class="detail-stat-label">Last</div><div class="detail-stat-val" style="color:var(--text-dim);font-size:10px">${lastStr}</div></div>
       </div>
@@ -728,7 +821,7 @@ function renderStats(){
       <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
       <div class="muscle-of">of ${r.full}</div>
       <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
-      ${gap!==null?`<div class="muscle-vs" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)}</div>`:''}
+      ${gap!==null?`<div class="muscle-vs" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'':isBehind?'':'='} ${Math.abs(gap)}</div>`:''}
     </div>`;
   });
   html+='</div>';
@@ -743,15 +836,15 @@ function selectMuscle(id,name){
 }
 function setSilView(v){silView=v;renderStats();}
 
-/* ════════════════════════════
+/* 
    ACTIONS
-   ════════════════════════════ */
+    */
 async function toggleTask(taskId,current){
   const next=!current;
   state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:next}:t);renderTasks();
   try{
     await nPatch(taskId,{Status:{checkbox:next}});
-    showToast(next?'✓ Done':'Reopened');
+    showToast(next?' Done':'Reopened');
     if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
   }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:current}:t);renderTasks();showToast('Update failed');}
 }
@@ -770,20 +863,20 @@ async function quickAdd(tid,name,cat,type){
     await nCreate(DB.tasks,{Task:{title:[{text:{content:name}}]},...(cat?{Cat:{select:{name:cat}}}:{}),
       ...(type==='Daily'?{Difficulty:{select:{name:'Daily'}}}:type==='Weekly'?{Difficulty:{select:{name:'Heavy'}}}:{}),
       Status:{checkbox:false},'Due Date':{date:{start:today}}});
-    showToast(`✓ ${name}`);await loadTasks();renderTasks();
+    showToast(` ${name}`);await loadTasks();renderTasks();
   }catch(e){showToast('Failed');}
 }
 
-/* ════════════════════════════
+/* 
    DAILY LOG BUTTON
    Mimics Notion automation:
    1. Create Daily Log entry for today
    2. Find today's tasks (Due Date = today)
    3. Set their "Daily log" relation to the new entry
-   ════════════════════════════ */
+    */
 async function addDailyLog(){
   const btn=document.querySelector('.action-btn.gold-btn');
-  if(btn){btn.disabled=true;btn.querySelector('.action-btn-icon').textContent='⏳';}
+  if(btn){btn.disabled=true;btn.querySelector('.action-btn-icon').textContent='…';}
   const today=new Date().toISOString().split('T')[0];
   const todayLabel=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 
@@ -830,12 +923,12 @@ async function addDailyLog(){
       'Daily log':{relation:[{id:logId}]},
     })));
 
-    showToast(`📅 Log created · ${uniqueIds.length} tasks linked`,3500);
+    showToast(`Log created · ${uniqueIds.length} tasks linked`,3500);
     await loadTasks();renderTasks();
   }catch(e){
     showToast('Failed: '+e.message);
   }
-  if(btn){btn.disabled=false;btn.querySelector('.action-btn-icon').textContent='📅';}
+  if(btn){btn.disabled=false;btn.querySelector('.action-btn-icon').textContent='';}
 }
 
 async function addWorkout(){
