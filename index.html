@@ -216,7 +216,6 @@ const DB={
   tasks:    '34163a0b4e7c81a5a8aefb94b96a6b36',
   templates:'34163a0b4e7c81a08eefdcd464d0a5a6',
   dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
-  streaks:  '35163a0b4e7c80eba737000b27f75c5f',
 };
 
 /* 
@@ -543,15 +542,22 @@ async function loadTasks(){
 async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){console.error(e);}}
 async function loadStreaks(){
   try{
-    // Query the Streaks database — single row with all streak counts
-    const pages=await nQuery(DB.streaks);
+    // Get today's Daily Log entry — streaks are formula properties on it
+    const today=new Date().toISOString().split('T')[0];
+    let pages=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
+    // Fallback to most recent entry if today's not created yet
+    if(!pages.length) pages=await nQuery(DB.dailyLog,undefined,[{property:'Date',direction:'descending'}]);
     if(pages.length){
       const q=pages[0].properties;
+      const fw=g.formula(q['Workout streak']);
+      const fm=g.formula(q['Mind streak']);
+      const fs=g.formula(q['Sleep streak']);
+      const fq=g.formula(q['Quest Perfect Day']);
       state.streaks={
-        workout: g.formula(q['Work streak'])  ?? 0,
-        mind:    g.formula(q['Mind streak'])  ?? 0,
-        sleep:   g.formula(q['Sleep streak']) ?? 0,
-        quest:   g.formula(q['Quest streak']) ?? 0,
+        workout: typeof fw==='number'?fw:0,
+        mind:    typeof fm==='number'?fm:0,
+        sleep:   typeof fs==='number'?fs:0,
+        quest:   typeof fq==='number'?fq:(fq===true?1:0),
       };
     }
   }catch(e){setError('Streaks: '+e.message);}
