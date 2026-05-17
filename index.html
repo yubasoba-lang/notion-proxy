@@ -447,6 +447,7 @@ let silView='front';
 function buildSilhouette(bodyStats){
   const statMap={};
   bodyStats.forEach(s=>{statMap[s.name.toLowerCase()]=s;});
+  console.log('statMap sample:', Object.values(statMap).slice(0,2).map(s=>({name:s.name,di:s.daysInactive,rank:s.rankStr})));
   const today=new Date();
 
   function isActive(name){
@@ -654,7 +655,7 @@ const g={
   num:v=>typeof v?.number==="number"?v.number:null
 };
 
-const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalXP:g.formula(q['Final XP'])??0,rankStr:g.formula(q.Rank)??'',rivalGap:g.rollup(q['Rival Gap']),rivalXP:g.rollup(q['Rival XP'])??0,lastTrained:g.rollup(q['Last day trained']),daysInactive:g.num(q['Days inactive']),cat:g.select(q.Cat)};};
+const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalXP:g.formula(q['Final XP'])??0,rankStr:g.formula(q.Rank)??'',rivalGap:g.rollup(q['Rival Gap']),rivalXP:g.rollup(q['Rival XP'])??0,lastTrained:g.rollup(q['Last day trained']),daysInactive:g.formula(q['Days inactive'])??g.num(q['Days inactive']),cat:g.select(q.Cat)};};
 const toRival=p=>{const q=p.properties;return{id:p.id,bodyPart:g.select(q['Body Part']),totalXP:g.formula(q['Total XP'])??0,gapNumber:g.formula(q['Gap in numbers'])??0,myCurrentXP:g.rollup(q['My current XP'])??0};};
 const toTask=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Task),cat:g.select(q.Cat),difficulty:g.select(q.Difficulty),status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),isQuest:g.formula(q['Is Quest'])??false};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
