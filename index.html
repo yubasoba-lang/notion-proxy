@@ -423,24 +423,22 @@ function buildSilhouette(bodyStats){
       ${active?`filter="url(#mglow)"`:''}/>`;
   }).join('');
 
-  // Label hotspots
-  const HS=16; // hotspot radius in image px
+  // Label hotspots — placed directly on muscle centers
+  const HS=18;
   const labels = hotspots.map(m=>{
     const name=m.name, active=isActive(name), col=rankColor(name)??(active?'#888':'#2a3050');
     const id=sid(name), sel=selectedMuscle===id, roman=getRoman(name);
-    // Offset label to not overlap the muscle — place to the left for front, right for back
-    const lx = silView==='front' ? m.cx - m.rx - HS - 4 : m.cx + m.rx + HS + 4;
-    const ly = m.cy;
+    const lx=m.cx, ly=m.cy;
     return `<g style="cursor:pointer;" onclick="selectMuscle('${id}','${name}')">
       <circle cx="${lx}" cy="${ly}" r="${HS}"
-        fill="rgba(7,8,16,0.88)" stroke="${active||sel?col:'#1c2035'}"
-        stroke-width="${sel?2.5:1.2}" ${active||sel?`filter="url(#mglow)"`:''}/>
-      <text x="${lx}" y="${ly-2}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Bebas Neue',sans-serif" font-size="9"
-        fill="${active?col:'#2a3050'}">${name.slice(0,4).toUpperCase()}</text>
-      <text x="${lx}" y="${ly+6}" text-anchor="middle" dominant-baseline="middle"
+        fill="rgba(7,8,16,0.85)" stroke="${active||sel?col:'#252a42'}"
+        stroke-width="${sel?2.5:1.5}" ${active||sel?`filter="url(#mglow)"`:''}/>
+      <text x="${lx}" y="${ly-3}" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Bebas Neue',sans-serif" font-size="10"
+        fill="${active?col:'#3a4060'}">${name.slice(0,4).toUpperCase()}</text>
+      <text x="${lx}" y="${ly+7}" text-anchor="middle" dominant-baseline="middle"
         font-family="'Inter',sans-serif" font-size="7" font-weight="700"
-        fill="${active?col+'bb':'#1c2035'}">${roman}</text>
+        fill="${active?col+'cc':'#252a42'}">${roman}</text>
     </g>`;
   }).join('');
 
@@ -788,6 +786,15 @@ async function addDailyLog(){
   if(btn){btn.disabled=true;btn.querySelector('.action-btn-icon').textContent='⏳';}
   const today=new Date().toISOString().split('T')[0];
   const todayLabel=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+
+  // The 4 daily tasks to create
+  const DAILY_TASKS=[
+    {name:'Meditate for 10 mins', cat:'Life', diff:'Daily'},
+    {name:'Journal',               cat:'Life', diff:'Daily'},
+    {name:'Clean Room',            cat:'Life', diff:'Daily'},
+    {name:'Read 30 mins',          cat:'Mind', diff:'Daily'},
+  ];
+
   try{
     // 1. Create Daily Log page
     const logPage=await nCreate(DB.dailyLog,{
@@ -796,21 +803,34 @@ async function addDailyLog(){
     });
     const logId=logPage.id;
 
-    // 2. Query tasks due today that aren't already logged
-    const todayTasks=await nQuery(DB.tasks,{and:[
-      {property:'Status',checkbox:{equals:false}},
+    // 2. Create the 4 daily tasks with today's date
+    const newTaskPages=await Promise.all(DAILY_TASKS.map(t=>nCreate(DB.tasks,{
+      Task:      {title:[{text:{content:t.name}}]},
+      Cat:       {select:{name:t.cat}},
+      Difficulty:{select:{name:t.diff}},
+      Status:    {checkbox:false},
+      'Due Date':{date:{start:today}},
+    })));
+
+    // 3. Query any existing tasks due today (not missed, not done)
+    const existingTasks=await nQuery(DB.tasks,{and:[
+      {property:'Status',   checkbox:{equals:false}},
       {property:'Missed check1',checkbox:{equals:false}},
-      {property:'Due Date',date:{equals:today}},
+      {property:'Due Date', date:{equals:today}},
     ]});
 
-    // 3. Assign each task's Daily log relation to the new log page
-    if(todayTasks.length){
-      await Promise.all(todayTasks.map(t=>nPatch(t.id,{
-        'Daily log':{relation:[{id:logId}]},
-      })));
-    }
+    // 4. Combine new + existing task IDs, link all to the daily log
+    const allIds=[
+      ...newTaskPages.map(p=>p.id),
+      ...existingTasks.map(t=>t.id),
+    ];
+    const uniqueIds=[...new Set(allIds)];
 
-    showToast(`📅 Log created · ${todayTasks.length} tasks linked`,3500);
+    await Promise.all(uniqueIds.map(id=>nPatch(id,{
+      'Daily log':{relation:[{id:logId}]},
+    })));
+
+    showToast(`📅 Log created · ${uniqueIds.length} tasks linked`,3500);
     await loadTasks();renderTasks();
   }catch(e){
     showToast('Failed: '+e.message);
