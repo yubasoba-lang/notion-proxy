@@ -208,7 +208,7 @@ const DB={
   rivals:   'f925bdca42f3428fa6f2c61594ae512a',
   tasks:    '34163a0b4e7c81a5a8aefb94b96a6b36',
   templates:'34163a0b4e7c81a08eefdcd464d0a5a6',
-  dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
+  dailyLog: '35063a0b4e7c8062826f000b18e5c8a1',
 };
 
 /* ════════════════════════════
@@ -321,10 +321,9 @@ function badgeHTML(rankObj,size=38){
 }
 
 /* ════════════════════════════
-   BODY SILHOUETTE SVG
-   (traced from anatomy image)
+   BODY SILHOUETTE — image-based
    ════════════════════════════ */
-let silView='front'; // 'front' | 'back'
+let silView='front';
 
 function buildSilhouette(bodyStats){
   const statMap={};
@@ -338,241 +337,150 @@ function buildSilhouette(bodyStats){
   }
   function rankColor(name){
     const s=statMap[name.toLowerCase()];
-    if(!s)return '#1c2035';
+    if(!s)return null;
     const r=parseRankStr(s.rankStr);
     return r?r.color:getRankFromXP(s.finalXP).rank.color;
   }
   function rankGlow(name){
     const s=statMap[name.toLowerCase()];
-    if(!s)return 'none';
+    if(!s)return null;
     const r=parseRankStr(s.rankStr);
     return r?r.glow:getRankFromXP(s.finalXP).rank.glow;
   }
   function sid(name){return statMap[name.toLowerCase()]?.id??'';}
+  function getRoman(name){
+    const s=statMap[name.toLowerCase()];
+    if(!s)return '';
+    const r=parseRankStr(s.rankStr)??getRankFromXP(s.finalXP??0).rank;
+    return r.roman;
+  }
 
-  // Helper: muscle region path
-  const mPath=(name,d,opacity=0.85)=>{
+  // Image is 600x900 approx, front figure left half, back right half
+  // We show only the relevant half based on silView
+  // Viewbox is 300x900 (one half)
+  // All coordinates below are relative to that half
+
+  // Muscle hit regions — ellipses/polygons placed over anatomy image
+  // Front figure coords (within left 300px of original ~600px wide image)
+  // Back figure coords offset by -300 from right half
+
+  const frontMuscles = [
+    // [name, cx%, cy%, rx%, ry%]  — % of the half-image dimensions (300w x 830h approx)
+    { name:'Chest',      shape:'ellipse', cx:50,  cy:24,  rx:16, ry:8  },
+    { name:'Core',       shape:'ellipse', cx:50,  cy:37,  rx:10, ry:10 },
+    { name:'Shoulder',   shape:'ellipse', cx:24,  cy:20,  rx:7,  ry:7  },
+    { name:'Shoulder',   shape:'ellipse', cx:76,  cy:20,  rx:7,  ry:7  },
+    { name:'Biceps',     shape:'ellipse', cx:18,  cy:31,  rx:5,  ry:8  },
+    { name:'Biceps',     shape:'ellipse', cx:82,  cy:31,  rx:5,  ry:8  },
+    { name:'Triceps',    shape:'ellipse', cx:15,  cy:31,  rx:4,  ry:7  },
+    { name:'Triceps',    shape:'ellipse', cx:85,  cy:31,  rx:4,  ry:7  },
+    { name:'Forearms',   shape:'ellipse', cx:13,  cy:43,  rx:4,  ry:7  },
+    { name:'Forearms',   shape:'ellipse', cx:87,  cy:43,  rx:4,  ry:7  },
+    { name:'Legs',       shape:'ellipse', cx:40,  cy:63,  rx:8,  ry:11 },
+    { name:'Legs',       shape:'ellipse', cx:60,  cy:63,  rx:8,  ry:11 },
+    { name:'Plyometrics',shape:'ellipse', cx:39,  cy:80,  rx:6,  ry:7  },
+    { name:'Plyometrics',shape:'ellipse', cx:61,  cy:80,  rx:6,  ry:7  },
+    { name:'Cardio',     shape:'ellipse', cx:50,  cy:20,  rx:6,  ry:5  },
+  ];
+
+  const backMuscles = [
+    { name:'Back',       shape:'ellipse', cx:50,  cy:26,  rx:16, ry:10 },
+    { name:'Shoulder',   shape:'ellipse', cx:24,  cy:19,  rx:7,  ry:7  },
+    { name:'Shoulder',   shape:'ellipse', cx:76,  cy:19,  rx:7,  ry:7  },
+    { name:'Triceps',    shape:'ellipse', cx:17,  cy:30,  rx:5,  ry:8  },
+    { name:'Triceps',    shape:'ellipse', cx:83,  cy:30,  rx:5,  ry:8  },
+    { name:'Biceps',     shape:'ellipse', cx:14,  cy:30,  rx:4,  ry:7  },
+    { name:'Biceps',     shape:'ellipse', cx:86,  cy:30,  rx:4,  ry:7  },
+    { name:'Forearms',   shape:'ellipse', cx:12,  cy:42,  rx:4,  ry:7  },
+    { name:'Forearms',   shape:'ellipse', cx:88,  cy:42,  rx:4,  ry:7  },
+    { name:'Legs',       shape:'ellipse', cx:40,  cy:64,  rx:8,  ry:10 },
+    { name:'Legs',       shape:'ellipse', cx:60,  cy:64,  rx:8,  ry:10 },
+    { name:'Plyometrics',shape:'ellipse', cx:39,  cy:81,  rx:6,  ry:7  },
+    { name:'Plyometrics',shape:'ellipse', cx:61,  cy:81,  rx:6,  ry:7  },
+  ];
+
+  const muscles = silView==='front' ? frontMuscles : backMuscles;
+  // Image: front is left 0-50%, back is right 50-100%
+  // We crop using viewBox on the SVG — image is shown full width but we shift
+  const imgOffsetX = silView==='front' ? 0 : -50; // percent shift
+
+  // Deduplicate muscle names for label rendering (only show one hotspot per muscle)
+  const seen={};
+  const hotspots=[];
+  muscles.forEach(m=>{
+    if(!seen[m.name]){
+      seen[m.name]=true;
+      hotspots.push(m);
+    }
+  });
+
+  // Build overlay ellipses
+  const W=300, H=860; // half-image virtual dimensions
+  const overlays = muscles.map(m=>{
+    const name=m.name;
     const active=isActive(name);
     const col=rankColor(name);
     const glw=rankGlow(name);
     const id=sid(name);
     const sel=selectedMuscle===id;
-    return `<path d="${d}"
-      fill="${active?col+'2a':'#12151e'}"
-      stroke="${active?col:'#1c2035'}"
-      stroke-width="${sel?2:active?1.2:0.6}"
-      opacity="${opacity}"
+    if(!col) return '';
+    const cx=m.cx/100*W, cy=m.cy/100*H, rx=m.rx/100*W, ry=m.ry/100*H;
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"
+      fill="${active?col:'transparent'}" opacity="${active?0.28:0}"
+      stroke="${active||sel?col:'transparent'}" stroke-width="${sel?2.5:1.5}"
       style="cursor:pointer;transition:all 0.3s;"
       onclick="selectMuscle('${id}','${name}')"
-      ${active&&!sel?`filter="url(#glow)"`:''}
-      ${sel?`filter="url(#glow2)"`:''}/>`;
-  };
+      ${active?`filter="url(#mglow)"`:''}/>`;
+  }).join('');
 
-  // Hotspot
-  const hotspot=(name,x,y)=>{
+  // Build label hotspots (one per unique muscle)
+  const labels = hotspots.map(m=>{
+    const name=m.name;
     const active=isActive(name);
-    const col=rankColor(name);
+    const col=rankColor(name)??(active?'#888':'#2a3050');
     const id=sid(name);
     const sel=selectedMuscle===id;
-    const s=statMap[name.toLowerCase()];
-    const r=parseRankStr(s?.rankStr)??getRankFromXP(s?.finalXP??0).rank;
+    const roman=getRoman(name);
+    const cx=m.cx/100*W, cy=m.cy/100*H;
     return `<g style="cursor:pointer;" onclick="selectMuscle('${id}','${name}')">
-      <circle cx="${x}" cy="${y}" r="13" fill="rgba(7,8,16,0.88)"
-        stroke="${active||sel?col:'#1c2035'}" stroke-width="${sel?2:1.2}"
-        ${active||sel?`filter="url(#glow)"`:''}/>
-      <text x="${x}" y="${y-2}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Bebas Neue',sans-serif" font-size="7" fill="${active?col:'#2a3050'}">${name.slice(0,4).toUpperCase()}</text>
-      <text x="${x}" y="${y+6}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Inter',sans-serif" font-size="5.5" font-weight="700" fill="${active?col+'bb':'#1c2035'}">${r.roman}</text>
+      <circle cx="${cx}" cy="${cy}" r="14"
+        fill="rgba(7,8,16,0.82)" stroke="${active||sel?col:'#1c2035'}"
+        stroke-width="${sel?2.5:1.2}"
+        ${active||sel?`filter="url(#mglow)"`:''}/>
+      <text x="${cx}" y="${cy-2.5}" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Bebas Neue',sans-serif" font-size="7.5"
+        fill="${active?col:'#2a3050'}">${name.slice(0,4).toUpperCase()}</text>
+      <text x="${cx}" y="${cy+5.5}" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Inter',sans-serif" font-size="6" font-weight="700"
+        fill="${active?col+'bb':'#1c2035'}">${roman}</text>
     </g>`;
-  };
+  }).join('');
 
-  if(silView==='front'){
-    // Front view — traced from anatomy reference
-    return `<svg viewBox="0 0 180 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:200px;display:block;margin:0 auto;">
+  // Image source — use the half we need via clipPath
+  const imgSrc='/anatomy.png';
+  // Original image roughly 600px wide — front is left half, back is right half
+  // We use the SVG image element with x offset and clip to show only one half
+
+  return `<div style="position:relative;width:100%;max-width:220px;margin:0 auto;">
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+      style="width:100%;display:block;">
       <defs>
-        <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow2"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="mglow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <clipPath id="halfClip"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath>
       </defs>
-      <!-- Outer body silhouette base -->
-      <path d="M60,10 Q90,4 120,10 Q130,14 128,28 Q136,30 140,40 Q148,50 144,65
-               Q152,68 158,80 Q166,95 160,115 Q154,130 144,138
-               L148,175 L152,210 L156,245 L154,285 L150,320 L148,355
-               Q145,368 136,370 Q126,372 122,360 L118,320 L112,280
-               Q108,268 90,268 Q72,268 68,280 L62,320 L58,360
-               Q54,372 44,370 Q34,368 32,355 L30,320 L26,285 L24,245
-               L28,210 L32,175 L36,138 Q26,130 20,115 Q14,95 22,80
-               Q28,68 36,65 Q32,50 40,40 Q44,30 52,28 Q50,14 60,10 Z"
-        fill="#0d0f1c" stroke="#1c2035" stroke-width="1.5"/>
-      <!-- Head -->
-      <ellipse cx="90" cy="22" rx="22" ry="20" fill="#0f1220" stroke="#1c2035" stroke-width="1.2"/>
-      <!-- Neck -->
-      <path d="M80,40 Q90,37 100,40 L102,54 Q90,52 78,54 Z" fill="#0f1220" stroke="#1c2035" stroke-width="1"/>
-      <!-- Trapezius -->
-      <path d="M62,55 Q90,50 118,55 L120,68 Q90,62 60,68 Z" fill="#10131e" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- SHOULDERS -->
-      ${mPath('Shoulder','M62,55 Q48,52 38,62 Q30,72 34,88 Q40,96 50,92 Q58,82 62,70 Z')}
-      ${mPath('Shoulder','M118,55 Q132,52 142,62 Q150,72 146,88 Q140,96 130,92 Q122,82 118,70 Z')}
-
-      <!-- CHEST (two pec masses) -->
-      ${mPath('Chest','M68,68 Q90,62 90,62 Q90,62 90,88 Q78,95 68,88 Z')}
-      ${mPath('Chest','M112,68 Q90,62 90,62 Q90,62 90,88 Q102,95 112,88 Z')}
-      <!-- chest center line -->
-      <line x1="90" y1="64" x2="90" y2="95" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- CORE / Abs (6 segments) -->
-      ${mPath('Core','M74,96 Q90,92 90,92 L90,116 Q82,118 74,114 Z')}
-      ${mPath('Core','M106,96 Q90,92 90,92 L90,116 Q98,118 106,114 Z')}
-      ${mPath('Core','M76,116 Q90,114 90,114 L90,132 Q82,134 76,130 Z')}
-      ${mPath('Core','M104,116 Q90,114 90,114 L90,132 Q98,134 104,130 Z')}
-      ${mPath('Core','M78,132 Q90,130 90,130 L90,148 Q83,150 78,146 Z')}
-      ${mPath('Core','M102,132 Q90,130 90,130 L90,148 Q97,150 102,146 Z')}
-      <!-- linea alba -->
-      <line x1="90" y1="96" x2="90" y2="150" stroke="#1c2035" stroke-width="0.7"/>
-
-      <!-- BICEPS -->
-      ${mPath('Biceps','M36,90 Q28,100 26,118 Q24,134 30,145 L42,140 L46,118 L46,94 Z')}
-      ${mPath('Biceps','M144,90 Q152,100 154,118 Q156,134 150,145 L138,140 L134,118 L134,94 Z')}
-
-      <!-- TRICEPS (visible side) -->
-      ${mPath('Triceps','M38,92 Q30,105 28,125 L30,145 L38,140 L42,120 L44,95 Z',0.6)}
-      ${mPath('Triceps','M142,92 Q150,105 152,125 L150,145 L142,140 L138,120 L136,95 Z',0.6)}
-
-      <!-- FOREARMS -->
-      ${mPath('Forearms','M30,145 Q22,162 24,186 L38,186 L44,165 L42,142 Z')}
-      ${mPath('Forearms','M150,145 Q158,162 156,186 L142,186 L136,165 L138,142 Z')}
-
-      <!-- Hands -->
-      <ellipse cx="28" cy="196" rx="10" ry="13" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-      <ellipse cx="152" cy="196" rx="10" ry="13" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-
-      <!-- Hip/oblique area -->
-      <path d="M60,150 Q56,165 56,178 L124,178 Q124,165 120,150 Q90,160 60,150 Z" fill="#10131e" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- LEGS — quads -->
-      ${mPath('Legs','M56,178 Q46,210 48,256 L74,256 Q78,210 80,178 Z')}
-      ${mPath('Legs','M124,178 Q134,210 132,256 L106,256 Q102,210 100,178 Z')}
-      <!-- quad inner line -->
-      <path d="M62,185 Q66,220 68,255" fill="none" stroke="#1c2035" stroke-width="0.7"/>
-      <path d="M118,185 Q114,220 112,255" fill="none" stroke="#1c2035" stroke-width="0.7"/>
-
-      <!-- Knees -->
-      <ellipse cx="61" cy="260" rx="14" ry="8" fill="#0f1220" stroke="#1c2035" stroke-width="0.8"/>
-      <ellipse cx="119" cy="260" rx="14" ry="8" fill="#0f1220" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- Lower legs -->
-      <path d="M48,265 Q44,296 46,325 L72,325 Q74,296 76,265 Z" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-      <path d="M132,265 Q136,296 134,325 L108,325 Q106,296 104,265 Z" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-
-      <!-- PLYOMETRICS — calves -->
-      ${mPath('Plyometrics','M48,266 Q43,290 45,318 L60,318 L64,288 L62,265 Z')}
-      ${mPath('Plyometrics','M132,266 Q137,290 135,318 L120,318 L116,288 L118,265 Z')}
-
-      <!-- Feet -->
-      <ellipse cx="58" cy="332" rx="16" ry="9" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-      <ellipse cx="122" cy="332" rx="16" ry="9" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-
-      <!-- CARDIO indicator (heart zone) -->
-      ${mPath('Cardio','M78,70 Q82,64 90,68 Q98,64 102,70 Q100,80 90,86 Q80,80 78,70',0.7)}
-
-      <!-- Hotspots -->
-      ${hotspot('Chest',90,78)}
-      ${hotspot('Core',90,124)}
-      ${hotspot('Shoulder',38,76)}
-      ${hotspot('Biceps',28,118)}
-      ${hotspot('Triceps',150,118)}
-      ${hotspot('Forearms',26,168)}
-      ${hotspot('Legs',62,218)}
-      ${hotspot('Plyometrics',46,294)}
-      ${hotspot('Cardio',114,76)}
-    </svg>`;
-  } else {
-    // Back view
-    return `<svg viewBox="0 0 180 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:200px;display:block;margin:0 auto;">
-      <defs>
-        <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow2"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <!-- Body outline back -->
-      <path d="M60,10 Q90,4 120,10 Q130,14 128,28 Q136,30 140,40 Q148,50 144,65
-               Q152,68 158,80 Q166,95 160,115 Q154,130 144,138
-               L148,175 L152,210 L156,245 L154,285 L150,320 L148,355
-               Q145,368 136,370 Q126,372 122,360 L118,320 L112,280
-               Q108,268 90,268 Q72,268 68,280 L62,320 L58,360
-               Q54,372 44,370 Q34,368 32,355 L30,320 L26,285 L24,245
-               L28,210 L32,175 L36,138 Q26,130 20,115 Q14,95 22,80
-               Q28,68 36,65 Q32,50 40,40 Q44,30 52,28 Q50,14 60,10 Z"
-        fill="#0d0f1c" stroke="#1c2035" stroke-width="1.5"/>
-      <!-- Head back -->
-      <ellipse cx="90" cy="22" rx="22" ry="20" fill="#0f1220" stroke="#1c2035" stroke-width="1.2"/>
-      <!-- Neck back -->
-      <path d="M80,40 Q90,38 100,40 L100,54 Q90,52 80,54 Z" fill="#0f1220" stroke="#1c2035" stroke-width="1"/>
-
-      <!-- BACK — trapezius upper -->
-      ${mPath('Back','M62,55 Q90,48 118,55 L116,78 Q90,72 64,78 Z')}
-      <!-- BACK — lat left -->
-      ${mPath('Back','M64,78 Q52,90 50,128 Q52,148 62,155 L72,140 Q68,120 70,95 Z')}
-      <!-- BACK — lat right -->
-      ${mPath('Back','M116,78 Q128,90 130,128 Q128,148 118,155 L108,140 Q112,120 110,95 Z')}
-      <!-- BACK — lower back -->
-      ${mPath('Back','M70,150 Q90,158 110,150 L112,178 Q90,185 68,178 Z')}
-      <!-- Spine line -->
-      <line x1="90" y1="55" x2="90" y2="178" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- SHOULDERS back -->
-      ${mPath('Shoulder','M62,55 Q48,52 38,62 Q30,72 34,88 Q40,96 50,92 Q58,82 62,70 Z')}
-      ${mPath('Shoulder','M118,55 Q132,52 142,62 Q150,72 146,88 Q140,96 130,92 Q122,82 118,70 Z')}
-
-      <!-- TRICEPS back (more visible) -->
-      ${mPath('Triceps','M36,90 Q26,106 26,128 L30,148 L42,142 L46,118 L44,95 Z')}
-      ${mPath('Triceps','M144,90 Q154,106 154,128 L150,148 L138,142 L134,118 L136,95 Z')}
-
-      <!-- BICEPS back (partially visible) -->
-      ${mPath('Biceps','M38,92 Q30,108 30,128 L38,138 L44,120 L46,96 Z',0.5)}
-      ${mPath('Biceps','M142,92 Q150,108 150,128 L142,138 L136,120 L134,96 Z',0.5)}
-
-      <!-- FOREARMS back -->
-      ${mPath('Forearms','M30,148 Q22,165 24,186 L38,186 L44,166 L40,145 Z')}
-      ${mPath('Forearms','M150,148 Q158,165 156,186 L142,186 L136,166 L140,145 Z')}
-
-      <!-- Hands -->
-      <ellipse cx="28" cy="196" rx="10" ry="13" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-      <ellipse cx="152" cy="196" rx="10" ry="13" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-
-      <!-- Glutes -->
-      <path d="M56,178 Q56,200 60,210 Q75,220 90,220 Q105,220 120,210 Q124,200 124,178 Z" fill="#10131e" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- LEGS back — hamstrings -->
-      ${mPath('Legs','M56,212 Q46,242 48,270 L74,270 Q76,242 78,212 Z')}
-      ${mPath('Legs','M124,212 Q134,242 132,270 L106,270 Q104,242 102,212 Z')}
-
-      <!-- Knees back -->
-      <ellipse cx="61" cy="272" rx="14" ry="7" fill="#0f1220" stroke="#1c2035" stroke-width="0.8"/>
-      <ellipse cx="119" cy="272" rx="14" ry="7" fill="#0f1220" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- PLYOMETRICS — calves back (more prominent) -->
-      ${mPath('Plyometrics','M48,276 Q43,306 46,330 L68,330 Q70,305 72,275 Z')}
-      ${mPath('Plyometrics','M132,276 Q137,306 134,330 L112,330 Q110,305 108,275 Z')}
-
-      <!-- Lower leg structure -->
-      <path d="M68,330 Q66,344 64,352 L58,355 L54,345 L46,330 Z" fill="#0d0f1c" stroke="#1c2035" stroke-width="0.8"/>
-      <path d="M112,330 Q114,344 116,352 L122,355 L126,345 L134,330 Z" fill="#0d0f1c" stroke="#1c2035" stroke-width="0.8"/>
-
-      <!-- Feet back -->
-      <ellipse cx="57" cy="358" rx="15" ry="8" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-      <ellipse cx="123" cy="358" rx="15" ry="8" fill="#0d0f1c" stroke="#1c2035" stroke-width="1"/>
-
-      <!-- Hotspots back -->
-      ${hotspot('Back',90,100)}
-      ${hotspot('Shoulder',38,76)}
-      ${hotspot('Triceps',26,118)}
-      ${hotspot('Biceps',150,118)}
-      ${hotspot('Forearms',26,168)}
-      ${hotspot('Legs',62,240)}
-      ${hotspot('Plyometrics',45,306)}
-    </svg>`;
-  }
+      <!-- Anatomy image — shifted to show front or back half -->
+      <image href="${imgSrc}"
+        x="${silView==='front'?0:-W}" y="0"
+        width="${W*2}" height="${H}"
+        clip-path="url(#halfClip)"
+        preserveAspectRatio="xMidYMid meet"
+        style="mix-blend-mode:normal;opacity:0.75;filter:invert(1) brightness(0.5) sepia(1) hue-rotate(180deg) saturate(0.3);"/>
+      <!-- Muscle overlays -->
+      ${overlays}
+      <!-- Labels -->
+      ${labels}
+    </svg>
+  </div>`;
 }
 
 /* ════════════════════════════
