@@ -9,77 +9,56 @@
 <title>Hunter System</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#0a0a0f; --bg-card:#12121a; --bg-mid:#1a1a26;
-  --border:#1e1e2e; --border-hi:#2a2a3e;
-  --text:#e8e8f0; --text-dim:#5a5a7a; --text-faint:#2a2a3e;
-  --orange:#ff6b2b; --blue:#4a9eff; --green:#4ade80; --red:#f87171;
-  --bronze:#cd7f32; --silver:#c0c0c0; --gold:#ffd700;
-  --platinum:#4fd6d6; --diamond:#a855f7; --champion:#3b82f6;
-  --titan:#ef4444; --olympian:#f59e0b;
-}
+:root{--bg:#0a0a0f;--bg-card:#12121a;--bg-mid:#1a1a26;--border:#1e1e2e;--border-hi:#2a2a3e;--text:#e8e8f0;--text-dim:#5a5a7a;--text-faint:#2a2a3e;--orange:#ff6b2b;--blue:#4a9eff;--green:#4ade80;--red:#f87171;--bronze:#cd7f32;--silver:#b8b8b8;--gold:#ffd700;--platinum:#4fd6d6;--diamond:#a855f7;--champion:#3b82f6;--titan:#ef4444;--olympian:#f59e0b;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;}
 body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 50%,rgba(74,158,255,0.03) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(255,107,43,0.03) 0%,transparent 50%);pointer-events:none;z-index:0;}
 #app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative;z-index:1;}
-
-/* Header */
 .header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;background:rgba(10,10,15,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;}
-.header-wordmark{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.1em;color:var(--text);}
+.header-wordmark{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.1em;}
 .header-wordmark span{color:var(--orange);}
-.sync-btn{background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;padding:6px 14px;cursor:pointer;border-radius:6px;transition:all 0.2s;}
+.sync-btn{background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);font-size:11px;font-weight:600;letter-spacing:0.08em;padding:6px 14px;cursor:pointer;border-radius:6px;transition:all 0.2s;}
 .sync-btn:hover{color:var(--orange);border-color:var(--orange);}
 .sync-btn:disabled{opacity:0.3;cursor:not-allowed;}
-
-/* Nav */
 .nav{display:grid;grid-template-columns:repeat(3,1fr);background:rgba(10,10,15,0.98);border-bottom:1px solid var(--border);flex-shrink:0;}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;cursor:pointer;color:var(--text-dim);transition:all 0.2s;position:relative;font-family:'Inter',sans-serif;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;cursor:pointer;color:var(--text-dim);transition:all 0.2s;position:relative;}
 .nav-btn.active{color:var(--orange);}
 .nav-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--orange);border-radius:2px 2px 0 0;box-shadow:0 0 8px var(--orange);}
 .nav-icon{font-size:17px;line-height:1;}
 .nav-label{font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
-
-/* Scroll */
 .scroll{flex:1;overflow-y:auto;padding:14px 14px 100px;-webkit-overflow-scrolling:touch;}
-
-/* Loader */
 .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;gap:14px;}
 .loader-ring{width:40px;height:40px;border:2px solid var(--border-hi);border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-text{font-size:11px;font-weight:600;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;}
-
-/* Error */
 .error-bar{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:8px;color:var(--red);padding:12px 14px;font-size:12px;font-weight:500;margin-bottom:12px;line-height:1.5;}
-
-/* Section label */
 .section-label{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:10px;margin:18px 0 10px;}
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent);}
 
-/* Rank badge */
-.rank-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid;position:relative;flex-direction:column;gap:0;line-height:1;width:52px;height:52px;}
-.rank-badge-sm{width:38px;height:38px;border-width:1.5px;}
-.rank-badge-lg{width:80px;height:80px;border-width:3px;}
+/* Rank badge — fixed to show name + roman correctly */
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid;position:relative;flex-direction:column;gap:1px;line-height:1;}
 .rank-badge::before{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid;opacity:0.15;}
-.rank-name-text{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:0.03em;}
-.rank-badge-sm .rank-name-text{font-size:8px;}
-.rank-badge-lg .rank-name-text{font-size:14px;}
-.rank-numeral{font-family:'Inter',sans-serif;font-size:7px;font-weight:700;letter-spacing:0.05em;opacity:0.85;}
-.rank-badge-sm .rank-numeral{font-size:6px;}
-.rank-badge-lg .rank-numeral{font-size:10px;}
-
-.rank-Bronze  {border-color:var(--bronze);color:var(--bronze);background:rgba(205,127,50,0.08);}
+.rb-sm{width:38px;height:38px;border-width:1.5px;}
+.rb-lg{width:80px;height:80px;border-width:3px;}
+.rb-name{font-family:'Bebas Neue',sans-serif;letter-spacing:0.03em;}
+.rb-sm .rb-name{font-size:9px;}
+.rb-lg .rb-name{font-size:16px;}
+.rb-roman{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:0.05em;}
+.rb-sm .rb-roman{font-size:7px;}
+.rb-lg .rb-roman{font-size:11px;}
+.rank-Bronze{border-color:var(--bronze);color:var(--bronze);background:rgba(205,127,50,0.08);}
 .rank-Bronze::before{border-color:var(--bronze);}
-.rank-Silver  {border-color:var(--silver);color:var(--silver);background:rgba(192,192,192,0.08);}
+.rank-Silver{border-color:var(--silver);color:var(--silver);background:rgba(184,184,184,0.08);}
 .rank-Silver::before{border-color:var(--silver);}
-.rank-Gold    {border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.08);}
+.rank-Gold{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.08);}
 .rank-Gold::before{border-color:var(--gold);}
 .rank-Platinum{border-color:var(--platinum);color:var(--platinum);background:rgba(79,214,214,0.08);}
 .rank-Platinum::before{border-color:var(--platinum);}
-.rank-Diamond {border-color:var(--diamond);color:var(--diamond);background:rgba(168,85,247,0.08);}
+.rank-Diamond{border-color:var(--diamond);color:var(--diamond);background:rgba(168,85,247,0.08);}
 .rank-Diamond::before{border-color:var(--diamond);}
 .rank-Champion{border-color:var(--champion);color:var(--champion);background:rgba(59,130,246,0.08);}
 .rank-Champion::before{border-color:var(--champion);}
-.rank-Titan   {border-color:var(--titan);color:var(--titan);background:rgba(239,68,68,0.08);}
+.rank-Titan{border-color:var(--titan);color:var(--titan);background:rgba(239,68,68,0.08);}
 .rank-Titan::before{border-color:var(--titan);}
 .rank-Olympian{border-color:var(--olympian);color:var(--olympian);background:rgba(245,158,11,0.12);}
 .rank-Olympian::before{border-color:var(--olympian);}
@@ -98,31 +77,27 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 
 /* TASKS */
 .action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.action-btn{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:13px 10px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.action-btn{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:10px;color:var(--text);font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:13px 10px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px;}
 .action-btn:hover{border-color:var(--orange);color:var(--orange);}
 .action-btn:active{transform:scale(0.97);}
 .action-btn:disabled{opacity:0.35;cursor:not-allowed;}
 .action-icon{font-size:18px;}
-
-/* Quick add templates */
 .template-section{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
 .template-section-title{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-.template-dot{width:5px;height:5px;border-radius:50%;}
+.template-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .template-grid{display:flex;flex-wrap:wrap;gap:6px;}
-.template-pill{background:var(--bg-mid);border:1px solid var(--border-hi);border-radius:6px;padding:6px 10px;font-size:11px;font-weight:500;color:var(--text);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.template-pill{background:var(--bg-mid);border:1px solid var(--border-hi);border-radius:6px;padding:7px 11px;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
 .template-pill:hover{border-color:var(--orange);color:var(--orange);}
 .template-pill:active{transform:scale(0.97);}
-
 .date-header{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--orange);display:flex;align-items:center;gap:8px;margin:16px 0 8px;}
 .date-header::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(255,107,43,0.3),transparent);}
 .cat-sub{font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin:8px 0 5px 2px;display:flex;align-items:center;gap:6px;}
 .cat-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-
 .task-item{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;transition:all 0.15s;user-select:none;}
 .task-item:active{transform:scale(0.99);}
 .task-item.done{opacity:0.28;}
 .task-item.done .task-name{text-decoration:line-through;}
-.task-cb{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border-hi);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--orange);cursor:pointer;transition:all 0.15s;}
+.task-cb{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border-hi);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--orange);cursor:pointer;}
 .task-item.done .task-cb{background:rgba(255,107,43,0.15);border-color:var(--orange);}
 .task-body{flex:1;min-width:0;}
 .task-name{font-size:13px;font-weight:500;line-height:1.3;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -139,31 +114,25 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .empty{text-align:center;padding:40px 20px;color:var(--text-faint);font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;}
 
 /* STATS */
-/* Silhouette */
 .silhouette-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;}
 .silhouette-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(255,107,43,0.04) 0%,transparent 60%);pointer-events:none;}
-.silhouette-title{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.silhouette-subtitle{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;text-align:center;}
 .silhouette-legend{display:flex;gap:14px;margin-top:10px;justify-content:center;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-dim);}
 .legend-dot{width:8px;height:8px;border-radius:50%;}
-
-/* Muscle cards */
 .muscle-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .muscle-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
-.muscle-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .muscle-card:hover{border-color:var(--border-hi);}
 .muscle-card.selected{border-width:1.5px;}
 .muscle-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .muscle-card-name{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);}
-.muscle-rank-pct{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;margin-bottom:4px;}
+.muscle-rank-pct{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;margin-bottom:2px;}
 .muscle-rank-label{font-size:9px;color:var(--text-dim);margin-bottom:8px;font-weight:500;}
 .prog-track{height:4px;background:var(--bg-mid);border-radius:2px;overflow:hidden;margin-bottom:6px;}
 .prog-fill{height:100%;border-radius:2px;transition:width 0.8s ease;position:relative;overflow:hidden;}
 .prog-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);animation:shimmer 2s linear infinite;}
 @keyframes shimmer{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
 .muscle-rival{font-size:9px;font-weight:600;font-family:'JetBrains Mono',monospace;text-align:right;}
-
-/* Detail panel */
 .detail-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
 .detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .detail-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;}
@@ -204,7 +173,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
-    <div id="tab-home"  class="tab-panel active"></div>
+    <div id="tab-home" class="tab-panel active"></div>
     <div id="tab-tasks" class="tab-panel" style="display:none"></div>
     <div id="tab-stats" class="tab-panel" style="display:none"></div>
   </div>
@@ -223,157 +192,225 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 const PROXY = '/api/notion';
 const DB = {
   stats:    '34163a0b4e7c81abb22ae7e6bccdf2c2',
+  rivals:   'f925bdca42f3428fa6f2c61594ae512a',
   tasks:    '34163a0b4e7c81a5a8aefb94b96a6b36',
   templates:'34163a0b4e7c81a08eefdcd464d0a5a6',
   dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
 };
 
-// Rank tiers — each has 3 sub-ranks (I, II, III)
-const RANK_TIERS = [
-  { name:'Bronze',   color:'#cd7f32', thresholds:[0,    50,   120]  },
-  { name:'Silver',   color:'#c0c0c0', thresholds:[220,  360,  550]  },
-  { name:'Gold',     color:'#ffd700', thresholds:[800,  1100, 1500] },
-  { name:'Platinum', color:'#4fd6d6', thresholds:[2000, 2700, 3600] },
-  { name:'Diamond',  color:'#a855f7', thresholds:[4800, 6300, 8100] },
-  { name:'Champion', color:'#3b82f6', thresholds:[10200,12600,15300]},
-  { name:'Titan',    color:'#ef4444', thresholds:[18300,21600,25200]},
-  { name:'Olympian', color:'#f59e0b', thresholds:[29100,33300,38000]},
-];
+// ── Rank system ──
+// Notion rank strings look like "🥉BRONZE III🥉" or "SILVER II" etc.
+const TIER_NAMES = ['Bronze','Silver','Gold','Platinum','Diamond','Champion','Titan','Olympian'];
+const TIER_COLORS = {
+  Bronze:'#cd7f32', Silver:'#b8b8b8', Gold:'#ffd700',
+  Platinum:'#4fd6d6', Diamond:'#a855f7', Champion:'#3b82f6',
+  Titan:'#ef4444', Olympian:'#f59e0b'
+};
 const ROMANS = ['I','II','III'];
 const ALL_RANKS = [];
-RANK_TIERS.forEach(t => {
-  t.thresholds.forEach((min,i) => {
-    ALL_RANKS.push({ name:t.name, roman:ROMANS[i], color:t.color, min,
-      full:`${t.name} ${ROMANS[i]}` });
+const TIER_XP = [
+  [0,50,120], [220,360,550], [800,1100,1500],
+  [2000,2700,3600], [4800,6300,8100],
+  [10200,12600,15300], [18300,21600,25200], [29100,33300,38000]
+];
+TIER_NAMES.forEach((name,ti)=>{
+  TIER_XP[ti].forEach((min,ri)=>{
+    ALL_RANKS.push({name, roman:ROMANS[ri], color:TIER_COLORS[name], min, full:`${name} ${ROMANS[ri]}`});
   });
 });
 
 function getRankFromXP(xp) {
-  let r = ALL_RANKS[0], next = ALL_RANKS[1];
-  for (let i = ALL_RANKS.length-1; i >= 0; i--) {
-    if (xp >= ALL_RANKS[i].min) { r=ALL_RANKS[i]; next=ALL_RANKS[i+1]??null; break; }
+  let r=ALL_RANKS[0], next=ALL_RANKS[1];
+  for(let i=ALL_RANKS.length-1;i>=0;i--){
+    if(xp>=ALL_RANKS[i].min){r=ALL_RANKS[i];next=ALL_RANKS[i+1]??null;break;}
   }
-  const pct = next ? Math.min(((xp-r.min)/(next.min-r.min))*100,100) : 100;
-  return { rank:r, next, pct };
+  const pct=next?Math.min(((xp-r.min)/(next.min-r.min))*100,100):100;
+  return {rank:r,next,pct};
 }
 
-// Parse notion rank string e.g. "🥉BRONZE III🥉" or "Bronze III"
+// Parse Notion rank string — handles "🥉BRONZE III🥉", "SILVER II", "Gold III" etc.
 function parseRankStr(str) {
   if (!str) return null;
-  // strip emoji and extra chars
-  const clean = str.replace(/[^\w\s]/g,'').trim();
-  const found = ALL_RANKS.find(r => clean.toLowerCase().includes(r.name.toLowerCase()) &&
-    (clean.includes(r.roman) || clean.toLowerCase().includes(r.roman.toLowerCase())));
-  return found ?? null;
+  const upper = str.toUpperCase().replace(/[^A-Z\s]/g,'').trim();
+  for (const name of TIER_NAMES) {
+    if (upper.includes(name.toUpperCase())) {
+      // find roman numeral — check III before II before I to avoid partial match
+      for (const roman of ['III','II','I']) {
+        if (upper.includes(roman)) {
+          return ALL_RANKS.find(r=>r.name===name&&r.roman===roman) ?? null;
+        }
+      }
+      // no roman found — default to I
+      return ALL_RANKS.find(r=>r.name===name&&r.roman==='I') ?? null;
+    }
+  }
+  return null;
 }
 
-function badgeHTML(rankObj, sizeClass='') {
-  if (!rankObj) return '';
+function badgeHTML(rankObj, sizeClass='rb-sm') {
+  if (!rankObj) return '<div class="rank-badge rank-Bronze rb-sm"><span class="rb-name">?</span></div>';
   return `<div class="rank-badge rank-${rankObj.name} ${sizeClass}">
-    <span class="rank-name-text">${rankObj.name.slice(0,4).toUpperCase()}</span>
-    <span class="rank-numeral">${rankObj.roman}</span>
+    <span class="rb-name">${rankObj.name.slice(0,5).toUpperCase()}</span>
+    <span class="rb-roman">${rankObj.roman}</span>
   </div>`;
 }
 
-const CAT_COLOR = { Body:'#ef5350', Mind:'#42a5f5', Life:'#66bb6a', German:'#ffa726' };
-const DIFF_ORDER = ['Maintenance','Normal','Heavy','Daily','Important'];
-const MUSCLE_NAMES = ['Chest','Back','Shoulder','Biceps','Triceps','Forearms','Core','Legs','Plyometrics','Cardio'];
+const CAT_COLOR={Body:'#ef5350',Mind:'#42a5f5',Life:'#66bb6a',German:'#ffa726'};
+const DIFF_ORDER=['Maintenance','Normal','Heavy','Daily','Important'];
 
-// Silhouette muscle positions (as % of SVG width/height)
-const MUSCLE_POSITIONS = {
-  Chest:      { x:50,  y:28 },
-  Back:       { x:50,  y:35 },
-  Shoulder:   { x:33,  y:25 },
-  Biceps:     { x:25,  y:35 },
-  Triceps:    { x:75,  y:35 },
-  Forearms:   { x:22,  y:48 },
-  Core:       { x:50,  y:42 },
-  Legs:       { x:50,  y:62 },
-  Plyometrics:{ x:38,  y:70 },
-  Cardio:     { x:62,  y:70 },
+// Muscle positions in the SVG (cx%, cy% of 200x400 viewbox)
+const MUSCLE_POS={
+  Chest:     {x:100,y:108},
+  Core:      {x:100,y:148},
+  Back:      {x:100,y:125},
+  Shoulder:  {x:60, y:85},
+  Biceps:    {x:38, y:118},
+  Triceps:   {x:162,y:118},
+  Forearms:  {x:32, y:165},
+  Legs:      {x:100,y:248},
+  Plyometrics:{x:62,y:290},
+  Cardio:    {x:138,y:290},
 };
 
-let state = { stats:[], tasks:[], templates:[], streaks:null };
-let currentTab = 'home';
-let selectedMuscle = null;
-let prevRanks = {};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null};
+let currentTab='home';
+let selectedMuscle=null;
+let prevRanks={};
 
-// ── Notion ──
-async function notionFetch(path, method='GET', body) {
-  const res = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,body})});
-  if (!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error??`Error ${res.status}`);}
+// ── Notion API ──
+async function notionFetch(path,method='GET',body){
+  const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,body})});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error??`Error ${res.status}`);}
   return res.json();
 }
-const notionQuery=(dbId,filter,sorts)=>notionFetch(`/databases/${dbId}/query`,'POST',{page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{})}).then(d=>d.results??[]);
-const notionPatch=(pageId,props)=>notionFetch(`/pages/${pageId}`,'PATCH',{properties:props});
-const notionCreate=(dbId,props)=>notionFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
+const nQuery=(dbId,filter,sorts)=>notionFetch(`/databases/${dbId}/query`,'POST',{page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{})}).then(d=>d.results??[]);
+const nPatch=(id,props)=>notionFetch(`/pages/${id}`,'PATCH',{properties:props});
+const nCreate=(dbId,props)=>notionFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
 
+// Property extractors — handle formula, rollup, plain values
 const g={
-  title:v=>v?.title?.[0]?.plain_text??(v?.rich_text?.[0]?.plain_text??''),
+  title:v=>v?.title?.[0]?.plain_text??'',
   text:v=>v?.rich_text?.[0]?.plain_text??'',
-  number:v=>v?.number??0,
   select:v=>v?.select?.name??null,
   checkbox:v=>v?.checkbox??false,
   date:v=>v?.date?.start??null,
-  formula:v=>{const f=v?.formula;if(!f)return null;return f.number??f.string??f.boolean??null;},
-  rollup:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='number')return r.number;if(r.type==='array'){const f=r.array?.[0];return f?.formula?.number??f?.formula?.string??f?.number??null;}return null;},
-  rollupStr:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='array'){const f=r.array?.[0];return f?.formula?.string??f?.title?.[0]?.plain_text??null;}return null;},
+  num:v=>v?.number??0,
+  formula:v=>{
+    const f=v?.formula;if(!f)return null;
+    // formula can return number, string, boolean
+    if(f.type==='number')return f.number;
+    if(f.type==='string')return f.string;
+    if(f.type==='boolean')return f.boolean;
+    return null;
+  },
+  rollup:v=>{
+    const r=v?.rollup;if(!r)return null;
+    if(r.type==='number')return r.number;
+    if(r.type==='array'){
+      const first=r.array?.[0];
+      if(!first)return null;
+      if(first.type==='formula'){
+        const f=first.formula;
+        if(f.type==='number')return f.number;
+        if(f.type==='string')return f.string;
+      }
+      if(first.type==='number')return first.number;
+      if(first.type==='title')return first.title?.[0]?.plain_text??null;
+    }
+    return null;
+  },
+  rollupStr:v=>{
+    const r=v?.rollup;if(!r)return null;
+    if(r.type==='array'){
+      const first=r.array?.[0];
+      if(!first)return null;
+      if(first.type==='formula'&&first.formula?.type==='string')return first.formula.string;
+      if(first.type==='title')return first.title?.[0]?.plain_text??null;
+    }
+    return null;
+  },
 };
 
-const toStat=p=>({
-  id:p.id, name:g.title(p.properties.Name),
-  finalXP:g.formula(p.properties['Final XP'])??0,
-  rankStr:g.formula(p.properties.Rank)??'',
-  rivalGap:g.rollup(p.properties['Rival Gap']),
-  rivalXP:g.rollup(p.properties['Rival XP'])??0,
-  lastTrained:g.rollup(p.properties['Last day trained']),
-  cat:g.select(p.properties.Cat),
-});
+const toStat=p=>{
+  const q=p.properties;
+  return {
+    id:p.id,
+    name:g.title(q.Name),
+    finalXP:g.formula(q['Final XP'])??0,
+    rankStr:g.formula(q.Rank)??'',    // formula returns string like "🥉BRONZE III🥉"
+    rivalGapNum:g.rollup(q['Rival Gap']),   // rollup of a formula(number) field
+    rivalXP:g.rollup(q['Rival XP'])??0,
+    lastTrained:g.rollup(q['Last day trained']),
+    cat:g.select(q.Cat),
+  };
+};
 
-const toTask=p=>({
-  id:p.id, name:g.title(p.properties.Task),
-  cat:g.select(p.properties.Cat), difficulty:g.select(p.properties.Difficulty),
-  status:g.checkbox(p.properties.Status),
-  missed:g.checkbox(p.properties['Missed check1']),
-  dueDate:g.date(p.properties['Due Date']),
-});
+// Rivals DB — query separately and join by Body Part name
+const toRival=p=>{
+  const q=p.properties;
+  return {
+    id:p.id,
+    bodyPart:g.select(q['Body Part']),
+    totalXP:g.formula(q['Total XP'])??0,
+    gapNumber:g.formula(q['Gap in numbers'])??0,   // number formula
+    gapStr:g.formula(q.Gap)??'',                   // string formula like "+44 XP ahead"
+    rankStr:g.formula(q.Rank)??'',
+    myCurrentXP:g.rollup(q['My current XP'])??0,
+  };
+};
 
-const toTemplate=p=>({
-  id:p.id, name:g.title(p.properties.Name),
-  cat:g.select(p.properties.Cat), type:g.select(p.properties.Type),
-});
+const toTask=p=>{
+  const q=p.properties;
+  return {
+    id:p.id, name:g.title(q.Task),
+    cat:g.select(q.Cat), difficulty:g.select(q.Difficulty),
+    status:g.checkbox(q.Status),
+    missed:g.checkbox(q['Missed check1']),
+    dueDate:g.date(q['Due Date']),
+  };
+};
 
-const toStreak=p=>({
-  workout:g.formula(p.properties['Workout streak'])??0,
-  mind:g.formula(p.properties['Mind streak'])??0,
-  sleep:g.formula(p.properties['Sleep streak'])??0,
-  quest:g.formula(p.properties['Quest Perfect Day'])??0,
-});
+const toTemplate=p=>{
+  const q=p.properties;
+  return {id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};
+};
 
-// ── UI ──
+const toStreak=p=>{
+  const q=p.properties;
+  return {
+    workout:g.formula(q['Workout streak'])??0,
+    mind:g.formula(q['Mind streak'])??0,
+    sleep:g.formula(q['Sleep streak'])??0,
+    quest:g.formula(q['Quest Perfect Day'])??0,
+  };
+};
+
+// ── UI helpers ──
 function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
 function showToast(msg,ms=2500){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);}
 function setSyncBusy(b){const btn=document.getElementById('syncBtn');btn.disabled=b;btn.textContent=b?'Syncing…':'↺ Sync';}
 
-// Rank-up
+// Rank-up detection
 function checkRankUps(newStats){
   newStats.forEach(s=>{
     const old=prevRanks[s.id];
-    if(old&&old!==s.rankStr&&s.rankStr){triggerRankUp(s.name,s.rankStr);}
+    if(old&&old!==s.rankStr&&s.rankStr){
+      const r=parseRankStr(s.rankStr);
+      if(r)triggerRankUp(s.name,r);
+    }
     prevRanks[s.id]=s.rankStr;
   });
 }
-function triggerRankUp(muscleName,rankStr){
-  const r=parseRankStr(rankStr)??ALL_RANKS[0];
-  document.getElementById('rankupMuscle').textContent=muscleName.toUpperCase();
-  document.getElementById('rankupNew').textContent=r.full;
-  document.getElementById('rankupBadge').innerHTML=badgeHTML(r,'rank-badge-lg');
+function triggerRankUp(name,rankObj){
+  document.getElementById('rankupMuscle').textContent=name.toUpperCase();
+  document.getElementById('rankupNew').textContent=rankObj.full;
+  document.getElementById('rankupBadge').innerHTML=badgeHTML(rankObj,'rb-lg');
   const container=document.getElementById('rankupParticles');
   container.innerHTML='';
   for(let i=0;i<35;i++){
     const p=document.createElement('div');p.className='particle';
-    const size=3+Math.random()*5;
-    p.style.cssText=`left:${Math.random()*100}%;bottom:0;width:${size}px;height:${size}px;background:${r.color};animation-delay:${Math.random()*0.6}s;animation-duration:${1+Math.random()}s;`;
+    const sz=3+Math.random()*5;
+    p.style.cssText=`left:${Math.random()*100}%;bottom:0;width:${sz}px;height:${sz}px;background:${rankObj.color};animation-delay:${Math.random()*0.6}s;animation-duration:${1+Math.random()}s;`;
     container.appendChild(p);
   }
   document.getElementById('rankupOverlay').classList.add('visible');
@@ -382,13 +419,25 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
 
 // ── Loaders ──
 async function loadStats(){
-  try{const pages=await notionQuery(DB.stats);const ns=pages.map(toStat);checkRankUps(ns);state.stats=ns;}
-  catch(e){setError('Stats: '+e.message);}
+  try{
+    const pages=await nQuery(DB.stats);
+    const ns=pages.map(toStat);
+    checkRankUps(ns);
+    state.stats=ns;
+  }catch(e){setError('Stats: '+e.message);}
 }
+
+async function loadRivals(){
+  try{
+    const pages=await nQuery(DB.rivals);
+    state.rivals=pages.map(toRival);
+  }catch(e){console.error('Rivals:',e);}
+}
+
 async function loadTasks(){
   try{
     const today=new Date().toISOString().split('T')[0];
-    const pages=await notionQuery(DB.tasks,{
+    const pages=await nQuery(DB.tasks,{
       and:[
         {property:'Status',checkbox:{equals:false}},
         {property:'Missed check1',checkbox:{equals:false}},
@@ -401,24 +450,26 @@ async function loadTasks(){
     state.tasks=pages.map(toTask);
   }catch(e){setError('Tasks: '+e.message);}
 }
+
 async function loadTemplates(){
-  try{const pages=await notionQuery(DB.templates);state.templates=pages.map(toTemplate);}
+  try{const pages=await nQuery(DB.templates);state.templates=pages.map(toTemplate);}
   catch(e){console.error(e);}
 }
+
 async function loadStreaks(){
   try{
     const today=new Date().toISOString().split('T')[0];
-    let pages=await notionQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
-    if(!pages.length)pages=await notionQuery(DB.dailyLog,undefined,[{property:'Date',direction:'descending'}]);
+    let pages=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
+    if(!pages.length)pages=await nQuery(DB.dailyLog,undefined,[{property:'Date',direction:'descending'}]);
     if(pages.length)state.streaks=toStreak(pages[0]);
   }catch(e){setError('Streaks: '+e.message);}
 }
 
 async function refresh(){
   setError(null);setSyncBusy(true);
-  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats()]);renderHome();}
+  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadRivals()]);renderHome();}
   if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
-  if(currentTab==='stats'){await loadStats();renderStats();}
+  if(currentTab==='stats'){await Promise.all([loadStats(),loadRivals()]);renderStats();}
   setSyncBusy(false);
 }
 
@@ -431,261 +482,237 @@ function switchTab(tab,btn){
   currentTab=tab;refresh();
 }
 
-// ── Silhouette SVG ──
-function buildSilhouette(bodyStats) {
-  // map name -> stat
-  const statMap = {};
-  bodyStats.forEach(s=>{ statMap[s.name]=s; });
-
-  const today = new Date();
-  function isActive(stat) {
-    if (!stat?.lastTrained) return false;
-    const d = new Date(stat.lastTrained);
-    return (today-d)/(1000*60*60*24) <= 5;
-  }
-
-  function getRankColor(stat) {
-    if (!stat) return '#2a2a3e';
-    const r = parseRankStr(stat.rankStr) ?? getRankFromXP(stat.finalXP).rank;
-    return r.color;
-  }
-
-  // Simple human silhouette SVG paths
-  const svgContent = `
-  <svg viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:220px;display:block;margin:0 auto;">
-    <defs>
-      <filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    </defs>
-    <!-- Body silhouette base -->
-    <!-- Head -->
-    <ellipse cx="100" cy="30" rx="22" ry="26" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Neck -->
-    <rect x="90" y="54" width="20" height="14" rx="4" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Torso -->
-    <path d="M60 68 Q50 72 46 110 L50 180 L150 180 L154 110 Q150 72 140 68 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Left arm upper -->
-    <path d="M62 70 Q42 75 36 115 Q32 130 36 148 L52 148 L58 108 L66 76 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Right arm upper -->
-    <path d="M138 70 Q158 75 164 115 Q168 130 164 148 L148 148 L142 108 L134 76 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Left forearm -->
-    <path d="M36 148 Q28 165 30 188 L46 188 L52 168 L52 148 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Right forearm -->
-    <path d="M164 148 Q172 165 170 188 L154 188 L148 168 L148 148 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Left hand -->
-    <ellipse cx="36" cy="196" rx="10" ry="12" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Right hand -->
-    <ellipse cx="164" cy="196" rx="10" ry="12" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Hips -->
-    <path d="M50 178 Q48 192 50 210 L150 210 Q152 192 150 178 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Left leg upper -->
-    <path d="M50 208 Q44 230 46 270 L74 270 Q76 230 78 208 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Right leg upper -->
-    <path d="M150 208 Q156 230 154 270 L126 270 Q124 230 122 208 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Left leg lower -->
-    <path d="M46 268 Q42 300 44 330 L70 330 Q72 300 74 268 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Right leg lower -->
-    <path d="M154 268 Q158 300 156 330 L130 330 Q128 300 126 268 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Left foot -->
-    <ellipse cx="55" cy="338" rx="16" ry="9" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-    <!-- Right foot -->
-    <ellipse cx="145" cy="338" rx="16" ry="9" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
-
-    <!-- Muscle highlights -->
-    <!-- Chest -->
-    ${muscleHighlight(statMap.Chest,  'M70 80 Q100 78 130 80 Q128 106 100 112 Q72 106 70 80', isActive, getRankColor)}
-    <!-- Core -->
-    ${muscleHighlight(statMap.Core,   'M72 112 Q100 116 128 112 Q126 150 100 154 Q74 150 72 112', isActive, getRankColor)}
-    <!-- Back (shown same area, diff color cue) -->
-    <!-- Shoulders left -->
-    ${muscleHighlight(statMap.Shoulder,'M60 68 Q50 62 44 78 Q50 90 62 88 Z', isActive, getRankColor)}
-    <!-- Shoulders right -->
-    ${muscleHighlight(statMap.Shoulder,'M140 68 Q150 62 156 78 Q150 90 138 88 Z', isActive, getRankColor)}
-    <!-- Left bicep -->
-    ${muscleHighlight(statMap.Biceps, 'M40 95 Q34 110 36 128 L50 128 L56 108 Z', isActive, getRankColor)}
-    <!-- Right bicep -->
-    ${muscleHighlight(statMap.Biceps, 'M160 95 Q166 110 164 128 L150 128 L144 108 Z', isActive, getRankColor)}
-    <!-- Left tricep -->
-    ${muscleHighlight(statMap.Triceps,'M44 110 Q36 125 36 148 L46 148 L52 128 Z', isActive, getRankColor)}
-    <!-- Right tricep -->
-    ${muscleHighlight(statMap.Triceps,'M156 110 Q164 125 164 148 L154 148 L148 128 Z', isActive, getRankColor)}
-    <!-- Left forearm -->
-    ${muscleHighlight(statMap.Forearms,'M36 148 Q28 168 30 188 L44 188 L50 168 L50 148 Z', isActive, getRankColor)}
-    <!-- Right forearm -->
-    ${muscleHighlight(statMap.Forearms,'M164 148 Q172 168 170 188 L156 188 L150 168 L150 148 Z', isActive, getRankColor)}
-    <!-- Legs left -->
-    ${muscleHighlight(statMap.Legs,   'M50 210 Q44 240 46 270 L72 270 Q76 240 78 210 Z', isActive, getRankColor)}
-    <!-- Legs right -->
-    ${muscleHighlight(statMap.Legs,   'M150 210 Q156 240 154 270 L128 270 Q124 240 122 210 Z', isActive, getRankColor)}
-
-    <!-- Muscle tap buttons -->
-    ${Object.entries(MUSCLE_POSITIONS).map(([name,pos])=>{
-      const stat=statMap[name];
-      const active=isActive(stat);
-      const color=getRankColor(stat);
-      const sel=selectedMuscle===stat?.id;
-      return `<circle cx="${pos.x*2}" cy="${pos.y*4}" r="14"
-        fill="rgba(10,10,15,0.8)" stroke="${active?color:'#2a2a3e'}"
-        stroke-width="${sel?2.5:1.5}"
-        style="cursor:pointer;${active?`filter:drop-shadow(0 0 4px ${color})`:''}${sel?`;filter:drop-shadow(0 0 6px ${color})`:''};"
-        onclick="selectMuscle('${stat?.id??''}','${name}')"
-      />
-      <text x="${pos.x*2}" y="${pos.y*4+4}" text-anchor="middle"
-        font-family="Inter,sans-serif" font-size="6.5" font-weight="700"
-        fill="${active?color:'#3a3a5a'}" pointer-events="none"
-        style="text-transform:uppercase;letter-spacing:0.02em"
-      >${name.slice(0,4).toUpperCase()}</text>`;
-    }).join('')}
-  </svg>`;
-  return svgContent;
+// Get rival data for a given muscle name
+function getRivalForMuscle(muscleName){
+  return state.rivals.find(r=>r.bodyPart&&r.bodyPart.toLowerCase()===muscleName.toLowerCase())??null;
 }
 
-function muscleHighlight(stat, path, isActiveFn, getColorFn) {
-  const active = isActiveFn(stat);
-  const color = getColorFn(stat);
-  if (!stat) return `<path d="${path}" fill="rgba(42,42,62,0.3)" stroke="none"/>`;
-  return `<path d="${path}" fill="${active?color+'22':'#1e1e2e'}" stroke="${active?color:'#2a2a3e'}" stroke-width="${active?1.5:0.5}" ${active?`filter="url(#glow)"`:''} style="transition:all 0.3s"/>`;
+// ── Silhouette ──
+function buildSilhouette(bodyStats){
+  const statMap={};
+  bodyStats.forEach(s=>{statMap[s.name.toLowerCase()]=s;});
+  const today=new Date();
+
+  function isActive(name){
+    const s=statMap[name.toLowerCase()];
+    if(!s?.lastTrained)return false;
+    return (today-new Date(s.lastTrained))/(1000*60*60*24)<=5;
+  }
+  function getRankColor(name){
+    const s=statMap[name.toLowerCase()];
+    if(!s)return '#2a2a3e';
+    const r=parseRankStr(s.rankStr);
+    return r?r.color:getRankFromXP(s.finalXP).rank.color;
+  }
+
+  const musclePath=(name,path)=>{
+    const active=isActive(name);
+    const color=getRankColor(name);
+    const s=statMap[name.toLowerCase()];
+    const sel=selectedMuscle===s?.id;
+    return `<path d="${path}" fill="${active?color+'1a':'#1e1e2e'}" stroke="${active?color:'#2a2a3e'}"
+      stroke-width="${sel?2:active?1.5:0.8}" style="transition:all 0.3s;cursor:pointer;"
+      onclick="selectMuscle('${s?.id??''}','${name}')"
+      ${active?`filter="url(#glow)"`:''}/>`;
+  };
+
+  // Hotspot circle for a muscle
+  const hotspot=(name,pos)=>{
+    const s=statMap[name.toLowerCase()];
+    const active=isActive(name);
+    const color=getRankColor(name);
+    const sel=selectedMuscle===s?.id;
+    const r=parseRankStr(s?.rankStr)??getRankFromXP(s?.finalXP??0).rank;
+    return `<g style="cursor:pointer;" onclick="selectMuscle('${s?.id??''}','${name}')">
+      <circle cx="${pos.x}" cy="${pos.y}" r="17"
+        fill="rgba(10,10,15,0.85)" stroke="${active?color:'#2a2a3e'}"
+        stroke-width="${sel?2.5:1.5}"
+        ${active||sel?`filter="url(#glow2)"`:''}/>
+      <text x="${pos.x}" y="${pos.y-3}" text-anchor="middle"
+        font-family="Bebas Neue,sans-serif" font-size="8" fill="${active?color:'#3a3a5a'}"
+        pointer-events="none">${name.slice(0,4).toUpperCase()}</text>
+      <text x="${pos.x}" y="${pos.y+7}" text-anchor="middle"
+        font-family="Inter,sans-serif" font-size="6" font-weight="700" fill="${active?color+'cc':'#2a2a3e'}"
+        pointer-events="none">${r.roman}</text>
+    </g>`;
+  };
+
+  return `<svg viewBox="0 0 200 370" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:240px;display:block;margin:0 auto;">
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="glow2"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- Head -->
+    <ellipse cx="100" cy="28" rx="20" ry="24" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Neck -->
+    <rect x="91" y="50" width="18" height="12" rx="4" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+    <!-- Trapezius area -->
+    <path d="M65 62 Q100 55 135 62 L132 75 Q100 70 68 75 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+
+    <!-- SHOULDERS -->
+    ${musclePath('Shoulder','M65 62 Q50 60 42 72 Q38 82 44 92 Q54 88 66 80 Z')}
+    ${musclePath('Shoulder','M135 62 Q150 60 158 72 Q162 82 156 92 Q146 88 134 80 Z')}
+
+    <!-- Upper arms (Biceps front) -->
+    ${musclePath('Biceps','M42 92 Q32 100 30 120 Q28 134 34 145 L48 140 L52 120 L50 95 Z')}
+    ${musclePath('Biceps','M158 92 Q168 100 170 120 Q172 134 166 145 L152 140 L148 120 L150 95 Z')}
+
+    <!-- Triceps (back of upper arm — shown overlaid) -->
+    ${musclePath('Triceps','M45 95 Q35 108 33 130 L34 145 L46 140 L50 120 Z')}
+    ${musclePath('Triceps','M155 95 Q165 108 167 130 L166 145 L154 140 L150 120 Z')}
+
+    <!-- Forearms -->
+    ${musclePath('Forearms','M34 145 Q24 160 26 185 L40 185 L46 165 L46 140 Z')}
+    ${musclePath('Forearms','M166 145 Q176 160 174 185 L160 185 L154 165 L154 140 Z')}
+
+    <!-- Hands -->
+    <ellipse cx="32" cy="193" rx="9" ry="11" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+    <ellipse cx="168" cy="193" rx="9" ry="11" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+
+    <!-- Torso base -->
+    <path d="M66 78 Q56 82 52 115 L54 178 L146 178 L148 115 Q144 82 134 78 Z" fill="#141420" stroke="#2a2a3e" stroke-width="1.5"/>
+
+    <!-- CHEST -->
+    ${musclePath('Chest','M68 82 Q100 78 132 82 Q130 108 100 115 Q70 108 68 82')}
+
+    <!-- CORE / Abs -->
+    ${musclePath('Core','M72 115 Q100 120 128 115 Q127 152 100 157 Q73 152 72 115')}
+
+    <!-- BACK — shown as side stripe -->
+    ${musclePath('Back','M52 82 Q62 78 68 82 Q70 108 72 135 L55 138 Q50 115 52 82')}
+    ${musclePath('Back','M148 82 Q138 78 132 82 Q130 108 128 135 L145 138 Q150 115 148 82')}
+
+    <!-- Hips -->
+    <path d="M54 177 Q52 192 54 208 L146 208 Q148 192 146 177 Z" fill="#141420" stroke="#2a2a3e" stroke-width="1.2"/>
+
+    <!-- LEGS (quads/hamstrings) -->
+    ${musclePath('Legs','M54 206 Q46 232 48 268 L76 268 Q80 232 82 206 Z')}
+    ${musclePath('Legs','M146 206 Q154 232 152 268 L124 268 Q120 232 118 206 Z')}
+
+    <!-- Lower legs -->
+    <path d="M48 266 Q43 296 45 326 L70 326 Q72 296 76 266 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+    <path d="M152 266 Q157 296 155 326 L130 326 Q128 296 124 266 Z" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+
+    <!-- PLYOMETRICS — calves/explosive -->
+    ${musclePath('Plyometrics','M45 268 Q40 290 43 316 L60 316 L65 290 L64 268 Z')}
+    ${musclePath('Plyometrics','M155 268 Q160 290 157 316 L140 316 L135 290 L136 268 Z')}
+
+    <!-- Feet -->
+    <ellipse cx="55" cy="333" rx="17" ry="9" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+    <ellipse cx="145" cy="333" rx="17" ry="9" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.2"/>
+
+    <!-- CARDIO — heart area overlay -->
+    ${musclePath('Cardio','M85 88 Q100 83 100 100 Q85 100 78 95 Z')}
+    ${musclePath('Cardio','M115 88 Q100 83 100 100 Q115 100 122 95 Z')}
+
+    <!-- Muscle hotspot buttons on top -->
+    ${Object.entries(MUSCLE_POS).map(([n,pos])=>hotspot(n,pos)).join('')}
+  </svg>`;
 }
 
 // ── Renderers ──
-function renderHome() {
+function renderHome(){
   const s=state.streaks;
-  const workout=s?.workout??0, mind=s?.mind??0, sleep=s?.sleep??0, quest=s?.quest??0;
+  const workout=s?.workout??0,mind=s?.mind??0,sleep=s?.sleep??0,quest=s?.quest??0;
   const bodyStats=state.stats.filter(x=>x.cat==='Body');
 
   document.getElementById('tab-home').innerHTML=`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
-      <div class="streak-card fire">
-        <span class="streak-icon">🔥</span>
-        <div class="streak-number" style="color:var(--orange)">${workout}</div>
-        <div class="streak-label">Workout</div>
-      </div>
-      <div class="streak-card mind">
-        <span class="streak-icon">🧠</span>
-        <div class="streak-number" style="color:var(--blue)">${mind}</div>
-        <div class="streak-label">Mind</div>
-      </div>
-      <div class="streak-card sleep">
-        <span class="streak-icon">🌙</span>
-        <div class="streak-number" style="color:#a855f7">${sleep}</div>
-        <div class="streak-label">Sleep</div>
-      </div>
-      <div class="streak-card quest">
-        <span class="streak-icon">⚔️</span>
-        <div class="streak-number" style="color:var(--green)">${quest}</div>
-        <div class="streak-label">Perfect Days</div>
-      </div>
+      <div class="streak-card fire"><span class="streak-icon">🔥</span><div class="streak-number" style="color:var(--orange)">${workout}</div><div class="streak-label">Workout</div></div>
+      <div class="streak-card mind"><span class="streak-icon">🧠</span><div class="streak-number" style="color:var(--blue)">${mind}</div><div class="streak-label">Mind</div></div>
+      <div class="streak-card sleep"><span class="streak-icon">🌙</span><div class="streak-number" style="color:#a855f7">${sleep}</div><div class="streak-label">Sleep</div></div>
+      <div class="streak-card quest"><span class="streak-icon">⚔️</span><div class="streak-number" style="color:var(--green)">${quest}</div><div class="streak-label">Perfect Days</div></div>
     </div>
     ${bodyStats.length?`
     <div class="section-label">Body</div>
     <div class="muscle-cards">
       ${bodyStats.map(stat=>{
-        const r=parseRankStr(stat.rankStr)??getRankFromXP(stat.finalXP).rank;
-        const {pct,next}=getRankFromXP(stat.finalXP);
-        const rivalDiff=stat.rivalGap;
-        const isAhead=rivalDiff!==null&&rivalDiff>0;
-        const isBehind=rivalDiff!==null&&rivalDiff<0;
+        const parsed=parseRankStr(stat.rankStr);
+        const {rank,next,pct}=getRankFromXP(stat.finalXP);
+        const r=parsed??rank;
+        const rival=getRivalForMuscle(stat.name);
+        const gap=rival?.gapNumber??null;
+        const isAhead=gap!==null&&gap>0;
+        const isBehind=gap!==null&&gap<0;
         return `<div class="muscle-card" onclick="switchTab('stats',document.querySelectorAll('.nav-btn')[2]);setTimeout(()=>selectMuscle('${stat.id}','${stat.name}'),400)">
-          <div class="muscle-card-top">
-            <span class="muscle-card-name">${stat.name}</span>
-            ${badgeHTML(r,'rank-badge-sm')}
-          </div>
+          <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,'rb-sm')}</div>
           <div class="muscle-rank-pct" style="color:${r.color}">${Math.round(pct)}%</div>
           <div class="muscle-rank-label">of ${r.full}</div>
           <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}55,${r.color})"></div></div>
-          ${rivalDiff!==null?`<div class="muscle-rival" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)} vs 影</div>`:''}
+          ${gap!==null?`<div class="muscle-rival" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)} vs 影</div>`:''}
         </div>`;
       }).join('')}
-    </div>`:''}
-  `;
+    </div>`:''}`;
 }
 
-function renderTasks() {
-  const today=new Date(); today.setHours(0,0,0,0);
+function renderTasks(){
+  const today=new Date();today.setHours(0,0,0,0);
   const CATS=['Body','Mind','Life','German'];
 
-  // Build quick-add groups from templates (non-daily/weekly — those have their own buttons)
-  const quickTemplates={};
-  state.templates.forEach(t=>{
-    const cat=t.cat??'Other';
-    if(!quickTemplates[cat])quickTemplates[cat]=[];
-    quickTemplates[cat].push(t);
-  });
+  // Quick add templates grouped by cat
+  const tGroups={};
+  state.templates.forEach(t=>{const c=t.cat??'Other';if(!tGroups[c])tGroups[c]=[];tGroups[c].push(t);});
 
-  let html=`
-    <div class="action-row">
-      <button class="action-btn" onclick="addDailyTasks()"><span class="action-icon">☀️</span>Daily Tasks</button>
-      <button class="action-btn" onclick="addWorkout()"><span class="action-icon">🏋️</span>Workout</button>
-    </div>`;
+  let html=`<div class="action-row">
+    <button class="action-btn" onclick="addDailyTasks()"><span class="action-icon">☀️</span>Daily Tasks</button>
+    <button class="action-btn" onclick="addWorkout()"><span class="action-icon">🏋️</span>Workout</button>
+  </div>`;
 
-  // Quick add templates
-  const templateCats=Object.entries(quickTemplates).filter(([,ts])=>ts.length>0);
-  if(templateCats.length){
+  const tEntries=Object.entries(tGroups).filter(([,ts])=>ts.length);
+  if(tEntries.length){
     html+=`<div class="section-label">Quick Add</div>`;
-    templateCats.forEach(([cat,ts])=>{
+    tEntries.forEach(([cat,ts])=>{
       const color=CAT_COLOR[cat]??'var(--text-dim)';
       html+=`<div class="template-section">
-        <div class="template-section-title">
-          <div class="template-dot" style="background:${color}"></div>${cat}
-        </div>
-        <div class="template-grid">
-          ${ts.map(t=>`<div class="template-pill" onclick="quickAddTemplate('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.cat??''}','${t.type??''}')">${t.name}</div>`).join('')}
-        </div>
+        <div class="template-section-title"><div class="template-dot" style="background:${color}"></div>${cat}</div>
+        <div class="template-grid">${ts.map(t=>`<div class="template-pill" onclick="quickAdd('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.cat??''}','${t.type??''}')">${t.name}</div>`).join('')}</div>
       </div>`;
     });
   }
 
-  // Tasks grouped by date
-  const dateGroups={};
+  // Group tasks by date
+  const dGroups={};
   state.tasks.forEach(t=>{
     let label='No Date';
     if(t.dueDate){
-      const d=new Date(t.dueDate); d.setHours(0,0,0,0);
+      const d=new Date(t.dueDate);d.setHours(0,0,0,0);
       const diff=Math.round((today-d)/(1000*60*60*24));
-      if(diff===0)label='Today';
-      else if(diff===1)label='Yesterday';
-      else if(diff>1)label=`${diff} Days Ago`;
-      else label='Upcoming';
+      label=diff===0?'Today':diff===1?'Yesterday':diff>1?`${diff} Days Ago`:'Upcoming';
     }
-    if(!dateGroups[label])dateGroups[label]=[];
-    dateGroups[label].push(t);
+    if(!dGroups[label])dGroups[label]=[];
+    dGroups[label].push(t);
   });
 
-  const dateOrder=['Today','Yesterday'];
-  const sorted=Object.keys(dateGroups).sort((a,b)=>{
-    const ai=dateOrder.indexOf(a),bi=dateOrder.indexOf(b);
+  const dOrder=['Today','Yesterday'];
+  const dSorted=Object.keys(dGroups).sort((a,b)=>{
+    const ai=dOrder.indexOf(a),bi=dOrder.indexOf(b);
     if(ai>-1&&bi>-1)return ai-bi;
     if(ai>-1)return -1;if(bi>-1)return 1;
-    const aN=parseInt(a),bN=parseInt(b);
-    if(!isNaN(aN)&&!isNaN(bN))return bN-aN;
-    return 0;
+    const an=parseInt(a),bn=parseInt(b);
+    return isNaN(an)||isNaN(bn)?0:bn-an;
   });
 
-  if(!state.tasks.length){html+=`<div class="section-label">Tasks</div><div class="empty">No pending tasks</div>`;}
+  html+=`<div class="section-label">Tasks</div>`;
+  if(!state.tasks.length){html+='<div class="empty">No pending tasks</div>';}
   else{
-    html+=`<div class="section-label">Tasks</div>`;
-    sorted.forEach(dateLabel=>{
-      const dateTasks=dateGroups[dateLabel];
-      html+=`<div class="date-header">${dateLabel}</div>`;
+    dSorted.forEach(dl=>{
+      html+=`<div class="date-header">${dl}</div>`;
       CATS.forEach(cat=>{
-        const catTasks=dateTasks.filter(t=>t.cat===cat);
-        if(!catTasks.length)return;
-        const color=CAT_COLOR[cat]??'var(--text-dim)';
-        html+=`<div class="cat-sub"><div class="cat-dot" style="background:${color}"></div>${cat}</div>`;
-        catTasks.forEach(t=>{ html+=taskHTML(t,today); });
+        const ct=dGroups[dl].filter(t=>t.cat===cat);
+        if(!ct.length)return;
+        html+=`<div class="cat-sub"><div class="cat-dot" style="background:${CAT_COLOR[cat]}"></div>${cat}</div>`;
+        ct.forEach(t=>{html+=taskHTML(t,today);});
       });
-      const other=dateTasks.filter(t=>!t.cat||!CATS.includes(t.cat));
-      if(other.length){
-        html+=`<div class="cat-sub"><div class="cat-dot" style="background:var(--text-dim)"></div>Other</div>`;
-        other.forEach(t=>{ html+=taskHTML(t,today); });
-      }
+      const ot=dGroups[dl].filter(t=>!t.cat||!CATS.includes(t.cat));
+      if(ot.length){html+=`<div class="cat-sub"><div class="cat-dot" style="background:var(--text-dim)"></div>Other</div>`;ot.forEach(t=>{html+=taskHTML(t,today);});}
     });
   }
-
   document.getElementById('tab-tasks').innerHTML=html;
 }
 
-function taskHTML(task, today) {
+function taskHTML(task,today){
   const overdue=task.dueDate&&new Date(task.dueDate)<today;
   const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
   const diff=task.difficulty;
@@ -701,52 +728,42 @@ function taskHTML(task, today) {
   </div>`;
 }
 
-function renderStats() {
+function renderStats(){
   const bodyStats=state.stats.filter(s=>s.cat==='Body');
   if(!bodyStats.length){document.getElementById('tab-stats').innerHTML='<div class="empty">No body stats found</div>';return;}
-
-  const selectedStat=selectedMuscle?bodyStats.find(s=>s.id===selectedMuscle):null;
-
+  const selStat=selectedMuscle?bodyStats.find(s=>s.id===selectedMuscle):null;
   let html='';
 
   // Silhouette
   html+=`<div class="silhouette-wrap">
-    <div class="silhouette-title">Body Map — tap a muscle</div>
+    <div class="silhouette-subtitle">Tap a muscle to inspect</div>
     ${buildSilhouette(bodyStats)}
     <div class="silhouette-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Active (≤5 days)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Active ≤5 days</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--border-hi)"></div>Inactive</div>
     </div>
   </div>`;
 
   // Detail panel
-  if(selectedStat){
-    const r=parseRankStr(selectedStat.rankStr)??getRankFromXP(selectedStat.finalXP).rank;
-    const {pct,next}=getRankFromXP(selectedStat.finalXP);
-    const rivalDiff=selectedStat.rivalGap;
-    const isAhead=rivalDiff!==null&&rivalDiff>0;
-    const isBehind=rivalDiff!==null&&rivalDiff<0;
-    const lastStr=selectedStat.lastTrained?new Date(selectedStat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
+  if(selStat){
+    const parsed=parseRankStr(selStat.rankStr);
+    const {rank,next,pct}=getRankFromXP(selStat.finalXP);
+    const r=parsed??rank;
+    const rival=getRivalForMuscle(selStat.name);
+    const gap=rival?.gapNumber??null;
+    const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
+    const lastStr=selStat.lastTrained?new Date(selStat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
     html+=`<div class="detail-panel" id="detailPanel">
       <div class="detail-header">
-        <div class="detail-name" style="color:${r.color}">${selectedStat.name}</div>
-        ${badgeHTML(r,'rank-badge-lg')}
+        <div class="detail-name" style="color:${r.color}">${selStat.name}</div>
+        ${badgeHTML(r,'rb-lg')}
       </div>
       <div class="detail-stats">
-        <div class="detail-stat">
-          <div class="detail-stat-label">Progress</div>
-          <div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div>
-        </div>
+        <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
         <div class="detail-stat-div"></div>
-        <div class="detail-stat">
-          <div class="detail-stat-label">vs 影</div>
-          <div class="detail-stat-val" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${rivalDiff!==null?(isAhead?'▲':'▼')+Math.abs(rivalDiff):'—'}</div>
-        </div>
+        <div class="detail-stat"><div class="detail-stat-label">vs 影</div><div class="detail-stat-val" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${gap!==null?(isAhead?'▲':'▼')+Math.abs(gap):'—'}</div></div>
         <div class="detail-stat-div"></div>
-        <div class="detail-stat">
-          <div class="detail-stat-label">Last</div>
-          <div class="detail-stat-val" style="color:var(--text-dim);font-size:11px">${lastStr}</div>
-        </div>
+        <div class="detail-stat"><div class="detail-stat-label">Last</div><div class="detail-stat-val" style="color:var(--text-dim);font-size:11px">${lastStr}</div></div>
       </div>
     </div>`;
   }
@@ -754,96 +771,85 @@ function renderStats() {
   // Muscle grid
   html+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
   bodyStats.forEach(stat=>{
-    const r=parseRankStr(stat.rankStr)??getRankFromXP(stat.finalXP).rank;
-    const {pct,next}=getRankFromXP(stat.finalXP);
-    const rivalDiff=stat.rivalGap;
-    const isAhead=rivalDiff!==null&&rivalDiff>0;
-    const isBehind=rivalDiff!==null&&rivalDiff<0;
+    const parsed=parseRankStr(stat.rankStr);
+    const {rank,next,pct}=getRankFromXP(stat.finalXP);
+    const r=parsed??rank;
+    const rival=getRivalForMuscle(stat.name);
+    const gap=rival?.gapNumber??null;
+    const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
     const sel=selectedMuscle===stat.id;
     html+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${r.color};`:''}">
-      <div style="${sel?`position:absolute;top:0;left:0;right:0;height:2px;background:${r.color};`:''}"></div>
-      <div class="muscle-card-top">
-        <span class="muscle-card-name">${stat.name}</span>
-        ${badgeHTML(r,'rank-badge-sm')}
-      </div>
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${sel?r.color:'transparent'}"></div>
+      <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,'rb-sm')}</div>
       <div class="muscle-rank-pct" style="color:${r.color}">${Math.round(pct)}%</div>
       <div class="muscle-rank-label">of ${r.full}</div>
       <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}55,${r.color})"></div></div>
-      ${rivalDiff!==null?`<div class="muscle-rival" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(rivalDiff)}</div>`:''}
+      ${gap!==null?`<div class="muscle-rival" style="color:${isAhead?'var(--green)':isBehind?'var(--red)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)} vs 影</div>`:''}
     </div>`;
   });
   html+='</div>';
   document.getElementById('tab-stats').innerHTML=html;
 }
 
-function selectMuscle(id, name) {
-  if (!id) return;
-  selectedMuscle = selectedMuscle===id ? null : id;
+function selectMuscle(id,name){
+  if(!id)return;
+  selectedMuscle=selectedMuscle===id?null:id;
   renderStats();
-  if (selectedMuscle) {
-    const panel=document.getElementById('detailPanel');
-    if(panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
-  }
+  if(selectedMuscle){const p=document.getElementById('detailPanel');if(p)setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
 }
 
-// ── Task actions ──
-async function toggleTask(taskId, current) {
+// ── Actions ──
+async function toggleTask(taskId,current){
   const next=!current;
   state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:next}:t);
   renderTasks();
   try{
-    await notionPatch(taskId,{Status:{checkbox:next}});
+    await nPatch(taskId,{Status:{checkbox:next}});
     showToast(next?'✓ Done':'Reopened');
     if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
   }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:current}:t);renderTasks();showToast('Update failed');}
 }
 
-async function cycleDiff(e, taskId, currentDiff) {
+async function cycleDiff(e,taskId,cur){
   e.stopPropagation();
-  const idx=DIFF_ORDER.indexOf(currentDiff);
-  const nextDiff=DIFF_ORDER[(idx+1)%DIFF_ORDER.length];
-  state.tasks=state.tasks.map(t=>t.id===taskId?{...t,difficulty:nextDiff}:t);
+  const next=DIFF_ORDER[(DIFF_ORDER.indexOf(cur)+1)%DIFF_ORDER.length];
+  state.tasks=state.tasks.map(t=>t.id===taskId?{...t,difficulty:next}:t);
   renderTasks();
-  try{
-    await notionPatch(taskId,{Difficulty:{select:{name:nextDiff}}});
-    showToast(`→ ${nextDiff}`);
-  }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,difficulty:currentDiff}:t);renderTasks();showToast('Update failed');}
+  try{await nPatch(taskId,{Difficulty:{select:{name:next}}});showToast(`→ ${next}`);}
+  catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,difficulty:cur}:t);renderTasks();showToast('Update failed');}
 }
 
-async function quickAddTemplate(templateId, name, cat, type) {
+async function quickAdd(tid,name,cat,type){
   const today=new Date().toISOString().split('T')[0];
   try{
-    await notionCreate(DB.tasks,{
+    await nCreate(DB.tasks,{
       Task:{title:[{text:{content:name}}]},
       ...(cat?{Cat:{select:{name:cat}}}:{}),
       ...(type==='Daily'?{Difficulty:{select:{name:'Daily'}}}:type==='Weekly'?{Difficulty:{select:{name:'Heavy'}}}:{}),
-      Status:{checkbox:false},
-      'Due Date':{date:{start:today}},
+      Status:{checkbox:false},'Due Date':{date:{start:today}},
     });
-    showToast(`✓ ${name} added`);
+    showToast(`✓ ${name}`);
     await loadTasks();renderTasks();
-  }catch(e){showToast('Failed to add');}
+  }catch(e){showToast('Failed');}
 }
 
 async function addDailyTasks(){
   const today=new Date().toISOString().split('T')[0];
   const daily=state.templates.filter(t=>t.type==='Daily');
-  if(!daily.length){showToast('No daily templates found');return;}
+  if(!daily.length){showToast('No daily templates');return;}
   try{
-    await Promise.all(daily.map(t=>notionCreate(DB.tasks,{Task:{title:[{text:{content:t.name}}]},...(t.cat?{Cat:{select:{name:t.cat}}}:{}),Difficulty:{select:{name:'Daily'}},Status:{checkbox:false},'Due Date':{date:{start:today}}})));
-    showToast(`${daily.length} daily tasks added`);
-    await loadTasks();renderTasks();
+    await Promise.all(daily.map(t=>nCreate(DB.tasks,{Task:{title:[{text:{content:t.name}}]},...(t.cat?{Cat:{select:{name:t.cat}}}:{}),Difficulty:{select:{name:'Daily'}},Status:{checkbox:false},'Due Date':{date:{start:today}}})));
+    showToast(`${daily.length} daily tasks added`);await loadTasks();renderTasks();
   }catch(e){showToast('Failed');}
 }
 
 async function addWorkout(){
   const today=new Date().toISOString().split('T')[0];
-  const workout=state.templates.filter(t=>t.type==='Weekly'||t.cat==='Body');
-  if(!workout.length){showToast('No workout templates found');return;}
+  const w=state.templates.filter(t=>t.type==='Weekly'||t.cat==='Body');
+  if(!w.length){showToast('No workout templates');return;}
   try{
-    await Promise.all(workout.map(t=>notionCreate(DB.tasks,{Task:{title:[{text:{content:t.name}}]},Cat:{select:{name:'Body'}},Difficulty:{select:{name:'Heavy'}},Status:{checkbox:false},'Due Date':{date:{start:today}}})));
-    showToast(`${workout.length} workout tasks added`);
-    await loadTasks();renderTasks();
+    await Promise.all(w.map(t=>nCreate(DB.tasks,{Task:{title:[{text:{content:t.name}}]},Cat:{select:{name:'Body'}},Difficulty:{select:{name:'Heavy'}},Status:{checkbox:false},'Due Date':{date:{start:today}}})));
+    showToast(`${w.length} workout tasks added`);await loadTasks();renderTasks();
   }catch(e){showToast('Failed');}
 }
 
