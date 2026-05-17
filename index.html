@@ -261,151 +261,63 @@ function parseRankStr(str){
     */
 function badgeSVG(rankObj, size=40){
   if(!rankObj) rankObj=ALL_RANKS[0];
-  const {name, roman, color} = rankObj;
-  const tierIdx = TIER_NAMES.indexOf(name);
-  const s = size;
-  const cx = s/2;
+  const {name, roman} = rankObj;
+  const imgSrc = `/badges/${name}.png`;
 
-  const GRAD = {
-    Bronze:   ['#2a1000','#a05c20','#e8a050','#6a3010'],
-    Silver:   ['#1a1a1a','#808080','#d8d8d8','#484848'],
-    Gold:     ['#2a1c00','#b07800','#f0cc30','#684800'],
-    Platinum: ['#001c1c','#189090','#50d8d8','#004848'],
-    Diamond:  ['#0e0020','#6010a8','#b050e8','#300060'],
-    Champion: ['#000c28','#1030a0','#3060e0','#001850'],
-    Titan:    ['#1a0000','#880808','#e03030','#400000'],
-    Olympian: ['#1c0c00','#906000','#e8b010','#503000'],
-  };
-  const [dark, mid, light, sdw] = GRAD[name] ?? GRAD.Bronze;
+  // All badges are square images on black bg
+  // Numeral sits at ~78% height — below the main emblem, above the bottom tip
+  // Dark pill background ensures readability on any badge colour
+  const w   = size;
+  const h   = size;
+  const cx  = w / 2;
+  const numY = h * 0.80;
 
-  // Sharp Valorant-style angular badge
-  // Flat top, angled sides, pointed bottom
-  const pad = s * 0.06;
-  const W = s - pad*2;
-  const H = s;
-  const ox = pad;
-  const oy = 0;
-  const topCut = W * 0.18;
-  const sideCut = H * 0.14;
+  // Pill dimensions
+  const pillW = Math.max(18, size * 0.44);
+  const pillH = Math.max(9,  size * 0.20);
+  const pillR = pillH / 2;
+  const fontSize = Math.max(7, Math.round(size * 0.19));
 
-  // Main polygon points
-  const mainPts = [
-    `${(ox+topCut).toFixed(1)},${oy}`,
-    `${(ox+W-topCut).toFixed(1)},${oy}`,
-    `${(ox+W).toFixed(1)},${(oy+sideCut).toFixed(1)}`,
-    `${(ox+W).toFixed(1)},${(oy+H*0.58).toFixed(1)}`,
-    `${(ox+W*0.5).toFixed(1)},${(oy+H).toFixed(1)}`,
-    `${ox.toFixed(1)},${(oy+H*0.58).toFixed(1)}`,
-    `${ox.toFixed(1)},${(oy+sideCut).toFixed(1)}`,
-  ].join(' ');
+  // Unique filter id per badge instance
+  const uid = name + roman + Math.round(size);
 
-  const ip = s * 0.07;
-  const innerPts = [
-    `${(ox+topCut+ip).toFixed(1)},${(oy+ip).toFixed(1)}`,
-    `${(ox+W-topCut-ip).toFixed(1)},${(oy+ip).toFixed(1)}`,
-    `${(ox+W-ip).toFixed(1)},${(oy+sideCut+ip).toFixed(1)}`,
-    `${(ox+W-ip).toFixed(1)},${(oy+H*0.58-ip*0.3).toFixed(1)}`,
-    `${(ox+W*0.5).toFixed(1)},${(oy+H-ip*1.5).toFixed(1)}`,
-    `${(ox+ip).toFixed(1)},${(oy+H*0.58-ip*0.3).toFixed(1)}`,
-    `${(ox+ip).toFixed(1)},${(oy+sideCut+ip).toFixed(1)}`,
-  ].join(' ');
-
-  // Horizontal divider line
-  const divY = (oy + H*0.42).toFixed(1);
-  const divX1 = (ox + ip*1.2).toFixed(1);
-  const divX2 = (ox + W - ip*1.2).toFixed(1);
-
-  // Wings for Diamond+ (angular, not curved)
-  const hasWings = tierIdx >= 4;
-  const wingSize = s * 0.18;
-  const wY = oy + H * 0.38;
-  const wings = hasWings ? `
-    <polygon points="${(ox-2).toFixed(1)},${(wY).toFixed(1)} ${(ox-wingSize).toFixed(1)},${(wY+wingSize*0.4).toFixed(1)} ${(ox-2).toFixed(1)},${(wY+wingSize*0.8).toFixed(1)}"
-      fill="${color}" opacity="0.55" stroke="${color}" stroke-width="0.5"/>
-    <polygon points="${(ox+W+2).toFixed(1)},${(wY).toFixed(1)} ${(ox+W+wingSize).toFixed(1)},${(wY+wingSize*0.4).toFixed(1)} ${(ox+W+2).toFixed(1)},${(wY+wingSize*0.8).toFixed(1)}"
-      fill="${color}" opacity="0.55" stroke="${color}" stroke-width="0.5"/>` : '';
-
-  // Crown for Titan/Olympian — 3 angular spikes above badge
-  const hasCrown = tierIdx >= 6;
-  const crownPts = [
-    `${(ox+W*0.32).toFixed(1)},${oy}`,
-    `${(ox+W*0.38).toFixed(1)},${(oy-s*0.14).toFixed(1)}`,
-    `${(ox+W*0.5).toFixed(1)},${(oy-s*0.08).toFixed(1)}`,
-    `${(ox+W*0.62).toFixed(1)},${(oy-s*0.14).toFixed(1)}`,
-    `${(ox+W*0.68).toFixed(1)},${oy}`,
-  ].join(' ');
-  const crown = hasCrown ? `<polyline points="${crownPts}" fill="none" stroke="${color}" stroke-width="${(s*0.04).toFixed(1)}" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>` : '';
-
-  // Accent tick marks (Platinum+)
-  const hasAccent = tierIdx >= 3;
-  const accent = hasAccent ? `
-    <line x1="${(ox+W*0.3).toFixed(1)}" y1="${(oy+ip*1.2).toFixed(1)}" x2="${(ox+W*0.5).toFixed(1)}" y2="${(oy+ip*0.4).toFixed(1)}" stroke="${light}" stroke-width="0.8" opacity="0.5"/>
-    <line x1="${(ox+W*0.7).toFixed(1)}" y1="${(oy+ip*1.2).toFixed(1)}" x2="${(ox+W*0.5).toFixed(1)}" y2="${(oy+ip*0.4).toFixed(1)}" stroke="${light}" stroke-width="0.8" opacity="0.5"/>` : '';
-
-  const nfs = Math.max(7, (s*0.185)).toFixed(1);
-  const rfs = Math.max(5, (s*0.13)).toFixed(1);
-  const textCX = (ox + W*0.5).toFixed(1);
-  const textY1 = (oy + H*0.43).toFixed(1);
-  const textY2 = (oy + H*0.62).toFixed(1);
-  const uid = name+roman+Math.round(s);
-
-  return `<svg width="${(s+wingSize*2+4).toFixed(0)}" height="${(s + (hasCrown?s*0.18:0) + 2).toFixed(0)}"
-    viewBox="${(-wingSize-2).toFixed(1)} ${(hasCrown?-s*0.18:0).toFixed(1)} ${(s+wingSize*2+4).toFixed(0)} ${(s+(hasCrown?s*0.18:0)+2).toFixed(0)}"
-    xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"
+    xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
     <defs>
-      <linearGradient id="mg${uid}" x1="15%" y1="0%" x2="85%" y2="100%">
-        <stop offset="0%"   stop-color="${dark}"/>
-        <stop offset="40%"  stop-color="${mid}"/>
-        <stop offset="72%"  stop-color="${light}"/>
-        <stop offset="100%" stop-color="${sdw}"/>
-      </linearGradient>
-      <linearGradient id="sh${uid}" x1="0%" y1="0%" x2="50%" y2="80%">
-        <stop offset="0%" stop-color="rgba(255,255,255,0.22)"/>
-        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-      </linearGradient>
-      <filter id="dr${uid}">
-        <feDropShadow dx="0" dy="${(s*0.05).toFixed(1)}" stdDeviation="${(s*0.07).toFixed(1)}"
-          flood-color="${color}" flood-opacity="0.55"/>
-      </filter>
-      <filter id="gl${uid}">
-        <feGaussianBlur stdDeviation="${(s*0.07).toFixed(1)}" result="b"/>
-        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      <filter id="ts${uid}">
+        <feDropShadow dx="0" dy="0.5" stdDeviation="1.5"
+          flood-color="rgba(0,0,0,1)" flood-opacity="1"/>
       </filter>
     </defs>
 
-    <!-- Glow halo -->
-    <polygon points="${mainPts}" fill="${color}" opacity="0.14" filter="url(#gl${uid})"/>
+    <!-- Badge image -->
+    <image href="${imgSrc}" x="0" y="0" width="${w}" height="${h}"
+      preserveAspectRatio="xMidYMid meet"/>
 
-    <!-- Crown -->
-    ${crown}
-
-    <!-- Wings -->
-    ${wings}
-
-    <!-- Main badge body -->
-    <polygon points="${mainPts}" fill="url(#mg${uid})" stroke="${color}" stroke-width="${(s*0.035).toFixed(1)}" filter="url(#dr${uid})"/>
-
-    <!-- Inner border -->
-    <polygon points="${innerPts}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.7"/>
-
-    <!-- Top shine -->
-    <polygon points="${mainPts}" fill="url(#sh${uid})"/>
-
-    <!-- Horizontal divider -->
-    <line x1="${divX1}" y1="${divY}" x2="${divX2}" y2="${divY}" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
-
-    <!-- Accent -->
-    ${accent}
-
-    <!-- Rank name -->
-    <text x="${textCX}" y="${textY1}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Bebas Neue',sans-serif" font-size="${nfs}" letter-spacing="0.8"
-      fill="rgba(255,255,255,0.95)" filter="url(#gl${uid})">${name.toUpperCase()}</text>
+    <!-- Numeral pill background -->
+    <rect
+      x="${(cx - pillW/2).toFixed(1)}"
+      y="${(numY - pillH/2).toFixed(1)}"
+      width="${pillW.toFixed(1)}"
+      height="${pillH.toFixed(1)}"
+      rx="${pillR.toFixed(1)}"
+      fill="rgba(0,0,0,0.72)"
+      stroke="rgba(255,255,255,0.12)"
+      stroke-width="0.6"/>
 
     <!-- Roman numeral -->
-    <text x="${textCX}" y="${textY2}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Inter',sans-serif" font-size="${rfs}" font-weight="700" letter-spacing="2"
-      fill="rgba(255,255,255,0.6)">${roman}</text>
+    <text
+      x="${cx.toFixed(1)}"
+      y="${(numY + fontSize*0.08).toFixed(1)}"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      font-family="'Bebas Neue',sans-serif"
+      font-size="${fontSize}"
+      font-weight="700"
+      letter-spacing="2"
+      fill="rgba(255,255,255,0.95)"
+      filter="url(#ts${uid})"
+    >${roman}</text>
   </svg>`;
 }
 
