@@ -499,7 +499,7 @@ function buildSilhouette(bodyStats){
     const fid=`cf${name.slice(0,3)}${sel?1:level}`;
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
       <defs><filter id="${fid}">
-        <feColorMatrix type="matrix" values="0 0 0 0 ${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 ${op} 0"/>
+        <feColorMatrix type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 0 0 0 ${op} 0"/>
         ${level<=1||sel?`<feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`:''}
       </filter></defs>
       <image href="${src}" x="0" y="0" width="612" height="612" filter="url(#${fid})"/>
@@ -508,13 +508,30 @@ function buildSilhouette(bodyStats){
 
   // Hotspot positions in full image space (612x612)
   const FC=153,BC=459;
+  // Hotspot positions tuned to mask white pixel centers
+  // Shoulders mask: rows 98-173, cols 90-259 (front figure cols 90-190 left, 200-259 right)
+  // Front figure x:70-305, center FC=185. Back figure x:310-545, center BC=430
   const HP={
-    front:{Chest:{x:FC,y:195},Core:{x:FC,y:310},Shoulder:{x:FC+68,y:178},
-           Biceps:{x:FC+82,y:235},Triceps:{x:FC+90,y:260},Forearms:{x:FC+90,y:310},
-           Legs:{x:FC+28,y:420},Plyometrics:{x:FC+24,y:510},Cardio:{x:FC-38,y:178}},
-    back: {Back:{x:BC,y:210},Shoulder:{x:BC+65,y:172},Triceps:{x:BC+88,y:245},
-           Biceps:{x:BC+95,y:268},Forearms:{x:BC+95,y:315},
-           Legs:{x:BC+28,y:425},Plyometrics:{x:BC+24,y:515}},
+    front:{
+      Chest:       {x:FC,     y:210},  // centre pecs
+      Core:        {x:FC,     y:330},  // abs centre
+      Cardio:      {x:FC-42,  y:192},  // upper left chest
+      Shoulder:    {x:FC+75,  y:138},  // right deltoid cap
+      Biceps:      {x:FC+85,  y:240},  // right bicep
+      Triceps:     {x:FC+92,  y:268},  // right tricep
+      Forearms:    {x:FC+90,  y:318},  // right forearm
+      Legs:        {x:FC+32,  y:430},  // right quad
+      Plyometrics: {x:FC+28,  y:520},  // right calf
+    },
+    back:{
+      Back:        {x:BC,     y:215},
+      Shoulder:    {x:BC+72,  y:140},
+      Triceps:     {x:BC+88,  y:250},
+      Biceps:      {x:BC+95,  y:272},
+      Forearms:    {x:BC+92,  y:318},
+      Legs:        {x:BC+32,  y:430},
+      Plyometrics: {x:BC+28,  y:520},
+    },
   };
   const posMap=HP[silView];
 
