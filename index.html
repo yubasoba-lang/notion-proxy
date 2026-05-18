@@ -495,12 +495,16 @@ function buildSilhouette(bodyStats){
     const R=(parseInt(hex.slice(0,2),16)/255).toFixed(3);
     const G=(parseInt(hex.slice(2,4),16)/255).toFixed(3);
     const B=(parseInt(hex.slice(4,6),16)/255).toFixed(3);
-    const op=sel?1:level===0?0.9:level===1?0.7:0.35;
+    const largeMuscle=['Shoulder','Back','Chest','Core','Legs'].includes(name);
+    const op=largeMuscle
+      ?(sel?0.55:level===0?0.42:level===1?0.28:level===2?0.12:0.03)
+      :(sel?0.82:level===0?0.72:level===1?0.52:level===2?0.22:0.04);
     const fid=`cf${name.slice(0,3)}${sel?1:level}`;
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
       <defs><filter id="${fid}">
         <feColorMatrix type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 0 0 0 ${op} 0"/>
-        ${level<=1||sel?`<feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`:''}
+        <feComponentTransfer><feFuncRGB type="linear" slope="0.85"/></feComponentTransfer>
+        ${sel?`<feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`:''  }
       </filter></defs>
       <image href="${src}" x="0" y="0" width="612" height="612" filter="url(#${fid})"/>
     </g>`;
@@ -513,24 +517,24 @@ function buildSilhouette(bodyStats){
   // Front figure x:70-305, center FC=185. Back figure x:310-545, center BC=430
   const HP={
     front:{
-      Chest:       {x:FC,     y:210},  // centre pecs
-      Core:        {x:FC,     y:330},  // abs centre
-      Cardio:      {x:FC-42,  y:192},  // upper left chest
-      Shoulder:    {x:FC+75,  y:138},  // right deltoid cap
-      Biceps:      {x:FC+85,  y:240},  // right bicep
-      Triceps:     {x:FC+92,  y:268},  // right tricep
-      Forearms:    {x:FC+90,  y:318},  // right forearm
-      Legs:        {x:FC+32,  y:430},  // right quad
-      Plyometrics: {x:FC+28,  y:520},  // right calf
+      Chest:       {x:FC,     y:230},  // centre pecs
+      Core:        {x:FC,     y:345},  // abs centre
+      Cardio:      {x:FC-50,  y:210},  // upper left chest
+      Shoulder:    {x:FC+78,  y:155},  // right deltoid
+      Biceps:      {x:FC+88,  y:258},  // right bicep
+      Triceps:     {x:FC+96,  y:282},  // right tricep
+      Forearms:    {x:FC+94,  y:335},  // right forearm
+      Legs:        {x:FC+35,  y:445},  // right quad
+      Plyometrics: {x:FC+30,  y:535},  // right calf
     },
     back:{
-      Back:        {x:BC,     y:215},
-      Shoulder:    {x:BC+72,  y:140},
-      Triceps:     {x:BC+88,  y:250},
-      Biceps:      {x:BC+95,  y:272},
-      Forearms:    {x:BC+92,  y:318},
-      Legs:        {x:BC+32,  y:430},
-      Plyometrics: {x:BC+28,  y:520},
+      Back:        {x:BC,     y:225},
+      Shoulder:    {x:BC+75,  y:158},
+      Triceps:     {x:BC+90,  y:258},
+      Biceps:      {x:BC+98,  y:282},
+      Forearms:    {x:BC+94,  y:335},
+      Legs:        {x:BC+35,  y:445},
+      Plyometrics: {x:BC+30,  y:535},
     },
   };
   const posMap=HP[silView];
