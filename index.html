@@ -482,9 +482,8 @@ function buildSilhouette(bodyStats){
   const frontMuscles=['Chest','Core','Shoulder','Biceps','Triceps','Forearms','Legs','Plyometrics','Cardio'];
   const backMuscles =['Back','Shoulder','Triceps','Biceps','Forearms','Legs','Plyometrics'];
   const muscles = silView==='front' ? frontMuscles : backMuscles;
-  // Front figure is centred at x=173 in source image; back figure at x=432.
-  // Each viewBox is 306 wide — shift so the figure sits at viewBox centre (153).
-  const VB = silView==='front' ? '20 0 306 612' : '279 0 306 612';
+  // Front figure occupies left half (x=0..306), back figure right half (x=306..612).
+  const VB = silView==='front' ? '0 0 306 612' : '306 0 306 612';
 
   // Build rank-coloured muscle overlay layers
   const maskLayers = muscles.filter((n,i,a)=>a.indexOf(n)===i).map(name=>{
@@ -568,9 +567,10 @@ function buildSilhouette(bodyStats){
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <clipPath id="clipFront"><rect x="0" y="0" width="306" height="612"/></clipPath>
         <clipPath id="clipBack"><rect x="306" y="0" width="306" height="612"/></clipPath>
+
       </defs>
       <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
-        preserveAspectRatio="xMidYMid meet" style="opacity:0.9;"/>
+        preserveAspectRatio="none" style="opacity:0.9;"/>
       ${maskLayers}
       ${hotspots}
     </svg>
