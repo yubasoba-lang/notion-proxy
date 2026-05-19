@@ -482,7 +482,9 @@ function buildSilhouette(bodyStats){
   const frontMuscles=['Chest','Core','Shoulder','Biceps','Triceps','Forearms','Legs','Plyometrics','Cardio'];
   const backMuscles =['Back','Shoulder','Triceps','Biceps','Forearms','Legs','Plyometrics'];
   const muscles = silView==='front' ? frontMuscles : backMuscles;
-  const VB = silView==='front' ? '0 0 306 612' : '306 0 306 612';
+  // Front figure is centred at x=173 in source image; back figure at x=432.
+  // Each viewBox is 306 wide — shift so the figure sits at viewBox centre (153).
+  const VB = silView==='front' ? '20 0 306 612' : '279 0 306 612';
 
   // Build rank-coloured muscle overlay layers
   const maskLayers = muscles.filter((n,i,a)=>a.indexOf(n)===i).map(name=>{
@@ -497,44 +499,42 @@ function buildSilhouette(bodyStats){
     const B=(parseInt(hex.slice(4,6),16)/255).toFixed(3);
     const largeMuscle=['Shoulder','Back','Chest','Core','Legs'].includes(name);
     const op=largeMuscle
-      ?(sel?0.55:level===0?0.42:level===1?0.28:level===2?0.12:0.03)
-      :(sel?0.82:level===0?0.72:level===1?0.52:level===2?0.22:0.04);
+      ?(sel?0.40:level===0?0.30:level===1?0.20:level===2?0.10:0.03)
+      :(sel?0.55:level===0?0.45:level===1?0.32:level===2?0.16:0.04);
     const fid=`cf${name.slice(0,3)}${sel?1:level}`;
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
       <defs><filter id="${fid}">
         <feColorMatrix type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 0 0 0 ${op} 0"/>
-        <feComponentTransfer><feFuncRGB type="linear" slope="0.85"/></feComponentTransfer>
         ${sel?`<feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`:''  }
       </filter></defs>
       <image href="${src}" x="0" y="0" width="612" height="612" filter="url(#${fid})"/>
     </g>`;
   }).join('');
 
-  // Hotspot positions in full image space (612x612)
-  const FC=153,BC=459;
-  // Hotspot positions tuned to mask white pixel centers
-  // Shoulders mask: rows 98-173, cols 90-259 (front figure cols 90-190 left, 200-259 right)
-  // Front figure x:70-305, center FC=185. Back figure x:310-545, center BC=430
+  // Hotspot positions in full image space (612x612).
+  // FC/BC = actual figure x-centres in source image (front 173, back 432).
+  // Y positions and x-offsets calibrated against mask centroids.
+  const FC=173,BC=432;
   const HP={
     front:{
-      Chest:       {x:FC,     y:230},  // centre pecs
-      Core:        {x:FC,     y:345},  // abs centre
-      Cardio:      {x:FC-50,  y:210},  // upper left chest
-      Shoulder:    {x:FC+78,  y:155},  // right deltoid
-      Biceps:      {x:FC+88,  y:258},  // right bicep
-      Triceps:     {x:FC+96,  y:282},  // right tricep
-      Forearms:    {x:FC+94,  y:335},  // right forearm
-      Legs:        {x:FC+35,  y:445},  // right quad
-      Plyometrics: {x:FC+30,  y:535},  // right calf
+      Chest:       {x:FC,     y:155},  // pec centre (mask y≈152)
+      Core:        {x:FC,     y:230},  // abs centre (mask y≈230)
+      Cardio:      {x:FC-55,  y:200},  // upper-left torso (tracker, no muscle region)
+      Shoulder:    {x:FC+58,  y:135},  // right deltoid (mask y≈131)
+      Biceps:      {x:FC+68,  y:175},  // right bicep (mask y≈174)
+      Triceps:     {x:FC+78,  y:200},  // right tricep (slightly below bicep so they don't overlap)
+      Forearms:    {x:FC+74,  y:230},  // right forearm (mask y≈222)
+      Legs:        {x:FC+15,  y:340},  // right quad (mask y≈335)
+      Plyometrics: {x:FC+10,  y:445},  // right calf (mask y≈444)
     },
     back:{
-      Back:        {x:BC,     y:225},
-      Shoulder:    {x:BC+75,  y:158},
-      Triceps:     {x:BC+90,  y:258},
-      Biceps:      {x:BC+98,  y:282},
-      Forearms:    {x:BC+94,  y:335},
-      Legs:        {x:BC+35,  y:445},
-      Plyometrics: {x:BC+30,  y:535},
+      Back:        {x:BC,     y:185},  // mid-back (mask y≈182)
+      Shoulder:    {x:BC+58,  y:135},  // rear delt
+      Triceps:     {x:BC+76,  y:180},  // tricep (mask y≈180)
+      Biceps:      {x:BC+76,  y:210},  // offset below triceps so they don't overlap
+      Forearms:    {x:BC+72,  y:240},  // forearm (mask y≈238)
+      Legs:        {x:BC+15,  y:340},  // hamstring (mask y≈337)
+      Plyometrics: {x:BC+10,  y:440},  // calf (mask y≈438)
     },
   };
   const posMap=HP[silView];
@@ -548,8 +548,8 @@ function buildSilhouette(bodyStats){
     const borderCol=sel?col:level===0?col:level===1?col+'bb':level===2?col+'44':'#1e1e28';
     const fillCol=sel?col+'44':level===0?col+'22':level===1?col+'11':'rgba(10,10,14,0.85)';
     const textCol=glow?col:'#2a2a3a';
-    // Adjust x for viewBox crop
-    const lx=silView==='front'?pos.x:pos.x-306;
+    // Hotspot coords are in source image space (0-612); viewBox crops the view.
+    const lx=pos.x;
     const ly=pos.y;
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
       ${glow?`<circle cx="${lx}" cy="${ly}" r="22" fill="${col}" opacity="0.1"/>`:''}
