@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -482,16 +483,17 @@ function buildSilhouette(bodyStats){
   const frontMuscles=['Chest','Core','Shoulder','Biceps','Triceps','Forearms','Legs','Plyometrics','Cardio'];
   const backMuscles =['Back','Shoulder','Triceps','Biceps','Forearms','Legs','Plyometrics'];
   const muscles = silView==='front' ? frontMuscles : backMuscles;
-  // Front figure occupies left half (x=0..306), back figure right half (x=306..612).
-  const VB = silView==='front' ? '0 0 306 612' : '306 0 306 612';
+  // Front figure is centred at x=173 in source image; back figure at x=432.
+  // Each viewBox is 306 wide — shift so the figure sits at viewBox centre (153).
+  const VB = silView==='front' ? '20 0 306 612' : '279 0 306 612';
 
   // Build rank-coloured muscle overlay layers
   const maskLayers = muscles.filter((n,i,a)=>a.indexOf(n)===i).map(name=>{
     const level=getLevel(name), col=rankColor(name), id=sid(name), sel=selectedMuscle===id;
     const src=MASK_IMGS[name]??'';
     if(!src) return '';
-    if(level===3&&!sel) return `<image href="${src}" x="0" y="0" width="612" height="612"
-      style="opacity:0.05;mix-blend-mode:screen;cursor:pointer;" onclick="selectMuscle('${id}','${name}')"/>`;
+    if(level===3&&!sel) return `<image href="${src}" x="0" y="${silView==='front'?46:49}" width="612" height="${silView==='front'?492:466}"
+      preserveAspectRatio="none" style="opacity:0.05;mix-blend-mode:screen;cursor:pointer;" onclick="selectMuscle('${id}','${name}')"/>`;
     const hex=(col??'#888888').replace('#','');
     const R=(parseInt(hex.slice(0,2),16)/255).toFixed(3);
     const G=(parseInt(hex.slice(2,4),16)/255).toFixed(3);
@@ -508,7 +510,8 @@ function buildSilhouette(bodyStats){
         <feColorMatrix type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 0 0 0 ${op} 0"/>
         ${sel?`<feGaussianBlur stdDeviation="2" edgeMode="duplicate"/>`:''}
       </filter></defs>
-      <image href="${src}" x="0" y="0" width="612" height="612" filter="url(#${fid})"/>
+      <image href="${src}" x="0" y="${silView==='front'?46:49}" width="612" height="${silView==='front'?492:466}"
+        preserveAspectRatio="none" filter="url(#${fid})"/>
     </g>`;
   }).join('');
 
@@ -567,9 +570,8 @@ function buildSilhouette(bodyStats){
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <clipPath id="clipFront"><rect x="0" y="0" width="306" height="612"/></clipPath>
         <clipPath id="clipBack"><rect x="306" y="0" width="306" height="612"/></clipPath>
-
       </defs>
-      <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
+      <image href="${ANATOMY_IMG}" x="0" y="${silView==='front'?46:49}" width="612" height="${silView==='front'?492:466}"
         preserveAspectRatio="none" style="opacity:0.9;"/>
       ${maskLayers}
       ${hotspots}
