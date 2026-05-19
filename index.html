@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -408,7 +407,7 @@ function badgeSVG(rankObj, size=40){
 
     <!-- Badge image -->
     <image href="${imgSrc}" x="0" y="0" width="${w}" height="${h}"
-      preserveAspectRatio="xMidYMid meet"/>
+      preserveAspectRatio="xMidYMid meet" style="mix-blend-mode:screen"/>
 
     <!-- Numeral pill background -->
     <rect
@@ -571,8 +570,9 @@ function buildSilhouette(bodyStats){
         <clipPath id="clipFront"><rect x="0" y="0" width="306" height="612"/></clipPath>
         <clipPath id="clipBack"><rect x="306" y="0" width="306" height="612"/></clipPath>
       </defs>
+      <rect x="0" y="0" width="612" height="612" fill="#111116"/>
       <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
-        style="opacity:0.9;filter:invert(1);mix-blend-mode:screen;"/>
+        style="mix-blend-mode:multiply;opacity:0.9;"/>
       ${maskLayers}
       ${hotspots}
     </svg>
