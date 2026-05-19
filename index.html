@@ -570,9 +570,8 @@ function buildSilhouette(bodyStats){
         <clipPath id="clipFront"><rect x="0" y="0" width="306" height="612"/></clipPath>
         <clipPath id="clipBack"><rect x="306" y="0" width="306" height="612"/></clipPath>
       </defs>
-      <rect x="0" y="0" width="612" height="612" fill="#111116"/>
       <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
-        style="mix-blend-mode:multiply;opacity:0.9;"/>
+        style="opacity:0.9;mix-blend-mode:darken;"/>
       ${maskLayers}
       ${hotspots}
     </svg>
