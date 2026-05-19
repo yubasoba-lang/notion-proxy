@@ -499,13 +499,15 @@ function buildSilhouette(bodyStats){
     const B=(parseInt(hex.slice(4,6),16)/255).toFixed(3);
     const largeMuscle=['Shoulder','Back','Chest','Core','Legs'].includes(name);
     const op=largeMuscle
-      ?(sel?0.40:level===0?0.30:level===1?0.20:level===2?0.10:0.03)
-      :(sel?0.55:level===0?0.45:level===1?0.32:level===2?0.16:0.04);
+      ?(sel?0.55:level===0?0.30:level===1?0.20:level===2?0.10:0.03)
+      :(sel?0.75:level===0?0.45:level===1?0.32:level===2?0.16:0.04);
     const fid=`cf${name.slice(0,3)}${sel?1:level}`;
-    return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
+    // Clip mask to current view so stray mask pixels don't bleed across the figure gap.
+    const clipId=silView==='front'?'clipFront':'clipBack';
+    return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;" clip-path="url(#${clipId})">
       <defs><filter id="${fid}">
         <feColorMatrix type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 0 0 0 ${op} 0"/>
-        ${sel?`<feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>`:''  }
+        ${sel?`<feGaussianBlur stdDeviation="2" edgeMode="duplicate"/>`:''}
       </filter></defs>
       <image href="${src}" x="0" y="0" width="612" height="612" filter="url(#${fid})"/>
     </g>`;
@@ -517,24 +519,24 @@ function buildSilhouette(bodyStats){
   const FC=173,BC=432;
   const HP={
     front:{
-      Chest:       {x:FC,     y:155},  // pec centre (mask y≈152)
-      Core:        {x:FC,     y:230},  // abs centre (mask y≈230)
-      Cardio:      {x:FC-55,  y:200},  // upper-left torso (tracker, no muscle region)
-      Shoulder:    {x:FC+58,  y:135},  // right deltoid (mask y≈131)
-      Biceps:      {x:FC+68,  y:175},  // right bicep (mask y≈174)
-      Triceps:     {x:FC+78,  y:200},  // right tricep (slightly below bicep so they don't overlap)
-      Forearms:    {x:FC+74,  y:230},  // right forearm (mask y≈222)
-      Legs:        {x:FC+15,  y:340},  // right quad (mask y≈335)
-      Plyometrics: {x:FC+10,  y:445},  // right calf (mask y≈444)
+      Chest:       {x:FC,     y:185},  // pec centre
+      Core:        {x:FC,     y:265},  // abs centre
+      Cardio:      {x:FC-55,  y:225},  // upper-left torso (tracker, no muscle region)
+      Shoulder:    {x:FC+58,  y:160},  // right deltoid
+      Biceps:      {x:FC+68,  y:205},  // right bicep
+      Triceps:     {x:FC+78,  y:230},  // right tricep
+      Forearms:    {x:FC+74,  y:265},  // right forearm
+      Legs:        {x:FC+15,  y:370},  // right quad
+      Plyometrics: {x:FC+10,  y:475},  // right calf
     },
     back:{
-      Back:        {x:BC,     y:185},  // mid-back (mask y≈182)
-      Shoulder:    {x:BC+58,  y:135},  // rear delt
-      Triceps:     {x:BC+76,  y:180},  // tricep (mask y≈180)
-      Biceps:      {x:BC+76,  y:210},  // offset below triceps so they don't overlap
-      Forearms:    {x:BC+72,  y:240},  // forearm (mask y≈238)
-      Legs:        {x:BC+15,  y:340},  // hamstring (mask y≈337)
-      Plyometrics: {x:BC+10,  y:440},  // calf (mask y≈438)
+      Back:        {x:BC,     y:215},  // mid-back
+      Shoulder:    {x:BC+58,  y:160},  // rear delt
+      Triceps:     {x:BC+76,  y:210},  // tricep
+      Biceps:      {x:BC+76,  y:240},  // offset below triceps
+      Forearms:    {x:BC+72,  y:275},  // forearm
+      Legs:        {x:BC+15,  y:370},  // hamstring
+      Plyometrics: {x:BC+10,  y:470},  // calf
     },
   };
   const posMap=HP[silView];
@@ -561,8 +563,11 @@ function buildSilhouette(bodyStats){
 
   return `<div style="width:100%;max-width:220px;margin:0 auto;">
     <svg viewBox="${VB}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
-      <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/>
-        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <clipPath id="clipFront"><rect x="0" y="0" width="306" height="612"/></clipPath>
+        <clipPath id="clipBack"><rect x="306" y="0" width="306" height="612"/></clipPath>
       </defs>
       <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
         preserveAspectRatio="xMidYMid meet" style="opacity:0.9;"/>
