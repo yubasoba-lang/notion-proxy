@@ -972,16 +972,16 @@ async function addWorkout(){
   const SCHEDULE = [
     { day:1, tasks:[{name:'Plyometrics',      diff:'Normal'     ,cat:'Body'},
                     {name:'Core workout',      diff:'Maintenance',cat:'Body'}] },
-    { day:2, tasks:[{name:'Chest workout',     diff:'Normal'     ,cat:'Body'},
+    { day:2, tasks:[{name:'Chest workout',     diff:'Heavy'      ,cat:'Body'},
                     {name:'Triceps workout',   diff:'Normal'     ,cat:'Body'},
                     {name:'Shoulder workout',  diff:'Normal'     ,cat:'Body'}] },
     { day:3, tasks:[{name:'Back workout',      diff:'Heavy'      ,cat:'Body'},
                     {name:'Biceps workout',    diff:'Normal'     ,cat:'Body'},
-                    {name:'Forearms workout',  diff:'Maintenance',cat:'Body'},
+                    {name:'Forearms workout',  diff:'Normal'     ,cat:'Body'},
                     {name:'Core workout',      diff:'Maintenance',cat:'Body'}] },
     { day:4, tasks:[{name:'Chest workout',     diff:'Normal'     ,cat:'Body'},
                     {name:'Triceps workout',   diff:'Normal'     ,cat:'Body'},
-                    {name:'Shoulder workout',  diff:'Maintenance',cat:'Body'}] },
+                    {name:'Shoulder workout',  diff:'Normal'     ,cat:'Body'}] },
     { day:5, tasks:[{name:'Back workout',      diff:'Normal'     ,cat:'Body'},
                     {name:'Biceps workout',    diff:'Normal'     ,cat:'Body'},
                     {name:'Forearms workout',  diff:'Normal'     ,cat:'Body'},
@@ -999,7 +999,7 @@ async function addWorkout(){
   monday.setDate(now.getDate() + mondayOffset);
   monday.setHours(0,0,0,0);
 
-  const toISO = d => d.toISOString().split('T')[0];
+  const toISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
   try {
     const creates = [];
