@@ -72,7 +72,7 @@ body::before {
 
 /* ── Nav ── */
 .nav {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   background: rgba(12,12,15,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -570,7 +570,7 @@ function buildSilhouette(bodyStats){
       </defs>
       <rect x="0" y="0" width="612" height="612" fill="#111116"/>
       <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
-        style="mix-blend-mode:multiply;opacity:0.9;"/>
+        style="mix-blend-mode:screen;filter:invert(1) brightness(0.45);"/>
       ${maskLayers}
       ${hotspots}
     </svg>
