@@ -726,7 +726,7 @@ function renderHome(){
         <div class="detail-stats">
           <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
           <div class="detail-stat-div"></div>
-          <div class="detail-stat"><div class="detail-stat-label">vs </div><div class="detail-stat-val" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'':'')+Math.abs(gap):'—'}</div></div>
+          <div class="detail-stat"><div class="detail-stat-label">vs </div><div class="detail-stat-val" style="color:${isAhead?'var(--red-hi)':isBehind?'var(--green-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'▼':'▲')+Math.abs(gap):'—'}</div></div>
           <div class="detail-stat-div"></div>
           <div class="detail-stat"><div class="detail-stat-label">Last</div><div class="detail-stat-val" style="color:var(--text-dim);font-size:10px">${lastStr}</div></div>
         </div>
@@ -749,7 +749,7 @@ function renderHome(){
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
         <div class="muscle-bottom-row">
           ${stat.daysInactive!=null?`<span class="days-inactive ${stat.daysInactive===0?'active':stat.daysInactive<=5?'recent':'stale'}">${stat.daysInactive===0?'Today':stat.daysInactive+'d ago'}</span>`:''}
-          ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--green-text)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)}</span>`:''}
+          ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--red-hi)':isBehind?'var(--green-text)':'var(--text-dim)'}">${isAhead?'▼':isBehind?'▲':'='} ${Math.abs(gap)}</span>`:''}
         </div>
       </div>`;
     });
