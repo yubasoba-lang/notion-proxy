@@ -293,13 +293,11 @@ body::before {
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon"></span><span class="nav-label">Home</span></button>
     <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">≡</span><span class="nav-label">Tasks</span></button>
-    <button class="nav-btn" onclick="switchTab('stats',this)"><span class="nav-icon"></span><span class="nav-label">Stats</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
     <div id="tab-home" class="tab-panel active"></div>
     <div id="tab-tasks" class="tab-panel" style="display:none"></div>
-    <div id="tab-stats" class="tab-panel" style="display:none"></div>
   </div>
 </div>
 <div class="rankup-overlay" id="rankupOverlay" onclick="closeRankup()">
@@ -671,7 +669,6 @@ async function refresh(){
   setError(null);setSyncBusy(true);
   if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadRivals()]);renderHome();}
   if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
-  if(currentTab==='stats'){await Promise.all([loadStats(),loadRivals()]);renderStats();}
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
@@ -690,25 +687,64 @@ function getRivalFor(name){return state.rivals.find(r=>r.bodyPart?.toLowerCase()
 function renderHome(){
   const s=state.streaks;
   const bodyStats=state.stats.filter(x=>x.cat==='Body'&&x.name!=='Rest');
-
-  document.getElementById('tab-home').innerHTML=`
+  const selStat=selectedMuscle?bodyStats.find(x=>x.id===selectedMuscle):null;
+  let html=`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
       <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
       <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
       <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
       <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
-    </div>
-    ${bodyStats.length?`<div class="section-label">Body</div><div class="muscle-grid">${bodyStats.map(stat=>{
+    </div>`;
+  if(bodyStats.length){
+    html+=`<div class="sil-wrap">
+      <div class="sil-header">
+        <div class="sil-title">Body Map</div>
+        <div class="sil-toggle">
+          <button class="sil-toggle-btn ${silView==='front'?'active':''}" onclick="setSilView('front')">Front</button>
+          <button class="sil-toggle-btn ${silView==='back'?'active':''}" onclick="setSilView('back')">Back</button>
+        </div>
+      </div>
+      ${buildSilhouette(bodyStats)}
+      <div class="sil-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green-hi)"></div>Active ≤5 days</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--border-hi)"></div>Inactive</div>
+      </div>
+    </div>`;
+    if(selStat){
+      const parsed=parseRankStr(selStat.rankStr);
+      const{rank,next,pct}=getRankFromXP(selStat.finalXP);
+      const r=parsed??rank;
+      const rival=getRivalFor(selStat.name);
+      const gap=rival?.gapNumber??null;
+      const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
+      const lastStr=selStat.lastTrained?new Date(selStat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
+      html+=`<div class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+          <div><div class="detail-name" style="color:${r.color}">${selStat.name}</div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-weight:600;letter-spacing:0.1em">${Math.round(pct)}% of ${r.full}</div></div>
+          ${badgeHTML(r,96)}
+        </div>
+        <div class="detail-stats">
+          <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
+          <div class="detail-stat-div"></div>
+          <div class="detail-stat"><div class="detail-stat-label">vs </div><div class="detail-stat-val" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'':'')+Math.abs(gap):'—'}</div></div>
+          <div class="detail-stat-div"></div>
+          <div class="detail-stat"><div class="detail-stat-label">Last</div><div class="detail-stat-val" style="color:var(--text-dim);font-size:10px">${lastStr}</div></div>
+        </div>
+      </div>`;
+    }
+    html+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
+    bodyStats.forEach(stat=>{
       const parsed=parseRankStr(stat.rankStr);
       const{rank,next,pct}=getRankFromXP(stat.finalXP);
       const r=parsed??rank;
       const rival=getRivalFor(stat.name);
       const gap=rival?.gapNumber??null;
       const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
-      return `<div class="muscle-mini" onclick="switchTab('stats',document.querySelectorAll('.nav-btn')[2]);setTimeout(()=>selectMuscle('${stat.id}','${stat.name}'),400)">
-        <div style="position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,${r.color}55,transparent)"></div>
-        <div class="muscle-mini-top"><span class="muscle-mini-name">${stat.name}</span>${badgeHTML(r,56)}</div>
+      const sel=selectedMuscle===stat.id;
+      html+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${r.color};`:''}">
+        <div class="muscle-card-top-bar" style="background:${sel?r.color:'transparent'}"></div>
+        <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,56)}</div>
         <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
         <div class="muscle-of">of ${r.full}</div>
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
@@ -716,7 +752,11 @@ function renderHome(){
           ${stat.daysInactive!=null?`<span class="days-inactive ${stat.daysInactive===0?'active':stat.daysInactive<=5?'recent':'stale'}">${stat.daysInactive===0?'Today':stat.daysInactive+'d ago'}</span>`:''}
           ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--green-text)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)}</span>`:''}
         </div>
-      </div>`;}).join('')}</div>`:''}`;
+      </div>`;
+    });
+    html+='</div>';
+  }
+  document.getElementById('tab-home').innerHTML=html;
 }
 
 const DIFF_ORDER=['Maintenance','Normal','Heavy','Daily','Important'];
@@ -792,85 +832,14 @@ function taskHTML(task,today){
   </div>`;
 }
 
-function renderStats(){
-  const bodyStats=state.stats.filter(s=>s.cat==='Body'&&s.name!=='Rest');
-  if(!bodyStats.length){document.getElementById('tab-stats').innerHTML='<div class="empty">No body stats</div>';return;}
-  const selStat=selectedMuscle?bodyStats.find(s=>s.id===selectedMuscle):null;
-  let html='';
-
-  // Silhouette
-  html+=`<div class="sil-wrap">
-    <div class="sil-header">
-      <div class="sil-title">Body Map</div>
-      <div class="sil-toggle">
-        <button class="sil-toggle-btn ${silView==='front'?'active':''}" onclick="setSilView('front')">Front</button>
-        <button class="sil-toggle-btn ${silView==='back'?'active':''}" onclick="setSilView('back')">Back</button>
-      </div>
-    </div>
-    ${buildSilhouette(bodyStats)}
-    <div class="sil-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--green-hi)"></div>Active ≤5 days</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--border-hi)"></div>Inactive</div>
-    </div>
-  </div>`;
-
-  // Detail
-  if(selStat){
-    const parsed=parseRankStr(selStat.rankStr);
-    const{rank,next,pct}=getRankFromXP(selStat.finalXP);
-    const r=parsed??rank;
-    const rival=getRivalFor(selStat.name);
-    const gap=rival?.gapNumber??null;
-    const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
-    const lastStr=selStat.lastTrained?new Date(selStat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
-    html+=`<div class="detail-panel" id="detailPanel">
-      <div class="detail-header">
-        <div><div class="detail-name" style="color:${r.color}">${selStat.name}</div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-weight:600;letter-spacing:0.1em">${Math.round(pct)}% of ${r.full}</div></div>
-        ${badgeHTML(r,96)}
-      </div>
-      <div class="detail-stats">
-        <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
-        <div class="detail-stat-div"></div>
-        <div class="detail-stat"><div class="detail-stat-label">vs </div><div class="detail-stat-val" style="color:${isAhead?'var(--green-hi)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'':'')+Math.abs(gap):'—'}</div></div>
-        <div class="detail-stat-div"></div>
-        <div class="detail-stat"><div class="detail-stat-label">Last</div><div class="detail-stat-val" style="color:var(--text-dim);font-size:10px">${lastStr}</div></div>
-      </div>
-    </div>`;
-  }
-
-  // Grid
-  html+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
-  bodyStats.forEach(stat=>{
-    const parsed=parseRankStr(stat.rankStr);
-    const{rank,next,pct}=getRankFromXP(stat.finalXP);
-    const r=parsed??rank;
-    const rival=getRivalFor(stat.name);
-    const gap=rival?.gapNumber??null;
-    const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
-    const sel=selectedMuscle===stat.id;
-    html+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${r.color};`:''}">
-      <div class="muscle-card-top-bar" style="background:${sel?r.color:'transparent'}"></div>
-      <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,56)}</div>
-      <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
-      <div class="muscle-of">of ${r.full}</div>
-      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
-      <div class="muscle-bottom-row">
-        ${stat.daysInactive!=null?`<span class="days-inactive ${stat.daysInactive===0?'active':stat.daysInactive<=5?'recent':'stale'}">${stat.daysInactive===0?'Today':stat.daysInactive+'d ago'}</span>`:''}
-        ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--green-text)':isBehind?'var(--red-hi)':'var(--text-dim)'}">${isAhead?'▲':isBehind?'▼':'='} ${Math.abs(gap)}</span>`:''}
-      </div>
-      </div>`;
-  });
-  html+='</div>';
-  document.getElementById('tab-stats').innerHTML=html;
-}
 
 function selectMuscle(id,name){
   if(!id)return;
   selectedMuscle=selectedMuscle===id?null:id;
-  renderStats();
+  renderHome();
   if(selectedMuscle){const p=document.getElementById('detailPanel');if(p)setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
 }
-function setSilView(v){silView=v;renderStats();}
+function setSilView(v){silView=v;renderHome();}
 
 /* 
    ACTIONS
