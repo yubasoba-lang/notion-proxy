@@ -11,25 +11,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:        #0c0c0f;
-  --bg-card:   #111116;
-  --bg-mid:    #17171e;
-  --bg-hi:     #1e1e28;
-  --border:    #1a1a22;
-  --border-hi: #28283a;
-  --border-glow: #2e2e42;
-  --text:      #c8c8d8;
-  --text-dim:  #48485e;
-  --text-faint:#22222e;
-  --gold:      #b8942a;
-  --gold-hi:   #d4aa3a;
-  --gold-dim:  #6a5418;
-  --gold-glow: rgba(184,148,42,0.15);
-  --green:     #1e4a2e;
-  --green-hi:  #2a6a3e;
-  --green-text:#3a9a5e;
-  --red-text:  #8a3030;
-  --red-hi:    #c04040;
+  --bg:        #06060c;
+  --bg-card:   #0c0c16;
+  --bg-mid:    #11111e;
+  --bg-hi:     #181828;
+  --border:    #14142a;
+  --border-hi: #1e1e3a;
+  --border-glow: #282850;
+  --text:      #a8a8c8;
+  --text-dim:  #38385a;
+  --text-faint:#18182a;
+  --gold:      #c09a2a;
+  --gold-hi:   #d4b040;
+  --gold-dim:  #604a14;
+  --gold-glow: rgba(192,154,42,0.1);
+  --green:     #142a1e;
+  --green-hi:  #1e4a2e;
+  --green-text:#2a8a58;
+  --red-text:  #6a2020;
+  --red-hi:    #a03030;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -40,8 +40,9 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background-image:
-    radial-gradient(ellipse at 30% 20%, rgba(184,148,42,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, rgba(184,148,42,0.02) 0%, transparent 40%);
+    radial-gradient(ellipse at 15% 10%, rgba(80,60,180,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 85%, rgba(40,40,140,0.05) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(60,50,120,0.03) 0%, transparent 70%);
   pointer-events: none; z-index: 0;
 }
 
@@ -73,23 +74,22 @@ body::before {
 /* ── Nav ── */
 .nav {
   display: grid; grid-template-columns: repeat(2, 1fr);
-  background: rgba(12,12,15,0.99);
+  background: rgba(6,6,12,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .nav-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 9px 4px 7px; background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 4px; background: none; border: none; cursor: pointer;
   color: var(--text-dim); transition: all 0.2s; position: relative;
 }
 .nav-btn.active { color: var(--gold); }
 .nav-btn.active::after {
-  content: ''; position: absolute; bottom: 0; left: 25%; right: 25%;
+  content: ''; position: absolute; bottom: 0; left: 30%; right: 30%;
   height: 1px; background: var(--gold);
-  box-shadow: 0 0 8px var(--gold-dim);
+  box-shadow: 0 0 10px rgba(192,154,42,0.5);
 }
-.nav-icon { font-size: 14px; line-height: 1; }
-.nav-label { font-size: 8px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.nav-icon { font-size: 18px; line-height: 1; }
 
 .scroll { flex: 1; overflow-y: auto; padding: 14px 14px 100px; -webkit-overflow-scrolling: touch; }
 
@@ -121,20 +121,17 @@ body::before {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 16px 14px 14px;
+  padding: 18px 14px 14px;
   position: relative; overflow: hidden;
 }
-.streak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border-glow), transparent); }
+.streak-card::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 2px; border-radius: 0 1px 1px 0; }
+.s-workout::after { background: linear-gradient(to bottom, var(--gold), transparent); }
+.s-mind::after    { background: linear-gradient(to bottom, #4466cc, transparent); }
+.s-sleep::after   { background: linear-gradient(to bottom, #7744aa, transparent); }
+.s-quest::after   { background: linear-gradient(to bottom, var(--green-text), transparent); }
 
-/* Clean geometric streak icons */
-.streak-ico { width: 20px; height: 20px; margin-bottom: 10px; flex-shrink: 0; }
-.fire-ico  { background: var(--gold); clip-path: polygon(50% 0%, 80% 30%, 95% 60%, 75% 85%, 50% 100%, 25% 85%, 5% 60%, 20% 30%); opacity: 0.8; }
-.mind-ico  { background: #3060b0; border-radius: 50%; opacity: 0.8; }
-.sleep-ico { background: #5030a0; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); opacity: 0.8; }
-.quest-ico { background: var(--green-text); clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); opacity: 0.8; }
-
-.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; letter-spacing: 0.01em; color: var(--text); }
-.streak-label  { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; color: var(--text-dim); text-transform: uppercase; margin-top: 4px; }
+.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; letter-spacing: 0.01em; color: var(--text); }
+.streak-label  { font-size: 7px; font-weight: 700; letter-spacing: 0.22em; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
 
 /* ── Body mini cards ── */
 .muscle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -214,8 +211,8 @@ body::before {
 .task-item.is-quest .task-cb { border-color: var(--gold-dim); }
 
 .task-body { flex: 1; min-width: 0; }
-.task-miss { width: 20px; height: 20px; border-radius: 3px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: var(--text-faint); cursor: pointer; transition: all 0.15s; }
-.task-miss:active { border-color: var(--red-hi); color: var(--red-hi); background: rgba(239,68,68,0.1); }
+.task-miss { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; color: var(--text-dim); cursor: pointer; transition: all 0.2s; opacity: 0.5; }
+.task-miss:active { border-color: var(--red-hi); color: var(--red-hi); background: rgba(160,48,48,0.15); opacity: 1; }
 .task-name { font-size: 13px; font-weight: 400; line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
 .task-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 
@@ -277,12 +274,7 @@ body::before {
 .particle { position: absolute; border-radius: 50%; animation: fly-up 1.5s ease forwards; }
 @keyframes fly-up { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; } }
 
-/* Streak icon CSS — monochrome */
-.streak-ico { width: 6px; height: 6px; margin-bottom: 12px; border-radius: 50%; background: var(--border-glow); flex-shrink: 0; }
-.fire-ico  { }
-.mind-ico  { }
-.sleep-ico { }
-.quest-ico { }
+
 
 </style>
 </head>
@@ -293,8 +285,8 @@ body::before {
     <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
   </div>
   <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon"></span><span class="nav-label">Home</span></button>
-    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">≡</span><span class="nav-label">Tasks</span></button>
+    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span></button>
+    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">≡</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
@@ -698,10 +690,10 @@ function renderHome(){
   let html=`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
-      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
-      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
-      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
-      <div class="streak-card"><div class="streak-ico"></div><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
+      <div class="streak-card s-workout"><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
+      <div class="streak-card s-mind"><div class="streak-number">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
+      <div class="streak-card s-sleep"><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
+      <div class="streak-card s-quest"><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
     </div>`;
   if(bodyStats.length){
     html+=`<div class="sil-wrap">
