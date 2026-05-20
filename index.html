@@ -506,12 +506,11 @@ function buildSilhouette(bodyStats){
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;" clip-path="url(#${clipId})">
       <defs><filter id="${fid}">
         <feComponentTransfer result="sharp">
-          <feFuncR type="linear" slope="8" intercept="-2"/>
-          <feFuncG type="linear" slope="8" intercept="-2"/>
-          <feFuncB type="linear" slope="8" intercept="-2"/>
+          <feFuncR type="linear" slope="4" intercept="-1.2"/>
+          <feFuncG type="linear" slope="4" intercept="-1.2"/>
+          <feFuncB type="linear" slope="4" intercept="-1.2"/>
         </feComponentTransfer>
-        <feGaussianBlur in="sharp" stdDeviation="1" result="smoothed"/>
-        <feColorMatrix in="smoothed" type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 ${op} 0 0 0 0"/>
+        <feColorMatrix in="sharp" type="matrix" values="${R} 0 0 0 0 ${G} 0 0 0 0 ${B} 0 0 0 0 ${op} 0 0 0 0"/>
         ${sel?`<feGaussianBlur stdDeviation="0.8" edgeMode="duplicate"/>`:''}
       </filter></defs>
       <image href="${src}" x="0" y="0" width="612" height="612" filter="url(#${fid})"/>
