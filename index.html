@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,7 +74,7 @@ body::before {
 
 /* ── Nav ── */
 .nav {
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  display: grid; grid-template-columns: repeat(3, 1fr);
   background: rgba(6,6,12,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -213,6 +214,28 @@ body::before {
 .task-body { flex: 1; min-width: 0; }
 .task-miss { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; color: var(--text-dim); cursor: pointer; transition: all 0.2s; opacity: 0.5; }
 .task-miss:active { border-color: var(--red-hi); color: var(--red-hi); background: rgba(160,48,48,0.15); opacity: 1; }
+
+/* Exam cards */
+.exam-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 18px 0 8px; padding-left: 2px; }
+.exam-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 13px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+.exam-card.upcoming { border-color: var(--border-hi); }
+.exam-card.past     { opacity: 0.65; }
+.exam-countdown { min-width: 40px; text-align: center; flex-shrink: 0; }
+.exam-countdown-num { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--gold); line-height: 1; }
+.exam-countdown-label { font-size: 7px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-dim); margin-top: 2px; }
+.exam-countdown.past-badge { min-width: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.exam-grade { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+.exam-grade.g1 { color: #c04040; } .exam-grade.g2 { color: #c07030; } .exam-grade.g3 { color: #c0a020; }
+.exam-grade.g4 { color: #4a8a60; } .exam-grade.g5 { color: #3060a0; }
+.exam-pct { font-size: 8px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-dim); margin-top: 2px; }
+.exam-body { flex: 1; min-width: 0; }
+.exam-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exam-date { font-size: 10px; color: var(--text-dim); margin-bottom: 6px; }
+.exam-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.exam-tag { font-size: 7px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; border: 1px solid; }
+.exam-tag.type-tag { color: #5060a0; border-color: #1c2040; background: #080c1c; }
+.exam-tag.subj-tag { color: var(--text-dim); border-color: var(--border); background: transparent; }
+
 .task-name { font-size: 13px; font-weight: 400; line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
 .task-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 
@@ -287,11 +310,13 @@ body::before {
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span></button>
     <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">≡</span></button>
+    <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
     <div id="tab-home" class="tab-panel active"></div>
     <div id="tab-tasks" class="tab-panel" style="display:none"></div>
+    <div id="tab-exams" class="tab-panel" style="display:none"></div>
   </div>
 </div>
 <div class="rankup-overlay" id="rankupOverlay" onclick="closeRankup()">
@@ -312,6 +337,7 @@ const DB={
   templates:'34163a0b4e7c81a08eefdcd464d0a5a6',
   dailyLog: '35063a0b4e7c80c9889cf67fa1166d90',
   streaks:  '35163a0b4e7c800d8caef234df927236',
+  exams:    '21463a0b4e7c802ebea5c74d09c69b8e',
 };
 
 /* 
@@ -577,7 +603,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[]};
 let currentTab='home';
 let selectedMuscle=null;
 let prevRanks={};
@@ -600,13 +626,15 @@ const g={
   formula:v=>{const f=v?.formula;if(!f)return null;return f.number??f.string??f.boolean??null;},
   rollup:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='number')return r.number;if(r.type==='array'){const f=r.array?.[0];if(!f)return null;if(f.type==='formula'){const ff=f.formula;return ff.number??ff.string??null;}if(f.type==='number')return f.number;}return null;},
   rollupStr:v=>{const r=v?.rollup;if(!r)return null;if(r.type==='array'){const f=r.array?.[0];if(!f)return null;if(f.type==='formula'&&f.formula?.type==='string')return f.formula.string;if(f.type==='title')return f.title?.[0]?.plain_text??null;}return null;},
-  num:v=>typeof v?.number==="number"?v.number:null
+  num:v=>typeof v?.number==="number"?v.number:null,
+  multiSelect:v=>v?.multi_select?.map(s=>s.name)??[]
 };
 
 const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalXP:g.formula(q['Final XP'])??0,rankStr:g.formula(q.Rank)??'',rivalGap:g.rollup(q['Rival Gap']),rivalXP:g.rollup(q['Rival XP'])??0,lastTrained:g.rollup(q['Last day trained']),daysInactive:g.formula(q['Days inactive'])??g.num(q['Days inactive']),cat:g.select(q.Cat)};};
 const toRival=p=>{const q=p.properties;return{id:p.id,bodyPart:g.select(q['Body Part']),totalXP:g.formula(q['Total XP'])??0,gapNumber:g.formula(q['Gap in numbers'])??0,myCurrentXP:g.rollup(q['My current XP'])??0};};
 const toTask=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Task),cat:g.select(q.Cat),difficulty:g.select(q.Difficulty),status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),isQuest:g.formula(q['Is Quest'])??false};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
+const toExam=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive)};};
 
 
 function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
@@ -664,10 +692,19 @@ async function loadStreaks(){
   }catch(e){setError('Streaks: '+e.message);}
 }
 
+async function loadExams(){
+  try{
+    const upcoming=await nQuery(DB.exams,{property:'Archive',checkbox:{equals:false}},[{property:'Exam Date',direction:'ascending'}]);
+    const past=await nQuery(DB.exams,{property:'Archive',checkbox:{equals:true}},[{property:'Exam Date',direction:'descending'}]);
+    state.exams=[...upcoming.map(toExam),...past.map(toExam)];
+  }catch(e){setError('Exams: '+e.message);}
+}
+
 async function refresh(){
   setError(null);setSyncBusy(true);
   if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadRivals()]);renderHome();}
   if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
+  if(currentTab==='exams'){await loadExams();renderExams();}
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
@@ -1002,6 +1039,72 @@ async function addWorkout(){
     showToast(`Week added — ${creates.length} tasks`, 3000);
     await loadTasks(); renderTasks();
   } catch(e) { showToast('Failed: '+e.message); }
+}
+
+function renderExams(){
+  const el=document.getElementById('tab-exams');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const upcoming=state.exams.filter(e=>!e.archive);
+  const past=state.exams.filter(e=>e.archive);
+
+  function fmtDate(d){
+    if(!d)return'—';
+    const dt=new Date(d+'T00:00:00');
+    return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  }
+  function countdown(d){
+    if(!d)return null;
+    const dt=new Date(d+'T00:00:00');
+    const diff=Math.round((dt-today)/(1000*60*60*24));
+    return diff;
+  }
+
+  const GRADE_COLORS={1:'g1',2:'g2',3:'g3',4:'g4',5:'g5'};
+
+  function examCard(exam){
+    const isUpcoming=!exam.archive;
+    const days=countdown(exam.date);
+    const gradeNum=exam.grade?parseInt(exam.grade):null;
+    const gradeClass=gradeNum?GRADE_COLORS[gradeNum]??'':'';
+
+    const leftCol=isUpcoming
+      ?`<div class="exam-countdown">
+          <div class="exam-countdown-num">${days!==null?(days===0?'0':days<0?Math.abs(days):days):'—'}</div>
+          <div class="exam-countdown-label">${days===null?'':days<0?'ago':days===1?'day':'days'}</div>
+        </div>`
+      :`<div class="exam-countdown past-badge">
+          ${gradeNum?`<div class="exam-grade ${gradeClass}">${gradeNum}</div>`:'<div class="exam-grade" style="color:var(--text-dim)">—</div>'}
+          ${exam.percentage!=null?`<div class="exam-pct">${exam.percentage}%</div>`:''}
+        </div>`;
+
+    const tagsHTML=[
+      ...exam.tags.map(t=>`<span class="exam-tag type-tag">${t}</span>`),
+      ...exam.subjects.map(s=>`<span class="exam-tag subj-tag">${s}</span>`)
+    ].join('');
+
+    return `<div class="exam-card ${isUpcoming?'upcoming':'past'}">
+      ${leftCol}
+      <div class="exam-body">
+        <div class="exam-name">${exam.name||'Untitled'}</div>
+        <div class="exam-date">${fmtDate(exam.date)}</div>
+        ${tagsHTML?`<div class="exam-tags">${tagsHTML}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  let html='';
+  if(upcoming.length){
+    html+=`<div class="exam-section-label">Upcoming</div>`;
+    html+=upcoming.map(examCard).join('');
+  }
+  if(past.length){
+    html+=`<div class="exam-section-label">Past</div>`;
+    html+=past.map(examCard).join('');
+  }
+  if(!upcoming.length&&!past.length){
+    html=`<div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:12px;">No exams</div>`;
+  }
+  el.innerHTML=html;
 }
 
 // Init
