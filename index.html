@@ -217,7 +217,18 @@ body::before {
 
 /* Study timer widget (home screen) */
 .study-widget { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
-.study-widget-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+.study-widget-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.study-widget-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
+.today-count { color: var(--gold-dim); font-weight: 600; }
+.pomo-toggle { display: flex; gap: 3px; }
+.pomo-toggle-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
+.pomo-toggle-btn.active { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+.pomo-hint { font-size: 9px; color: var(--text-faint); letter-spacing: 0.08em; margin-top: 8px; text-align: center; }
+.pomo-dots { display: flex; gap: 5px; margin-top: 4px; }
+.pomo-dot { font-size: 10px; color: var(--text-faint); transition: color 0.3s; }
+.pomo-dot.filled { color: var(--gold); }
+.study-timer.pomo-work { color: var(--gold); }
+.study-timer.pomo-break { color: var(--green-text); }
 .study-idle { display: flex; gap: 8px; align-items: center; }
 .subject-picker { flex: 1; background: var(--bg-mid); border: 1px solid var(--border-hi); border-radius: 5px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 8px 10px; appearance: none; -webkit-appearance: none; min-width: 0; }
 .study-start-btn { flex-shrink: 0; background: transparent; border: 1px solid var(--gold-dim); color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; padding: 8px 14px; border-radius: 5px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
@@ -636,6 +647,8 @@ function buildSilhouette(bodyStats){
 
 let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null};
 let timerInterval=null;
+let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
+const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 const SUBJECTS=['Immunology','Microbiology I','Physiology II','Physiology I','Molecular Cell Biology II','Biochemistry II','Anatomy','Microanatomy II','Microanatomy I','Other'];
 let currentTab='home';
 let selectedMuscle=null;
@@ -765,39 +778,71 @@ function fmtSessionDur(startedISO,doneISO){
 
 function startTimer(){
   clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    const el=document.getElementById('timer-display');
-    if(!el||!state.activeSession){clearInterval(timerInterval);return;}
-    const ms=Date.now()-new Date(state.activeSession.startedAt).getTime();
-    el.textContent=formatDuration(ms);
-  },1000);
+  tickTimer();
+  timerInterval=setInterval(tickTimer,1000);
 }
+function tickTimer(){
+  const el=document.getElementById('timer-display');
+  if(!el)return;
+  if(pomoMode&&pomoPhaseEnd){
+    const rem=Math.max(0,pomoPhaseEnd-Date.now());
+    el.textContent=formatDuration(rem);
+    if(rem<=0){clearInterval(timerInterval);timerInterval=null;pomoPhase==='work'?completePomoWork():completePomoBreak();}
+    return;
+  }
+  if(!state.activeSession){clearInterval(timerInterval);return;}
+  el.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+}
+async function completePomoWork(){
+  if(!state.activeSession)return;
+  const now=new Date().toISOString(),{id}=state.activeSession;
+  pomoCount++;state.activeSession=null;
+  nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}}).catch(()=>{});
+  showToast(`Pomo ${pomoCount} ✓`);
+  pomoPhase='break';
+  pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+  renderHome();startTimer();
+}
+async function completePomoBreak(){
+  pomoPhase='work';pomoPhaseEnd=null;
+  if(!lastSubject){renderHome();return;}
+  try{
+    const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
+    state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
+    pomoPhaseEnd=Date.now()+POMO_WORK;
+    renderHome();startTimer();
+  }catch(e){showToast('Auto-start failed');renderHome();}
+}
+function setPomoMode(v){pomoMode=v;renderHome();}
 
 async function startSession(subject){
   if(!subject)return;
+  lastSubject=subject;
   try{
-    const page=await nCreate(DB.studied,{
-      Name:{title:[{text:{content:subject}}]},
-      Subject:{status:{name:subject}},
-    });
+    const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
+    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;}
     startTimer();renderHome();
     showToast('▸ '+subject);
   }catch(e){showToast('Failed to start');}
 }
 
 async function stopSession(){
-  if(!state.activeSession)return;
-  const now=new Date().toISOString();
-  const {id}=state.activeSession;
   clearInterval(timerInterval);timerInterval=null;
+  pomoPhaseEnd=null;
+  const wasActive=state.activeSession;
   state.activeSession=null;
   renderHome();
-  try{
-    await nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}});
-    showToast('Session logged ✓');
-    if(currentTab==='study'){await loadSessions();renderStudyLog();}
-  }catch(e){showToast('Failed to log');}
+  if(wasActive){
+    const now=new Date().toISOString();
+    try{
+      await nPatch(wasActive.id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}});
+      showToast('Stopped ✓');
+    }catch(e){showToast('Failed to log');}
+  } else {
+    showToast('Break skipped');
+  }
+  if(currentTab==='study'){await loadSessions();renderStudyLog();}
 }
 
 async function refresh(){
@@ -825,25 +870,53 @@ function renderHome(){
   const s=state.streaks;
   const bodyStats=state.stats.filter(x=>x.cat==='Body'&&x.name!=='Rest');
   const selStat=selectedMuscle?bodyStats.find(x=>x.id===selectedMuscle):null;
-  const subjectOptions=SUBJECTS.map(s=>`<option value="${s}">${s}</option>`).join('');
-  const timerWidget=state.activeSession
-    ?`<div class="study-widget">
-        <div class="study-widget-label">Studying now</div>
-        <div class="study-active">
-          <div class="study-active-info">
-            <div class="study-active-subject">${state.activeSession.subject}</div>
-            <div id="timer-display" class="study-timer">${formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime())}</div>
-          </div>
-          <button class="study-stop-btn" onclick="stopSession()">■ Stop</button>
+  const subjectOptions=SUBJECTS.map(sv=>`<option value="${sv}">${sv}</option>`).join('');
+  const todayStr=new Date().toISOString().split('T')[0];
+  const todayCount=Math.max(pomoCount,state.sessions.filter(ss=>ss.started?.startsWith(todayStr)&&ss.complete==='Done').length);
+  const blockPos=pomoCount%4;
+  const pomoDots=Array.from({length:4},(_,i)=>`<span class="pomo-dot${i<blockPos?' filled':''}">${i<blockPos?'◉':'○'}</span>`).join('');
+  const isBreak=pomoMode&&!state.activeSession&&pomoPhaseEnd;
+  let timerWidget;
+  if(state.activeSession){
+    const elapsed=formatDuration(pomoMode?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
+    timerWidget=`<div class="study-widget">
+      <div class="study-widget-top"><div class="study-widget-label">${pomoMode?`Pomo ${pomoCount+1}`:'Studying'}${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div></div>
+      <div class="study-active">
+        <div class="study-active-info">
+          <div class="study-active-subject">${state.activeSession.subject}</div>
+          <div id="timer-display" class="study-timer${pomoMode?' pomo-work':''}">${elapsed}</div>
+          ${pomoMode?`<div class="pomo-dots">${pomoDots}</div>`:''}
         </div>
-      </div>`
-    :`<div class="study-widget">
-        <div class="study-widget-label">Start studying</div>
-        <div class="study-idle">
-          <select id="subject-picker" class="subject-picker">${subjectOptions}</select>
-          <button class="study-start-btn" onclick="startSession(document.getElementById('subject-picker').value)">▸ Start</button>
+        <button class="study-stop-btn" onclick="stopSession()">■ Stop</button>
+      </div>
+    </div>`;
+  } else if(isBreak){
+    const rem=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+    const isLong=pomoCount%4===0;
+    timerWidget=`<div class="study-widget">
+      <div class="study-widget-top"><div class="study-widget-label">${isLong?'Long break':'Short break'} <span class="today-count">· ${todayCount} today</span></div></div>
+      <div class="study-active">
+        <div class="study-active-info">
+          <div class="study-active-subject" style="color:var(--green-text)">Rest up</div>
+          <div id="timer-display" class="study-timer pomo-break">${rem}</div>
+          <div class="pomo-dots">${pomoDots}</div>
         </div>
-      </div>`;
+        <button class="study-stop-btn" onclick="stopSession()">■ Skip</button>
+      </div>
+    </div>`;
+  } else {
+    timerWidget=`<div class="study-widget">
+      <div class="study-widget-top">
+        <div class="study-widget-label">Start studying${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div>
+        <div class="pomo-toggle"><button class="pomo-toggle-btn${!pomoMode?' active':''}" onclick="setPomoMode(false)">Free</button><button class="pomo-toggle-btn${pomoMode?' active':''}" onclick="setPomoMode(true)">Pomo</button></div>
+      </div>
+      <div class="study-idle">
+        <select id="subject-picker" class="subject-picker">${subjectOptions}</select>
+        <button class="study-start-btn" onclick="startSession(document.getElementById('subject-picker').value)">▸ Start</button>
+      </div>
+      ${pomoMode?'<div class="pomo-hint">25 work · 5 break · 15 after ×4</div>':''}
+    </div>`;
+  }
   let html=timerWidget+`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
