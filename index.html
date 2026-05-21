@@ -65,7 +65,7 @@ body::after {
   backdrop-filter: blur(20px);
   flex-shrink: 0;
 }
-.wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 0.28em; color: var(--gold); text-shadow: 0 0 28px rgba(224,208,168,0.35); }
+.wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 0.28em; }
 .wordmark em { color: var(--gold); font-style: normal; }
 .sync-btn {
   background: transparent;
@@ -112,9 +112,10 @@ body::after {
 /* ── Section label ── */
 .section-label {
   font-size: 8px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--text-faint); display: flex; align-items: center; gap: 10px; margin: 16px 0 10px;
+  color: var(--text-dim); display: flex; align-items: center; gap: 10px; margin: 16px 0 10px;
 }
-.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
+.section-label::before { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--border-hi)); }
+.section-label::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(to left,  transparent, var(--border-hi)); }
 .empty { text-align: center; padding: 40px 20px; color: var(--text-faint); font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
 
 /* ══════════════════════════════
@@ -155,7 +156,8 @@ body::after {
 .muscle-pct-big  { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.02em; margin-bottom: 1px; line-height: 1; }
 .muscle-of       { font-size: 9px; color: var(--text-dim); margin-bottom: 8px; font-weight: 500; letter-spacing: 0.04em; }
 .prog-track      { height: 2px; background: var(--bg-hi); border-radius: 1px; overflow: hidden; margin-bottom: 5px; }
-.prog-fill       { height: 100%; border-radius: 1px; transition: width 0.9s ease; }
+.prog-fill       { height: 100%; border-radius: 1px; transition: width 0.9s ease; animation: prog-in 0.9s cubic-bezier(0.4,0,0.2,1) both; }
+@keyframes prog-in { from { width: 0 !important; } }
 
 /* Days inactive badge */
 .muscle-bottom-row { display: flex; align-items: center; justify-content: space-between; }
@@ -405,6 +407,45 @@ body::after {
 @keyframes tab-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .tab-panel.active { animation: tab-enter 0.22s ease; }
 
+/* Wordmark shimmer */
+.wordmark {
+  background: linear-gradient(90deg, var(--gold) 20%, var(--gold-hi) 50%, #fff8e0 55%, var(--gold-hi) 60%, var(--gold) 80%);
+  background-size: 250% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: wm-sheen 5s linear infinite;
+}
+@keyframes wm-sheen { 0%{background-position:150% center} 100%{background-position:-150% center} }
+
+/* Screen light sweep */
+.screen-sweep { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(224,208,168,0.025) 50%, transparent 100%);
+  background-size: 100% 300%;
+  animation: sweep 14s ease-in-out infinite;
+}
+@keyframes sweep { 0%,100%{background-position:0 -100%} 50%{background-position:0 200%} }
+
+/* Tap ripple */
+.ripple { position: absolute; border-radius: 50%; background: rgba(224,208,168,0.12);
+  transform: scale(0); animation: ripple-out 0.55s ease forwards; pointer-events: none; }
+@keyframes ripple-out { to { transform: scale(3.5); opacity: 0; } }
+
+/* Card shimmer sweep */
+.streak-card, .muscle-card, .session-card, .exam-card, .study-widget, .task-item {
+  position: relative; overflow: hidden;
+}
+.streak-card::before, .muscle-card::before, .session-card::before, .exam-card::before {
+  content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(224,208,168,0.04), transparent);
+  animation: card-sheen 10s ease-in-out infinite;
+  pointer-events: none; z-index: 1;
+}
+.streak-card::before { animation-delay: 0s; }
+.muscle-card::before { animation-delay: 2s; }
+.session-card::before { animation-delay: 1s; }
+.exam-card::before { animation-delay: 3s; }
+@keyframes card-sheen { 0%,75%,100%{left:-80%;opacity:0} 77%{opacity:1} 90%{left:130%;opacity:1} 92%{opacity:0} }
+
 </style>
 </head>
 <body>
@@ -413,6 +454,7 @@ body::after {
 <div class="bg-orb orb-3"></div>
 <div class="noise-layer"></div>
 <div class="vignette"></div>
+<div class="screen-sweep"></div>
 <div id="app">
   <div class="header">
     <div class="wordmark">GRIND</div>
@@ -1096,6 +1138,7 @@ function renderHome(){
     html+='</div>';
   }
   document.getElementById('tab-home').innerHTML=html;
+  document.querySelectorAll('.streak-number').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
 }
 
 const DIFF_ORDER=['Maintenance','Normal','Heavy','Daily','Important'];
@@ -1544,6 +1587,32 @@ function renderExams(){
   }
   el.innerHTML=html;
 }
+
+// Count-up animation
+function countUp(el,to,dur=700){
+  if(!el||to<=0)return;
+  const start=performance.now();
+  const tick=now=>{
+    const p=Math.min((now-start)/dur,1);
+    const e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(e*to);
+    if(p<1)requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// Tap ripple
+document.addEventListener('touchstart',e=>{
+  const card=e.target.closest('.muscle-card,.streak-card,.session-card,.exam-card,.task-item');
+  if(!card)return;
+  const r=document.createElement('div');
+  r.className='ripple';
+  const rect=card.getBoundingClientRect(),t=e.touches[0];
+  const sz=Math.max(rect.width,rect.height);
+  r.style.cssText=`width:${sz}px;height:${sz}px;left:${t.clientX-rect.left-sz/2}px;top:${t.clientY-rect.top-sz/2}px`;
+  card.appendChild(r);
+  setTimeout(()=>r.remove(),560);
+},{passive:true});
 
 // Init
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
