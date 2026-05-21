@@ -1041,7 +1041,7 @@ async function stopSession(){
 
 async function refresh(){
   setError(null);setSyncBusy(true);
-  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadRivals()]);renderHome();}
+  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadRivals(),loadExams()]);renderHome();}
   if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
   if(currentTab==='exams'){await loadExams();renderExams();}
   if(currentTab==='study'){await loadSessions();renderStudyLog();}
