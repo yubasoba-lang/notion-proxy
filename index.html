@@ -324,7 +324,20 @@ body::after {
 .task-due.overdue { color: var(--red-hi); }
 
 /* ── STATS ── */
-.sil-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; }
+.sil-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
+
+/* Next exam countdown */
+.next-exam-card { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 8px; padding: 13px 16px; margin-top: 14px; position: relative; overflow: hidden; }
+.next-exam-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 100% 50%, var(--gold-glow) 0%, transparent 60%); pointer-events: none; }
+.next-exam-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.next-exam-label { font-size: 7px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+.next-exam-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.next-exam-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+.countdown-wrap { display: flex; gap: 6px; align-items: flex-end; flex-shrink: 0; margin-left: 12px; }
+.countdown-unit { display: flex; flex-direction: column; align-items: center; }
+.countdown-num { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--gold); line-height: 1; min-width: 26px; text-align: center; }
+.countdown-lbl { font-size: 6px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+.countdown-sep { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--text-faint); line-height: 1; padding-bottom: 2px; }
 .sil-wrap::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 20%, rgba(184,148,42,0.03) 0%, transparent 60%); pointer-events: none; }
 .sil-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .sil-title { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
@@ -761,6 +774,7 @@ function buildSilhouette(bodyStats){
 
 let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null};
 let timerInterval=null;
+let examCountdownInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
 let soundEnabled=localStorage.getItem('grind-sound')!=='off';
 let audioCtx=null;
@@ -903,6 +917,34 @@ async function loadSessions(){
   }catch(e){setError('Sessions: '+e.message);}
 }
 
+function getExamCountdown(dateStr){
+  if(!dateStr)return null;
+  const target=new Date(dateStr.split('T')[0]+'T00:00:00');
+  const diff=target-Date.now();
+  if(diff<=0)return null;
+  return{
+    d:Math.floor(diff/86400000),
+    h:Math.floor((diff%86400000)/3600000),
+    m:Math.floor((diff%3600000)/60000),
+    s:Math.floor((diff%60000)/1000)
+  };
+}
+function renderExamCountdownDisplay(){
+  const exam=state.exams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  if(!exam)return;
+  const c=getExamCountdown(exam.date);
+  if(!c)return;
+  const el=document.getElementById('exam-countdown-display');
+  if(!el)return;
+  el.innerHTML=`
+    <div class="countdown-unit"><div class="countdown-num">${String(c.d).padStart(2,'0')}</div><div class="countdown-lbl">days</div></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><div class="countdown-num">${String(c.h).padStart(2,'0')}</div><div class="countdown-lbl">hrs</div></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><div class="countdown-num">${String(c.m).padStart(2,'0')}</div><div class="countdown-lbl">min</div></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><div class="countdown-num">${String(c.s).padStart(2,'0')}</div><div class="countdown-lbl">sec</div></div>`;
+}
 function formatDuration(ms){
   const s=Math.floor(ms/1000);
   const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
@@ -1010,6 +1052,7 @@ function switchTab(tab,btn){
   document.querySelectorAll('.tab-panel').forEach(p=>{p.style.display='none';p.classList.remove('active');});
   btn.classList.add('active');
   const panel=document.getElementById('tab-'+tab);panel.style.display='block';panel.classList.add('active');
+  if(tab!=='home'){clearInterval(examCountdownInterval);examCountdownInterval=null;}
   currentTab=tab;refresh();
 }
 
@@ -1077,6 +1120,24 @@ function renderHome(){
       <div class="streak-card s-sleep"><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
       <div class="streak-card s-quest"><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
     </div>`;
+  // Next exam widget
+  const nextExam=state.exams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  if(nextExam){
+    const c=getExamCountdown(nextExam.date);
+    if(c){
+      const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
+      html+=`<div class="next-exam-card">
+        <div class="next-exam-label">Next Exam</div>
+        <div class="next-exam-top">
+          <div>
+            <div class="next-exam-name">${nextExam.name}</div>
+            <div class="next-exam-tags">${tags}</div>
+          </div>
+          <div class="countdown-wrap" id="exam-countdown-display"></div>
+        </div>
+      </div>`;
+    }
+  }
   if(bodyStats.length){
     html+=`<div class="sil-wrap">
       <div class="sil-header">
@@ -1139,6 +1200,9 @@ function renderHome(){
   }
   document.getElementById('tab-home').innerHTML=html;
   document.querySelectorAll('.streak-number').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
+  clearInterval(examCountdownInterval);
+  renderExamCountdownDisplay();
+  examCountdownInterval=setInterval(renderExamCountdownDisplay,1000);
 }
 
 const DIFF_ORDER=['Maintenance','Normal','Heavy','Daily','Important'];
