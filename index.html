@@ -220,6 +220,9 @@ body::before {
 .study-widget-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .study-widget-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
 .today-count { color: var(--gold-dim); font-weight: 600; }
+.sound-toggle { background: transparent; border: none; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-dim); cursor: pointer; padding: 2px; opacity: 0.6; transition: opacity 0.2s; line-height: 1; font-family: 'Inter', sans-serif; }
+.sound-toggle.muted { color: var(--text-faint); text-decoration: line-through; }
+.sound-toggle:active { opacity: 1; }
 .pomo-toggle { display: flex; gap: 3px; }
 .pomo-toggle-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
 .pomo-toggle-btn.active { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
@@ -648,6 +651,24 @@ function buildSilhouette(bodyStats){
 let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null};
 let timerInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
+let soundEnabled=localStorage.getItem('grind-sound')!=='off';
+let audioCtx=null;
+function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playChime(freqs=[523,659],vol=0.1,dur=0.5){
+  if(!soundEnabled)return;
+  try{
+    const ctx=getAudioCtx();
+    freqs.forEach((freq,i)=>setTimeout(()=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=freq;
+      g.gain.setValueAtTime(vol,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+      o.start(ctx.currentTime);o.stop(ctx.currentTime+dur);
+    },i*200));
+  }catch(e){}
+}
+function toggleSound(){soundEnabled=!soundEnabled;localStorage.setItem('grind-sound',soundEnabled?'on':'off');renderHome();}
 const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 const SUBJECTS=['Immunology','Microbiology I','Physiology II','Physiology I','Molecular Cell Biology II','Biochemistry II','Anatomy','Microanatomy II','Microanatomy I','Other'];
 let currentTab='home';
@@ -798,6 +819,8 @@ async function completePomoWork(){
   const now=new Date().toISOString(),{id}=state.activeSession;
   pomoCount++;state.activeSession=null;
   nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}}).catch(()=>{});
+  if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
+  playChime([523,659],0.1,0.5);
   showToast(`Pomo ${pomoCount} ✓`);
   pomoPhase='break';
   pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
@@ -806,6 +829,8 @@ async function completePomoWork(){
 async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
   if(!lastSubject){renderHome();return;}
+  if(navigator.vibrate)navigator.vibrate([100,80,100]);
+  playChime([659],0.07,0.4);
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
     state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
@@ -880,7 +905,7 @@ function renderHome(){
   if(state.activeSession){
     const elapsed=formatDuration(pomoMode?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
     timerWidget=`<div class="study-widget">
-      <div class="study-widget-top"><div class="study-widget-label">${pomoMode?`Pomo ${pomoCount+1}`:'Studying'}${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div></div>
+      <div class="study-widget-top"><div class="study-widget-label">${pomoMode?`Pomo ${pomoCount+1}`:'Studying'}${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button></div>
       <div class="study-active">
         <div class="study-active-info">
           <div class="study-active-subject">${state.activeSession.subject}</div>
@@ -894,7 +919,7 @@ function renderHome(){
     const rem=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
     const isLong=pomoCount%4===0;
     timerWidget=`<div class="study-widget">
-      <div class="study-widget-top"><div class="study-widget-label">${isLong?'Long break':'Short break'} <span class="today-count">· ${todayCount} today</span></div></div>
+      <div class="study-widget-top"><div class="study-widget-label">${isLong?'Long break':'Short break'} <span class="today-count">· ${todayCount} today</span></div><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button></div>
       <div class="study-active">
         <div class="study-active-info">
           <div class="study-active-subject" style="color:var(--green-text)">Rest up</div>
@@ -908,7 +933,7 @@ function renderHome(){
     timerWidget=`<div class="study-widget">
       <div class="study-widget-top">
         <div class="study-widget-label">Start studying${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div>
-        <div class="pomo-toggle"><button class="pomo-toggle-btn${!pomoMode?' active':''}" onclick="setPomoMode(false)">Free</button><button class="pomo-toggle-btn${pomoMode?' active':''}" onclick="setPomoMode(true)">Pomo</button></div>
+        <div style="display:flex;gap:6px;align-items:center"><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button><div class="pomo-toggle"><button class="pomo-toggle-btn${!pomoMode?' active':''}" onclick="setPomoMode(false)">Free</button><button class="pomo-toggle-btn${pomoMode?' active':''}" onclick="setPomoMode(true)">Pomo</button></div></div>
       </div>
       <div class="study-idle">
         <select id="subject-picker" class="subject-picker">${subjectOptions}</select>
