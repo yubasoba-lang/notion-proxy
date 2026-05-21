@@ -12,38 +12,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:        #06060c;
-  --bg-card:   #0c0c16;
-  --bg-mid:    #11111e;
-  --bg-hi:     #181828;
-  --border:    #14142a;
-  --border-hi: #1e1e3a;
-  --border-glow: #282850;
-  --text:      #a8a8c8;
-  --text-dim:  #38385a;
-  --text-faint:#18182a;
-  --gold:      #c09a2a;
-  --gold-hi:   #d4b040;
-  --gold-dim:  #604a14;
-  --gold-glow: rgba(192,154,42,0.1);
-  --green:     #142a1e;
-  --green-hi:  #1e4a2e;
-  --green-text:#2a8a58;
-  --red-text:  #6a2020;
-  --red-hi:    #a03030;
+  --bg:        #050807;
+  --bg-card:   #080d09;
+  --bg-mid:    #0c1210;
+  --bg-hi:     #111a14;
+  --border:    #151e17;
+  --border-hi: #1c2c1f;
+  --border-glow: #243828;
+  --text:      #7a9696;
+  --text-dim:  #223030;
+  --text-faint:#0c1414;
+  --gold:      #3a6a6a;
+  --gold-hi:   #4a7c7c;
+  --gold-dim:  #142424;
+  --gold-glow: rgba(58,106,106,0.1);
+  --green:     #0c1a1a;
+  --green-hi:  #122424;
+  --green-text:#3a6a6a;
+  --red-text:  #4a1e1a;
+  --red-hi:    #7a2820;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
 
-/* Obsidian texture — very subtle stone-like noise */
+/* Ancient alien stone */
 body::before {
   content: '';
   position: fixed; inset: 0;
   background-image:
-    radial-gradient(ellipse at 15% 10%, rgba(80,60,180,0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 85%, rgba(40,40,140,0.05) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(60,50,120,0.03) 0%, transparent 70%);
+    radial-gradient(ellipse at 20% 8%,  rgba(58,106,106,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 88%, rgba(40,80,80,0.05)  0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(25,55,55,0.03)  0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(58,106,106,0.007) 3px, rgba(58,106,106,0.007) 4px);
   pointer-events: none; z-index: 0;
 }
 
@@ -58,7 +65,7 @@ body::before {
   backdrop-filter: blur(20px);
   flex-shrink: 0;
 }
-.wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 0.18em; color: var(--text); }
+.wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 0.28em; color: var(--gold); text-shadow: 0 0 24px rgba(58,106,106,0.5); }
 .wordmark em { color: var(--gold); font-style: normal; }
 .sync-btn {
   background: transparent;
@@ -88,7 +95,7 @@ body::before {
 .nav-btn.active::after {
   content: ''; position: absolute; bottom: 0; left: 30%; right: 30%;
   height: 1px; background: var(--gold);
-  box-shadow: 0 0 10px rgba(192,154,42,0.5);
+  box-shadow: 0 0 10px rgba(58,106,106,0.5);
 }
 .nav-icon { font-size: 18px; line-height: 1; }
 
@@ -372,9 +379,9 @@ body::before {
   </div>
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span></button>
-    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">≡</span></button>
+    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">☰</span></button>
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span></button>
-    <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">▸</span></button>
+    <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
@@ -659,7 +666,7 @@ function buildSilhouette(bodyStats){
         <clipPath id="clipFront"><rect x="0" y="0" width="306" height="612"/></clipPath>
         <clipPath id="clipBack"><rect x="306" y="0" width="306" height="612"/></clipPath>
       </defs>
-      <rect x="0" y="0" width="612" height="612" fill="#111116"/>
+      <rect x="0" y="0" width="612" height="612" fill="#100e08"/>
       <image href="${ANATOMY_IMG}" x="0" y="0" width="612" height="612"
         style="mix-blend-mode:screen;filter:invert(1) brightness(0.45);"/>
       ${maskLayers}
@@ -674,12 +681,20 @@ let timerInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
 let soundEnabled=localStorage.getItem('grind-sound')!=='off';
 let audioCtx=null;
-function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function getAudioCtx(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function unlockAudio(){
+  try{const ctx=getAudioCtx();if(ctx.state==='suspended')ctx.resume();}catch(e){}
+}
+document.addEventListener('touchstart',unlockAudio,{once:true});
+document.addEventListener('click',unlockAudio,{once:true});
 function playChime(freqs=[523,659],vol=0.1,dur=0.5){
   if(!soundEnabled)return;
   try{
     const ctx=getAudioCtx();
-    freqs.forEach((freq,i)=>setTimeout(()=>{
+    const play=()=>freqs.forEach((freq,i)=>setTimeout(()=>{
       const o=ctx.createOscillator(),g=ctx.createGain();
       o.connect(g);g.connect(ctx.destination);
       o.type='sine';o.frequency.value=freq;
@@ -687,6 +702,7 @@ function playChime(freqs=[523,659],vol=0.1,dur=0.5){
       g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
       o.start(ctx.currentTime);o.stop(ctx.currentTime+dur);
     },i*200));
+    if(ctx.state==='suspended')ctx.resume().then(play);else play();
   }catch(e){}
 }
 function toggleSound(){soundEnabled=!soundEnabled;localStorage.setItem('grind-sound',soundEnabled?'on':'off');renderHome();}
@@ -1328,6 +1344,12 @@ function renderStudyLog(){
     const ringGlow=isBreak?'#1a3a28':'var(--gold-dim)';
     const countdownTxt=formatDuration(rem);
 
+    const sundialTicks=Array.from({length:60},(_,i)=>{
+      const a=(i*6-90)*Math.PI/180;
+      const isQ=i%15===0,isMaj=i%5===0;
+      const r1=isQ?88:isMaj?91:93,r2=97;
+      return`<line x1="${(120+r1*Math.cos(a)).toFixed(1)}" y1="${(120+r1*Math.sin(a)).toFixed(1)}" x2="${(120+r2*Math.cos(a)).toFixed(1)}" y2="${(120+r2*Math.sin(a)).toFixed(1)}" stroke="${isQ?ringColor:'var(--border-hi)'}" stroke-width="${isQ?1.5:isMaj?0.8:0.4}" opacity="${isQ?0.8:0.6}"/>`;
+    }).join('');
     html+=`<div class="pomo-screen">
       <div class="pomo-screen-phase">${phaseLabel}</div>
       <div class="pomo-screen-subject">${subject}</div>
@@ -1335,11 +1357,13 @@ function renderStudyLog(){
         <svg class="pomo-ring" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <filter id="ring-glow-f">
-              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feGaussianBlur stdDeviation="4" result="b"/>
               <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
           </defs>
           <circle class="pomo-ring-bg" cx="120" cy="120" r="100"/>
+          <circle cx="120" cy="120" r="108" fill="none" stroke="var(--border)" stroke-width="0.5"/>
+          ${sundialTicks}
           <circle class="pomo-ring-track" cx="120" cy="120" r="100"
             transform="rotate(-90 120 120)"
             stroke-dasharray="${CIRC}"
