@@ -443,6 +443,160 @@ body::after {
   transform: scale(0); animation: ripple-out 0.55s ease forwards; pointer-events: none; }
 @keyframes ripple-out { to { transform: scale(3.5); opacity: 0; } }
 
+/* ═══════════════════════════════════════════
+   SECRET HINA PAGE
+   ═══════════════════════════════════════════ */
+#tab-hina { position:relative; height:100%; overflow:hidden; background:#06040e; padding:0; }
+.hina-stage { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
+.hina-bg-glow {
+  position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(139,92,246,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 5%,   rgba(168,85,247,0.07) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 15%,  rgba(100,50,200,0.05) 0%, transparent 40%);
+}
+.hina-particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.hina-petal {
+  position:absolute; width:4px; height:4px; border-radius:50%;
+  background:rgba(168,85,247,0.4);
+  animation: hina-fall linear infinite;
+}
+@keyframes hina-fall {
+  0%   { transform:translateY(-10px) rotate(0deg); opacity:0; }
+  10%  { opacity:1; }
+  90%  { opacity:0.5; }
+  100% { transform:translateY(110vh) rotate(720deg); opacity:0; }
+}
+.hina-char {
+  position:absolute; bottom:195px; left:50%;
+  transform:translateX(-50%);
+  height:calc(100% - 210px); max-height:680px; width:auto;
+  object-fit:contain; object-position:bottom center;
+  filter:drop-shadow(0 0 35px rgba(139,92,246,0.22));
+  transition:opacity 0.55s ease;
+  animation:hinaFloat 5s ease-in-out infinite;
+  user-select:none; -webkit-user-drag:none;
+}
+.hina-char.hidden { opacity:0; }
+@keyframes hinaFloat {
+  0%,100%{ transform:translateX(-50%) translateY(0px); }
+  50%    { transform:translateX(-50%) translateY(-7px); }
+}
+.hina-overlay {
+  position:absolute; bottom:0; left:0; right:0; z-index:10;
+  background:linear-gradient(to top, rgba(6,4,14,0.98) 0%, rgba(6,4,14,0.82) 55%, transparent 100%);
+  padding:14px 20px 22px;
+}
+.hina-phase-label {
+  font-size:9px; font-weight:800; letter-spacing:0.28em;
+  text-transform:uppercase; text-align:center; margin-bottom:3px;
+  transition:color 0.5s;
+}
+.hina-timer {
+  font-family:'JetBrains Mono',monospace; font-size:50px; font-weight:600;
+  color:#fff; text-align:center; line-height:1;
+  text-shadow:0 0 28px rgba(168,85,247,0.55);
+  letter-spacing:-0.02em;
+}
+.hina-subject-lbl {
+  font-size:10px; color:rgba(200,175,255,0.5); text-align:center;
+  margin-top:3px; letter-spacing:0.12em; font-weight:500; height:14px;
+}
+.hina-dots { display:flex; justify-content:center; gap:10px; margin:10px 0 12px; }
+.hina-dot {
+  width:9px; height:9px; border-radius:50%;
+  border:1.5px solid rgba(124,58,237,0.5); background:transparent;
+  transition:all 0.3s;
+}
+.hina-dot.filled {
+  background:#a855f7;
+  border-color:#a855f7;
+  box-shadow:0 0 10px rgba(168,85,247,0.8);
+}
+.hina-controls { display:flex; gap:10px; align-items:center; }
+.hina-sel {
+  flex:1; background:rgba(124,58,237,0.1);
+  border:1px solid rgba(124,58,237,0.3); border-radius:10px;
+  color:rgba(210,185,255,0.9); font-size:12px; padding:11px 12px;
+  outline:none; -webkit-appearance:none;
+  font-family:'Inter',sans-serif;
+}
+.hina-sel option { background:#0e0818; color:#c8b0ff; }
+.hina-start {
+  background:linear-gradient(135deg,#6d28d9,#a855f7);
+  border:none; border-radius:10px; color:#fff;
+  font-size:14px; font-weight:700; padding:11px 22px;
+  letter-spacing:0.08em;
+  box-shadow:0 4px 18px rgba(168,85,247,0.4);
+  cursor:pointer; transition:all 0.18s; white-space:nowrap;
+}
+.hina-start:active { transform:scale(0.94); }
+.hina-stop {
+  background:rgba(124,58,237,0.12);
+  border:1px solid rgba(124,58,237,0.3); border-radius:10px;
+  color:rgba(200,175,255,0.8); font-size:13px; font-weight:600;
+  padding:11px 16px; cursor:pointer; white-space:nowrap;
+}
+.hina-lock-btn {
+  position:absolute; top:14px; right:14px; z-index:20;
+  background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.2);
+  border-radius:8px; color:rgba(200,175,255,0.4);
+  font-size:13px; padding:6px 10px; cursor:pointer;
+}
+.hina-count-badge {
+  position:absolute; top:14px; left:14px; z-index:20;
+  font-size:10px; font-weight:700; letter-spacing:0.12em;
+  color:rgba(168,85,247,0.55);
+}
+/* Nav secret button */
+.nav-btn.secret-nav { color:rgba(139,92,246,0.55); }
+.nav-btn.secret-nav.active { color:#a855f7; }
+.nav-btn.secret-nav.active::after { background:#a855f7; }
+
+/* PIN MODAL */
+.pin-modal {
+  position:fixed; inset:0; z-index:2000;
+  background:rgba(4,2,12,0.93); backdrop-filter:blur(16px);
+  display:none; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+}
+.pin-modal-title {
+  font-family:'Bebas Neue',sans-serif; font-size:30px;
+  letter-spacing:0.32em; color:#a855f7;
+  text-shadow:0 0 24px rgba(168,85,247,0.6);
+}
+.pin-modal-sub {
+  font-size:10px; color:rgba(200,175,255,0.35);
+  letter-spacing:0.18em; text-transform:uppercase; margin-top:-14px;
+}
+.pin-dots-row { display:flex; gap:18px; }
+.pin-dot-ui {
+  width:15px; height:15px; border-radius:50%;
+  border:2px solid rgba(124,58,237,0.45); background:transparent;
+  transition:all 0.18s;
+}
+.pin-dot-ui.filled {
+  background:#a855f7; border-color:#a855f7;
+  box-shadow:0 0 14px rgba(168,85,247,0.9);
+}
+@keyframes pinShake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)} 60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+.pin-keypad {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:248px;
+}
+.pin-key {
+  background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.2);
+  border-radius:14px; color:rgba(225,205,255,0.9);
+  font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600;
+  padding:17px 0; text-align:center; cursor:pointer;
+  transition:all 0.14s; -webkit-tap-highlight-color:transparent;
+}
+.pin-key:active { background:rgba(124,58,237,0.28); transform:scale(0.93); }
+.pin-key.del { font-size:15px; color:rgba(200,175,255,0.45); }
+.pin-err { font-size:10px; color:#f87171; letter-spacing:0.12em; height:15px; text-align:center; }
+
 /* Card shimmer sweep */
 .streak-card, .muscle-card, .session-card, .exam-card, .study-widget, .task-item {
   position: relative; overflow: hidden;
@@ -470,7 +624,7 @@ body::after {
 <div class="screen-sweep"></div>
 <div id="app">
   <div class="header">
-    <div class="wordmark">GRIND</div>
+    <div class="wordmark" onclick="handleWordmarkTap()" style="cursor:default;user-select:none;">GRIND</div>
     <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
   </div>
   <div class="nav">
@@ -478,6 +632,7 @@ body::after {
     <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">☰</span></button>
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span></button>
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span></button>
+    <button class="nav-btn secret-nav" id="hina-nav-btn" onclick="switchTab('hina',this)" style="display:none"><span class="nav-icon">♡</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
@@ -485,8 +640,34 @@ body::after {
     <div id="tab-tasks" class="tab-panel" style="display:none"></div>
     <div id="tab-exams" class="tab-panel" style="display:none"></div>
     <div id="tab-study" class="tab-panel" style="display:none"></div>
+    <div id="tab-hina" class="tab-panel" style="display:none"></div>
   </div>
 </div>
+<!-- PIN LOCK MODAL -->
+<div class="pin-modal" id="pin-modal">
+  <div class="pin-modal-title" id="pin-title">ENTER PIN</div>
+  <div class="pin-modal-sub" id="pin-subtitle">secret access</div>
+  <div class="pin-dots-row" id="pin-dots-row">
+    <div class="pin-dot-ui"></div><div class="pin-dot-ui"></div>
+    <div class="pin-dot-ui"></div><div class="pin-dot-ui"></div>
+  </div>
+  <div class="pin-err" id="pin-err"></div>
+  <div class="pin-keypad">
+    <div class="pin-key" onclick="pinInput('1')">1</div>
+    <div class="pin-key" onclick="pinInput('2')">2</div>
+    <div class="pin-key" onclick="pinInput('3')">3</div>
+    <div class="pin-key" onclick="pinInput('4')">4</div>
+    <div class="pin-key" onclick="pinInput('5')">5</div>
+    <div class="pin-key" onclick="pinInput('6')">6</div>
+    <div class="pin-key" onclick="pinInput('7')">7</div>
+    <div class="pin-key" onclick="pinInput('8')">8</div>
+    <div class="pin-key" onclick="pinInput('9')">9</div>
+    <div class="pin-key" onclick="closePinModal()" style="font-size:11px;color:rgba(200,175,255,0.35)">✕</div>
+    <div class="pin-key" onclick="pinInput('0')">0</div>
+    <div class="pin-key del" onclick="pinInput('del')">⌫</div>
+  </div>
+</div>
+
 <div class="rankup-overlay" id="rankupOverlay" onclick="closeRankup()">
   <div class="rankup-particles" id="rankupParticles"></div>
   <div class="rankup-eyebrow">RANK UP</div>
@@ -919,9 +1100,10 @@ async function loadSessions(){
 
 function getExamCountdown(dateStr){
   if(!dateStr)return null;
-  const target=new Date(dateStr.split('T')[0]+'T00:00:00');
+  // Use end-of-day so "today" exams still show a countdown
+  const target=new Date(dateStr.split('T')[0]+'T23:59:59');
   const diff=target-Date.now();
-  if(diff<=0)return null;
+  if(diff<0)return null;
   return{
     d:Math.floor(diff/86400000),
     h:Math.floor((diff%86400000)/3600000),
@@ -930,12 +1112,14 @@ function getExamCountdown(dateStr){
   };
 }
 function renderExamCountdownDisplay(){
+  console.log('[countdown] exams=',state.exams.length,state.exams.map(e=>e.date));
   const exam=state.exams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  if(!exam)return;
+  if(!exam){console.log('[countdown] no eligible exam');return;}
   const c=getExamCountdown(exam.date);
-  if(!c)return;
   const el=document.getElementById('exam-countdown-display');
-  if(!el)return;
+  if(!el){console.log('[countdown] display element not found');return;}
+  if(!c){el.innerHTML=`<div style="color:var(--red-hi);font-size:11px;font-weight:700;letter-spacing:0.08em">EXAM DAY</div>`;return;}
+  console.log('[countdown] rendering',c);
   el.innerHTML=`
     <div class="countdown-unit"><div class="countdown-num">${String(c.d).padStart(2,'0')}</div><div class="countdown-lbl">days</div></div>
     <div class="countdown-sep">:</div>
@@ -968,7 +1152,7 @@ function tickTimer(){
   if(pomoMode&&pomoPhaseEnd){
     const rem=Math.max(0,pomoPhaseEnd-Date.now());
     const txt=formatDuration(rem);
-    ['timer-display','timer-display-log'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
+    ['timer-display','timer-display-log','hina-timer-display'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
     // update ring
     const ring=document.getElementById('pomo-ring-fill');
     if(ring){
@@ -981,8 +1165,9 @@ function tickTimer(){
   }
   if(!state.activeSession){clearInterval(timerInterval);return;}
   const txt=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
-  ['timer-display','timer-display-log'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
+  ['timer-display','timer-display-log','hina-timer-display'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
 }
+function renderActiveTab(){if(currentTab==='hina')renderHina();else renderHome();}
 async function completePomoWork(){
   if(!state.activeSession)return;
   const now=new Date().toISOString(),{id}=state.activeSession;
@@ -993,19 +1178,20 @@ async function completePomoWork(){
   showToast(`Pomo ${pomoCount} ✓`);
   pomoPhase='break';
   pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
-  renderHome();startTimer();
+  if(currentTab==='hina')hinaFlashComplete();else{renderHome();}
+  startTimer();
 }
 async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
-  if(!lastSubject){renderHome();return;}
+  if(!lastSubject){renderActiveTab();return;}
   if(navigator.vibrate)navigator.vibrate([100,80,100]);
   playChime([659],0.07,0.4);
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
     state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
     pomoPhaseEnd=Date.now()+POMO_WORK;
-    renderHome();startTimer();
-  }catch(e){showToast('Auto-start failed');renderHome();}
+    renderActiveTab();startTimer();
+  }catch(e){showToast('Auto-start failed');renderActiveTab();}
 }
 function setPomoMode(v){pomoMode=v;renderHome();}
 
@@ -1023,10 +1209,10 @@ async function startSession(subject){
 
 async function stopSession(){
   clearInterval(timerInterval);timerInterval=null;
-  pomoPhaseEnd=null;
+  pomoPhaseEnd=null;pomoPhase='work';
   const wasActive=state.activeSession;
   state.activeSession=null;
-  renderHome();
+  renderActiveTab();
   if(wasActive){
     const now=new Date().toISOString();
     try{
@@ -1036,7 +1222,7 @@ async function stopSession(){
   } else {
     showToast('Break skipped');
   }
-  if(currentTab==='study'){await loadSessions();renderStudyLog();}
+  if(currentTab==='study'||currentTab==='hina'){await loadSessions();if(currentTab==='study')renderStudyLog();else renderHina();}
 }
 
 async function refresh(){
@@ -1045,22 +1231,211 @@ async function refresh(){
   if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
   if(currentTab==='exams'){await loadExams();renderExams();}
   if(currentTab==='study'){await loadSessions();renderStudyLog();}
+  if(currentTab==='hina'){await loadSessions();renderHina();}
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>{p.style.display='none';p.classList.remove('active');});
-  btn.classList.add('active');
-  const panel=document.getElementById('tab-'+tab);panel.style.display='block';panel.classList.add('active');
+  if(btn){btn.classList.add('active');}
+  const panel=document.getElementById('tab-'+tab);if(panel){panel.style.display='block';panel.classList.add('active');}
   if(tab!=='home'){clearInterval(examCountdownInterval);examCountdownInterval=null;}
   currentTab=tab;refresh();
 }
 
 function getRivalFor(name){return state.rivals.find(r=>r.bodyPart?.toLowerCase()===name.toLowerCase())??null;}
 
-/* 
+/* ═══════════════════════════════════
+   SECRET PAGE — HINA
+   ═══════════════════════════════════ */
+let secretUnlocked=false;
+let hinaTapCount=0,hinaTapTimer=null;
+let pinBuffer='',pinFirstSet='',pinModalMode='check';
+let hinaCompleteFlash=false,hinaCompleteTimer=null;
+
+function handleWordmarkTap(){
+  hinaTapCount++;
+  if(hinaTapTimer)clearTimeout(hinaTapTimer);
+  hinaTapTimer=setTimeout(()=>{hinaTapCount=0;},2500);
+  if(hinaTapCount>=5){
+    hinaTapCount=0;clearTimeout(hinaTapTimer);
+    openPinModal();
+  }
+}
+
+function openPinModal(){
+  const saved=localStorage.getItem('hina-pin');
+  pinModalMode=saved?'check':'set';
+  pinBuffer='';pinFirstSet='';
+  document.getElementById('pin-modal').style.display='flex';
+  updatePinModal();
+}
+function closePinModal(){
+  document.getElementById('pin-modal').style.display='none';
+  pinBuffer='';pinFirstSet='';
+}
+function updatePinModal(){
+  const titles={check:'ENTER PIN',set:'SET PIN',confirm:'CONFIRM PIN'};
+  const subs={check:'secret access',set:'choose a 4-digit pin',confirm:'enter again to confirm'};
+  document.getElementById('pin-title').textContent=titles[pinModalMode];
+  document.getElementById('pin-subtitle').textContent=subs[pinModalMode];
+  document.getElementById('pin-err').textContent='';
+  renderPinDots();
+}
+function renderPinDots(){
+  const c=document.getElementById('pin-dots-row');
+  if(!c)return;
+  c.innerHTML=[0,1,2,3].map(i=>`<div class="pin-dot-ui${i<pinBuffer.length?' filled':''}"></div>`).join('');
+}
+function pinInput(val){
+  if(val==='del'){pinBuffer=pinBuffer.slice(0,-1);renderPinDots();return;}
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=val;renderPinDots();
+  if(pinBuffer.length===4)setTimeout(handlePinComplete,160);
+}
+function handlePinComplete(){
+  const err=document.getElementById('pin-err');
+  if(pinModalMode==='check'){
+    const saved=localStorage.getItem('hina-pin');
+    if(pinBuffer===saved){closePinModal();unlockSecret();}
+    else{
+      err.textContent='WRONG PIN';
+      const row=document.getElementById('pin-dots-row');
+      row.style.animation='pinShake 0.35s ease';
+      setTimeout(()=>{row.style.animation='';pinBuffer='';renderPinDots();},400);
+    }
+  } else if(pinModalMode==='set'){
+    pinFirstSet=pinBuffer;pinBuffer='';
+    pinModalMode='confirm';updatePinModal();
+  } else if(pinModalMode==='confirm'){
+    if(pinBuffer===pinFirstSet){
+      localStorage.setItem('hina-pin',pinBuffer);
+      closePinModal();unlockSecret();
+    } else {
+      err.textContent="PINS DON'T MATCH";
+      pinBuffer='';pinFirstSet='';
+      setTimeout(()=>{pinModalMode='set';updatePinModal();},600);
+    }
+  }
+}
+function unlockSecret(){
+  secretUnlocked=true;
+  const btn=document.getElementById('hina-nav-btn');
+  if(btn)btn.style.display='flex';
+  switchTab('hina',btn);
+}
+function lockSecret(){
+  secretUnlocked=false;
+  const btn=document.getElementById('hina-nav-btn');
+  if(btn)btn.style.display='none';
+  const homeBtn=document.querySelector('.nav-btn');
+  switchTab('home',homeBtn);
+}
+
+function getHinaImage(){
+  const hour=new Date().getHours();
+  const morning=(hour>=5&&hour<11)&&pomoCount===0;
+  if(pomoMode&&pomoPhaseEnd&&!state.activeSession){
+    return (pomoCount%4===0)?'hina-longbreak.png':'hina-break.png';
+  }
+  if(state.activeSession){
+    return (pomoCount>=2)?'hina-focus.png':'hina-work.png';
+  }
+  return morning?'hina-morning.png':'hina-idle.png';
+}
+function hinaFlashComplete(){
+  hinaCompleteFlash=true;
+  if(hinaCompleteTimer)clearTimeout(hinaCompleteTimer);
+  renderHina();
+  hinaCompleteTimer=setTimeout(()=>{hinaCompleteFlash=false;renderHina();},3000);
+}
+
+function renderHina(){
+  const el=document.getElementById('tab-hina');
+  if(!el)return;
+  const todayStr=new Date().toISOString().split('T')[0];
+  const todayCount=Math.max(pomoCount,state.sessions.filter(ss=>ss.started?.startsWith(todayStr)&&ss.complete==='Done').length);
+  const blockPos=pomoCount%4;
+  const dots=Array.from({length:4},(_,i)=>`<div class="hina-dot${i<blockPos?' filled':''}"></div>`).join('');
+  const imgSrc=hinaCompleteFlash?'hina-complete.png':getHinaImage();
+
+  // timer + phase
+  let timerText='00:00',phaseLabel='READY',phaseColor='rgba(168,85,247,0.6)';
+  const isActive=!!state.activeSession;
+  const isBreak=pomoMode&&pomoPhaseEnd&&!state.activeSession;
+  if(isActive&&pomoMode&&pomoPhaseEnd){
+    timerText=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+    phaseLabel='FOCUS';phaseColor='#a855f7';
+  } else if(isBreak){
+    timerText=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+    phaseLabel=pomoCount%4===0?'LONG BREAK':'SHORT BREAK';
+    phaseColor='rgba(100,80,160,0.8)';
+  } else if(isActive){
+    timerText=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+    phaseLabel='STUDYING';phaseColor='#a855f7';
+  }
+
+  const subOpts=SUBJECTS.map(s=>`<option value="${s}"${s===lastSubject?' selected':''}>${s}</option>`).join('');
+  let ctrlHTML;
+  if(isActive){
+    ctrlHTML=`<div class="hina-sel" style="pointer-events:none;opacity:0.7">${state.activeSession.subject||'Studying'}</div>
+      <button class="hina-stop" onclick="stopSession()">■ Stop</button>`;
+  } else if(isBreak){
+    ctrlHTML=`<div style="flex:1;text-align:center;font-size:10px;color:rgba(200,175,255,0.4);letter-spacing:0.08em">auto-starting next pomo…</div>
+      <button class="hina-stop" onclick="stopSession()">Skip</button>`;
+  } else {
+    ctrlHTML=`<select class="hina-sel" id="hina-subject-sel" onchange="lastSubject=this.value">
+        <option value="">— Subject —</option>${subOpts}</select>
+      <button class="hina-start" onclick="hinaStart()">▸ START</button>`;
+  }
+
+  el.innerHTML=`<div class="hina-stage">
+    <div class="hina-bg-glow"></div>
+    <div class="hina-particles" id="hina-particles"></div>
+    ${todayCount>0?`<div class="hina-count-badge">${todayCount}× today</div>`:''}
+    <button class="hina-lock-btn" onclick="lockSecret()">🔒</button>
+    <img class="hina-char" src="${imgSrc}" id="hina-char-img" alt="">
+    <div class="hina-overlay">
+      <div class="hina-phase-label" style="color:${phaseColor}">${phaseLabel}</div>
+      <div class="hina-timer" id="hina-timer-display">${timerText}</div>
+      <div class="hina-subject-lbl">${isActive?(state.activeSession.subject||''):(isBreak?'take a rest…':'')}</div>
+      <div class="hina-dots">${dots}</div>
+      <div class="hina-controls">${ctrlHTML}</div>
+    </div>
+  </div>`;
+  initHinaParticles();
+}
+
+function initHinaParticles(){
+  const c=document.getElementById('hina-particles');
+  if(!c||c.children.length>0)return;
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');p.className='hina-petal';
+    const sz=2+Math.random()*3;
+    p.style.cssText=`left:${5+Math.random()*90}%;width:${sz}px;height:${sz}px;`+
+      `animation-duration:${18+Math.random()*20}s;animation-delay:${-Math.random()*30}s;`+
+      `opacity:${0.2+Math.random()*0.4};border-radius:${Math.random()>0.5?'50%':'2px'};`+
+      `background:${Math.random()>0.5?'rgba(168,85,247,0.35)':'rgba(216,180,254,0.25)'};`;
+    c.appendChild(p);
+  }
+}
+
+async function hinaStart(){
+  const sel=document.getElementById('hina-subject-sel');
+  const subject=sel?sel.value:lastSubject;
+  if(!subject){showToast('Pick a subject');return;}
+  pomoMode=true;lastSubject=subject;
+  try{
+    const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
+    state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
+    pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;
+    startTimer();renderHina();showToast('▸ '+subject);
+  }catch(e){showToast('Failed to start');}
+}
+
+/* ═══════════════════════════════════
    RENDERERS
-    */
+   ═══════════════════════════════════ */
 function renderHome(){
   const s=state.streaks;
   const bodyStats=state.stats.filter(x=>x.cat==='Body'&&x.name!=='Rest');
@@ -1120,24 +1495,28 @@ function renderHome(){
       <div class="streak-card s-sleep"><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
       <div class="streak-card s-quest"><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
     </div>`;
-  // Next exam widget
-  const nextExam=state.exams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  // Next exam widget — always show debug info so we can diagnose
+  const allExams=state.exams;
+  const nextExam=allExams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const noDateExam=allExams.find(e=>!e.archive&&!e.date);
+  html+=`<div class="next-exam-card">
+    <div class="next-exam-label">Next Exam <span style="color:var(--text-faint);font-size:8px;margin-left:4px">[${allExams.length} loaded]</span></div>`;
   if(nextExam){
-    const c=getExamCountdown(nextExam.date);
-    if(c){
-      const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
-      html+=`<div class="next-exam-card">
-        <div class="next-exam-label">Next Exam</div>
-        <div class="next-exam-top">
-          <div>
-            <div class="next-exam-name">${nextExam.name}</div>
-            <div class="next-exam-tags">${tags}</div>
-          </div>
-          <div class="countdown-wrap" id="exam-countdown-display"></div>
+    const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
+    html+=`<div class="next-exam-top">
+        <div>
+          <div class="next-exam-name">${nextExam.name}</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${nextExam.date||'no date'}</div>
+          <div class="next-exam-tags">${tags}</div>
         </div>
+        <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
       </div>`;
-    }
+  } else if(allExams.length===0){
+    html+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No exams found — check Notion sync</div>`;
+  } else {
+    html+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">Exams found (${allExams.length}) but all archived or no dates<br><span style="font-size:9px">${allExams.slice(0,3).map(e=>e.name+'|arch='+e.archive+'|date='+e.date).join(', ')}</span></div>`;
   }
+  html+=`</div>`;
   if(bodyStats.length){
     html+=`<div class="sil-wrap">
       <div class="sil-header">
