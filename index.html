@@ -389,6 +389,25 @@ body::after {
 .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-hi); border: 1px solid var(--border-hi); color: var(--text); padding: 9px 18px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; z-index: 200; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.6); animation: toast-up 0.2s ease; pointer-events: none; }
 @keyframes toast-up { from { opacity: 0; transform: translateX(-50%) translateY(6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
+/* ── Pomo Flash Overlay ── */
+.pomo-flash-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.93); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 310; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+.pomo-flash-overlay.visible { opacity: 1; pointer-events: all; }
+.pf-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.pf-dot { position: absolute; border-radius: 50%; animation: pf-fly 1.8s ease forwards; }
+@keyframes pf-fly { 0% { transform: translateY(60vh) scale(1) rotate(0deg); opacity: 1; } 80% { opacity: 0.7; } 100% { transform: translateY(-25vh) scale(0.4) rotate(540deg); opacity: 0; } }
+.pf-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.45em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; animation: phase-fade-in 0.4s ease; }
+.pf-glyph { font-family: 'Bebas Neue', sans-serif; font-size: 88px; line-height: 1; letter-spacing: 0.04em; color: var(--gold); text-shadow: 0 0 48px rgba(224,208,168,0.55), 0 0 12px rgba(224,208,168,0.3); animation: pop-in 0.55s cubic-bezier(0.175,0.885,0.32,1.275); }
+.pf-sub { font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); margin-top: 12px; animation: phase-fade-in 0.5s ease 0.1s both; }
+.pf-dots-row { display: flex; gap: 8px; margin-top: 22px; animation: phase-fade-in 0.5s ease 0.2s both; }
+.pf-session-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(224,208,168,0.18); border: 1px solid rgba(224,208,168,0.22); transition: background 0.2s; }
+.pf-session-dot.done { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(224,208,168,0.45); }
+.pf-bar-wrap { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(224,208,168,0.08); }
+.pf-bar { height: 100%; background: linear-gradient(to right, var(--gold), rgba(224,208,168,0.5)); transform-origin: left; animation: pf-drain 3s linear forwards; }
+@keyframes pf-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.pf-tap { font-size: 8px; color: var(--text-faint); letter-spacing: 0.14em; margin-top: 28px; animation: blink 1.6s ease infinite; }
+@keyframes screen-flash { 0% { opacity: 0; } 8% { opacity: 0.22; } 100% { opacity: 0; } }
+.screen-flash-el { position: fixed; inset: 0; background: rgba(224,208,168,1); pointer-events: none; z-index: 305; opacity: 0; animation: screen-flash 0.6s ease forwards; }
+
 /* ── Rank-up overlay ── */
 .rankup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .rankup-overlay.visible { opacity: 1; pointer-events: all; }
@@ -671,6 +690,15 @@ body::after {
       <button class="workout-submit-btn" onclick="submitExamGrade(false)" style="flex:1;background:rgba(224,208,168,0.04)">SAVE ONLY</button>
     </div>
   </div>
+</div>
+<div class="pomo-flash-overlay" id="pomoFlashOverlay" onclick="closePomoFlash()">
+  <div class="pf-particles" id="pfParticles"></div>
+  <div class="pf-eyebrow" id="pfEyebrow">POMO COMPLETE</div>
+  <div class="pf-glyph" id="pfGlyph">✓</div>
+  <div class="pf-sub" id="pfSub"></div>
+  <div class="pf-dots-row" id="pfDotsRow"></div>
+  <div class="pf-tap">tap to continue</div>
+  <div class="pf-bar-wrap"><div class="pf-bar" id="pfBar"></div></div>
 </div>
 <div class="rankup-overlay" id="rankupOverlay" onclick="closeRankup()">
   <div class="rankup-particles" id="rankupParticles"></div>
@@ -1017,8 +1045,8 @@ function getAudioCtx(){
 function unlockAudio(){
   try{const ctx=getAudioCtx();if(ctx.state==='suspended')ctx.resume();}catch(e){}
 }
-document.addEventListener('touchstart',unlockAudio,{once:true});
-document.addEventListener('click',unlockAudio,{once:true});
+document.addEventListener('touchstart',unlockAudio);
+document.addEventListener('click',unlockAudio);
 function playChime(freqs=[523,659],vol=0.1,dur=0.5){
   if(!soundEnabled)return;
   try{
@@ -1261,19 +1289,20 @@ async function completePomoWork(){
   pomoCount++;state.activeSession=null;
   nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}}).catch(()=>{});
   if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
-  playChime([523,659],0.1,0.5);
-  showToast(`Pomo ${pomoCount} ✓`);
+  playPomoCompleteSound();
   pomoPhase='break';
   pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
   savePomoPersist();
+  showPomoFlash(true);
   renderHome();startTimer();
 }
 async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
   savePomoPersist();
-  if(!lastSubject){renderHome();return;}
   if(navigator.vibrate)navigator.vibrate([100,80,100]);
-  playChime([659],0.07,0.4);
+  playBreakEndSound();
+  showPomoFlash(false);
+  if(!lastSubject){renderHome();return;}
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
     state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
@@ -1281,6 +1310,103 @@ async function completePomoBreak(){
     renderHome();startTimer();
   }catch(e){showToast('Auto-start failed');renderHome();}
 }
+function playPomoCompleteSound(){
+  if(!soundEnabled)return;
+  try{
+    const ctx=getAudioCtx();
+    const play=()=>{
+      const notes=[523,659,784,1047];
+      notes.forEach((hz,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='sine';o.frequency.value=hz;
+        const t=ctx.currentTime+i*0.13;
+        g.gain.setValueAtTime(0,t);
+        g.gain.linearRampToValueAtTime(0.13,t+0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
+        o.start(t);o.stop(t+0.56);
+      });
+    };
+    if(ctx.state==='suspended')ctx.resume().then(play);else play();
+  }catch(e){}
+}
+function playBreakEndSound(){
+  if(!soundEnabled)return;
+  try{
+    const ctx=getAudioCtx();
+    const play=()=>{
+      const notes=[659,587];
+      notes.forEach((hz,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='sine';o.frequency.value=hz;
+        const t=ctx.currentTime+i*0.18;
+        g.gain.setValueAtTime(0,t);
+        g.gain.linearRampToValueAtTime(0.09,t+0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.6);
+        o.start(t);o.stop(t+0.61);
+      });
+    };
+    if(ctx.state==='suspended')ctx.resume().then(play);else play();
+  }catch(e){}
+}
+let pomoFlashTimer=null;
+function showPomoFlash(isWork){
+  // Screen flash
+  const fl=document.createElement('div');
+  fl.className='screen-flash-el';
+  document.body.appendChild(fl);
+  setTimeout(()=>fl.remove(),700);
+
+  const ov=document.getElementById('pomoFlashOverlay');
+  if(!ov)return;
+
+  // Populate
+  document.getElementById('pfEyebrow').textContent=isWork?'POMO COMPLETE':'BREAK OVER';
+  document.getElementById('pfGlyph').textContent=isWork?pomoCount:'▸';
+  document.getElementById('pfSub').textContent=isWork
+    ?( (pomoCount%4===0)?'LONG BREAK EARNED — REST UP':'SHORT BREAK — BREATHE')
+    :'TIME TO FOCUS';
+
+  // Session dots (up to 8 shown, last 4 in current set)
+  const dotsRow=document.getElementById('pfDotsRow');
+  dotsRow.innerHTML='';
+  const total=Math.min(pomoCount,8);
+  for(let i=0;i<4;i++){
+    const d=document.createElement('div');
+    const setStart=Math.floor((pomoCount-1)/4)*4;
+    d.className='pf-session-dot'+(i<(pomoCount-setStart)?' done':'');
+    dotsRow.appendChild(d);
+  }
+
+  // Particles
+  const pfP=document.getElementById('pfParticles');
+  pfP.innerHTML='';
+  const colors=['rgba(224,208,168,0.9)','rgba(180,160,100,0.7)','rgba(255,230,130,0.8)','rgba(140,120,60,0.6)'];
+  for(let i=0;i<22;i++){
+    const dot=document.createElement('div');
+    dot.className='pf-dot';
+    const sz=4+Math.random()*8;
+    dot.style.cssText=`width:${sz}px;height:${sz}px;left:${8+Math.random()*84}%;background:${colors[i%colors.length]};animation-delay:${Math.random()*0.5}s;animation-duration:${1.4+Math.random()*0.8}s;`;
+    pfP.appendChild(dot);
+  }
+
+  // Reset bar animation
+  const bar=document.getElementById('pfBar');
+  bar.style.animation='none';
+  bar.offsetHeight; // reflow
+  bar.style.animation='pf-drain 3s linear forwards';
+
+  ov.classList.add('visible');
+  if(pomoFlashTimer)clearTimeout(pomoFlashTimer);
+  pomoFlashTimer=setTimeout(closePomoFlash,3200);
+}
+function closePomoFlash(){
+  if(pomoFlashTimer){clearTimeout(pomoFlashTimer);pomoFlashTimer=null;}
+  const ov=document.getElementById('pomoFlashOverlay');
+  if(ov)ov.classList.remove('visible');
+}
+
 function setPomoMode(v){pomoMode=v;renderHome();}
 
 async function startSession(subject){
