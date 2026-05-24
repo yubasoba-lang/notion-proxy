@@ -661,62 +661,62 @@ const BADGE_IMGS={
 
 function badgeSVG(rankObj, size=40){
   if(!rankObj) rankObj=ALL_RANKS[0];
-  const {name, roman} = rankObj;
-  const imgSrc = BADGE_IMGS[name] ?? '';
+  const {name, roman, color, glow} = rankObj;
 
-  // All badges are square images on black bg
-  // Numeral sits at ~78% height — below the main emblem, above the bottom tip
-  // Dark pill background ensures readability on any badge colour
-  const w   = size;
-  const h   = size;
-  const cx  = w / 2;
-  const numY = h * 0.82;
+  const w=size, h=size, cx=w/2, cy=h/2;
+  const r   = size * 0.36;   // arc radius
+  const sw  = size * 0.09;   // stroke width
+  const uid = (name+roman+Math.round(size)).replace(/\s/g,'');
 
-  // Pill dimensions
-  const pillW = Math.max(22, size * 0.42);
-  const pillH = Math.max(11, size * 0.18);
-  const pillR = pillH / 2;
-  const fontSize = Math.max(8, Math.round(size * 0.17));
+  // Arc: opens at the bottom (150° → 390°), 240° total sweep
+  // Three segments of equal size with small gaps between
+  const startDeg=150, totalDeg=240, gapDeg=7;
+  const segDeg=(totalDeg - gapDeg*2)/3;
+  const segs=[
+    [startDeg,            startDeg+segDeg],
+    [startDeg+segDeg+gapDeg,       startDeg+segDeg*2+gapDeg],
+    [startDeg+segDeg*2+gapDeg*2,   startDeg+totalDeg],
+  ];
+  const filled=roman==='III'?3:roman==='II'?2:1;
 
-  // Unique filter id per badge instance
-  const uid = name + roman + Math.round(size);
+  function pt(deg){
+    const rad=deg*Math.PI/180;
+    return [cx+r*Math.cos(rad), cy+r*Math.sin(rad)];
+  }
+  function arc(a1,a2){
+    const [x1,y1]=pt(a1),[x2,y2]=pt(a2);
+    const large=(a2-a1)>180?1:0;
+    return `M${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${large},1 ${x2.toFixed(2)},${y2.toFixed(2)}`;
+  }
 
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"
-    xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+  const dimStroke='rgba(255,255,255,0.08)';
+  const arcPaths=segs.map((s,i)=>{
+    const on=i<filled;
+    return `<path d="${arc(s[0],s[1])}" fill="none"
+      stroke="${on?color:dimStroke}" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"
+      ${on?`filter="url(#glow${uid})"`:''} opacity="${on?1:1}"/>`;
+  }).join('');
+
+  // Sizes for inner text
+  const letterSz = (size*0.30).toFixed(1);
+  const romanSz  = (size*0.15).toFixed(1);
+  const glowStd  = (size*0.07).toFixed(1);
+
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
     <defs>
-      <filter id="ts${uid}">
-        <feDropShadow dx="0" dy="0.5" stdDeviation="1.5"
-          flood-color="rgba(0,0,0,1)" flood-opacity="1"/>
+      <filter id="glow${uid}" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="${glowStd}" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
     </defs>
-
-    <!-- Badge image -->
-    <image href="${imgSrc}" x="0" y="0" width="${w}" height="${h}"
-      preserveAspectRatio="xMidYMid meet" style="mix-blend-mode:screen;clip-path:inset(2px)"/>
-
-    <!-- Numeral pill background -->
-    <rect
-      x="${(cx - pillW/2).toFixed(1)}"
-      y="${(numY - pillH/2).toFixed(1)}"
-      width="${pillW.toFixed(1)}"
-      height="${pillH.toFixed(1)}"
-      rx="${pillR.toFixed(1)}"
-      fill="rgba(0,0,0,0.72)"
-      stroke="rgba(255,255,255,0.12)"
-      stroke-width="0.6"/>
-
-    <!-- Roman numeral -->
-    <text
-      x="${cx.toFixed(1)}"
-      y="${(numY + fontSize*0.08).toFixed(1)}"
-      text-anchor="middle"
-      dominant-baseline="middle"
-      font-family="'Bebas Neue',sans-serif"
-      font-size="${fontSize}"
-      font-weight="700"
-      letter-spacing="2"
-      fill="rgba(255,255,255,0.95)"
-      filter="url(#ts${uid})"
+    ${arcPaths}
+    <text x="${cx}" y="${(cy-size*0.07).toFixed(1)}" text-anchor="middle" dominant-baseline="middle"
+      font-family="'Bebas Neue',sans-serif" font-size="${letterSz}"
+      fill="${color}" filter="url(#glow${uid})" opacity="0.92"
+    >${name[0]}</text>
+    <text x="${cx}" y="${(cy+size*0.24).toFixed(1)}" text-anchor="middle" dominant-baseline="middle"
+      font-family="'Bebas Neue',sans-serif" font-size="${romanSz}" letter-spacing="1.5"
+      fill="rgba(255,255,255,0.45)"
     >${roman}</text>
   </svg>`;
 }
@@ -775,7 +775,7 @@ function buildSilhouette(bodyStats){
   }
 
   const frontMuscles=['Pecs','Abs','Obliques','Front Delts','Side Delts','Biceps','Triceps','Forearms','Quads','Calves','Cardio','Plyometrics'];
-  const backMuscles =['Rear Delts','Traps','Rhomboids','Lats','Lower Back','Glutes','Hamstrings','Triceps','Biceps','Forearms','Calves'];
+  const backMuscles =['Rear Delts','Traps','Rhomboids','Lats','Lower Back','Glutes','Hamstrings','Triceps','Biceps','Forearms','Calves','Side Delts','Plyometrics'];
   const muscles = silView==='front' ? frontMuscles : backMuscles;
   // Front figure is centred at x=173 in source image; back figure at x=432.
   // Each viewBox is 306 wide — shift so the figure sits at viewBox centre (153).
@@ -845,6 +845,8 @@ function buildSilhouette(bodyStats){
       Biceps:        {x:BC+78,  y:243},
       Forearms:      {x:BC+74,  y:281},
       Calves:        {x:BC+10,  y:472},
+      'Side Delts':  {x:BC+70,  y:168},  // same offset as front view
+      Plyometrics:   {x:BC-48,  y:455},  // same offset as front view
     },
   };
   const posMap=HP[silView];
