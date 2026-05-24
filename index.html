@@ -81,7 +81,7 @@ body::after {
 
 /* ── Nav ── */
 .nav {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: rgba(6,6,12,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -168,7 +168,7 @@ body::after {
 .muscle-vs       { font-size: 9px; font-weight: 600; font-family: 'JetBrains Mono', monospace; text-align: right; }
 
 /* ── TASKS ── */
-.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.action-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 10px; }
 .action-btn {
   background: var(--bg-card); border: 1px solid var(--border-hi);
   border-radius: 6px; color: var(--text-dim);
@@ -429,6 +429,21 @@ body::after {
 .wec-secondary{background:rgba(100,100,100,0.1);color:var(--text-dim);border:1px solid var(--border);}
 .wec-log-btn{width:100%;padding:10px;background:var(--gold);color:#0a0a0e;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;border:none;border-radius:8px;cursor:pointer;font-family:inherit;}
 .wec-log-btn:disabled{opacity:0.45;cursor:not-allowed;}
+.wec-day-section{margin-bottom:6px;}
+.wec-day-header{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-radius:9px;cursor:pointer;border:1px solid var(--border);background:var(--bg);transition:border-color 0.15s,background 0.15s;margin-bottom:0;}
+.wec-day-header:hover{border-color:rgba(224,208,168,0.25);background:rgba(224,208,168,0.04);}
+.wec-day-header.today{border-color:rgba(224,208,168,0.35);background:rgba(224,208,168,0.06);}
+.wec-day-header-left{display:flex;align-items:center;gap:8px;}
+.wec-day-dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
+.wec-day-header.today .wec-day-dot{background:var(--gold);}
+.wec-day-title{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);}
+.wec-day-header.today .wec-day-title{color:var(--gold);}
+.wec-day-label-sub{font-size:9px;color:var(--text-faint);font-weight:400;letter-spacing:0.05em;text-transform:none;margin-left:2px;}
+.wec-day-right{display:flex;align-items:center;gap:8px;}
+.wec-day-count{font-size:9px;color:var(--text-faint);}
+.wec-day-chevron{font-size:10px;color:var(--text-dim);transition:transform 0.2s;}
+.wec-day-header.open .wec-day-chevron{transform:rotate(180deg);}
+.wec-day-body{padding:5px 0 0 0;display:flex;flex-direction:column;gap:3px;}
 
 /* ── Ambient background ── */
 .bg-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
@@ -945,6 +960,7 @@ const toBodyStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),de
 const toExercise=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),day:g.multiSelect(q.Day),primaryMuscle:g.select(q['Primary Muscle']),musclesHit:g.multiSelect(q['Muscles Hit']).map(m=>MUSCLES_HIT_MAP[m]??m),xpPerSet:g.num(q['XP per Set'])??0,category:g.select(q.Category),equipment:g.select(q.Equipment)};};
 let selectedExercise=null;
 let expandedExercise=null;
+let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
 
 
 function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
@@ -1672,16 +1688,37 @@ async function logExerciseFromTab(id){
   }
 }
 
+function toggleWorkoutDay(abbr){
+  if(!expandedWorkoutDays)expandedWorkoutDays=new Set();
+  if(expandedWorkoutDays.has(abbr))expandedWorkoutDays.delete(abbr);
+  else expandedWorkoutDays.add(abbr);
+  renderWorkout();
+}
+
 function renderWorkout(){
   const el=document.getElementById('tab-workout');
   if(!state.exercises.length){
     el.innerHTML='<div class="empty" style="padding:32px 0;text-align:center;color:var(--text-dim)">Loading exercises…</div>';
     return;
   }
-  const DAY_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const todayAbbr=DAY_ABBR[new Date().getDay()];
-  const todayEx=state.exercises.filter(e=>e.day.includes(todayAbbr));
-  const otherEx=state.exercises.filter(e=>!e.day.includes(todayAbbr));
+
+  // Day order and labels matching the training protocol
+  const DAY_DEFS=[
+    {abbr:'Mon',label:'Monday',   sub:'Plyometrics & Core'},
+    {abbr:'Tue',label:'Tuesday',  sub:'Mild Push'},
+    {abbr:'Wed',label:'Wednesday',sub:'Strong Pull'},
+    {abbr:'Thu',label:'Thursday', sub:'Strong Push'},
+    {abbr:'Fri',label:'Friday',   sub:'Mild Pull'},
+    {abbr:'Sat',label:'Saturday', sub:'Legs & Cardio'},
+    {abbr:'Sun',label:'Sunday',   sub:'Rest'},
+  ];
+  const ABBRS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const todayAbbr=ABBRS[new Date().getDay()];
+
+  // Init expandedWorkoutDays to today only on first load
+  if(expandedWorkoutDays===null){
+    expandedWorkoutDays=new Set([todayAbbr]);
+  }
 
   function exCard(e){
     const open=expandedExercise===e.id;
@@ -1708,14 +1745,28 @@ function renderWorkout(){
   }
 
   let html='';
-  if(todayEx.length){
-    html+=`<div class="section-label">Today · ${todayAbbr} <span style="color:var(--text-faint);font-weight:400">(${todayEx.length})</span></div>`;
-    html+=todayEx.map(exCard).join('');
-  }
-  if(otherEx.length){
-    html+=`<div class="section-label" style="margin-top:14px">Other Days <span style="color:var(--text-faint);font-weight:400">(${otherEx.length})</span></div>`;
-    html+=otherEx.map(exCard).join('');
-  }
+  DAY_DEFS.forEach(({abbr,label,sub})=>{
+    const dayEx=state.exercises.filter(e=>e.day.includes(abbr));
+    if(!dayEx.length)return;
+    const isToday=abbr===todayAbbr;
+    const isOpen=expandedWorkoutDays.has(abbr);
+    const headerCls=`wec-day-header${isToday?' today':''}${isOpen?' open':''}`;
+    html+=`<div class="wec-day-section">
+      <div class="${headerCls}" onclick="toggleWorkoutDay('${abbr}')">
+        <div class="wec-day-header-left">
+          <div class="wec-day-dot"></div>
+          <div class="wec-day-title">${label}${isToday?' <span style="font-size:8px;opacity:0.7;letter-spacing:0.05em;text-transform:none;font-weight:400">· today</span>':''}</div>
+          <span class="wec-day-label-sub">${sub}</span>
+        </div>
+        <div class="wec-day-right">
+          <span class="wec-day-count">${dayEx.length}</span>
+          <span class="wec-day-chevron">▾</span>
+        </div>
+      </div>
+      ${isOpen?`<div class="wec-day-body">${dayEx.map(exCard).join('')}</div>`:''}
+    </div>`;
+  });
+
   el.innerHTML=html;
 }
 
