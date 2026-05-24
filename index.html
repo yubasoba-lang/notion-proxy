@@ -36,21 +36,32 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
 
-/* Ancient alien stone */
+/* Ambient light field */
 body::before {
   content: '';
-  position: fixed; inset: 0;
+  position: fixed; inset: -10%;
   background-image:
-    radial-gradient(ellipse at 20% 8%,  rgba(224,208,168,0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 88%, rgba(180,160,110,0.04) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(120,105,65,0.03)  0%, transparent 70%);
+    radial-gradient(ellipse at 18% 12%,  rgba(224,208,168,0.11) 0%, transparent 42%),
+    radial-gradient(ellipse at 82% 84%,  rgba(180,160,100,0.07) 0%, transparent 38%),
+    radial-gradient(ellipse at 52% 52%,  rgba(120,100,55,0.05)  0%, transparent 60%),
+    radial-gradient(ellipse at 72% 16%,  rgba(160,138,80,0.05)  0%, transparent 32%),
+    radial-gradient(ellipse at 22% 82%,  rgba(100,82,40,0.04)   0%, transparent 36%);
   pointer-events: none; z-index: 0;
+  animation: bg-drift 75s ease-in-out infinite alternate;
+}
+@keyframes bg-drift {
+  0%   { transform: translate(0%,    0%);    opacity: 1;    }
+  25%  { transform: translate(1.5%,  -1%);   opacity: 0.88; }
+  50%  { transform: translate(-1%,   1.8%);  opacity: 0.94; }
+  75%  { transform: translate(2%,    1%);    opacity: 0.85; }
+  100% { transform: translate(-1.5%, -1.5%); opacity: 0.92; }
 }
 body::after {
   content: '';
   position: fixed; inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(224,208,168,0.007) 3px, rgba(224,208,168,0.007) 4px);
+  background-image: radial-gradient(circle, rgba(224,208,168,0.22) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.055;
   pointer-events: none; z-index: 0;
 }
 
@@ -266,12 +277,12 @@ body::after {
 .pomo-free-active { display: flex; flex-direction: column; align-items: center; padding: 32px 0 16px; }
 .pomo-screen-phase { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; animation: phase-fade-in 0.4s ease; }
 .pomo-screen-subject { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.06em; margin-bottom: 24px; animation: phase-fade-in 0.5s ease; }
-.pomo-ring-wrap { position: relative; width: 220px; height: 220px; margin: 0 auto; }
+.pomo-ring-wrap { position: relative; width: 230px; height: 230px; margin: 0 auto; overflow: visible; }
 .pomo-ring { width: 100%; height: 100%; overflow: visible; }
 .pomo-ring-bg { fill: none; stroke: var(--border); stroke-width: 1.5; }
 .pomo-ring-track { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 628.318; stroke-dashoffset: 0; transition: stroke-dashoffset 0.95s linear; }
 .pomo-ring-time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-.pomo-ring-countdown { font-family: 'JetBrains Mono', monospace; font-size: 44px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; line-height: 1; animation: phase-fade-in 0.4s ease; }
+.pomo-ring-countdown { font-family: 'JetBrains Mono', monospace; font-size: 50px; font-weight: 600; color: var(--text); letter-spacing: -0.03em; line-height: 1; animation: phase-fade-in 0.4s ease; text-shadow: 0 0 28px rgba(224,208,168,0.22); }
 .pomo-ring-label { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-faint); margin-top: 6px; }
 .pomo-screen-dots { display: flex; gap: 12px; margin: 22px 0 8px; }
 .pomo-screen-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-hi); transition: background 0.4s ease, box-shadow 0.4s ease; }
@@ -470,7 +481,7 @@ body::after {
 @keyframes orb-drift-3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-45px,25px)} }
 
 /* Noise texture overlay */
-.noise-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.055;
+.noise-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat; background-size: 200px 200px; }
 
@@ -964,6 +975,39 @@ let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelec
 let timerInterval=null;
 let examCountdownInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
+
+function savePomoPersist(){
+  if(pomoMode&&pomoPhaseEnd){
+    localStorage.setItem('grind-pomo',JSON.stringify({
+      mode:pomoMode,phase:pomoPhase,phaseEnd:pomoPhaseEnd,
+      count:pomoCount,subject:lastSubject||''
+    }));
+  } else {
+    localStorage.removeItem('grind-pomo');
+  }
+}
+function restorePomoPersist(){
+  try{
+    const raw=localStorage.getItem('grind-pomo');
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    if(!d.phaseEnd)return;
+    const now=Date.now();
+    if(d.phaseEnd<=now){
+      // Phase expired while away — auto-advance
+      localStorage.removeItem('grind-pomo');
+      if(d.phase==='work'){
+        pomoMode=d.mode;pomoCount=d.count+1;lastSubject=d.subject;
+        pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+        savePomoPersist();startTimer();
+      }
+      return;
+    }
+    pomoMode=d.mode;pomoPhase=d.phase;pomoPhaseEnd=d.phaseEnd;
+    pomoCount=d.count;lastSubject=d.subject;
+    startTimer();
+  }catch(e){localStorage.removeItem('grind-pomo');}
+}
 let soundEnabled=localStorage.getItem('grind-sound')!=='off';
 let audioCtx=null;
 function getAudioCtx(){
@@ -1181,6 +1225,28 @@ function tickTimer(){
       const totalMs=pomoPhase==='work'?POMO_WORK:(pomoCount%4===0?POMO_LONG:POMO_SHORT);
       const pct=Math.min(1,(totalMs-rem)/totalMs);
       ring.setAttribute('stroke-dashoffset',(628.318*pct).toFixed(2));
+      // Update orbital dot position
+      const ORB_R=114;
+      const angle=-Math.PI/2+pct*2*Math.PI;
+      const ox=(120+ORB_R*Math.cos(angle)).toFixed(2);
+      const oy=(120+ORB_R*Math.sin(angle)).toFixed(2);
+      ['pomo-orbit-dot','pomo-orbit-halo','pomo-orbit-glow'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){el.setAttribute('cx',ox);el.setAttribute('cy',oy);}
+      });
+      // Update trail arc
+      const trailEl=document.getElementById('pomo-orbit-trail');
+      if(trailEl){
+        const TRAIL=0.125;
+        let d='';
+        if(pct>TRAIL){
+          const ta=-Math.PI/2+(pct-TRAIL)*2*Math.PI;
+          const tx=(120+ORB_R*Math.cos(ta)).toFixed(2);
+          const ty=(120+ORB_R*Math.sin(ta)).toFixed(2);
+          d=`M ${tx} ${ty} A ${ORB_R} ${ORB_R} 0 0 1 ${ox} ${oy}`;
+        }
+        trailEl.setAttribute('d',d);
+      }
     }
     if(rem<=0){clearInterval(timerInterval);timerInterval=null;pomoPhase==='work'?completePomoWork():completePomoBreak();}
     return;
@@ -1199,10 +1265,12 @@ async function completePomoWork(){
   showToast(`Pomo ${pomoCount} ✓`);
   pomoPhase='break';
   pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+  savePomoPersist();
   renderHome();startTimer();
 }
 async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
+  savePomoPersist();
   if(!lastSubject){renderHome();return;}
   if(navigator.vibrate)navigator.vibrate([100,80,100]);
   playChime([659],0.07,0.4);
@@ -1221,7 +1289,7 @@ async function startSession(subject){
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
-    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;}
+    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();}
     startTimer();renderHome();
     showToast('▸ '+subject);
   }catch(e){showToast('Failed to start');}
@@ -1230,6 +1298,7 @@ async function startSession(subject){
 async function stopSession(){
   clearInterval(timerInterval);timerInterval=null;
   pomoPhaseEnd=null;pomoPhase='work';
+  savePomoPersist();
   const wasActive=state.activeSession;
   state.activeSession=null;
   renderHome();
@@ -2007,6 +2076,20 @@ function renderStudyLog(){
     const ringGlow=isBreak?'#1a3a28':'var(--gold-dim)';
     const countdownTxt=formatDuration(rem);
 
+    // Orbital dot initial position
+    const ORB_R=114;
+    const orbAngle=-Math.PI/2+pct*2*Math.PI;
+    const orbX=(120+ORB_R*Math.cos(orbAngle)).toFixed(2);
+    const orbY=(120+ORB_R*Math.sin(orbAngle)).toFixed(2);
+    // Orbital trail arc (45° = 0.125 of circle behind dot)
+    const TRAIL_PCT=0.125;
+    let trailD='';
+    if(pct>TRAIL_PCT){
+      const ta=-Math.PI/2+(pct-TRAIL_PCT)*2*Math.PI;
+      const tx=(120+ORB_R*Math.cos(ta)).toFixed(2);
+      const ty=(120+ORB_R*Math.sin(ta)).toFixed(2);
+      trailD=`M ${tx} ${ty} A ${ORB_R} ${ORB_R} 0 0 1 ${orbX} ${orbY}`;
+    }
     const sundialTicks=Array.from({length:60},(_,i)=>{
       const a=(i*6-90)*Math.PI/180;
       const isQ=i%15===0,isMaj=i%5===0;
@@ -2017,16 +2100,27 @@ function renderStudyLog(){
       <div class="pomo-screen-phase">${phaseLabel}</div>
       <div class="pomo-screen-subject">${subject}</div>
       <div class="pomo-ring-wrap">
-        <svg class="pomo-ring" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <svg class="pomo-ring" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" overflow="visible">
           <defs>
-            <filter id="ring-glow-f">
+            <filter id="ring-glow-f" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="4" result="b"/>
               <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
+            <filter id="orb-glow" x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="orb-bloom" x="-150%" y="-150%" width="400%" height="400%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
+          <!-- Faint orbit path -->
+          <circle cx="120" cy="120" r="${ORB_R}" fill="none" stroke="${ringColor}" stroke-width="0.6" opacity="0.10" stroke-dasharray="3 5"/>
+          <!-- Main ring bg -->
           <circle class="pomo-ring-bg" cx="120" cy="120" r="100"/>
-          <circle cx="120" cy="120" r="108" fill="none" stroke="var(--border)" stroke-width="0.5"/>
           ${sundialTicks}
+          <!-- Progress arc -->
           <circle class="pomo-ring-track" cx="120" cy="120" r="100"
             transform="rotate(-90 120 120)"
             stroke-dasharray="${CIRC}"
@@ -2034,6 +2128,14 @@ function renderStudyLog(){
             stroke="${ringColor}"
             id="pomo-ring-fill"
             filter="url(#ring-glow-f)"/>
+          <!-- Orbital trail -->
+          <path id="pomo-orbit-trail" d="${trailD}" fill="none" stroke="${ringColor}" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+          <!-- Orbital outer glow -->
+          <circle id="pomo-orbit-glow" cx="${orbX}" cy="${orbY}" r="11" fill="${ringColor}" opacity="0.18" filter="url(#orb-glow)"/>
+          <!-- Orbital halo -->
+          <circle id="pomo-orbit-halo" cx="${orbX}" cy="${orbY}" r="5.5" fill="${ringColor}" opacity="0.55" filter="url(#orb-bloom)"/>
+          <!-- Orbital core -->
+          <circle id="pomo-orbit-dot" cx="${orbX}" cy="${orbY}" r="3" fill="#ffffff" opacity="0.95"/>
         </svg>
         <div class="pomo-ring-time">
           <div id="timer-display-log" class="pomo-ring-countdown">${countdownTxt}</div>
@@ -2245,6 +2347,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 
 // Init
+restorePomoPersist();
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
 (function initSparks(){
   for(let i=0;i<10;i++){
