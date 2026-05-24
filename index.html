@@ -81,7 +81,7 @@ body::after {
 
 /* ── Nav ── */
 .nav {
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
   background: rgba(6,6,12,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -97,7 +97,7 @@ body::after {
   height: 1px; background: var(--gold);
   box-shadow: 0 0 10px rgba(224,208,168,0.35);
 }
-.nav-icon { font-size: 18px; line-height: 1; }
+.nav-icon { font-size: 16px; line-height: 1; }
 
 .scroll { flex: 1; overflow-y: auto; padding: 14px 14px 100px; -webkit-overflow-scrolling: touch; }
 
@@ -524,6 +524,40 @@ body::after {
 .exam-card::before { animation-delay: 3s; }
 @keyframes card-sheen { 0%,75%,100%{left:-80%;opacity:0} 77%{opacity:1} 90%{left:130%;opacity:1} 92%{opacity:0} }
 
+
+/* ── Journal Tab ── */
+.jnl-new-btn{width:100%;padding:13px;background:linear-gradient(135deg,rgba(224,208,168,0.12),rgba(224,208,168,0.06));border:1px solid rgba(224,208,168,0.3);border-radius:10px;color:var(--gold);font-size:14px;font-weight:700;letter-spacing:0.08em;cursor:pointer;margin-bottom:14px;transition:background 0.2s,border-color 0.2s;}
+.jnl-new-btn:hover{background:rgba(224,208,168,0.18);border-color:rgba(224,208,168,0.5);}
+.jnl-day-label{font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;margin:14px 0 6px;}
+.jnl-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:border-color 0.15s;}
+.jnl-card:hover{border-color:rgba(224,208,168,0.25);}
+.jnl-card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;}
+.jnl-card-meta{font-size:10px;color:var(--text-dim);margin-bottom:6px;}
+.jnl-emotions{display:flex;flex-wrap:wrap;gap:4px;}
+.jnl-emotion-chip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.05em;}
+/* form */
+.jnl-form{display:flex;flex-direction:column;gap:10px;}
+.jnl-back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text-dim);font-size:12px;cursor:pointer;padding:0;margin-bottom:4px;width:fit-content;}
+.jnl-back-btn:hover{color:var(--gold);}
+.jnl-form-label{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;}
+.jnl-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color 0.15s;}
+.jnl-input:focus{border-color:rgba(224,208,168,0.4);}
+.jnl-textarea{min-height:130px;resize:vertical;line-height:1.6;}
+.jnl-book-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.jnl-book-chip{padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.jnl-book-chip.selected{border-color:var(--gold);color:var(--gold);background:rgba(224,208,168,0.1);}
+.jnl-emo-grid{display:flex;flex-wrap:wrap;gap:5px;}
+.jnl-emo-btn{padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;letter-spacing:0.04em;}
+.jnl-emo-btn.sel-blue{border-color:#4a8fe0;color:#4a8fe0;background:rgba(74,143,224,0.12);}
+.jnl-emo-btn.sel-green{border-color:#4caf7d;color:#4caf7d;background:rgba(76,175,125,0.12);}
+.jnl-emo-btn.sel-yellow{border-color:#d4a800;color:#d4a800;background:rgba(212,168,0,0.12);}
+.jnl-emo-btn.sel-orange{border-color:#e07840;color:#e07840;background:rgba(224,120,64,0.12);}
+.jnl-emo-btn.sel-red{border-color:#e05555;color:#e05555;background:rgba(224,85,85,0.12);}
+.jnl-emo-btn.sel-default{border-color:#888;color:#aaa;background:rgba(136,136,136,0.12);}
+.jnl-save-btn{width:100%;padding:13px;background:linear-gradient(135deg,rgba(224,208,168,0.15),rgba(224,208,168,0.07));border:1px solid rgba(224,208,168,0.35);border-radius:10px;color:var(--gold);font-size:14px;font-weight:700;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.jnl-save-btn:hover{background:rgba(224,208,168,0.22);}
+.jnl-save-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.jnl-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 0;}
 </style>
 </head>
 <body>
@@ -544,6 +578,7 @@ body::after {
     <button class="nav-btn" onclick="switchTab('workout',this)"><span class="nav-icon">⊕</span></button>
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span></button>
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span></button>
+    <button class="nav-btn" onclick="switchTab('journal',this)"><span class="nav-icon">✎</span></button>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
@@ -552,6 +587,7 @@ body::after {
     <div id="tab-workout" class="tab-panel" style="display:none"></div>
     <div id="tab-exams" class="tab-panel" style="display:none"></div>
     <div id="tab-study" class="tab-panel" style="display:none"></div>
+    <div id="tab-journal" class="tab-panel" style="display:none"></div>
   </div>
 </div>
 <div class="workout-modal" id="workoutModal" onclick="if(event.target===this)closeWorkoutModal()">
@@ -605,6 +641,8 @@ const DB={
   bodyStats:      '96ca351633e742088730979eb09eb1d0',
   exerciseLibrary:'05096c88e4d54b7098a3623357f7a95a',
   workoutLog:     '02a675ed9078420ea9c40957663dd472',
+  journals:       '21463a0b4e7c81119bfa000b7d9a6cc5',
+  entries:        '21463a0b4e7c8152898f000bdad9d9d3',
 };
 
 /* 
@@ -878,7 +916,8 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[]};
+let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
@@ -923,6 +962,7 @@ async function nFetch(path,method='GET',body){
 const nQuery=(dbId,filter,sorts)=>nFetch(`/databases/${dbId}/query`,'POST',{page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{})}).then(d=>d.results??[]);
 const nPatch=(id,props)=>nFetch(`/pages/${id}`,'PATCH',{properties:props});
 const nCreate=(dbId,props)=>nFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
+const nAddBlocks=(pageId,children)=>nFetch(`/blocks/${pageId}/children`,'PATCH',{children});
 
 const g={
   title:v=>v?.title?.[0]?.plain_text??'',
@@ -976,6 +1016,9 @@ async function loadStats(){try{const p=await nQuery(DB.stats);const ns=p.map(toS
 async function loadBodyStats(){try{const p=await nQuery(DB.bodyStats);const ns=p.map(toBodyStat);checkRankUps(ns);state.bodyStats=ns;}catch(e){setError('Body Stats: '+e.message);}}
 async function loadExercises(){try{const p=await nQuery(DB.exerciseLibrary);state.exercises=p.map(toExercise);}catch(e){setError('Exercises: '+e.message);}}
 async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){console.error(e);}}
+async function loadJournals(){try{const p=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});state.journals=p.map(x=>({id:x.id,name:x.properties.Name?.title?.[0]?.plain_text??'Untitled'}));}catch(e){console.error('Journals:',e);}}
+async function loadEntries(){try{const p=await nQuery(DB.entries,null,[{property:'Date',direction:'descending'}]);state.entries=p.map(x=>{const q=x.properties;return{id:x.id,name:q.Name?.title?.[0]?.plain_text??'Untitled',date:q.Date?.date?.start??null,emotions:q.Emotions?.multi_select?.map(e=>e.name)??[]};});}catch(e){console.error('Entries:',e);}}
+
 async function loadTasks(){
   try{
     const today=new Date().toISOString().split('T')[0];
@@ -1191,6 +1234,7 @@ async function refresh(){
   if(currentTab==='workout'){await Promise.all([loadBodyStats(),loadExercises()]);renderWorkout();}
   if(currentTab==='exams'){await loadExams();renderExams();}
   if(currentTab==='study'){await loadSessions();renderStudyLog();}
+  if(currentTab==='journal'){await Promise.all([loadJournals(),loadEntries()]);renderJournal();}
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
@@ -1758,6 +1802,124 @@ function renderWorkout(){
     </div>`;
   });
 
+  el.innerHTML=html;
+}
+
+
+/* ── Journal Helpers ── */
+const EMO_COLOR={Joy:'blue',Excitement:'blue',Happiness:'blue',Gratitude:'green',Calmness:'green',Confidence:'green',Disappointment:'yellow',Anxiety:'yellow',Sadness:'yellow',Frustration:'yellow',Jealousy:'orange',Anger:'orange',Fear:'red',Panic:'red',Despair:'red',Boredom:'default'};
+
+function toggleJournalEmotion(name){
+  if(journalSelectedEmotions.has(name))journalSelectedEmotions.delete(name);
+  else journalSelectedEmotions.add(name);
+  renderJournal();
+}
+function selectJournalBook(id){
+  journalSelectedJournalId=journalSelectedJournalId===id?null:id;
+  renderJournal();
+}
+async function saveJournalEntry(){
+  const title=document.getElementById('jnlTitle').value.trim();
+  const date=document.getElementById('jnlDate').value;
+  const body=document.getElementById('jnlBody').value.trim();
+  if(!title){document.getElementById('jnlTitle').focus();return;}
+  const btn=document.getElementById('jnlSaveBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const props={
+      Name:{title:[{text:{content:title}}]},
+      ...(date?{Date:{date:{start:date}}}:{}),
+      ...(journalSelectedEmotions.size?{Emotions:{multi_select:[...journalSelectedEmotions].map(n=>({name:n}))}}:{}),
+      ...(journalSelectedJournalId?{Journal:{relation:[{id:journalSelectedJournalId}]}}:{}),
+    };
+    const page=await nCreate(DB.entries,props);
+    if(body&&page?.id){
+      const paragraphs=body.split('\n').filter(l=>l.trim()).map(l=>({type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:l}}]}}));
+      if(paragraphs.length)await nAddBlocks(page.id,paragraphs).catch(()=>{});
+    }
+    journalFormOpen=false;journalSelectedEmotions=new Set();journalSelectedJournalId=null;
+    await Promise.all([loadJournals(),loadEntries()]);renderJournal();
+  }catch(e){btn.disabled=false;btn.textContent='Save Entry';alert('Error: '+e.message);}
+}
+
+function renderJournal(){
+  const el=document.getElementById('tab-journal');
+  const today=new Date().toISOString().split('T')[0];
+  const allEmos=Object.keys(EMO_COLOR);
+
+  if(journalFormOpen){
+    const books=state.journals;
+    let bookChips=books.length
+      ?books.map(b=>`<button class="jnl-book-chip ${journalSelectedJournalId===b.id?'selected':''}" onclick="selectJournalBook('${b.id}')">${b.name}</button>`).join('')
+      :'<span style="color:var(--text-dim);font-size:11px">No journals found</span>';
+    let emoButtons=allEmos.map(e=>{
+      const c=EMO_COLOR[e];
+      const sel=journalSelectedEmotions.has(e);
+      return `<button class="jnl-emo-btn ${sel?'sel-'+c:''}" onclick="toggleJournalEmotion('${e}')">${e}</button>`;
+    }).join('');
+    el.innerHTML=`
+    <button class="jnl-back-btn" onclick="journalFormOpen=false;renderJournal()">← Back</button>
+    <div class="jnl-form">
+      <div>
+        <div class="jnl-form-label">Title</div>
+        <input id="jnlTitle" class="jnl-input" placeholder="Entry title…" type="text"/>
+      </div>
+      <div>
+        <div class="jnl-form-label">Date</div>
+        <input id="jnlDate" class="jnl-input" type="date" value="${today}"/>
+      </div>
+      <div>
+        <div class="jnl-form-label">Journal</div>
+        <div class="jnl-book-chips">${bookChips}</div>
+      </div>
+      <div>
+        <div class="jnl-form-label">Emotions</div>
+        <div class="jnl-emo-grid">${emoButtons}</div>
+      </div>
+      <div>
+        <div class="jnl-form-label">Body</div>
+        <textarea id="jnlBody" class="jnl-input jnl-textarea" placeholder="Write your entry…"></textarea>
+      </div>
+      <button class="jnl-save-btn" id="jnlSaveBtn" onclick="saveJournalEntry()">Save Entry</button>
+    </div>`;
+    return;
+  }
+
+  // List view
+  let html=`<button class="jnl-new-btn" onclick="journalFormOpen=true;renderJournal()">+ New Entry</button>`;
+  const entries=state.entries;
+  if(!entries.length){html+=`<div class="jnl-empty">No entries yet.<br>Tap + New Entry to start.</div>`;el.innerHTML=html;return;}
+
+  // Group by date label
+  const groups=[];const seen={};
+  entries.forEach(e=>{
+    const d=e.date??'';
+    let label='Unknown';
+    if(d){
+      if(d===today)label='Today';
+      else{
+        const diff=Math.round((new Date(today)-new Date(d))/(864e5));
+        if(diff===1)label='Yesterday';
+        else if(diff<=7)label='This Week';
+        else{const dt=new Date(d+'T00:00:00');label=dt.toLocaleDateString('en-GB',{month:'long',year:'numeric'});}
+      }
+    }
+    if(!seen[label]){seen[label]=true;groups.push({label,entries:[]});}
+    groups[groups.length-1].entries.push(e);
+  });
+
+  groups.forEach(g=>{
+    html+=`<div class="jnl-day-label">${g.label}</div>`;
+    g.entries.forEach(e=>{
+      const chips=e.emotions.map(em=>{
+        const c=EMO_COLOR[em]??'default';
+        const colors={blue:'#4a8fe0',green:'#4caf7d',yellow:'#d4a800',orange:'#e07840',red:'#e05555',default:'#888'};
+        return `<span class="jnl-emotion-chip" style="color:${colors[c]};background:${colors[c]}18;border:1px solid ${colors[c]}44">${em}</span>`;
+      }).join('');
+      const dateStr=e.date?new Date(e.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+      html+=`<div class="jnl-card"><div class="jnl-card-title">${e.name}</div>${dateStr?`<div class="jnl-card-meta">${dateStr}</div>`:''}${chips?`<div class="jnl-emotions">${chips}</div>`:''}</div>`;
+    });
+  });
   el.innerHTML=html;
 }
 
