@@ -405,8 +405,8 @@ body::after {
 .pf-bar { height: 100%; background: linear-gradient(to right, var(--gold), rgba(224,208,168,0.5)); transform-origin: left; animation: pf-drain 3s linear forwards; }
 @keyframes pf-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .pf-tap { font-size: 8px; color: var(--text-faint); letter-spacing: 0.14em; margin-top: 28px; animation: blink 1.6s ease infinite; }
-@keyframes screen-flash { 0% { opacity: 0; } 8% { opacity: 0.22; } 100% { opacity: 0; } }
-.screen-flash-el { position: fixed; inset: 0; background: rgba(224,208,168,1); pointer-events: none; z-index: 305; opacity: 0; animation: screen-flash 0.6s ease forwards; }
+@keyframes screen-flash { 0% { opacity: 0; } 6% { opacity: 0.55; } 18% { opacity: 0.35; } 100% { opacity: 0; } }
+.screen-flash-el { position: fixed; inset: 0; background: rgba(224,208,168,1); pointer-events: none; z-index: 305; opacity: 0; animation: screen-flash 1s ease forwards; }
 
 /* ── Rank-up overlay ── */
 .rankup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -1047,6 +1047,30 @@ function unlockAudio(){
 }
 document.addEventListener('touchstart',unlockAudio);
 document.addEventListener('click',unlockAudio);
+
+// ── Tab title flash ──
+let titleFlashInterval=null;
+const ORIGINAL_TITLE=document.title||'Grind';
+function flashTitle(msg,durationMs=8000){
+  if(titleFlashInterval)clearInterval(titleFlashInterval);
+  let on=true;
+  titleFlashInterval=setInterval(()=>{
+    document.title=on?msg:ORIGINAL_TITLE;
+    on=!on;
+  },800);
+  setTimeout(()=>{
+    clearInterval(titleFlashInterval);
+    titleFlashInterval=null;
+    document.title=ORIGINAL_TITLE;
+  },durationMs);
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&titleFlashInterval){
+    clearInterval(titleFlashInterval);
+    titleFlashInterval=null;
+    document.title=ORIGINAL_TITLE;
+  }
+});
 function playChime(freqs=[523,659],vol=0.1,dur=0.5){
   if(!soundEnabled)return;
   try{
@@ -1288,18 +1312,20 @@ async function completePomoWork(){
   const now=new Date().toISOString(),{id}=state.activeSession;
   pomoCount++;state.activeSession=null;
   nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}}).catch(()=>{});
-  if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
+  // sound was pre-scheduled at pomo start; also try immediate fallback
   playPomoCompleteSound();
   pomoPhase='break';
-  pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+  const breakDur=pomoCount%4===0?POMO_LONG:POMO_SHORT;
+  pomoPhaseEnd=Date.now()+breakDur;
   savePomoPersist();
+  // pre-schedule break-end sound now (timer callback — may be suspended, but worth trying)
+  schedulePomoEndSound(breakDur/1000,false);
   showPomoFlash(true);
   renderHome();startTimer();
 }
 async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
   savePomoPersist();
-  if(navigator.vibrate)navigator.vibrate([100,80,100]);
   playBreakEndSound();
   showPomoFlash(false);
   if(!lastSubject){renderHome();return;}
@@ -1307,56 +1333,62 @@ async function completePomoBreak(){
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
     state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
     pomoPhaseEnd=Date.now()+POMO_WORK;
+    // pre-schedule next pomo-end sound (no user gesture here, best effort)
+    schedulePomoEndSound(POMO_WORK/1000,true);
     renderHome();startTimer();
   }catch(e){showToast('Auto-start failed');renderHome();}
 }
-function playPomoCompleteSound(){
+// Pre-schedule a sound at an absolute Web Audio time (called during user gesture at pomo start)
+let scheduledSoundNodes=[];
+function cancelScheduledSound(){
+  scheduledSoundNodes.forEach(({o,g})=>{try{o.stop();g.disconnect();}catch(e){}});
+  scheduledSoundNodes=[];
+}
+function schedulePomoEndSound(secsFromNow,isWork){
   if(!soundEnabled)return;
   try{
     const ctx=getAudioCtx();
-    const play=()=>{
-      const notes=[523,659,784,1047];
+    const schedule=()=>{
+      cancelScheduledSound();
+      const notes=isWork?[523,659,784,1047]:[659,587];
+      const vols=isWork?[0.13,0.13,0.13,0.16]:[0.09,0.08];
+      const gap=isWork?0.13:0.18;
+      const t0=ctx.currentTime+secsFromNow;
       notes.forEach((hz,i)=>{
         const o=ctx.createOscillator(),g=ctx.createGain();
         o.connect(g);g.connect(ctx.destination);
         o.type='sine';o.frequency.value=hz;
-        const t=ctx.currentTime+i*0.13;
+        const t=t0+i*gap;
         g.gain.setValueAtTime(0,t);
-        g.gain.linearRampToValueAtTime(0.13,t+0.04);
+        g.gain.linearRampToValueAtTime(vols[i],t+0.04);
         g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
         o.start(t);o.stop(t+0.56);
+        scheduledSoundNodes.push({o,g});
       });
     };
-    if(ctx.state==='suspended')ctx.resume().then(play);else play();
+    if(ctx.state==='suspended')ctx.resume().then(schedule);else schedule();
   }catch(e){}
 }
-function playBreakEndSound(){
-  if(!soundEnabled)return;
-  try{
-    const ctx=getAudioCtx();
-    const play=()=>{
-      const notes=[659,587];
-      notes.forEach((hz,i)=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.connect(g);g.connect(ctx.destination);
-        o.type='sine';o.frequency.value=hz;
-        const t=ctx.currentTime+i*0.18;
-        g.gain.setValueAtTime(0,t);
-        g.gain.linearRampToValueAtTime(0.09,t+0.05);
-        g.gain.exponentialRampToValueAtTime(0.0001,t+0.6);
-        o.start(t);o.stop(t+0.61);
-      });
-    };
-    if(ctx.state==='suspended')ctx.resume().then(play);else play();
-  }catch(e){}
-}
+function playPomoCompleteSound(){ schedulePomoEndSound(0,true); }
+function playBreakEndSound(){ schedulePomoEndSound(0,false); }
 let pomoFlashTimer=null;
 function showPomoFlash(isWork){
-  // Screen flash
-  const fl=document.createElement('div');
-  fl.className='screen-flash-el';
-  document.body.appendChild(fl);
-  setTimeout(()=>fl.remove(),700);
+  // Tab title blink (visible from other tabs)
+  if(isWork){
+    flashTitle('✓ POMO '+pomoCount+' DONE');
+  } else {
+    flashTitle('▸ BREAK OVER — FOCUS');
+  }
+
+  // Screen flash (3 pulses for work, 1 for break)
+  const pulseCount=isWork?3:1;
+  for(let i=0;i<pulseCount;i++){
+    const fl=document.createElement('div');
+    fl.className='screen-flash-el';
+    fl.style.animationDelay=(i*0.22)+'s';
+    document.body.appendChild(fl);
+    setTimeout(()=>fl.remove(),1200+i*220);
+  }
 
   const ov=document.getElementById('pomoFlashOverlay');
   if(!ov)return;
@@ -1415,7 +1447,7 @@ async function startSession(subject){
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
-    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();}
+    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);}
     startTimer();renderHome();
     showToast('▸ '+subject);
   }catch(e){showToast('Failed to start');}
@@ -1424,6 +1456,7 @@ async function startSession(subject){
 async function stopSession(){
   clearInterval(timerInterval);timerInterval=null;
   pomoPhaseEnd=null;pomoPhase='work';
+  cancelScheduledSound();
   savePomoPersist();
   const wasActive=state.activeSession;
   state.activeSession=null;
