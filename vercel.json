@@ -1,19 +1,13 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/notion.js",     "use": "@vercel/node" },
-    { "src": "api/daily-plan.js", "use": "@vercel/node" },
+    { "src": "api/notion.js",  "use": "@vercel/node" },
+    { "src": "api/claude.js",  "use": "@vercel/node" },
     { "src": "**/*.{png,html,json}", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/notion",      "dest": "/api/notion.js" },
-    { "src": "/api/daily-plan",  "dest": "/api/daily-plan.js" },
-    { "src": "/(.*)",            "dest": "/$1" }
-  ],
-  "crons": [
-    {
-      "path": "/api/daily-plan",
-      "schedule": "30 5 * * *"
-    }
+    { "src": "/api/notion", "dest": "/api/notion.js" },
+    { "src": "/api/claude", "dest": "/api/claude.js" },
+    { "src": "/(.*)",       "dest": "/$1" }
   ]
 }
