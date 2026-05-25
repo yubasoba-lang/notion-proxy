@@ -47,14 +47,14 @@ body::before {
     radial-gradient(ellipse at 72% 16%,  rgba(160,138,80,0.05)  0%, transparent 32%),
     radial-gradient(ellipse at 22% 82%,  rgba(100,82,40,0.04)   0%, transparent 36%);
   pointer-events: none; z-index: 0;
-  animation: bg-drift 75s ease-in-out infinite alternate;
+  animation: bg-drift 180s ease-in-out infinite alternate;
 }
 @keyframes bg-drift {
-  0%   { transform: translate(0%,    0%);    opacity: 1;    }
-  25%  { transform: translate(1.5%,  -1%);   opacity: 0.88; }
-  50%  { transform: translate(-1%,   1.8%);  opacity: 0.94; }
-  75%  { transform: translate(2%,    1%);    opacity: 0.85; }
-  100% { transform: translate(-1.5%, -1.5%); opacity: 0.92; }
+  0%   { transform: translate(0%,     0%);    opacity: 1;    }
+  25%  { transform: translate(0.8%,  -0.5%);  opacity: 0.93; }
+  50%  { transform: translate(-0.5%,  1%);    opacity: 0.96; }
+  75%  { transform: translate(1%,     0.6%);  opacity: 0.91; }
+  100% { transform: translate(-0.8%, -0.8%);  opacity: 0.94; }
 }
 body::after {
   content: '';
@@ -1162,14 +1162,34 @@ async function generateDayPlan(){
         return `${e.name}: ${e.date} (${days} day${days===1?'':'s'} away)`;
       });
 
-    // Fetch tasks + recent studied in parallel (state may not have them all)
-    const [tasksPages,studiedPages]=await Promise.all([
+    // Fetch tasks + recent studied + exercises in parallel
+    const todayAbbr=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()];
+    const [tasksPages,studiedPages,exercisePages]=await Promise.all([
       nQuery(DB.tasks,{and:[
         {property:'Status',checkbox:{equals:false}},
         {property:'Missed check1',checkbox:{equals:false}},
       ]},[{property:'Due Date',direction:'ascending'}]),
       nQuery(DB.studied,null,[{timestamp:'created_time',direction:'descending'}]),
+      nQuery(DB.exerciseLibrary),
     ]);
+
+    // Build today's workout summary
+    const todayExercises=(exercisePages||[])
+      .map(p=>toExercise(p))
+      .filter(e=>e.day.includes(todayAbbr));
+    let gymInfo='Rest day (no exercises scheduled)';
+    if(todayExercises.length){
+      // Estimate: 3 sets per exercise × 3 min per set (work + rest) + 15 min warmup/cooldown
+      const estMins=Math.round(todayExercises.length*3*3+15);
+      const byMuscle={};
+      todayExercises.forEach(e=>{
+        const m=e.primaryMuscle||'Other';
+        byMuscle[m]=(byMuscle[m]||[]);
+        byMuscle[m].push(e.name);
+      });
+      const muscleStr=Object.entries(byMuscle).map(([m,ex])=>`${m} (${ex.join(', ')})`).join('; ');
+      gymInfo=`${todayExercises.length} exercises, ~${estMins} min estimated — ${muscleStr}`;
+    }
 
     const tasks=(tasksPages||[]).slice(0,8).map(p=>{
       const name=g.title(p.properties.Name);
@@ -1201,9 +1221,12 @@ ${tasks.length?tasks.join('\n'):'None'}
 STUDY THIS WEEK (pomos per subject):
 ${subjectPomosStr}
 
+TODAY'S GYM WORKOUT:
+${gymInfo}
+
 FIXED ANCHORS (only include ones that haven't passed yet):
 - Cook + eat lunch: 90 min (if not done yet)
-- Gym: 60 min (if not done yet)
+- Gym session: use the estimated duration above (if not done yet)
 - Wind down last 30 min of day
 - Sleep by 23:00
 
