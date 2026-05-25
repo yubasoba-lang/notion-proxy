@@ -22,7 +22,7 @@ export default async function handler(req, res) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-6",
         max_tokens: 2000,
         system,
         messages: [{ role: "user", content: message }],
