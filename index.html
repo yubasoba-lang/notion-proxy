@@ -254,6 +254,33 @@ body::after {
 .pomo-toggle { display: flex; gap: 3px; }
 .pomo-toggle-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 3px; cursor: pointer; transition: all 0.15s; }
 .pomo-toggle-btn.active { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+
+/* ── Day Plan card ── */
+.plan-card { background: linear-gradient(145deg, rgba(224,208,168,0.04) 0%, var(--bg-card) 60%); border: 1px solid rgba(224,208,168,0.14); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+.plan-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.plan-card-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
+.plan-gen-btn { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--gold-glow); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
+.plan-gen-btn:active { opacity: 0.7; }
+.plan-gen-btn:disabled { opacity: 0.4; cursor: default; }
+.plan-priorities { margin-bottom: 12px; }
+.plan-priority { font-size: 11px; color: var(--text); line-height: 1.5; padding: 1px 0; }
+.plan-priority strong { color: var(--gold); font-weight: 700; }
+.plan-divider { height: 1px; background: var(--border); margin: 10px 0; }
+.plan-blocks { display: flex; flex-direction: column; gap: 1px; max-height: 320px; overflow-y: auto; }
+.plan-block { display: grid; grid-template-columns: 88px 1fr auto; align-items: center; gap: 8px; padding: 5px 2px; border-bottom: 1px solid rgba(224,208,168,0.04); }
+.plan-block:last-child { border-bottom: none; }
+.plan-block-time { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+.plan-block-activity { font-size: 11px; color: var(--text); line-height: 1.3; }
+.plan-energy { font-size: 7px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+.plan-energy.deep     { background: rgba(224,208,168,0.12); color: var(--gold); }
+.plan-energy.medium   { background: rgba(224,208,168,0.06); color: var(--gold-dim); }
+.plan-energy.light    { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+.plan-energy.movement { background: rgba(80,160,100,0.12);  color: #7ec99a; }
+.plan-energy.none     { display: none; }
+.plan-generating { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 11px; padding: 8px 0; }
+.plan-gen-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: blink 1s ease infinite; }
+.plan-gen-dot:nth-child(2) { animation-delay: 0.2s; }
+.plan-gen-dot:nth-child(3) { animation-delay: 0.4s; }
 .pomo-hint { font-size: 9px; color: var(--text-faint); letter-spacing: 0.08em; margin-top: 8px; text-align: center; }
 .pomo-dots { display: flex; gap: 5px; margin-top: 4px; }
 .pomo-dot { font-size: 10px; color: var(--text-faint); transition: color 0.3s; }
@@ -1087,6 +1114,134 @@ function playChime(freqs=[523,659],vol=0.1,dur=0.5){
   }catch(e){}
 }
 function toggleSound(){soundEnabled=!soundEnabled;localStorage.setItem('grind-sound',soundEnabled?'on':'off');renderHome();}
+
+// ── Day Plan ──
+function getTodayPlan(){
+  try{
+    const key='grind-plan-'+new Date().toISOString().split('T')[0];
+    const raw=localStorage.getItem(key);
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null;}
+}
+function saveTodayPlan(plan){
+  const key='grind-plan-'+new Date().toISOString().split('T')[0];
+  localStorage.setItem(key,JSON.stringify(plan));
+  // Clean up old plan keys
+  for(const k of Object.keys(localStorage)){
+    if(k.startsWith('grind-plan-')&&k!==key)localStorage.removeItem(k);
+  }
+}
+async function callClaude(system,userMsg){
+  const r=await fetch('/api/claude',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({system,message:userMsg}),
+  });
+  if(!r.ok)throw new Error('Claude API error '+r.status);
+  const d=await r.json();
+  return d.text;
+}
+async function generateDayPlan(){
+  if(window._planGenerating)return;
+  window._planGenerating=true;
+  renderHome();
+  try{
+    const now=new Date();
+    const timeStr=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const dayName=now.toLocaleDateString('en-US',{weekday:'long'});
+    const dateStr=now.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+    const todayStr=now.toISOString().split('T')[0];
+    const weekAgo=new Date(now-7*24*60*60*1000).toISOString().split('T')[0];
+
+    // Gather data already in state
+    const exams=(state.exams||[])
+      .filter(e=>!e.archive&&e.date&&e.date>=todayStr)
+      .sort((a,b)=>a.date.localeCompare(b.date))
+      .map(e=>{
+        const days=Math.ceil((new Date(e.date)-now)/(1000*60*60*24));
+        return `${e.name}: ${e.date} (${days} day${days===1?'':'s'} away)`;
+      });
+
+    // Fetch tasks + recent studied in parallel (state may not have them all)
+    const [tasksPages,studiedPages]=await Promise.all([
+      nQuery(DB.tasks,{property:'Done',checkbox:{equals:false}}),
+      nQuery(DB.studied,{property:'Done',date:{on_or_after:weekAgo}}),
+    ]);
+
+    const tasks=(tasksPages||[]).slice(0,8).map(p=>{
+      const name=g.title(p.properties.Name);
+      const due=p.properties.Due?.date?.start||null;
+      return name+(due?` (due ${due})`:'');
+    }).filter(Boolean);
+
+    const subjectPomos={};
+    (studiedPages||[]).forEach(p=>{
+      const subj=p.properties.Subject?.status?.name||g.title(p.properties.Name);
+      if(subj)subjectPomos[subj]=(subjectPomos[subj]||0)+1;
+    });
+
+    const subjectPomosStr=Object.keys(subjectPomos).length
+      ?Object.entries(subjectPomos).map(([s,n])=>s+': '+n+' pomos').join('\n')
+      :'None yet';
+
+    const context=`It is currently ${timeStr} on ${dayName}, ${dateStr}. Plan the rest of today starting from NOW (${timeStr}). Exam period — no classes.
+
+UPCOMING EXAMS:
+${exams.length?exams.join('\n'):'None'}
+
+PENDING TASKS:
+${tasks.length?tasks.join('\n'):'None'}
+
+STUDY THIS WEEK (pomos per subject):
+${subjectPomosStr}
+
+FIXED ANCHORS (only include ones that haven't passed yet):
+- Cook + eat lunch: 90 min (if not done yet)
+- Gym: 60 min (if not done yet)
+- Wind down last 30 min of day
+- Sleep by 23:00
+
+PREFERENCES:
+- Deep work in afternoon 14:00–18:00 peak energy
+- Lighter review / flashcards in evening
+- 50-min study blocks, 10-min breaks
+- Prioritise subjects with closest exams
+- If exam ≤ 3 days away it dominates the schedule`;
+
+    const system=`You are a daily planner for a medical student in exam period. Given the current time, plan the REST of today only — skip anything that has already passed.
+
+Return ONLY valid JSON, no markdown:
+{
+  "priorities": [
+    "Subject — one line reason",
+    "Subject — one line reason",
+    "Task or activity — one line reason"
+  ],
+  "schedule": [
+    {"time": "14:10 – 15:00", "activity": "Microbiology — Focus Block 1", "energy": "Deep"}
+  ],
+  "notes": [
+    "Short note on the plan logic"
+  ]
+}
+
+Energy values: "Deep", "Medium", "Light", "Movement", or "—".
+Be specific — name the subject in each study block. Make the schedule realistic from now until 23:00.`;
+
+    const raw=await callClaude(system,context);
+    // Strip any accidental markdown fences
+    const cleaned=raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();
+    const plan=JSON.parse(cleaned);
+    saveTodayPlan(plan);
+    showToast('Plan ready ✓');
+  }catch(e){
+    showToast('Failed to generate plan');
+    console.error(e);
+  }finally{
+    window._planGenerating=false;
+    renderHome();
+  }
+}
 const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 const SUBJECTS=['Immunology','Microbiology I','Physiology II','Physiology I','Molecular Cell Biology II','Biochemistry II','Anatomy','Microanatomy II','Microanatomy I','Other'];
 let currentTab='home';
@@ -1574,7 +1729,50 @@ function renderHome(){
       ${pomoMode?'<div class="pomo-hint">25 work · 5 break · 15 after ×4</div>':''}
     </div>`;
   }
-  let html=timerWidget+`
+  // Day plan card
+  const todayPlan=getTodayPlan();
+  let planCard;
+  if(window._planGenerating){
+    planCard=`<div class="plan-card">
+      <div class="plan-card-top"><div class="plan-card-label">Today's Plan</div></div>
+      <div class="plan-generating">
+        <div class="plan-gen-dot"></div><div class="plan-gen-dot"></div><div class="plan-gen-dot"></div>
+        <span>Claude is planning your day…</span>
+      </div>
+    </div>`;
+  } else if(todayPlan){
+    const prioHTML=todayPlan.priorities.map((p,i)=>{
+      const [bold,rest]=p.split(' — ');
+      return `<div class="plan-priority">${i+1}. <strong>${bold}</strong>${rest?' — '+rest:''}</div>`;
+    }).join('');
+    const blockHTML=todayPlan.schedule.map(b=>{
+      const eClass=b.energy==='Deep'?'deep':b.energy==='Medium'?'medium':b.energy==='Light'?'light':b.energy==='Movement'?'movement':'none';
+      return `<div class="plan-block">
+        <div class="plan-block-time">${b.time}</div>
+        <div class="plan-block-activity">${b.activity}</div>
+        <div class="plan-energy ${eClass}">${eClass!=='none'?b.energy:''}</div>
+      </div>`;
+    }).join('');
+    planCard=`<div class="plan-card">
+      <div class="plan-card-top">
+        <div class="plan-card-label">Today's Plan</div>
+        <button class="plan-gen-btn" onclick="generateDayPlan()">↺ Regenerate</button>
+      </div>
+      <div class="plan-priorities">${prioHTML}</div>
+      <div class="plan-divider"></div>
+      <div class="plan-blocks">${blockHTML}</div>
+    </div>`;
+  } else {
+    planCard=`<div class="plan-card">
+      <div class="plan-card-top">
+        <div class="plan-card-label">Today's Plan</div>
+        <button class="plan-gen-btn" onclick="generateDayPlan()">✦ Plan My Day</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);padding:4px 0">No plan yet — tap to generate a time-blocked schedule from now.</div>
+    </div>`;
+  }
+
+  let html=timerWidget+planCard+`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
       <div class="streak-card s-workout"><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
