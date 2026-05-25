@@ -1164,8 +1164,11 @@ async function generateDayPlan(){
 
     // Fetch tasks + recent studied in parallel (state may not have them all)
     const [tasksPages,studiedPages]=await Promise.all([
-      nQuery(DB.tasks,{property:'Done',checkbox:{equals:false}}),
-      nQuery(DB.studied,{property:'Done',date:{on_or_after:weekAgo}}),
+      nQuery(DB.tasks,{and:[
+        {property:'Status',checkbox:{equals:false}},
+        {property:'Missed check1',checkbox:{equals:false}},
+      ]},[{property:'Due Date',direction:'ascending'}]),
+      nQuery(DB.studied,null,[{timestamp:'created_time',direction:'descending'}]),
     ]);
 
     const tasks=(tasksPages||[]).slice(0,8).map(p=>{
@@ -1175,7 +1178,10 @@ async function generateDayPlan(){
     }).filter(Boolean);
 
     const subjectPomos={};
-    (studiedPages||[]).forEach(p=>{
+    (studiedPages||[]).filter(p=>{
+      const done=p.properties.Done?.date?.start;
+      return done&&done>=weekAgo;
+    }).forEach(p=>{
       const subj=p.properties.Subject?.status?.name||g.title(p.properties.Name);
       if(subj)subjectPomos[subj]=(subjectPomos[subj]||0)+1;
     });
