@@ -1818,7 +1818,7 @@ function renderHome(){
   upcomingExams.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
     (e.subjects||[]).forEach(s=>{
       // Match exam subject to SUBJECTS list (partial, case-insensitive)
-      const match=SUBJECTS.find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()));
+      const match=[...SUBJECTS].sort((a,b)=>b.length-a.length).find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()));
       if(match&&!subjectExamDate[match])subjectExamDate[match]=e.date;
     });
   });
