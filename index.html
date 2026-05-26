@@ -2047,6 +2047,7 @@ async function addDailyLog(){
     const logPage=await nCreate(DB.dailyLog,{
       'Log day':{title:[{text:{content:todayLabel}}]},
       'Date':{date:{start:today}},
+      'Streaks':{relation:[{id:'35163a0b-4e7c-806d-aa6c-c36c0f22a250'}]},
     });
     const logId=logPage.id;
 
