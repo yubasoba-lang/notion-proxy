@@ -137,6 +137,7 @@ body::after {
 
 /* ── HOME — Streaks ── */
 .streak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.streak-number.loading { opacity: 0.2; font-size: 28px; }
 .streak-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -188,6 +189,17 @@ body::after {
 
 /* ── TASKS ── */
 .action-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 10px; }
+.sleep-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.sleep-btn { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 6px; color: var(--text-dim); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 14px 4px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; }
+.sleep-btn:active { transform: scale(0.97); }
+.sleep-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.sleep-btn-icon { font-size: 16px; line-height: 1; }
+.sleep-btn.great { border-color: rgba(74,160,100,0.4); color: #7ec99a; }
+.sleep-btn.great:hover { background: rgba(74,160,100,0.08); }
+.sleep-btn.ok { border-color: rgba(192,144,48,0.4); color: #c09030; }
+.sleep-btn.ok:hover { background: rgba(192,144,48,0.08); }
+.sleep-btn.bad { border-color: rgba(140,46,32,0.4); color: var(--red-hi); }
+.sleep-btn.bad:hover { background: rgba(140,46,32,0.08); }
 .action-btn {
   background: var(--bg-card); border: 1px solid var(--border-hi);
   border-radius: 6px; color: var(--text-dim);
@@ -275,7 +287,7 @@ body::after {
 .plan-gen-btn { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--gold-glow); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
 .plan-gen-btn:active { opacity: 0.7; }
 .plan-gen-btn:disabled { opacity: 0.4; cursor: default; }
-.plan-priorities { margin-bottom: 12px; }
+.plan-priorities { margin-bottom: 12px; max-height: 96px; overflow-y: auto; }
 .plan-priority { font-size: 11px; color: var(--text); line-height: 1.5; padding: 1px 0; }
 .plan-priority strong { color: var(--gold); font-weight: 700; }
 .plan-divider { height: 1px; background: var(--border); margin: 10px 0; }
@@ -382,6 +394,7 @@ body::after {
 .quest-tag { font-size: 8px; font-weight: 700; letter-spacing: 0.08em; color: var(--gold-dim); border: 1px solid var(--gold-dim); border-radius: 2px; padding: 2px 5px; background: var(--gold-glow); flex-shrink: 0; }
 .task-due { font-size: 9px; font-weight: 500; color: var(--text-faint); }
 .task-due.overdue { color: var(--red-hi); }
+.task-study-tag { font-size: 8px; font-weight: 600; letter-spacing: 0.06em; color: #4a80d8; opacity: 0.7; padding: 2px 5px; border: 1px solid rgba(74,128,216,0.25); border-radius: 2px; flex-shrink: 0; }
 
 /* ── STATS ── */
 .sil-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
@@ -662,7 +675,10 @@ body::after {
 <div id="app">
   <div class="header">
     <div class="wordmark">GRIND</div>
-    <button class="sync-btn" id="syncBtn" onclick="refresh()">↺ Sync</button>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+      <button class="sync-btn" id="syncBtn" onclick="refresh(true)">↺ Sync</button>
+      <span id="sync-time" style="font-size:8px;color:var(--text-faint);letter-spacing:0.06em"></span>
+    </div>
   </div>
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span></button>
@@ -1042,8 +1058,8 @@ let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessio
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
-let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
-let pomoGoal=parseInt(localStorage.getItem('pomo-goal')||'8');
+let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=localStorage.getItem('grind-last-subject')||null;
+let pomoGoal=(()=>{const v=parseInt(localStorage.getItem('pomo-goal'));return(v>0&&v<=30)?v:8;})();
 
 function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
@@ -1134,13 +1150,16 @@ function getTodayPlan(){
   try{
     const key='grind-plan-'+new Date().toISOString().split('T')[0];
     const raw=localStorage.getItem(key);
-    return raw?JSON.parse(raw):null;
-  }catch(e){return null;}
+    if(!raw)return null;
+    const plan=JSON.parse(raw);
+    // Validate required shape
+    if(!plan||!Array.isArray(plan.schedule)||!Array.isArray(plan.priorities))return null;
+    return plan;
+  }catch(e){localStorage.removeItem('grind-plan-'+new Date().toISOString().split('T')[0]);return null;}
 }
 function saveTodayPlan(plan){
   const key='grind-plan-'+new Date().toISOString().split('T')[0];
-  localStorage.setItem(key,JSON.stringify(plan));
-  // Clean up old plan keys
+  localStorage.setItem(key,JSON.stringify({...plan,_savedAt:Date.now()}));
   for(const k of Object.keys(localStorage)){
     if(k.startsWith('grind-plan-')&&k!==key)localStorage.removeItem(k);
   }
@@ -1278,8 +1297,7 @@ Be specific — name the subject in each study block. Make the schedule realisti
     saveTodayPlan(plan);
     showToast('Plan ready ✓');
   }catch(e){
-    showToast('Failed to generate plan');
-    console.error(e);
+    showToast('Plan failed: '+e.message,3000);
   }finally{
     window._planGenerating=false;
     renderHome();
@@ -1288,6 +1306,10 @@ Be specific — name the subject in each study block. Make the schedule realisti
 const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 const SUBJECTS=['Immunology','Microbiology I','Physiology II','Physiology I','Molecular Cell Biology II','Biochemistry II','Anatomy','Microanatomy II','Microanatomy I','Other'];
 let currentTab='home';
+const _tabLoadedAt={};
+const TAB_CACHE_MS=60000;
+function _tabFresh(tab){return _tabLoadedAt[tab]&&(Date.now()-_tabLoadedAt[tab])<TAB_CACHE_MS;}
+function _markTabLoaded(tab){_tabLoadedAt[tab]=Date.now();}
 let selectedMuscle=null;
 let prevRanks={};
 
@@ -1318,7 +1340,7 @@ const g={
 
 const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalXP:g.formula(q['Final XP'])??0,rankStr:g.formula(q.Rank)??'',rivalGap:g.rollup(q['Rival Gap']),rivalXP:g.rollup(q['Rival XP'])??0,lastTrained:g.rollup(q['Last day trained']),daysInactive:g.formula(q['Days inactive'])??g.num(q['Days inactive']),cat:g.select(q.Cat)};};
 const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total XP'])??0};};
-const toTask=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Task),cat:g.select(q.Cat),difficulty:g.select(q.Difficulty),status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),isQuest:g.formula(q['Is Quest'])??false};};
+const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),isQuest:g.formula(q['Is Quest'])??false,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
 const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete)};};
 const toExam=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive)};};
@@ -1333,7 +1355,24 @@ let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
 
 function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
 function showToast(msg,ms=2500){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);}
-function setSyncBusy(b){const btn=document.getElementById('syncBtn');btn.disabled=b;btn.textContent=b?'…':'↺ Sync';}
+let lastSyncedAt=null;
+function setSyncBusy(b){
+  const btn=document.getElementById('syncBtn');
+  if(!btn)return;
+  btn.disabled=b;
+  if(b){btn.textContent='…';return;}
+  lastSyncedAt=Date.now();
+  btn.textContent='↺ Sync';
+  const lbl=document.getElementById('sync-time');
+  if(lbl)lbl.textContent='just now';
+}
+function updateSyncTimeLabel(){
+  const lbl=document.getElementById('sync-time');
+  if(!lbl||!lastSyncedAt)return;
+  const mins=Math.floor((Date.now()-lastSyncedAt)/60000);
+  lbl.textContent=mins<1?'just now':mins===1?'1m ago':mins+'m ago';
+}
+setInterval(updateSyncTimeLabel,30000);
 
 function checkRankUps(ns){ns.forEach(s=>{const old=prevRanks[s.id];if(old&&old!==s.rankStr&&s.rankStr){const r=parseRankStr(s.rankStr);if(r)triggerRankUp(s.name,r);}prevRanks[s.id]=s.rankStr;});}
 function triggerRankUp(name,ro){
@@ -1352,9 +1391,9 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
 async function loadStats(){try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}catch(e){setError('Stats: '+e.message);}}
 async function loadBodyStats(){try{const p=await nQuery(DB.bodyStats);const ns=p.map(toBodyStat);checkRankUps(ns);state.bodyStats=ns;}catch(e){setError('Body Stats: '+e.message);}}
 async function loadExercises(){try{const p=await nQuery(DB.exerciseLibrary);state.exercises=p.map(toExercise);}catch(e){setError('Exercises: '+e.message);}}
-async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){console.error(e);}}
-async function loadJournals(){try{const p=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});state.journals=p.map(x=>({id:x.id,name:x.properties.Name?.title?.[0]?.plain_text??'Untitled'}));}catch(e){console.error('Journals:',e);}}
-async function loadEntries(){try{const p=await nQuery(DB.entries,null,[{property:'Date',direction:'descending'}]);state.entries=p.map(x=>{const q=x.properties;return{id:x.id,name:q.Name?.title?.[0]?.plain_text??'Untitled',date:q.Date?.date?.start??null,emotions:q.Emotions?.multi_select?.map(e=>e.name)??[]};});}catch(e){console.error('Entries:',e);}}
+async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){}}
+async function loadJournals(){try{const p=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});state.journals=p.map(x=>({id:x.id,name:x.properties.Name?.title?.[0]?.plain_text??'Untitled'}));}catch(e){setError('Journals: '+e.message);}}
+async function loadEntries(){try{const p=await nQuery(DB.entries,null,[{property:'Date',direction:'descending'}]);state.entries=p.map(x=>{const q=x.properties;return{id:x.id,name:q.Name?.title?.[0]?.plain_text??'Untitled',date:q.Date?.date?.start??null,emotions:q.Emotions?.multi_select?.map(e=>e.name)??[]};});}catch(e){setError('Entries: '+e.message);}}
 
 async function loadTasks(){
   try{
@@ -1367,7 +1406,7 @@ async function loadTasks(){
     state.tasks=p.map(toTask);
   }catch(e){setError('Tasks: '+e.message);}
 }
-async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){console.error(e);}}
+async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){setError('Templates: '+e.message);}}
 async function loadStreaks(){
   try{
     // Streaks DB has single "Shite" row with all computed streak formulas
@@ -1428,14 +1467,12 @@ function getExamCountdown(dateStr){
   };
 }
 function renderExamCountdownDisplay(){
-  console.log('[countdown] exams=',state.exams.length,state.exams.map(e=>e.date));
   const exam=state.exams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  if(!exam){console.log('[countdown] no eligible exam');return;}
+  if(!exam)return;
   const c=getExamCountdown(exam.date);
   const el=document.getElementById('exam-countdown-display');
-  if(!el){console.log('[countdown] display element not found');return;}
+  if(!el)return;
   if(!c){el.innerHTML=`<div style="color:var(--red-hi);font-size:11px;font-weight:700;letter-spacing:0.08em">EXAM DAY</div>`;return;}
-  console.log('[countdown] rendering',c);
   el.innerHTML=`
     <div class="countdown-unit"><div class="countdown-num">${String(c.d).padStart(2,'0')}</div><div class="countdown-lbl">days</div></div>
     <div class="countdown-sep">:</div>
@@ -1523,7 +1560,7 @@ async function completePomoWork(){
     });
     const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:dateStr}});
     if(logs.length)await nPatch(taskPage.id,{'Daily log':{relation:[{id:logs[0].id}]}});
-  }catch(_){}
+  }catch(e){showToast('Task log failed — check Notion',2500);}
   // sound was pre-scheduled at pomo start; also try immediate fallback
   playPomoCompleteSound();
   pomoPhase='break';
@@ -1652,25 +1689,52 @@ function closePomoFlash(){
 }
 
 function setPomoMode(v){pomoMode=v;renderHome();}
+function changeSessionSubject(){
+  if(!state.activeSession)return;
+  const opts=SUBJECTS.join('\n');
+  const cur=state.activeSession.subject;
+  const next=prompt(`Change subject:\n${SUBJECTS.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\nCurrent: ${cur}\nType name or number:`)?.trim();
+  if(!next)return;
+  const byNum=parseInt(next);
+  const resolved=(!isNaN(byNum)&&byNum>=1&&byNum<=SUBJECTS.length)?SUBJECTS[byNum-1]:SUBJECTS.find(s=>s.toLowerCase()===next.toLowerCase())||next;
+  if(resolved===cur)return;
+  state.activeSession.subject=resolved;
+  lastSubject=resolved;
+  localStorage.setItem('grind-last-subject',resolved);
+  nPatch(state.activeSession.id,{Name:{title:[{text:{content:resolved}}]},Subject:{status:{name:resolved}}}).catch(()=>{});
+  renderHome();
+  showToast('Subject → '+resolved);
+}
 function editPomoGoal(){
   const v=prompt('Daily pomo goal:',pomoGoal);
   const n=parseInt(v);
   if(n>0&&n<=30){pomoGoal=n;localStorage.setItem('pomo-goal',n);renderHome();}
 }
 
+let _sessionBusy=false;
 async function startSession(subject){
-  if(!subject)return;
+  if(_sessionBusy||!subject||state.activeSession)return;
+  _sessionBusy=true;
   lastSubject=subject;
+  localStorage.setItem('grind-last-subject',subject);
+  const startBtn=document.querySelector('.study-start-btn');
+  if(startBtn){startBtn.disabled=true;startBtn.textContent='…';}
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
     if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);}
     startTimer();renderHome();
     showToast('▸ '+subject);
-  }catch(e){showToast('Failed to start');}
+  }catch(e){
+    showToast('Failed to start: '+e.message);
+    if(startBtn){startBtn.disabled=false;startBtn.textContent='▸ Start';}
+  }
+  finally{_sessionBusy=false;}
 }
 
 async function stopSession(){
+  if(_sessionBusy)return;
+  _sessionBusy=true;
   clearInterval(timerInterval);timerInterval=null;
   pomoPhaseEnd=null;pomoPhase='work';
   cancelScheduledSound();
@@ -1711,18 +1775,21 @@ async function stopSession(){
   } else {
     showToast('Break skipped');
   }
+  delete _tabLoadedAt['home'];delete _tabLoadedAt['study'];delete _tabLoadedAt['tasks'];
   if(currentTab==='study'){await loadSessions();renderStudyLog();}
   if(currentTab==='tasks'){await loadTasks();renderTasks();}
+  _sessionBusy=false;
 }
 
-async function refresh(){
+async function refresh(force=false){
   setError(null);setSyncBusy(true);
-  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadBodyStats(),loadRivals(),loadExams(),loadSessions()]);renderHome();}
-  if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
-  if(currentTab==='workout'){await Promise.all([loadBodyStats(),loadExercises()]);renderWorkout();}
-  if(currentTab==='exams'){await loadExams();renderExams();}
-  if(currentTab==='study'){await loadSessions();renderStudyLog();}
-  if(currentTab==='journal'){await Promise.all([loadJournals(),loadEntries()]);renderJournal();}
+  const skip=!force&&_tabFresh(currentTab);
+  if(currentTab==='home'){if(!skip)await Promise.all([loadStreaks(),loadStats(),loadBodyStats(),loadRivals(),loadExams(),loadSessions()]);_markTabLoaded('home');renderHome();}
+  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates()]);_markTabLoaded('tasks');renderTasks();}
+  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
+  if(currentTab==='exams'){if(!skip)await loadExams();_markTabLoaded('exams');renderExams();}
+  if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
+  if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
@@ -1731,7 +1798,7 @@ function switchTab(tab,btn){
   btn.classList.add('active');
   const panel=document.getElementById('tab-'+tab);panel.style.display='block';panel.classList.add('active');
   if(tab!=='home'){clearInterval(examCountdownInterval);examCountdownInterval=null;}
-  currentTab=tab;refresh();
+  currentTab=tab;refresh(false);
 }
 
 function getRivalFor(stat){if(!stat?.rivalId)return null;return state.rivals.find(r=>r.id===stat.rivalId)??null;}
@@ -1744,7 +1811,35 @@ function renderHome(){
   const s=state.streaks;
   const bodyStats=state.bodyStats;
   const selStat=selectedMuscle?bodyStats.find(x=>x.id===selectedMuscle):null;
-  const subjectOptions=SUBJECTS.map(sv=>`<option value="${sv}">${sv}</option>`).join('');
+  // Sort subjects: closest exam first, then most recently studied, then rest
+  const todayISO=new Date().toISOString().split('T')[0];
+  const upcomingExams=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date>=todayISO);
+  const subjectExamDate={};
+  upcomingExams.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    (e.subjects||[]).forEach(s=>{
+      // Match exam subject to SUBJECTS list (partial, case-insensitive)
+      const match=SUBJECTS.find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()));
+      if(match&&!subjectExamDate[match])subjectExamDate[match]=e.date;
+    });
+  });
+  const lastStudiedMap={};
+  (state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.subject).forEach(s=>{
+    if(!lastStudiedMap[s.subject]||s.started>lastStudiedMap[s.subject])lastStudiedMap[s.subject]=s.started;
+  });
+  const sortedSubjects=[...SUBJECTS].sort((a,b)=>{
+    const aExam=subjectExamDate[a],bExam=subjectExamDate[b];
+    if(aExam&&bExam)return aExam.localeCompare(bExam);
+    if(aExam&&!bExam)return -1;
+    if(!aExam&&bExam)return 1;
+    const aLast=lastStudiedMap[a]||'',bLast=lastStudiedMap[b]||'';
+    return bLast.localeCompare(aLast);
+  });
+  const subjectOptions=sortedSubjects.map(sv=>{
+    const examDate=subjectExamDate[sv];
+    const daysAway=examDate?Math.ceil((new Date(examDate)-new Date())/(1000*60*60*24)):null;
+    const label=examDate?`${sv} · ${daysAway}d`:sv;
+    return `<option value="${sv}"${sv===lastSubject?' selected':''}>${label}</option>`;
+  }).join('');
   const todayStr=new Date().toISOString().split('T')[0];
   const todayCount=Math.max(pomoCount,state.sessions.filter(ss=>ss.started?.startsWith(todayStr)&&ss.complete==='Done').length);
   const blockPos=pomoCount%4;
@@ -1757,7 +1852,7 @@ function renderHome(){
       <div class="study-widget-top"><div class="study-widget-label">${pomoMode?`Pomo ${pomoCount+1}`:'Studying'}${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button></div>
       <div class="study-active">
         <div class="study-active-info">
-          <div class="study-active-subject">${state.activeSession.subject}</div>
+          <div class="study-active-subject" onclick="changeSessionSubject()" title="Tap to change subject" style="cursor:pointer">${state.activeSession.subject} <span style="font-size:8px;opacity:0.4">✎</span></div>
           <div id="timer-display" class="study-timer${pomoMode?' pomo-work':''}">${elapsed}</div>
           ${pomoMode?`<div class="pomo-dots">${pomoDots}</div>`:''}
         </div>
@@ -1794,11 +1889,12 @@ function renderHome(){
   // Today's Focus card
   const todaySessions=state.sessions.filter(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
   const todayMinutes=todaySessions.reduce((sum,s)=>{
-    if(!s.started||!s.done)return sum;
-    return sum+Math.max(0,(new Date(s.done)-new Date(s.started))/60000);
-  },0);
+    if(!s.started)return sum;
+    const end=s.done?new Date(s.done):new Date();
+    return sum+Math.max(0,(end-new Date(s.started))/60000);
+  },0)+(state.activeSession&&state.activeSession.startedAt&&state.activeSession.startedAt.startsWith(todayStr)?Math.max(0,(Date.now()-new Date(state.activeSession.startedAt).getTime())/60000):0);
   const todaySubjects=[...new Set(todaySessions.map(s=>s.subject).filter(Boolean))];
-  const focusCount=Math.max(pomoCount,todaySessions.length);
+  const focusCount=Math.max(pomoCount,todaySessions.length)+(state.activeSession?1:0);
   const focusPct=Math.min(100,Math.round(focusCount/pomoGoal*100));
   const focusDone=focusCount>=pomoGoal;
   const focusTimeStr=todayMinutes>=60
@@ -1845,11 +1941,16 @@ function renderHome(){
         <div class="plan-energy ${eClass}">${eClass!=='none'?b.energy:''}</div>
       </div>`;
     }).join('');
+    const planAge=todayPlan._savedAt?Math.floor((Date.now()-todayPlan._savedAt)/60000):null;
+    const planTimeStr=todayPlan._savedAt?new Date(todayPlan._savedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+    const planStale=planAge!==null&&planAge>180;
     planCard=`<div class="plan-card">
       <div class="plan-card-top">
-        <div class="plan-card-label">Today's Plan</div>
+        <div class="plan-card-label">Today's Plan${planTimeStr?` <span style="font-weight:400;opacity:0.5;font-size:7px;letter-spacing:0.1em">${planStale?'⚠ ':''} ${planTimeStr}</span>`:''}
+        </div>
         <button class="plan-gen-btn" onclick="generateDayPlan()">↺ Regenerate</button>
       </div>
+      ${planStale?`<div style="font-size:9px;color:var(--gold-dim);margin-bottom:8px;letter-spacing:0.04em">Plan is ${Math.floor(planAge/60)}h old — consider regenerating</div>`:''}
       <div class="plan-priorities">${prioHTML}</div>
       <div class="plan-divider"></div>
       <div class="plan-blocks">${blockHTML}</div>
@@ -1867,17 +1968,16 @@ function renderHome(){
   let html=timerWidget+focusCard+planCard+`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
-      <div class="streak-card s-workout"><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
-      <div class="streak-card s-mind"><div class="streak-number">${s?.mind??0}</div><div class="streak-label">Mind</div></div>
-      <div class="streak-card s-sleep"><div class="streak-number">${s?.sleep??0}</div><div class="streak-label">Sleep</div></div>
-      <div class="streak-card s-quest"><div class="streak-number">${s?.quest??0}</div><div class="streak-label">Perfect Days</div></div>
+      <div class="streak-card s-workout"><div class="streak-number${s?'':' loading'}">${s?s.workout??0:'—'}</div><div class="streak-label">Workout</div></div>
+      <div class="streak-card s-mind"><div class="streak-number${s?'':' loading'}">${s?s.mind??0:'—'}</div><div class="streak-label">Mind</div></div>
+      <div class="streak-card s-sleep"><div class="streak-number${s?'':' loading'}">${s?s.sleep??0:'—'}</div><div class="streak-label">Sleep</div></div>
+      <div class="streak-card s-quest"><div class="streak-number${s?'':' loading'}">${s?s.quest??0:'—'}</div><div class="streak-label">Perfect Days</div></div>
     </div>`;
-  // Next exam widget — always show debug info so we can diagnose
+  // Next exam widget
   const allExams=state.exams;
   const nextExam=allExams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  const noDateExam=allExams.find(e=>!e.archive&&!e.date);
   html+=`<div class="next-exam-card">
-    <div class="next-exam-label">Next Exam <span style="color:var(--text-faint);font-size:8px;margin-left:4px">[${allExams.length} loaded]</span></div>`;
+    <div class="next-exam-label">Next Exam</div>`;
   if(nextExam){
     const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
     html+=`<div class="next-exam-top">
@@ -1888,10 +1988,8 @@ function renderHome(){
         </div>
         <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
       </div>`;
-  } else if(allExams.length===0){
-    html+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No exams found — check Notion sync</div>`;
   } else {
-    html+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">Exams found (${allExams.length}) but all archived or no dates<br><span style="font-size:9px">${allExams.slice(0,3).map(e=>e.name+'|arch='+e.archive+'|date='+e.date).join(', ')}</span></div>`;
+    html+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No upcoming exams</div>`;
   }
   html+=`</div>`;
   if(bodyStats.length){
@@ -1954,8 +2052,15 @@ function renderHome(){
     });
     html+='</div>';
   }
+  const _scroll=document.querySelector('.scroll');
+  const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
-  document.querySelectorAll('.streak-number').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
+  if(_scroll)_scroll.scrollTop=_scrollTop;
+  const _newStreakSig=s?`${s.workout}|${s.mind}|${s.sleep}|${s.quest}`:'';
+  if(_newStreakSig!==renderHome._lastStreakSig){
+    renderHome._lastStreakSig=_newStreakSig;
+    document.querySelectorAll('.streak-number:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
+  }
   clearInterval(examCountdownInterval);
   renderExamCountdownDisplay();
   examCountdownInterval=setInterval(renderExamCountdownDisplay,1000);
@@ -1971,8 +2076,10 @@ function renderTasks(){
   const tGroups={};
   state.templates.forEach(t=>{const c=t.cat??'Other';if(!tGroups[c])tGroups[c]=[];tGroups[c].push(t);});
 
-  let html=`<div class="action-row">
-    <button class="action-btn gold-btn" onclick="addDailyLog()"><span class="action-btn-icon"></span>Daily Log</button>
+  let html=`<div class="sleep-row">
+    <button class="sleep-btn great" id="sleepBtn-great" onclick="addSleepLog('Sleep 8+ hours','great')">8+ hrs</button>
+    <button class="sleep-btn ok"    id="sleepBtn-ok"    onclick="addSleepLog('Sleep 6-7 hours','ok')"  >6–7 hrs</button>
+    <button class="sleep-btn bad"   id="sleepBtn-bad"   onclick="addSleepLog('Sleep <5 hours','bad')"  >&lt;5 hrs</button>
   </div>`;
 
   // Quick add
@@ -2026,7 +2133,8 @@ function taskHTML(task,today){
       <div class="task-name">${task.name||'Unnamed'}</div>
       <div class="task-tags">
         ${isQ?'<span class="quest-tag"> QUEST</span>':''}
-        ${diff?`<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>`:''}
+        ${task.isStudySession?'<span class="task-study-tag">◈ Study</span>':''}
+        ${diff&&!task.isStudySession?`<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>`:''}
         ${dueStr?`<span class="task-due ${overdue?'overdue':''}">${overdue?' ':''}${dueStr}</span>`:''}
       </div>
     </div>
@@ -2083,30 +2191,37 @@ async function quickAdd(tid,name,cat,type){
   }catch(e){showToast('Failed');}
 }
 
-/* 
-   DAILY LOG BUTTON
-   Mimics Notion automation:
-   1. Create Daily Log entry for today
-   2. Find today's tasks (Due Date = today)
-   3. Set their "Daily log" relation to the new entry
-    */
-async function addDailyLog(){
-  const btn=document.querySelector('.action-btn.gold-btn');
-  if(btn){btn.disabled=true;btn.querySelector('.action-btn-icon').textContent='…';}
+/*
+   SLEEP LOG BUTTONS
+   First thing in the morning — pick how you slept.
+   Creates the daily log page, all standard daily tasks,
+   plus the sleep task (already complete), all linked together.
+*/
+const DAILY_TASKS=[
+  {name:'Meditate for 10 mins', cat:'Life', diff:'Daily'},
+  {name:'Journal',               cat:'Life', diff:'Daily'},
+  {name:'Clean Room',            cat:'Life', diff:'Daily'},
+  {name:'Read 30 mins',          cat:'Mind', diff:'Daily'},
+  {name:'Workout',               cat:'Body', diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5'},
+];
+
+async function addSleepLog(sleepName, tier){
+  // Disable all 3 buttons while running
+  const btns=['great','ok','bad'].map(t=>document.getElementById('sleepBtn-'+t));
+  btns.forEach(b=>{if(b){b.disabled=true;b.textContent='…';}});
+
   const today=new Date().toISOString().split('T')[0];
   const todayLabel=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 
-  // The 4 daily tasks to create
-  const DAILY_TASKS=[
-    {name:'Meditate for 10 mins', cat:'Life', diff:'Daily'},
-    {name:'Journal',               cat:'Life', diff:'Daily'},
-    {name:'Clean Room',            cat:'Life', diff:'Daily'},
-    {name:'Read 30 mins',          cat:'Mind', diff:'Daily'},
-    {name:'Workout',               cat:'Body', diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5'},
-  ];
-
   try{
-    // 1. Create Daily Log page
+    // 0. Duplicate guard
+    const existingLogs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
+    if(existingLogs.length){
+      showToast('Today\'s log already exists',2500);
+      return;
+    }
+
+    // 1. Create Daily Log page linked to Streaks
     const logPage=await nCreate(DB.dailyLog,{
       'Log day':{title:[{text:{content:todayLabel}}]},
       'Date':{date:{start:today}},
@@ -2114,41 +2229,45 @@ async function addDailyLog(){
     });
     const logId=logPage.id;
 
-    // 2. Create the 4 daily tasks with today's date
-    const newTaskPages=await Promise.all(DAILY_TASKS.map(t=>nCreate(DB.tasks,{
+    // 2. Create standard daily tasks + sleep task (already complete)
+    const allTaskDefs=[
+      ...DAILY_TASKS,
+      {name:sleepName, cat:'Life', diff:'Daily', done:true},
+    ];
+    const newTaskPages=await Promise.all(allTaskDefs.map(t=>nCreate(DB.tasks,{
       Task:      {title:[{text:{content:t.name}}]},
       Cat:       {select:{name:t.cat}},
       Difficulty:{select:{name:t.diff}},
-      Status:    {checkbox:false},
+      Status:    {checkbox:t.done===true},
       'Due Date':{date:{start:today}},
       ...(t.base!=null?{Base:{number:t.base}}:{}),
       ...(t.stat!=null?{Stat:{relation:[{id:t.stat}]}}:{}),
     })));
 
-    // 3. Query any existing tasks due today (not missed, not done)
+    // 3. Query any existing tasks due today and combine
     const existingTasks=await nQuery(DB.tasks,{and:[
-      {property:'Status',   checkbox:{equals:false}},
+      {property:'Status',      checkbox:{equals:false}},
       {property:'Missed check1',checkbox:{equals:false}},
-      {property:'Due Date', date:{equals:today}},
+      {property:'Due Date',    date:{equals:today}},
     ]});
-
-    // 4. Combine new + existing task IDs, link all to the daily log
-    const allIds=[
+    const uniqueIds=[...new Set([
       ...newTaskPages.map(p=>p.id),
       ...existingTasks.map(t=>t.id),
-    ];
-    const uniqueIds=[...new Set(allIds)];
+    ])];
 
-    await Promise.all(uniqueIds.map(id=>nPatch(id,{
-      'Daily log':{relation:[{id:logId}]},
-    })));
+    // 4. Link all tasks to the daily log
+    await Promise.all(uniqueIds.map(id=>nPatch(id,{'Daily log':{relation:[{id:logId}]}})));
 
-    showToast(`Log created · ${uniqueIds.length} tasks linked`,3500);
+    delete _tabLoadedAt['tasks'];
+    showToast(`Good morning · ${sleepName}`,3000);
     await loadTasks();renderTasks();
   }catch(e){
     showToast('Failed: '+e.message);
+  }finally{
+    // Re-render restores buttons naturally; just in case render didn't fire:
+    btns.forEach(b=>{if(b)b.disabled=false;});
+    renderTasks();
   }
-  if(btn){btn.disabled=false;btn.querySelector('.action-btn-icon').textContent='';}
 }
 
 async function addWorkout(){
