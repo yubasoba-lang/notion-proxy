@@ -400,7 +400,7 @@ body::after {
 .sil-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
 
 /* Next exam countdown */
-.next-exam-card { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 8px; padding: 13px 16px; margin-top: 14px; position: relative; overflow: hidden; }
+.next-exam-card { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 8px; padding: 13px 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
 .next-exam-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 100% 50%, var(--gold-glow) 0%, transparent 60%); pointer-events: none; }
 .next-exam-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
 .next-exam-label { font-size: 7px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
@@ -1965,22 +1965,13 @@ function renderHome(){
     </div>`;
   }
 
-  let html=timerWidget+focusCard+planCard+`
-    <div class="section-label">Streaks</div>
-    <div class="streak-grid">
-      <div class="streak-card s-workout"><div class="streak-number${s?'':' loading'}">${s?s.workout??0:'—'}</div><div class="streak-label">Workout</div></div>
-      <div class="streak-card s-mind"><div class="streak-number${s?'':' loading'}">${s?s.mind??0:'—'}</div><div class="streak-label">Mind</div></div>
-      <div class="streak-card s-sleep"><div class="streak-number${s?'':' loading'}">${s?s.sleep??0:'—'}</div><div class="streak-label">Sleep</div></div>
-      <div class="streak-card s-quest"><div class="streak-number${s?'':' loading'}">${s?s.quest??0:'—'}</div><div class="streak-label">Perfect Days</div></div>
-    </div>`;
-  // Next exam widget
+  // Next exam widget — built first, placed at top
   const allExams=state.exams;
   const nextExam=allExams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  html+=`<div class="next-exam-card">
-    <div class="next-exam-label">Next Exam</div>`;
+  let examCard=`<div class="next-exam-card"><div class="next-exam-label">Next Exam</div>`;
   if(nextExam){
     const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
-    html+=`<div class="next-exam-top">
+    examCard+=`<div class="next-exam-top">
         <div>
           <div class="next-exam-name">${nextExam.name}</div>
           <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${nextExam.date||'no date'}</div>
@@ -1989,9 +1980,18 @@ function renderHome(){
         <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
       </div>`;
   } else {
-    html+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No upcoming exams</div>`;
+    examCard+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No upcoming exams</div>`;
   }
-  html+=`</div>`;
+  examCard+=`</div>`;
+
+  let html=examCard+timerWidget+focusCard+planCard+`
+    <div class="section-label">Streaks</div>
+    <div class="streak-grid">
+      <div class="streak-card s-workout"><div class="streak-number${s?'':' loading'}">${s?s.workout??0:'—'}</div><div class="streak-label">Workout</div></div>
+      <div class="streak-card s-mind"><div class="streak-number${s?'':' loading'}">${s?s.mind??0:'—'}</div><div class="streak-label">Mind</div></div>
+      <div class="streak-card s-sleep"><div class="streak-number${s?'':' loading'}">${s?s.sleep??0:'—'}</div><div class="streak-label">Sleep</div></div>
+      <div class="streak-card s-quest"><div class="streak-number${s?'':' loading'}">${s?s.quest??0:'—'}</div><div class="streak-label">Perfect Days</div></div>
+    </div>`;
   if(bodyStats.length){
     html+=`<div class="sil-wrap">
       <div class="sil-header">
