@@ -256,6 +256,19 @@ body::after {
 .pomo-toggle-btn.active { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
 
 /* ── Day Plan card ── */
+/* ── Today's Focus card ── */
+.focus-card { background: linear-gradient(145deg, rgba(224,208,168,0.04) 0%, var(--bg-card) 60%); border: 1px solid rgba(224,208,168,0.14); border-radius: 14px; padding: 14px 16px 12px; margin-bottom: 12px; }
+.focus-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.focus-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
+.focus-goal-btn { font-size: 10px; font-weight: 600; color: var(--gold); background: none; border: none; cursor: pointer; padding: 0; letter-spacing: 0.04em; display: flex; align-items: center; gap: 4px; }
+.focus-goal-btn.complete { color: #7ec99a; }
+.focus-bar-track { height: 3px; background: rgba(224,208,168,0.08); border-radius: 99px; margin-bottom: 11px; overflow: hidden; }
+.focus-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(to right, rgba(224,208,168,0.5), var(--gold)); transition: width 0.6s cubic-bezier(0.25,1,0.5,1); }
+.focus-bar-fill.complete { background: linear-gradient(to right, #4a9a6a, #7ec99a); }
+.focus-bottom { display: flex; align-items: center; justify-content: space-between; }
+.focus-subjects { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
+.focus-chip { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 99px; background: rgba(224,208,168,0.07); border: 1px solid rgba(224,208,168,0.12); color: var(--text-dim); }
+.focus-time { font-size: 10px; color: var(--text-dim); font-weight: 500; white-space: nowrap; margin-left: 8px; }
 .plan-card { background: linear-gradient(145deg, rgba(224,208,168,0.04) 0%, var(--bg-card) 60%); border: 1px solid rgba(224,208,168,0.14); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
 .plan-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .plan-card-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); }
@@ -1030,6 +1043,7 @@ let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelec
 let timerInterval=null;
 let examCountdownInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=null;
+let pomoGoal=parseInt(localStorage.getItem('pomo-goal')||'8');
 
 function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
@@ -1638,6 +1652,11 @@ function closePomoFlash(){
 }
 
 function setPomoMode(v){pomoMode=v;renderHome();}
+function editPomoGoal(){
+  const v=prompt('Daily pomo goal:',pomoGoal);
+  const n=parseInt(v);
+  if(n>0&&n<=30){pomoGoal=n;localStorage.setItem('pomo-goal',n);renderHome();}
+}
 
 async function startSession(subject){
   if(!subject)return;
@@ -1698,7 +1717,7 @@ async function stopSession(){
 
 async function refresh(){
   setError(null);setSyncBusy(true);
-  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadBodyStats(),loadRivals(),loadExams()]);renderHome();}
+  if(currentTab==='home'){await Promise.all([loadStreaks(),loadStats(),loadBodyStats(),loadRivals(),loadExams(),loadSessions()]);renderHome();}
   if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTemplates()]);renderTasks();}
   if(currentTab==='workout'){await Promise.all([loadBodyStats(),loadExercises()]);renderWorkout();}
   if(currentTab==='exams'){await loadExams();renderExams();}
@@ -1772,6 +1791,36 @@ function renderHome(){
       ${pomoMode?'<div class="pomo-hint">25 work · 5 break · 15 after ×4</div>':''}
     </div>`;
   }
+  // Today's Focus card
+  const todaySessions=state.sessions.filter(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
+  const todayMinutes=todaySessions.reduce((sum,s)=>{
+    if(!s.started||!s.done)return sum;
+    return sum+Math.max(0,(new Date(s.done)-new Date(s.started))/60000);
+  },0);
+  const todaySubjects=[...new Set(todaySessions.map(s=>s.subject).filter(Boolean))];
+  const focusCount=Math.max(pomoCount,todaySessions.length);
+  const focusPct=Math.min(100,Math.round(focusCount/pomoGoal*100));
+  const focusDone=focusCount>=pomoGoal;
+  const focusTimeStr=todayMinutes>=60
+    ?`${Math.floor(todayMinutes/60)}h ${Math.round(todayMinutes%60)}m`
+    :todayMinutes>=1?`${Math.round(todayMinutes)}m`:'';
+  const chipsHTML=todaySubjects.length
+    ?todaySubjects.map(s=>`<span class="focus-chip">${s}</span>`).join('')
+    :`<span class="focus-chip" style="opacity:0.4">No sessions yet</span>`;
+  const focusCard=`<div class="focus-card">
+    <div class="focus-top">
+      <div class="focus-label">Today's Focus</div>
+      <button class="focus-goal-btn${focusDone?' complete':''}" onclick="editPomoGoal()">
+        ${focusDone?'✓':''}${focusCount} / ${pomoGoal} pomos
+      </button>
+    </div>
+    <div class="focus-bar-track"><div class="focus-bar-fill${focusDone?' complete':''}" style="width:${focusPct}%"></div></div>
+    <div class="focus-bottom">
+      <div class="focus-subjects">${chipsHTML}</div>
+      ${focusTimeStr?`<div class="focus-time">${focusTimeStr}</div>`:''}
+    </div>
+  </div>`;
+
   // Day plan card
   const todayPlan=getTodayPlan();
   let planCard;
@@ -1815,7 +1864,7 @@ function renderHome(){
     </div>`;
   }
 
-  let html=timerWidget+planCard+`
+  let html=timerWidget+focusCard+planCard+`
     <div class="section-label">Streaks</div>
     <div class="streak-grid">
       <div class="streak-card s-workout"><div class="streak-number">${s?.workout??0}</div><div class="streak-label">Workout</div></div>
