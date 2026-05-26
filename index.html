@@ -1493,9 +1493,23 @@ function tickTimer(){
 }
 async function completePomoWork(){
   if(!state.activeSession)return;
-  const now=new Date().toISOString(),{id}=state.activeSession;
+  const now=new Date().toISOString(),{id,subject,startedAt}=state.activeSession;
   pomoCount++;state.activeSession=null;
   nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}}).catch(()=>{});
+  // Create task + link to daily log (same as stopSession)
+  try{
+    const dateStr=new Date(startedAt).toISOString().split('T')[0];
+    const taskPage=await nCreate(DB.tasks,{
+      Task:{title:[{text:{content:subject}}]},
+      Cat:{select:{name:'Mind'}},
+      Difficulty:{select:{name:'Normal'}},
+      Base:{number:5},
+      Status:{checkbox:true},
+      'Due Date':{date:{start:dateStr}},
+    });
+    const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:dateStr}});
+    if(logs.length)await nPatch(taskPage.id,{'Daily log':{relation:[{id:logs[0].id}]}});
+  }catch(_){}
   // sound was pre-scheduled at pomo start; also try immediate fallback
   playPomoCompleteSound();
   pomoPhase='break';
