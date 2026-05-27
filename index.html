@@ -248,9 +248,13 @@ body::after {
 .task-item:active { transform: scale(0.99); }
 .task-item.done { opacity: 0.22; }
 .task-item.done .task-name { text-decoration: line-through; }
-.task-item.is-quest { border-color: rgba(224,208,168,0.35); background: linear-gradient(100deg, rgba(224,208,168,0.06) 0%, var(--bg-card) 55%); box-shadow: 0 0 14px rgba(224,208,168,0.06), inset 0 0 20px rgba(224,208,168,0.03); animation: quest-shimmer 4s ease-in-out infinite; }
-.task-item.is-quest::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2.5px; background: linear-gradient(to bottom, var(--gold), rgba(224,208,168,0.4)); border-radius: 0 1px 1px 0; }
-@keyframes quest-shimmer { 0%,100% { box-shadow: 0 0 10px rgba(224,208,168,0.05), inset 0 0 20px rgba(224,208,168,0.02); border-color: rgba(224,208,168,0.28); } 50% { box-shadow: 0 0 20px rgba(224,208,168,0.11), inset 0 0 30px rgba(224,208,168,0.05); border-color: rgba(224,208,168,0.45); } }
+.task-item.is-quest { border-color: rgba(224,208,168,0.55); background: linear-gradient(105deg, rgba(224,208,168,0.13) 0%, rgba(224,208,168,0.06) 45%, var(--bg-card) 75%); box-shadow: 0 0 24px rgba(224,208,168,0.10), 0 2px 10px rgba(0,0,0,0.35); overflow: hidden; animation: quest-pulse 4s ease-in-out infinite; }
+.task-item.is-quest::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, #ecddb8, var(--gold), rgba(224,208,168,0.35)); border-radius: 0 1px 1px 0; box-shadow: 0 0 8px rgba(224,208,168,0.5); }
+.task-item.is-quest::after { content: ''; position: absolute; top: 0; bottom: 0; width: 45%; background: linear-gradient(90deg, transparent, rgba(224,208,168,0.10), transparent); animation: quest-shine 5s ease-in-out infinite; left: -50%; pointer-events: none; }
+.task-item.is-quest .task-name { color: var(--gold-hi); }
+.task-item.is-quest .task-cb { border-color: rgba(224,208,168,0.45); }
+@keyframes quest-pulse { 0%,100% { border-color: rgba(224,208,168,0.45); box-shadow: 0 0 18px rgba(224,208,168,0.08); } 50% { border-color: rgba(224,208,168,0.7); box-shadow: 0 0 28px rgba(224,208,168,0.16), 0 0 8px rgba(224,208,168,0.06) inset; } }
+@keyframes quest-shine { 0%,25% { left:-50%; opacity:0; } 35% { opacity:1; } 65%,100% { left:160%; opacity:0; } }
 
 .task-cb { width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 9px; cursor: pointer; transition: all 0.15s; }
 .task-item.done .task-cb { background: rgba(42,106,62,0.2); border-color: var(--green-text); color: var(--green-text); }
@@ -405,7 +409,7 @@ body::after {
 .diff-Daily       { color: var(--gold-dim); border-color: var(--gold-dim); background: var(--gold-glow); }
 .diff-Important   { color: #4a2870; border-color: #2a1848; background: #100818; }
 
-.quest-tag { font-size: 8px; font-weight: 700; letter-spacing: 0.10em; color: var(--gold); border: 1px solid rgba(224,208,168,0.3); border-radius: 2px; padding: 2px 6px; background: rgba(224,208,168,0.08); flex-shrink: 0; text-shadow: 0 0 8px rgba(224,208,168,0.4); }
+.quest-tag { font-size: 7.5px; font-weight: 800; letter-spacing: 0.18em; color: #0d0c09; background: linear-gradient(135deg, #ecddb8 0%, #e0d0a8 50%, #c8b070 100%); border: none; border-radius: 2px; padding: 2px 7px; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 8px rgba(224,208,168,0.25); }
 .task-due { font-size: 9px; font-weight: 500; color: var(--text-faint); }
 .task-due.overdue { color: var(--red-hi); }
 .task-study-tag { font-size: 8px; font-weight: 600; letter-spacing: 0.06em; color: #4a80d8; opacity: 0.7; padding: 2px 5px; border: 1px solid rgba(74,128,216,0.25); border-radius: 2px; flex-shrink: 0; }
