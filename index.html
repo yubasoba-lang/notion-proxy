@@ -144,16 +144,27 @@ body::after {
 .streak-num.loading { opacity: 0.2; }
 
 /* ── Loading Screen ── */
-#loadOverlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1); }
+#loadOverlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; transition: opacity 0.9s cubic-bezier(0.4,0,0.2,1); }
 #loadOverlay.done { opacity: 0; pointer-events: none; }
-.load-orbit { position: relative; width: 88px; height: 88px; }
-.load-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(224,208,168,0.13); }
-.load-ring-inner { position: absolute; inset: 14px; border-radius: 50%; border: 1px solid rgba(224,208,168,0.05); }
-.load-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px 3px rgba(224,208,168,0.45), 0 0 24px rgba(224,208,168,0.15); top: 50%; left: 50%; margin: -3.5px 0 0 -3.5px; animation: orbit 2s linear infinite; }
-@keyframes orbit { 0% { transform: rotate(0deg) translateX(44px); } 100% { transform: rotate(360deg) translateX(44px); } }
-.load-pct { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 0.12em; color: var(--gold); text-shadow: 0 0 40px rgba(224,208,168,0.18); line-height: 1; min-width: 88px; text-align: center; }
-.load-bar-track { width: 150px; height: 1px; background: rgba(224,208,168,0.08); border-radius: 99px; overflow: hidden; }
-.load-bar-fill { height: 100%; background: linear-gradient(to right, rgba(224,208,168,0.35), var(--gold)); border-radius: 99px; width: 0%; transition: width 0.5s cubic-bezier(0.25,1,0.5,1); }
+.load-orrery { position: relative; width: 130px; height: 130px; }
+.load-orrery::before { content: ''; position: absolute; top: 50%; left: 50%; width: 200px; height: 200px; margin: -100px 0 0 -100px; border-radius: 50%; background: radial-gradient(circle, rgba(224,208,168,0.05) 0%, transparent 65%); pointer-events: none; }
+.load-r1 { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(224,208,168,0.10); animation: rrot 50s linear infinite; }
+.load-r2 { position: absolute; inset: 20px; border-radius: 50%; border: 1px solid rgba(224,208,168,0.07); animation: rrot 34s linear infinite reverse; }
+.load-r3 { position: absolute; inset: 40px; border-radius: 50%; border: 1px solid rgba(224,208,168,0.13); }
+.load-core { position: absolute; top: 50%; left: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 14px 5px rgba(224,208,168,0.3), 0 0 40px rgba(224,208,168,0.12); animation: core-pulse 3.5s ease-in-out infinite; }
+@keyframes core-pulse { 0%,100% { box-shadow: 0 0 14px 5px rgba(224,208,168,0.3), 0 0 40px rgba(224,208,168,0.12); } 50% { box-shadow: 0 0 22px 9px rgba(224,208,168,0.45), 0 0 70px rgba(224,208,168,0.18); } }
+.load-d1 { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px 3px rgba(224,208,168,0.55), 0 0 22px rgba(224,208,168,0.2); top: 50%; left: 50%; margin: -3.5px 0 0 -3.5px; animation: ld1 2.4s linear infinite; }
+.load-d2 { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: rgba(224,208,168,0.55); box-shadow: 0 0 7px 2px rgba(224,208,168,0.3); top: 50%; left: 50%; margin: -2px 0 0 -2px; animation: ld2 1.55s linear infinite reverse; }
+.load-d3 { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: rgba(224,208,168,0.35); top: 50%; left: 50%; margin: -1.5px 0 0 -1.5px; animation: ld3 3.8s linear infinite; }
+@keyframes ld1 { 0% { transform: rotate(0deg) translateX(65px); } 100% { transform: rotate(360deg) translateX(65px); } }
+@keyframes ld2 { 0% { transform: rotate(0deg) translateX(45px); } 100% { transform: rotate(360deg) translateX(45px); } }
+@keyframes ld3 { 0% { transform: rotate(60deg) translateX(25px); } 100% { transform: rotate(420deg) translateX(25px); } }
+@keyframes rrot { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.load-text { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.load-pct { font-family: 'Bebas Neue', sans-serif; font-size: 58px; letter-spacing: 0.1em; color: var(--gold); text-shadow: 0 0 50px rgba(224,208,168,0.22), 0 0 100px rgba(224,208,168,0.08); line-height: 1; text-align: center; }
+.load-sublabel { font-size: 7px; font-weight: 700; letter-spacing: 0.40em; color: rgba(224,208,168,0.25); text-transform: uppercase; }
+.load-bar-track { width: 190px; height: 1px; background: rgba(224,208,168,0.07); border-radius: 99px; overflow: hidden; }
+.load-bar-fill { height: 100%; background: linear-gradient(to right, rgba(224,208,168,0.15), rgba(224,208,168,0.7), var(--gold)); border-radius: 99px; width: 0%; transition: width 0.55s cubic-bezier(0.25,1,0.5,1); box-shadow: 0 0 8px rgba(224,208,168,0.4); }
 
 /* ── Body mini cards ── */
 .muscle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -669,12 +680,19 @@ body::after {
 </head>
 <body>
 <div id="loadOverlay">
-  <div class="load-orbit">
-    <div class="load-ring"></div>
-    <div class="load-ring-inner"></div>
-    <div class="load-dot"></div>
+  <div class="load-orrery">
+    <div class="load-r1"></div>
+    <div class="load-r2"></div>
+    <div class="load-r3"></div>
+    <div class="load-core"></div>
+    <div class="load-d1"></div>
+    <div class="load-d2"></div>
+    <div class="load-d3"></div>
   </div>
-  <div class="load-pct" id="loadPct">0%</div>
+  <div class="load-text">
+    <div class="load-pct" id="loadPct">0%</div>
+    <div class="load-sublabel">Syncing</div>
+  </div>
   <div class="load-bar-track"><div class="load-bar-fill" id="loadBarFill"></div></div>
 </div>
 <div class="bg-orb orb-1"></div>
@@ -2196,11 +2214,12 @@ async function quickAdd(tid,name,cat,type){
    plus the sleep task (already complete), all linked together.
 */
 const DAILY_TASKS=[
-  {name:'Meditate for 10 mins', cat:'Life', diff:'Daily'},
-  {name:'Journal',               cat:'Life', diff:'Daily'},
-  {name:'Clean Room',            cat:'Life', diff:'Daily'},
-  {name:'Read 30 mins',          cat:'Mind', diff:'Daily'},
-  {name:'Workout',               cat:'Body', diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5'},
+  {name:'Study German',          cat:'German',diff:'Daily', questId:1},
+  {name:'Meditate for 10 mins',  cat:'Life',  diff:'Daily', questId:2},
+  {name:'Journal',               cat:'Life',  diff:'Daily', questId:3},
+  {name:'Clean Room',            cat:'Life',  diff:'Daily', questId:4},
+  {name:'Read 30 mins',          cat:'Mind',  diff:'Daily', questId:5},
+  {name:'Workout',               cat:'Body',  diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5'},
 ];
 
 async function addSleepLog(sleepName, tier){
@@ -2238,6 +2257,7 @@ async function addSleepLog(sleepName, tier){
       Difficulty:{select:{name:t.diff}},
       Status:    {checkbox:t.done===true},
       'Due Date':{date:{start:today}},
+      ...(t.questId!=null?{'Quest ID':{number:t.questId}}:{}),
       ...(t.base!=null?{Base:{number:t.base}}:{}),
       ...(t.stat!=null?{Stat:{relation:[{id:t.stat}]}}:{}),
     })));
