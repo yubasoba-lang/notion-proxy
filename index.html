@@ -1065,7 +1065,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[]};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -1368,7 +1368,7 @@ const g={
 
 const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalXP:g.formula(q['Final XP'])??0,rankStr:g.formula(q.Rank)??'',rivalGap:g.rollup(q['Rival Gap']),rivalXP:g.rollup(q['Rival XP'])??0,lastTrained:g.rollup(q['Last day trained']),daysInactive:g.formula(q['Days inactive'])??g.num(q['Days inactive']),cat:g.select(q.Cat)};};
 const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total XP'])??0};};
-const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),isQuest:g.formula(q['Is Quest'])??false,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
+const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);const questId=g.num(q['Quest ID']);return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),questId,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
 const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete)};};
 const toExam=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive)};};
@@ -1435,6 +1435,17 @@ async function loadTasks(){
   }catch(e){setError('Tasks: '+e.message);}
 }
 async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){setError('Templates: '+e.message);}}
+async function loadTodayQuests(){
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
+    if(logs.length){
+      const q=logs[0].properties;
+      const ids=[g.num(q['Quest 1']),g.num(q['Quest 2']),g.num(q['Quest 3'])].filter(n=>n!=null&&n>0);
+      state.todayQuests=ids;
+    }else{state.todayQuests=[];}
+  }catch(e){state.todayQuests=[];}
+}
 async function loadStreaks(){
   try{
     // Streaks DB has single "Shite" row with all computed streak formulas
@@ -1805,7 +1816,7 @@ async function stopSession(){
   }
   delete _tabLoadedAt['home'];delete _tabLoadedAt['study'];delete _tabLoadedAt['tasks'];
   if(currentTab==='study'){await loadSessions();renderStudyLog();}
-  if(currentTab==='tasks'){await loadTasks();renderTasks();}
+  if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTodayQuests()]);renderTasks();}
   _sessionBusy=false;
 }
 
@@ -1822,7 +1833,7 @@ async function refresh(force=false){
     }
     _markTabLoaded('home');renderHome();
   }
-  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates()]);_markTabLoaded('tasks');renderTasks();}
+  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests()]);_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip)await loadExams();_markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
@@ -2021,19 +2032,19 @@ function renderHome(){
 
   const streakRow=`<div class="streak-row">
     <div class="streak-item">
-      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="5.5" width="1.8" height="3" rx="0.4"/><rect x="1.8" y="4.5" width="2" height="5" rx="0.4"/><rect x="3.8" y="6.3" width="6.4" height="1.4" rx="0.4"/><rect x="10.2" y="4.5" width="2" height="5" rx="0.4"/><rect x="12.2" y="5.5" width="1.8" height="3" rx="0.4"/></svg>
+      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="5.5" width="1.8" height="3" rx="0.4"/><rect x="1.8" y="4.5" width="2" height="5" rx="0.4"/><rect x="3.8" y="6.3" width="6.4" height="1.4" rx="0.4"/><rect x="10.2" y="4.5" width="2" height="5" rx="0.4"/><rect x="12.2" y="5.5" width="1.8" height="3" rx="0.4"/></svg>
       <span class="streak-num${s?'':' loading'}">${s?s.workout??0:'—'}</span>
     </div>
     <div class="streak-item">
-      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"><path d="M7 2.5c-1.1 0-2 .9-2 1.9 0 .3.1.6.2.8C4.5 5.6 4 6.3 4 7.2c0 .5.2 1 .5 1.3C4.2 9 4 9.5 4 10c0 1.1.9 1.5 2 1.5h2c1.1 0 2-.4 2-1.5 0-.5-.2-1-.5-1.5.3-.3.5-.8.5-1.3 0-.9-.5-1.6-1.2-2 .1-.2.2-.5.2-.8 0-1-.9-1.9-2-1.9z"/><line x1="7" y1="2.5" x2="7" y2="11.5"/><path d="M5.5 6.5 Q7 5.5 8.5 6.5"/></svg>
+      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"><path d="M7 2.5c-1.1 0-2 .9-2 1.9 0 .3.1.6.2.8C4.5 5.6 4 6.3 4 7.2c0 .5.2 1 .5 1.3C4.2 9 4 9.5 4 10c0 1.1.9 1.5 2 1.5h2c1.1 0 2-.4 2-1.5 0-.5-.2-1-.5-1.5.3-.3.5-.8.5-1.3 0-.9-.5-1.6-1.2-2 .1-.2.2-.5.2-.8 0-1-.9-1.9-2-1.9z"/><line x1="7" y1="2.5" x2="7" y2="11.5"/><path d="M5.5 6.5 Q7 5.5 8.5 6.5"/></svg>
       <span class="streak-num${s?'':' loading'}">${s?s.mind??0:'—'}</span>
     </div>
     <div class="streak-item">
-      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="9" width="12" height="1.5" rx="0.4"/><rect x="1" y="4.5" width="1.5" height="6" rx="0.4"/><rect x="11.5" y="4.5" width="1.5" height="6" rx="0.4"/><rect x="2.5" y="6" width="3.5" height="3" rx="1"/><rect x="8" y="6" width="3.5" height="3" rx="1"/></svg>
+      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="9" width="12" height="1.5" rx="0.4"/><rect x="1" y="4.5" width="1.5" height="6" rx="0.4"/><rect x="11.5" y="4.5" width="1.5" height="6" rx="0.4"/><rect x="2.5" y="6" width="3.5" height="3" rx="1"/><rect x="8" y="6" width="3.5" height="3" rx="1"/></svg>
       <span class="streak-num${s?'':' loading'}">${s?s.sleep??0:'—'}</span>
     </div>
     <div class="streak-item">
-      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"><path d="M7 2c0 0 3.5 3 3.5 6 0 2-1.5 4-3.5 4S3.5 10 3.5 8C3.5 5 7 2 7 2z"/><path d="M7 7c0 0 1 1.2 1 2 0 .8-.5 1.5-1 1.5S6 9.8 6 9c0-.8 1-2 1-2z" fill="currentColor" opacity="0.5"/></svg>
+      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"><path d="M7 2c0 0 3.5 3 3.5 6 0 2-1.5 4-3.5 4S3.5 10 3.5 8C3.5 5 7 2 7 2z"/><path d="M7 7c0 0 1 1.2 1 2 0 .8-.5 1.5-1 1.5S6 9.8 6 9c0-.8 1-2 1-2z" fill="currentColor" opacity="0.5"/></svg>
       <span class="streak-num${s?'':' loading'}">${s?s.quest??0:'—'}</span>
     </div>
   </div>`;
@@ -2113,7 +2124,7 @@ function taskHTML(task,today){
   const overdue=task.dueDate&&new Date(task.dueDate)<today;
   const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
   const diff=task.difficulty;
-  const isQ=!!task.isQuest&&task.isQuest!=='';
+  const isQ=!!task.questId&&(state.todayQuests||[]).includes(task.questId);
   return `<div class="task-item ${task.status?'done':''} ${isQ?'is-quest':''}" id="task-${task.id}">
     <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'':''}</div>
     <div class="task-body">
