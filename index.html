@@ -135,32 +135,25 @@ body::after {
 .badge-wrap { display: inline-flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
 .badge-wrap svg { display: block; }
 
-/* ── HOME — Streaks ── */
-.streak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.streak-number.loading { opacity: 0.2; font-size: 28px; }
-.streak-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px 16px 16px;
-  position: relative; overflow: hidden;
-  transition: border-color 0.2s, transform 0.15s;
-}
-.streak-card:active { transform: scale(0.98); }
-.streak-card::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 0 2px 2px 0; }
+/* ── HOME — Streaks compact row ── */
+.streak-row { display: flex; align-items: center; padding: 9px 14px; background: rgba(224,208,168,0.025); border: 1px solid rgba(224,208,168,0.07); border-radius: 10px; margin-bottom: 10px; }
+.streak-item { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
+.streak-item+.streak-item { border-left: 1px solid rgba(224,208,168,0.06); }
+.streak-svg { flex-shrink: 0; color: var(--gold); opacity: 0.5; }
+.streak-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; line-height: 1; color: var(--gold); letter-spacing: 0.03em; }
+.streak-num.loading { opacity: 0.2; }
 
-
-
-/* Accent bar — uniform gold */
-.s-workout::after,
-.s-mind::after,
-.s-sleep::after,
-.s-quest::after   { background: linear-gradient(to bottom, var(--gold), rgba(224,208,168,0.06)); }
-
-.streak-number { font-family: 'Bebas Neue', sans-serif; font-size: 56px; line-height: 1; letter-spacing: 0.01em; color: var(--gold); text-shadow: 0 0 32px rgba(224,208,168,0.18); }
-
-.streak-label  { font-size: 8px; font-weight: 700; letter-spacing: 0.20em; color: var(--text-dim); text-transform: uppercase; margin-top: 7px; }
-.streak-icon   { position: absolute; top: 13px; right: 13px; font-size: 15px; opacity: 0.30; }
+/* ── Loading Screen ── */
+#loadOverlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1); }
+#loadOverlay.done { opacity: 0; pointer-events: none; }
+.load-orbit { position: relative; width: 88px; height: 88px; }
+.load-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(224,208,168,0.13); }
+.load-ring-inner { position: absolute; inset: 14px; border-radius: 50%; border: 1px solid rgba(224,208,168,0.05); }
+.load-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px 3px rgba(224,208,168,0.45), 0 0 24px rgba(224,208,168,0.15); top: 50%; left: 50%; margin: -3.5px 0 0 -3.5px; animation: orbit 2s linear infinite; }
+@keyframes orbit { 0% { transform: rotate(0deg) translateX(44px); } 100% { transform: rotate(360deg) translateX(44px); } }
+.load-pct { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 0.12em; color: var(--gold); text-shadow: 0 0 40px rgba(224,208,168,0.18); line-height: 1; min-width: 88px; text-align: center; }
+.load-bar-track { width: 150px; height: 1px; background: rgba(224,208,168,0.08); border-radius: 99px; overflow: hidden; }
+.load-bar-fill { height: 100%; background: linear-gradient(to right, rgba(224,208,168,0.35), var(--gold)); border-radius: 99px; width: 0%; transition: width 0.5s cubic-bezier(0.25,1,0.5,1); }
 
 /* ── Body mini cards ── */
 .muscle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -675,6 +668,15 @@ body::after {
 </style>
 </head>
 <body>
+<div id="loadOverlay">
+  <div class="load-orbit">
+    <div class="load-ring"></div>
+    <div class="load-ring-inner"></div>
+    <div class="load-dot"></div>
+  </div>
+  <div class="load-pct" id="loadPct">0%</div>
+  <div class="load-bar-track"><div class="load-bar-fill" id="loadBarFill"></div></div>
+</div>
 <div class="bg-orb orb-1"></div>
 <div class="bg-orb orb-2"></div>
 <div class="bg-orb orb-3"></div>
@@ -1320,6 +1322,23 @@ const TAB_CACHE_MS=60000;
 function _tabFresh(tab){return _tabLoadedAt[tab]&&(Date.now()-_tabLoadedAt[tab])<TAB_CACHE_MS;}
 function _markTabLoaded(tab){_tabLoadedAt[tab]=Date.now();}
 let selectedMuscle=null;
+
+// ── Loading screen ──
+let _hasLoaded=false;
+function _setLoad(pct){
+  if(_hasLoaded)return;
+  const fill=document.getElementById('loadBarFill');
+  const num=document.getElementById('loadPct');
+  if(fill)fill.style.width=pct+'%';
+  if(num)num.textContent=Math.round(pct)+'%';
+  if(pct>=100){
+    _hasLoaded=true;
+    setTimeout(()=>{
+      const ov=document.getElementById('loadOverlay');
+      if(ov){ov.classList.add('done');setTimeout(()=>ov.remove(),800);}
+    },350);
+  }
+}
 let prevRanks={};
 
 async function nFetch(path,method='GET',body){
@@ -1793,7 +1812,16 @@ async function stopSession(){
 async function refresh(force=false){
   setError(null);setSyncBusy(true);
   const skip=!force&&_tabFresh(currentTab);
-  if(currentTab==='home'){if(!skip)await Promise.all([loadStreaks(),loadStats(),loadRivals(),loadExams(),loadSessions()]);_markTabLoaded('home');renderHome();}
+  if(currentTab==='home'){
+    if(!skip){
+      const isFirst=!_hasLoaded;
+      if(isFirst)_setLoad(2);
+      let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
+      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick)]);
+      if(isFirst)_setLoad(100);
+    }
+    _markTabLoaded('home');renderHome();
+  }
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates()]);_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip)await loadExams();_markTabLoaded('exams');renderExams();}
@@ -1991,14 +2019,26 @@ function renderHome(){
   }
   examCard+=`</div>`;
 
-  let html=examCard+timerWidget+focusCard+planCard+`
-    <div class="section-label">Streaks</div>
-    <div class="streak-grid">
-      <div class="streak-card s-workout"><div class="streak-number${s?'':' loading'}">${s?s.workout??0:'—'}</div><div class="streak-label">Workout</div></div>
-      <div class="streak-card s-mind"><div class="streak-number${s?'':' loading'}">${s?s.mind??0:'—'}</div><div class="streak-label">Mind</div></div>
-      <div class="streak-card s-sleep"><div class="streak-number${s?'':' loading'}">${s?s.sleep??0:'—'}</div><div class="streak-label">Sleep</div></div>
-      <div class="streak-card s-quest"><div class="streak-number${s?'':' loading'}">${s?s.quest??0:'—'}</div><div class="streak-label">Perfect Days</div></div>
-    </div>`;
+  const streakRow=`<div class="streak-row">
+    <div class="streak-item">
+      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="5.5" width="1.8" height="3" rx="0.4"/><rect x="1.8" y="4.5" width="2" height="5" rx="0.4"/><rect x="3.8" y="6.3" width="6.4" height="1.4" rx="0.4"/><rect x="10.2" y="4.5" width="2" height="5" rx="0.4"/><rect x="12.2" y="5.5" width="1.8" height="3" rx="0.4"/></svg>
+      <span class="streak-num${s?'':' loading'}">${s?s.workout??0:'—'}</span>
+    </div>
+    <div class="streak-item">
+      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"><path d="M7 2.5c-1.1 0-2 .9-2 1.9 0 .3.1.6.2.8C4.5 5.6 4 6.3 4 7.2c0 .5.2 1 .5 1.3C4.2 9 4 9.5 4 10c0 1.1.9 1.5 2 1.5h2c1.1 0 2-.4 2-1.5 0-.5-.2-1-.5-1.5.3-.3.5-.8.5-1.3 0-.9-.5-1.6-1.2-2 .1-.2.2-.5.2-.8 0-1-.9-1.9-2-1.9z"/><line x1="7" y1="2.5" x2="7" y2="11.5"/><path d="M5.5 6.5 Q7 5.5 8.5 6.5"/></svg>
+      <span class="streak-num${s?'':' loading'}">${s?s.mind??0:'—'}</span>
+    </div>
+    <div class="streak-item">
+      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="9" width="12" height="1.5" rx="0.4"/><rect x="1" y="4.5" width="1.5" height="6" rx="0.4"/><rect x="11.5" y="4.5" width="1.5" height="6" rx="0.4"/><rect x="2.5" y="6" width="3.5" height="3" rx="1"/><rect x="8" y="6" width="3.5" height="3" rx="1"/></svg>
+      <span class="streak-num${s?'':' loading'}">${s?s.sleep??0:'—'}</span>
+    </div>
+    <div class="streak-item">
+      <svg class="streak-svg" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"><path d="M7 2c0 0 3.5 3 3.5 6 0 2-1.5 4-3.5 4S3.5 10 3.5 8C3.5 5 7 2 7 2z"/><path d="M7 7c0 0 1 1.2 1 2 0 .8-.5 1.5-1 1.5S6 9.8 6 9c0-.8 1-2 1-2z" fill="currentColor" opacity="0.5"/></svg>
+      <span class="streak-num${s?'':' loading'}">${s?s.quest??0:'—'}</span>
+    </div>
+  </div>`;
+
+  let html=streakRow+examCard+timerWidget+focusCard+planCard;
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
@@ -2006,7 +2046,7 @@ function renderHome(){
   const _newStreakSig=s?`${s.workout}|${s.mind}|${s.sleep}|${s.quest}`:'';
   if(_newStreakSig!==renderHome._lastStreakSig){
     renderHome._lastStreakSig=_newStreakSig;
-    document.querySelectorAll('.streak-number:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
+    document.querySelectorAll('.streak-num:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
   }
   clearInterval(examCountdownInterval);
   renderExamCountdownDisplay();
@@ -2073,7 +2113,7 @@ function taskHTML(task,today){
   const overdue=task.dueDate&&new Date(task.dueDate)<today;
   const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
   const diff=task.difficulty;
-  const isQ=task.isQuest===true||task.isQuest===' QUEST';
+  const isQ=!!task.isQuest&&task.isQuest!=='';
   return `<div class="task-item ${task.status?'done':''} ${isQ?'is-quest':''}" id="task-${task.id}">
     <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'':''}</div>
     <div class="task-body">
