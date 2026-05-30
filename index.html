@@ -2507,7 +2507,7 @@ function renderWorkout(){
       </div>`;
     }
     bodyMapHTML+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
-    bodyStats.forEach(stat=>{
+    [...bodyStats].sort((a,b)=>(b.decayedXP??0)-(a.decayedXP??0)).forEach(stat=>{
       const parsed=parseRankStr(stat.rankStr);
       const{rank,next,pct}=getRankFromXP(stat.decayedXP);
       const r=parsed??rank;
