@@ -1086,8 +1086,6 @@ function buildSilhouette(bodyStats){
     const lx=pos.x;
     const ly=pos.y;
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
-      ${sel?`<circle cx="${lx}" cy="${ly}" r="18" fill="${col}" opacity="0.18" filter="url(#glow)"/>
-      <circle cx="${lx}" cy="${ly}" r="18" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.7"/>`:``}
       <circle cx="${lx}" cy="${ly}" r="20" fill="transparent" stroke="none"/>
     </g>`;
   }).join('');
