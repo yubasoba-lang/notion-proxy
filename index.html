@@ -1086,10 +1086,9 @@ function buildSilhouette(bodyStats){
     const lx=pos.x;
     const ly=pos.y;
     return `<g onclick="selectMuscle('${id}','${name}')" style="cursor:pointer;">
-      ${glow?`<circle cx="${lx}" cy="${ly}" r="22" fill="${col}" opacity="0.1"/>`:''}
-      <circle cx="${lx}" cy="${ly}" r="15" fill="${fillCol}" stroke="${borderCol}" stroke-width="${sel?2.5:glow?2:1.2}" ${glow?`filter="url(#glow)"`:''}/>
-      <text x="${lx}" y="${ly-2}" text-anchor="middle" dominant-baseline="middle" font-family="'Bebas Neue',sans-serif" font-size="8" fill="${textCol}">${name.slice(0,4).toUpperCase()}</text>
-      <text x="${lx}" y="${ly+6}" text-anchor="middle" dominant-baseline="middle" font-family="'Inter',sans-serif" font-size="5.5" font-weight="700" fill="${glow?col+'cc':'#1e1e28'}">${diLabel}</text>
+      ${sel?`<circle cx="${lx}" cy="${ly}" r="18" fill="${col}" opacity="0.18" filter="url(#glow)"/>
+      <circle cx="${lx}" cy="${ly}" r="18" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.7"/>`:``}
+      <circle cx="${lx}" cy="${ly}" r="20" fill="transparent" stroke="none"/>
     </g>`;
   }).join('');
 
