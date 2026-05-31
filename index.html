@@ -455,6 +455,14 @@ body::after {
 .rival-workout-streak-who { font-size: 7px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(143,184,216,0.4); margin-bottom: 2px; }
 .rival-workout-streak-num { font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: 1; }
 .rival-workout-streak-unit { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(143,184,216,0.35); margin-left: 3px; }
+.rival-wl-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(143,184,216,0.08); }
+.rival-wl-dots { display: flex; gap: 5px; align-items: center; }
+.rival-wl-dot { width: 9px; height: 9px; border-radius: 50%; }
+.rival-wl-dot.win { background: var(--gold); }
+.rival-wl-dot.loss { background: rgba(143,184,216,0.6); }
+.rival-wl-dot.tie { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15); }
+.rival-wl-dot.future { background: transparent; border: 1px solid rgba(255,255,255,0.08); }
+.rival-wl-record { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; }
 
 /* Exam cards */
 .exam-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 18px 0 8px; padding-left: 2px; }
@@ -2367,6 +2375,18 @@ function renderRivalPageContent(){
       </div>
     </div>`;
   }).join('');
+  // W/L dots
+  const todayStr=new Date().toISOString().split('T')[0];
+  const wlData=last7.map((d,i)=>{
+    if(d.date>todayStr)return'future';
+    const diff=userLast7[i]-d.hours;
+    if(Math.abs(diff)<0.1)return'tie';
+    return diff>0?'win':'loss';
+  });
+  const wins=wlData.filter(x=>x==='win').length;
+  const losses=wlData.filter(x=>x==='loss').length;
+  const wcol=wins>losses?'var(--gold)':wins<losses?'rgba(143,184,216,0.7)':'var(--text-dim)';
+  const wlDots=wlData.map(s=>`<div class="rival-wl-dot ${s}"></div>`).join('');
   // Streak dots
   const dots=last7.map(d=>`<div class="rival-streak-dot ${d.dark?'dark':'active'}"></div>`).join('');
   return`
@@ -2400,6 +2420,10 @@ function renderRivalPageContent(){
           <span style="font-size:7px;color:rgba(224,208,168,0.5);letter-spacing:0.1em;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:7px;height:7px;border-radius:1px;background:rgba(224,208,168,0.45)"></span>You</span>
         </div>
         <div style="font-size:8px;color:${gcol(gapW)};letter-spacing:0.06em">${gapStr(gapW)} this week</div>
+      </div>
+      <div class="rival-wl-row">
+        <div class="rival-wl-dots">${wlDots}</div>
+        <div class="rival-wl-record" style="color:${wcol}">${wins}W · ${losses}L</div>
       </div>
     </div>
     <div class="rival-streak-card">
