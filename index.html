@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#070810">
 <title>GRIND</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:        #0b0a08;
@@ -399,7 +399,7 @@ body::after {
 .rival-teaser { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(143,184,216,0.04); border: 1px solid rgba(143,184,216,0.12); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: background 0.15s; }
 .rival-teaser:active { background: rgba(143,184,216,0.08); }
 .rival-teaser-left { display: flex; align-items: center; gap: 8px; }
-.rival-teaser-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.06em; color: #8fb8d8; line-height: 1; }
+.rival-teaser-name { font-family: 'Ma Shan Zheng', serif; font-size: 26px; color: #8fb8d8; line-height: 1; }
 .rival-teaser-status { font-size: 8px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 .rival-teaser-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .rival-teaser-hours { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: #8fb8d8; line-height: 1; }
@@ -409,7 +409,7 @@ body::after {
 .rival-page-inner { padding: 0 0 40px; max-width: 420px; margin: 0 auto; }
 .rival-page-header { padding: 16px 16px 0; }
 .rival-back { background: transparent; border: none; color: var(--text-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; padding: 6px 0; }
-.rival-page-name { font-family: 'Bebas Neue', sans-serif; font-size: 72px; letter-spacing: 0.04em; color: #8fb8d8; text-align: center; line-height: 1; margin: 16px 0 2px; }
+.rival-page-name { font-family: 'Ma Shan Zheng', serif; font-size: 88px; color: #8fb8d8; text-align: center; line-height: 1; margin: 16px 0 2px; }
 .rival-page-subtitle { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(143,184,216,0.4); text-align: center; margin-bottom: 24px; }
 .rival-section-label { font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(143,184,216,0.35); margin-bottom: 8px; }
 .rival-status-card { background: rgba(143,184,216,0.04); border: 1px solid rgba(143,184,216,0.1); border-radius: 10px; padding: 14px 16px; margin: 0 16px 10px; }
@@ -1165,10 +1165,28 @@ function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
     localStorage.setItem('grind-pomo',JSON.stringify({
       mode:pomoMode,phase:pomoPhase,phaseEnd:pomoPhaseEnd,
-      count:pomoCount,subject:lastSubject||''
+      count:pomoCount,subject:lastSubject||'',
+      sessionId:state.activeSession?.id??null,
+      startedAt:state.activeSession?.startedAt??null
     }));
+    // Sync to Notion so it survives across devices (fire-and-forget)
+    if(state.activeSession?.id){
+      nPatch(state.activeSession.id,{
+        'Pomo Phase':{select:{name:pomoPhase}},
+        'Pomo End':{date:{start:new Date(pomoPhaseEnd).toISOString()}},
+        'Pomo Count':{number:pomoCount},
+      }).catch(()=>{});
+    }
   } else {
     localStorage.removeItem('grind-pomo');
+    // Clear pomo state from Notion when session ends
+    if(state.activeSession?.id){
+      nPatch(state.activeSession.id,{
+        'Pomo Phase':{select:null},
+        'Pomo End':{date:null},
+        'Pomo Count':{number:null},
+      }).catch(()=>{});
+    }
   }
 }
 function restorePomoPersist(){
@@ -1190,6 +1208,10 @@ function restorePomoPersist(){
     }
     pomoMode=d.mode;pomoPhase=d.phase;pomoPhaseEnd=d.phaseEnd;
     pomoCount=d.count;lastSubject=d.subject;
+    // Immediately restore activeSession so timer widget renders before Notion loads
+    if(d.sessionId&&d.startedAt&&!state.activeSession){
+      state.activeSession={id:d.sessionId,subject:d.subject,startedAt:d.startedAt};
+    }
     startTimer();
   }catch(e){localStorage.removeItem('grind-pomo');}
 }
@@ -1509,7 +1531,7 @@ const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalX
 const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total XP'])??0};};
 const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);const questId=g.num(q['Quest ID']);const isQuestRaw=g.formula(q['Is Quest']);const isQuest=isQuestRaw===1||isQuestRaw===true||(typeof isQuestRaw==='string'&&isQuestRaw!=='');return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),questId,isQuest,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
-const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null};};
+const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
 const toExam=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive)};};
 // Muscles Hit uses different delt names from Primary Muscle — normalise on load
 const MUSCLES_HIT_MAP={'Pecs':'Pectoralis','Lats':'Latissimus Dorsi','Quads':'Quadriceps','Front Delts':'Anterior Deltoid','Anterior Delts':'Anterior Deltoid','Side Delts':'Lateral Deltoid','Lateral Delts':'Lateral Deltoid','Rear Delts':'Posterior Deltoid','Posterior Delts':'Posterior Deltoid'};
@@ -1627,8 +1649,28 @@ async function loadSessions(){
     state.sessions=p.map(toSession);
     // detect any lingering In Progress session
     const active=state.sessions.find(s=>s.complete==='In progress');
-    if(active&&!state.activeSession){
+    if(active){
       state.activeSession={id:active.id,subject:active.subject||active.name,startedAt:active.started};
+      // Restore pomo from Notion if no local state (cross-device)
+      const hasLocal=!!localStorage.getItem('grind-pomo');
+      if(!hasLocal&&active.pomoPhase&&active.pomoEnd){
+        const phaseEnd=new Date(active.pomoEnd).getTime();
+        const now=Date.now();
+        if(phaseEnd>now){
+          // Phase still running — restore it
+          pomoMode=true;pomoPhase=active.pomoPhase;
+          pomoPhaseEnd=phaseEnd;pomoCount=active.pomoCount??0;
+          lastSubject=active.subject||active.name||'';
+          savePomoPersist();
+        } else if(active.pomoPhase==='work'){
+          // Work phase expired while away — auto-advance to break
+          pomoMode=true;pomoCount=(active.pomoCount??0)+1;
+          lastSubject=active.subject||active.name||'';
+          pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+          savePomoPersist();
+        }
+        // if break expired — just let it be, no-op
+      }
       startTimer();
     }
   }catch(e){setError('Sessions: '+e.message);}
@@ -2138,6 +2180,10 @@ function getUserStudyHoursWeek(){
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started>=wa&&s.done)
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
+function getUserHoursOnDay(dateStr){
+  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(dateStr)&&s.done)
+    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+}
 function renderRivalTeaser(){
   const{status,hours}=getRivalLiveStatus();
   const uh=getUserStudyHoursToday();
@@ -2186,13 +2232,22 @@ function renderRivalPageContent(){
   }
   // 7-day bars
   const last7=days.slice(-7);
-  const maxH=Math.max(...last7.map(d=>d.hours),1);
-  const bars=last7.map(d=>{
-    const pct=d.dark?0:(d.hours/maxH*100).toFixed(0);
+  const userLast7=last7.map(d=>getUserHoursOnDay(d.date));
+  const maxH=Math.max(...last7.map(d=>d.hours),...userLast7,1);
+  const bars=last7.map((d,i)=>{
+    const rPct=d.dark?0:(d.hours/maxH*100).toFixed(0);
+    const uPct=(userLast7[i]/maxH*100).toFixed(0);
     const isToday=d.date===new Date().toISOString().split('T')[0];
-    const bg=d.dark?'rgba(143,184,216,0.08)':isToday?'#8fb8d8':'rgba(143,184,216,0.35)';
+    const rBg=d.dark?'rgba(143,184,216,0.08)':isToday?'#8fb8d8':'rgba(143,184,216,0.38)';
+    const uBg=userLast7[i]>0?(isToday?'var(--gold)':'rgba(224,208,168,0.45)'):'rgba(224,208,168,0.06)';
     const day=['S','M','T','W','T','F','S'][new Date(d.date+'T12:00:00').getDay()];
-    return`<div class="rival-week-bar-wrap"><div class="rival-week-bar" style="height:${pct}%;background:${bg}"></div><div class="rival-week-bar-day">${day}</div></div>`;
+    return`<div class="rival-week-bar-wrap">
+      <div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:100%;">
+        <div style="flex:1;height:${rPct}%;background:${rBg};border-radius:2px 2px 0 0;min-height:${d.dark?0:2}px"></div>
+        <div style="flex:1;height:${uPct}%;background:${uBg};border-radius:2px 2px 0 0;min-height:${userLast7[i]>0?2:0}px"></div>
+      </div>
+      <div class="rival-week-bar-day">${day}</div>
+    </div>`;
   }).join('');
   // Streak dots
   const dots=last7.map(d=>`<div class="rival-streak-dot ${d.dark?'dark':'active'}"></div>`).join('');
@@ -2221,7 +2276,13 @@ function renderRivalPageContent(){
         </div>
       </div>
       <div class="rival-week-bars">${bars}</div>
-      <div style="font-size:8px;color:${gcol(gapW)};margin-top:6px;text-align:right;letter-spacing:0.06em">${gapStr(gapW)} this week</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <div style="display:flex;gap:10px;">
+          <span style="font-size:7px;color:rgba(143,184,216,0.6);letter-spacing:0.1em;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:7px;height:7px;border-radius:1px;background:rgba(143,184,216,0.5)"></span>影</span>
+          <span style="font-size:7px;color:rgba(224,208,168,0.5);letter-spacing:0.1em;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:7px;height:7px;border-radius:1px;background:rgba(224,208,168,0.45)"></span>You</span>
+        </div>
+        <div style="font-size:8px;color:${gcol(gapW)};letter-spacing:0.06em">${gapStr(gapW)} this week</div>
+      </div>
     </div>
     <div class="rival-streak-card">
       <div class="rival-section-label">STUDY STREAK</div>
