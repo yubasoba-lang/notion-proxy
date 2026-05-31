@@ -394,6 +394,52 @@ body::after {
 .quality-btn.distracted:active, .quality-btn.distracted.picked { background: rgba(180,60,60,0.08); border-color: #6a2020; }
 .quality-skip { display: block; text-align: center; margin-top: 14px; font-size: 9px; color: var(--text-faint); letter-spacing: 0.1em; cursor: pointer; padding: 4px; }
 
+/* ── Rival ── */
+/* teaser on home */
+.rival-teaser { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(143,184,216,0.04); border: 1px solid rgba(143,184,216,0.12); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: background 0.15s; }
+.rival-teaser:active { background: rgba(143,184,216,0.08); }
+.rival-teaser-left { display: flex; align-items: center; gap: 8px; }
+.rival-teaser-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.06em; color: #8fb8d8; line-height: 1; }
+.rival-teaser-status { font-size: 8px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+.rival-teaser-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.rival-teaser-hours { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: #8fb8d8; line-height: 1; }
+.rival-teaser-gap { font-size: 8px; letter-spacing: 0.06em; }
+/* full rival page */
+.rival-page { position: fixed; inset: 0; background: var(--bg); z-index: 400; overflow-y: auto; animation: fade-in 0.2s ease; }
+.rival-page-inner { padding: 0 0 40px; max-width: 420px; margin: 0 auto; }
+.rival-page-header { padding: 16px 16px 0; }
+.rival-back { background: transparent; border: none; color: var(--text-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; padding: 6px 0; }
+.rival-page-name { font-family: 'Bebas Neue', sans-serif; font-size: 72px; letter-spacing: 0.04em; color: #8fb8d8; text-align: center; line-height: 1; margin: 16px 0 2px; }
+.rival-page-subtitle { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(143,184,216,0.4); text-align: center; margin-bottom: 24px; }
+.rival-section-label { font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(143,184,216,0.35); margin-bottom: 8px; }
+.rival-status-card { background: rgba(143,184,216,0.04); border: 1px solid rgba(143,184,216,0.1); border-radius: 10px; padding: 14px 16px; margin: 0 16px 10px; }
+.rival-status-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rival-status-dot { font-size: 10px; }
+.rival-status-text { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; flex: 1; }
+.rival-hours-today { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: #8fb8d8; line-height: 1; }
+.rival-gap { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; }
+.rival-timeline { position: relative; height: 6px; background: rgba(143,184,216,0.08); border-radius: 3px; overflow: visible; margin-top: 4px; }
+.rival-session-block { position: absolute; top: 0; height: 100%; border-radius: 2px; transition: background 0.3s; }
+.rival-now-marker { position: absolute; top: -4px; bottom: -4px; width: 1.5px; background: rgba(255,255,255,0.5); border-radius: 1px; }
+.rival-week-card { background: rgba(143,184,216,0.04); border: 1px solid rgba(143,184,216,0.1); border-radius: 10px; padding: 14px 16px; margin: 0 16px 10px; }
+.rival-week-compare { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rival-week-stat { flex: 1; }
+.rival-week-name { font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(143,184,216,0.5); margin-bottom: 3px; }
+.rival-week-hours { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.04em; color: #8fb8d8; line-height: 1; }
+.rival-week-sep { font-size: 9px; color: var(--text-faint); letter-spacing: 0.1em; }
+.rival-week-bars { display: flex; gap: 4px; align-items: flex-end; height: 40px; }
+.rival-week-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+.rival-week-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
+.rival-week-bar-day { font-size: 7px; color: rgba(143,184,216,0.35); font-weight: 700; }
+.rival-streak-card { background: rgba(143,184,216,0.04); border: 1px solid rgba(143,184,216,0.1); border-radius: 10px; padding: 14px 16px; margin: 0 16px 10px; }
+.rival-streak-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 10px; }
+.rival-streak-num { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: #8fb8d8; line-height: 1; }
+.rival-streak-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(143,184,216,0.4); }
+.rival-streak-dots { display: flex; gap: 5px; }
+.rival-streak-dot { width: 8px; height: 8px; border-radius: 50%; }
+.rival-streak-dot.active { background: #8fb8d8; }
+.rival-streak-dot.dark { background: rgba(143,184,216,0.15); }
+
 /* Exam cards */
 .exam-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 18px 0 8px; padding-left: 2px; }
 .exam-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 13px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
@@ -2008,6 +2054,203 @@ function getRivalFor(stat){if(!stat?.rivalId)return null;return state.rivals.fin
 
 
 /* ═══════════════════════════════════
+   RIVAL SIMULATION
+   ═══════════════════════════════════ */
+const RIVAL_CFG={
+  startDate:'2026-01-01',
+  restChance:0.10,
+  darkClusterChance:0.42,
+  comebackMult:1.30,
+  dailyHoursMin:5.0,
+  dailyHoursMax:8.0,
+  sessionsMin:3,
+  sessionsMax:5,
+  blockMin:0.75,
+  blockMax:1.75,
+  variance:0.28,
+};
+function _rivalHash(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h;}
+function _rivalRng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let _rivalCache=null,_rivalCacheDate=null;
+function getRivalDays(){
+  const today=new Date().toISOString().split('T')[0];
+  if(_rivalCache&&_rivalCacheDate===today)return _rivalCache;
+  const days=[];let cur=new Date(RIVAL_CFG.startDate);const end=new Date(today);let prevDark=false;
+  while(cur<=end){
+    const ds=cur.toISOString().split('T')[0];
+    const rng=_rivalRng(_rivalHash(ds+'kage'));
+    const rc=prevDark?RIVAL_CFG.darkClusterChance:RIVAL_CFG.restChance;
+    const isDark=rng()<rc;
+    if(isDark){days.push({date:ds,dark:true,hours:0,sessions:[]});prevDark=true;}
+    else{
+      const isComeback=prevDark;
+      let h=RIVAL_CFG.dailyHoursMin+rng()*(RIVAL_CFG.dailyHoursMax-RIVAL_CFG.dailyHoursMin);
+      h*=(1+(rng()-0.5)*2*RIVAL_CFG.variance);
+      if(isComeback)h*=RIVAL_CFG.comebackMult;
+      h=Math.max(3,Math.min(10.5,h));
+      const nSess=RIVAL_CFG.sessionsMin+Math.floor(rng()*(RIVAL_CFG.sessionsMax-RIVAL_CFG.sessionsMin+1));
+      const sessions=[];let ct=8.5+rng()*1.5;
+      const perSess=h/nSess;
+      for(let i=0;i<nSess;i++){
+        const len=perSess*(0.6+rng()*0.8);
+        const sm=Math.round(ct*60),em=Math.round((ct+len)*60);
+        if(em>23*60)break;
+        sessions.push({sm,em});
+        ct+=len+0.45+rng()*0.9;
+      }
+      days.push({date:ds,dark:false,hours:h,sessions,comeback:isComeback});
+      prevDark=false;
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  _rivalCache=days;_rivalCacheDate=today;return days;
+}
+function getRivalLiveStatus(){
+  const days=getRivalDays();const td=days[days.length-1];
+  if(!td||td.dark)return{status:'dark',hours:0,sessions:[]};
+  const now=new Date();const nm=now.getHours()*60+now.getMinutes();
+  let h=0,inSess=false,nextMin=null;
+  for(const s of td.sessions){
+    if(s.em<=nm){h+=(s.em-s.sm)/60;}
+    else if(s.sm<=nm){h+=(nm-s.sm)/60;inSess=true;}
+    else if(nextMin===null){nextMin=s.sm;}
+  }
+  const allDone=!inSess&&nextMin===null;
+  const status=inSess?'studying':allDone?'done':'on break';
+  return{status,hours:h,sessions:td.sessions,nextMin};
+}
+function getRivalStreak(){
+  const days=getRivalDays();let streak=0,cd=0;
+  for(let i=days.length-1;i>=0;i--){
+    if(!days[i].dark){streak++;cd=0;}
+    else{cd++;if(cd>=3)break;}
+  }
+  return streak;
+}
+function fmtH(h){const hrs=Math.floor(h),mins=Math.round((h-hrs)*60);if(hrs===0)return mins+'m';if(mins===0)return hrs+'h';return hrs+'h '+mins+'m';}
+function getUserStudyHoursToday(){
+  const t=new Date().toISOString().split('T')[0];
+  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(t)&&s.done)
+    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+}
+function getUserStudyHoursWeek(){
+  const wa=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started>=wa&&s.done)
+    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+}
+function renderRivalTeaser(){
+  const{status,hours}=getRivalLiveStatus();
+  const uh=getUserStudyHoursToday();
+  const gap=hours-uh;
+  const scol=status==='studying'?'#8fb8d8':status==='dark'?'rgba(143,184,216,0.25)':'rgba(143,184,216,0.5)';
+  const gapStr=Math.abs(gap)<0.05?'neck and neck':fmtH(Math.abs(gap))+(gap>0?' ahead of you':' behind you');
+  const gcol=gap>0.05?'#c07070':gap<-0.05?'#6a9a6a':'var(--text-dim)';
+  return`<div class="rival-teaser" onclick="openRivalPage()">
+    <div class="rival-teaser-left">
+      <span class="rival-teaser-name">影</span>
+      <span class="rival-teaser-status" style="color:${scol}">${status}</span>
+    </div>
+    <div class="rival-teaser-right">
+      <span class="rival-teaser-hours">${fmtH(hours)}</span>
+      <span class="rival-teaser-gap" style="color:${gcol}">${gapStr}</span>
+    </div>
+  </div>`;
+}
+function renderRivalPageContent(){
+  const days=getRivalDays();
+  const{status,hours:rh,sessions:todaySessions}=getRivalLiveStatus();
+  const uh=getUserStudyHoursToday();
+  const rw=days.slice(-7).reduce((s,d)=>s+d.hours,0);
+  const uw=getUserStudyHoursWeek();
+  const streak=getRivalStreak();
+  const gapD=rh-uh,gapW=rw-uw;
+  const scol=status==='studying'?'#8fb8d8':status==='dark'?'rgba(143,184,216,0.3)':'rgba(143,184,216,0.5)';
+  const sdot=status==='studying'?'●':status==='dark'?'○':'◐';
+  const gcol=d=>d>0.05?'#c07070':d<-0.05?'#6a9a6a':'var(--text-dim)';
+  const gapStr=d=>Math.abs(d)<0.05?'tied':fmtH(Math.abs(d))+(d>0?' ahead':' behind');
+  // Timeline
+  const now=new Date();const nm=now.getHours()*60+now.getMinutes();
+  const DS=8*60,DE=23*60,DR=DE-DS;
+  let timelineHTML='';
+  if(status!=='dark'&&todaySessions.length){
+    const blocks=todaySessions.map(s=>{
+      const l=((s.sm-DS)/DR*100).toFixed(1);
+      const w=(Math.max((s.em-s.sm)/DR*100,2)).toFixed(1);
+      const active=s.sm<=nm&&s.em>nm;const done=s.em<=nm;
+      const bg=active?'#8fb8d8':done?'rgba(143,184,216,0.5)':'rgba(143,184,216,0.18)';
+      return`<div class="rival-session-block" style="left:${l}%;width:${w}%;background:${bg}"></div>`;
+    }).join('');
+    const np=((nm-DS)/DR*100).toFixed(1);
+    const marker=nm>=DS&&nm<=DE?`<div class="rival-now-marker" style="left:${np}%"></div>`:'';
+    timelineHTML=`<div class="rival-timeline">${blocks}${marker}</div>`;
+  }
+  // 7-day bars
+  const last7=days.slice(-7);
+  const maxH=Math.max(...last7.map(d=>d.hours),1);
+  const bars=last7.map(d=>{
+    const pct=d.dark?0:(d.hours/maxH*100).toFixed(0);
+    const isToday=d.date===new Date().toISOString().split('T')[0];
+    const bg=d.dark?'rgba(143,184,216,0.08)':isToday?'#8fb8d8':'rgba(143,184,216,0.35)';
+    const day=['S','M','T','W','T','F','S'][new Date(d.date+'T12:00:00').getDay()];
+    return`<div class="rival-week-bar-wrap"><div class="rival-week-bar" style="height:${pct}%;background:${bg}"></div><div class="rival-week-bar-day">${day}</div></div>`;
+  }).join('');
+  // Streak dots
+  const dots=last7.map(d=>`<div class="rival-streak-dot ${d.dark?'dark':'active'}"></div>`).join('');
+  return`
+    <div class="rival-status-card">
+      <div class="rival-section-label">TODAY</div>
+      <div class="rival-status-top">
+        <span class="rival-status-dot" style="color:${scol}">${sdot}</span>
+        <span class="rival-status-text" style="color:${scol}">${status}</span>
+        <span class="rival-hours-today">${fmtH(rh)}</span>
+        <span class="rival-gap" style="color:${gcol(gapD)}">${gapStr(gapD)}</span>
+      </div>
+      ${timelineHTML}
+    </div>
+    <div class="rival-week-card">
+      <div class="rival-section-label">THIS WEEK</div>
+      <div class="rival-week-compare">
+        <div class="rival-week-stat">
+          <div class="rival-week-name">影</div>
+          <div class="rival-week-hours">${fmtH(rw)}</div>
+        </div>
+        <div class="rival-week-sep">vs</div>
+        <div class="rival-week-stat">
+          <div class="rival-week-name">You</div>
+          <div class="rival-week-hours" style="color:${gcol(-gapW)}">${fmtH(uw)}</div>
+        </div>
+      </div>
+      <div class="rival-week-bars">${bars}</div>
+      <div style="font-size:8px;color:${gcol(gapW)};margin-top:6px;text-align:right;letter-spacing:0.06em">${gapStr(gapW)} this week</div>
+    </div>
+    <div class="rival-streak-card">
+      <div class="rival-section-label">STUDY STREAK</div>
+      <div class="rival-streak-row">
+        <span class="rival-streak-num">${streak}</span>
+        <span class="rival-streak-label">days</span>
+      </div>
+      <div class="rival-streak-dots">${dots}</div>
+    </div>`;
+}
+function openRivalPage(){
+  if(document.getElementById('rivalPage'))return;
+  const el=document.createElement('div');el.id='rivalPage';el.className='rival-page';
+  el.innerHTML=`<div class="rival-page-inner">
+    <div class="rival-page-header"><button class="rival-back" onclick="closeRivalPage()">← Back</button></div>
+    <div class="rival-page-name">影</div>
+    <div class="rival-page-subtitle">Shadow · Rival</div>
+    <div id="rivalPageContent">${renderRivalPageContent()}</div>
+  </div>`;
+  document.body.appendChild(el);
+  clearInterval(window._rivalInterval);
+  window._rivalInterval=setInterval(()=>{const c=document.getElementById('rivalPageContent');if(c)c.innerHTML=renderRivalPageContent();else clearInterval(window._rivalInterval);},60000);
+}
+function closeRivalPage(){
+  document.getElementById('rivalPage')?.remove();
+  clearInterval(window._rivalInterval);
+}
+
+/* ═══════════════════════════════════
    RENDERERS
    ═══════════════════════════════════ */
 function renderHome(){
@@ -2226,7 +2469,8 @@ function renderHome(){
     </div>
   </div>`;
 
-  let html=streakRow+examCard+timerWidget+focusCard+planCard;
+  const rivalTeaser=renderRivalTeaser();
+  let html=streakRow+rivalTeaser+examCard+timerWidget+focusCard+planCard;
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
