@@ -301,19 +301,25 @@ body::after {
 .plan-gen-btn { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: var(--gold-glow); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
 .plan-gen-btn:active { opacity: 0.7; }
 .plan-gen-btn:disabled { opacity: 0.4; cursor: default; }
-.plan-priorities { margin-bottom: 12px; max-height: 96px; overflow-y: auto; }
-.plan-priority { font-size: 11px; color: var(--text); line-height: 1.5; padding: 1px 0; }
-.plan-priority strong { color: var(--gold); font-weight: 700; }
-.plan-divider { height: 1px; background: var(--border); margin: 10px 0; }
-.plan-blocks { display: flex; flex-direction: column; gap: 1px; max-height: 320px; overflow-y: auto; }
-.plan-block { display: grid; grid-template-columns: 88px 1fr auto; align-items: center; gap: 8px; padding: 5px 6px; border-bottom: 1px solid rgba(224,208,168,0.04); border-left: 2px solid transparent; border-radius: 0 3px 3px 0; }
-.plan-block.deep    { border-left-color: var(--gold); background: rgba(224,208,168,0.03); }
-.plan-block.medium  { border-left-color: rgba(224,208,168,0.35); }
-.plan-block.light   { border-left-color: rgba(224,208,168,0.12); }
-.plan-block.movement{ border-left-color: #4a9a6a; background: rgba(74,154,106,0.03); }
-.plan-block:last-child { border-bottom: none; }
-.plan-block-time { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
-.plan-block-activity { font-size: 11px; color: var(--text); line-height: 1.3; }
+.plan-generating { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 11px; padding: 8px 0; }
+.plan-gen-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: blink 1s ease infinite; }
+.plan-gen-dot:nth-child(2) { animation-delay: 0.2s; }
+.plan-gen-dot:nth-child(3) { animation-delay: 0.4s; }
+/* Daily recap */
+.recap-card { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.recap-text { font-size: 12px; color: var(--text); line-height: 1.65; letter-spacing: 0.01em; }
+.recap-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.recap-stat { display: flex; flex-direction: column; gap: 2px; }
+.recap-stat-num { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--gold); }
+.recap-stat-label { font-size: 7px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
+.recap-stat-divider { width: 1px; background: var(--border); align-self: stretch; }
+/* Study log bars */
+.study-bars-wrap { padding: 6px 0 20px; }
+.study-bars-label { font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+.study-bars { display: flex; gap: 3px; align-items: flex-end; height: 48px; }
+.study-bar-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+.study-bar { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.4s ease; min-height: 2px; }
+.study-bar-day { font-size: 6.5px; color: var(--text-faint); letter-spacing: 0.04em; white-space: nowrap; }
 .plan-energy { font-size: 7px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
 .plan-energy.deep     { background: rgba(224,208,168,0.12); color: var(--gold); }
 .plan-energy.medium   { background: rgba(224,208,168,0.06); color: var(--gold-dim); }
@@ -1376,6 +1382,52 @@ function saveTodayPlan(plan){
     if(k.startsWith('grind-plan-')&&k!==key)localStorage.removeItem(k);
   }
 }
+// ── Daily Recap ──
+function getTodayRecap(){
+  try{
+    const key='grind-recap-'+new Date().toISOString().split('T')[0];
+    const raw=localStorage.getItem(key);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch(e){return null;}
+}
+function saveTodayRecap(recap){
+  const today=new Date().toISOString().split('T')[0];
+  const key='grind-recap-'+today;
+  localStorage.setItem(key,JSON.stringify({...recap,_savedAt:Date.now()}));
+  for(const k of Object.keys(localStorage)){
+    if(k.startsWith('grind-recap-')&&k!==key)localStorage.removeItem(k);
+  }
+}
+async function generateDailyRecap(){
+  if(window._recapGenerating)return;
+  window._recapGenerating=true;
+  renderHome();
+  try{
+    const todayStr=new Date().toISOString().split('T')[0];
+    const todaySessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(todayStr)&&s.done);
+    if(!todaySessions.length){showToast('No sessions today yet');window._recapGenerating=false;renderHome();return;}
+    const totalH=todaySessions.reduce((s,x)=>s+(new Date(x.done)-new Date(x.started))/3600000,0);
+    const flowC=todaySessions.filter(s=>s.quality==='Flow').length;
+    const grindC=todaySessions.filter(s=>s.quality==='Grind').length;
+    const distractedC=todaySessions.filter(s=>s.quality==='Distracted').length;
+    const subjects=[...new Set(todaySessions.map(s=>s.subject||s.name).filter(Boolean))];
+    const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
+    const{status,hours:rh}=getRivalLiveStatus();
+    const rivalGap=totalH-rh;
+    const rivalStr=Math.abs(rivalGap)<0.05?'tied with 影':rivalGap>0?`${fmtH(rivalGap)} ahead of 影`:`${fmtH(Math.abs(rivalGap))} behind 影`;
+    const context=`STUDY TODAY: ${fmtH(totalH)} total, ${todaySessions.length} sessions
+SUBJECTS: ${subjects.join(', ')||'none'}
+QUALITY: ${flowC} Flow, ${grindC} Grind, ${distractedC} Distracted
+VS 影: ${rivalStr} (you: ${fmtH(totalH)}, 影: ${fmtH(rh)})`;
+    const system=`You are writing a brutally honest, short daily study recap for a medical student. 2-3 sentences MAX. No fluff, no generic motivation. Acknowledge what was good, call out what wasn't. Reference the actual data. Be direct like a coach, not a cheerleader. Don't start with "Today".`;
+    const text=await callClaude(system,context);
+    const recap={text:text.trim(),totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:todaySessions.length};
+    saveTodayRecap(recap);
+    showToast('Recap ready');
+  }catch(e){showToast('Recap failed: '+e.message,3000);}
+  finally{window._recapGenerating=false;renderHome();}
+}
 async function callClaude(system,userMsg){
   const r=await fetch('/api/claude',{
     method:'POST',
@@ -2108,11 +2160,12 @@ async function refresh(force=false){
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
       await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick)]);
       if(isFirst)_setLoad(100);
-      // If no local plan, try pulling from Notion
-      if(!getTodayPlan()){
+      // Auto-generate recap if: past 6pm, sessions exist today, no recap yet
+      if(!getTodayRecap()&&!window._recapGenerating){
         const todayStr=new Date().toISOString().split('T')[0];
-        const notionPlan=await loadTodayPlanFromNotion(todayStr);
-        if(notionPlan)saveTodayPlan(notionPlan);
+        const hour=new Date().getHours();
+        const hasSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
+        if(hasSessions&&hour>=18){generateDailyRecap();}
       }
     }
     _markTabLoaded('home');renderHome();
@@ -2764,51 +2817,47 @@ function renderHome(){
     </div>
   </div>`;
 
-  // Day plan card
-  const todayPlan=getTodayPlan();
+  // Daily recap card
+  const todayRecap=getTodayRecap();
+  const fmtHr=h=>{if(!h||h<0.05)return'0h';const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
   let planCard;
-  if(window._planGenerating){
-    planCard=`<div class="plan-card">
-      <div class="plan-card-top"><div class="plan-card-label">Today's Plan</div></div>
+  if(window._recapGenerating){
+    planCard=`<div class="recap-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
+      </div>
       <div class="plan-generating">
         <div class="plan-gen-dot"></div><div class="plan-gen-dot"></div><div class="plan-gen-dot"></div>
-        <span>Claude is planning your day…</span>
+        <span style="font-size:11px;color:var(--text-dim)">Claude is writing your recap…</span>
       </div>
     </div>`;
-  } else if(todayPlan){
-    const prioHTML=todayPlan.priorities.map((p,i)=>{
-      const [bold,rest]=p.split(' — ');
-      return `<div class="plan-priority">${i+1}. <strong>${bold}</strong>${rest?' — '+rest:''}</div>`;
-    }).join('');
-    const blockHTML=todayPlan.schedule.map(b=>{
-      const eClass=b.energy==='Deep'?'deep':b.energy==='Medium'?'medium':b.energy==='Light'?'light':b.energy==='Movement'?'movement':'none';
-      return `<div class="plan-block ${eClass}">
-        <div class="plan-block-time">${b.time}</div>
-        <div class="plan-block-activity">${b.activity}</div>
-        <div class="plan-energy ${eClass}">${eClass!=='none'?b.energy:''}</div>
-      </div>`;
-    }).join('');
-    const planAge=todayPlan._savedAt?Math.floor((Date.now()-todayPlan._savedAt)/60000):null;
-    const planTimeStr=todayPlan._savedAt?new Date(todayPlan._savedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
-    const planStale=planAge!==null&&planAge>180;
-    planCard=`<div class="plan-card">
-      <div class="plan-card-top">
-        <div class="plan-card-label">Today's Plan${planTimeStr?` <span style="font-weight:400;opacity:0.5;font-size:7px;letter-spacing:0.1em">${planStale?'⚠ ':''} ${planTimeStr}</span>`:''}
-        </div>
-        <button class="plan-gen-btn" onclick="generateDayPlan()">↺ Regenerate</button>
+  } else if(todayRecap){
+    const rivalCol=todayRecap.rivalGap>0?'var(--gold)':todayRecap.rivalGap<0?'#8B8B9B':'var(--text-dim)';
+    const rivalSymbol=todayRecap.rivalGap>0?'↑':todayRecap.rivalGap<0?'↓':'=';
+    planCard=`<div class="recap-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
+        <button class="plan-gen-btn" onclick="generateDailyRecap()">↺</button>
       </div>
-      ${planStale?`<div style="font-size:9px;color:var(--gold-dim);margin-bottom:8px;letter-spacing:0.04em">Plan is ${Math.floor(planAge/60)}h old — consider regenerating</div>`:''}
-      <div class="plan-priorities">${prioHTML}</div>
-      <div class="plan-divider"></div>
-      <div class="plan-blocks">${blockHTML}</div>
+      <div class="recap-text">${todayRecap.text}</div>
+      <div class="recap-stats">
+        <div class="recap-stat"><div class="recap-stat-num">${fmtHr(todayRecap.totalH)}</div><div class="recap-stat-label">Studied</div></div>
+        <div class="recap-stat-divider"></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:var(--gold)">${todayRecap.flowC}</div><div class="recap-stat-label">Flow</div></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(224,208,168,0.45)">${todayRecap.grindC}</div><div class="recap-stat-label">Grind</div></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(180,90,70,0.8)">${todayRecap.distractedC}</div><div class="recap-stat-label">Dist.</div></div>
+        <div class="recap-stat-divider"></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:${rivalCol}">${rivalSymbol} ${fmtHr(Math.abs(todayRecap.rivalGap))}</div><div class="recap-stat-label">vs 影</div></div>
+      </div>
     </div>`;
   } else {
-    planCard=`<div class="plan-card">
-      <div class="plan-card-top">
-        <div class="plan-card-label">Today's Plan</div>
-        <button class="plan-gen-btn" onclick="generateDayPlan()">✦ Plan My Day</button>
+    const hasSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
+    planCard=`<div class="recap-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
+        ${hasSessions?`<button class="plan-gen-btn" onclick="generateDailyRecap()">✦ Generate</button>`:''}
       </div>
-      <div style="font-size:11px;color:var(--text-dim);padding:4px 0">No plan yet — tap to generate a time-blocked schedule from now.</div>
+      <div style="font-size:11px;color:var(--text-dim);padding:2px 0">${hasSessions?'Tap to generate today\'s recap':'Study something first'}</div>
     </div>`;
   }
 
@@ -3618,6 +3667,50 @@ function renderStudyLog(){
       <button class="pomo-screen-stop" onclick="stopSession()">stop</button>
       ${days.length?'<div class="pomo-log-divider"></div>':''}
     </div>`;
+  }
+
+  // 14-day study bars
+  {
+    const BAR_DAYS=14;
+    const today2=new Date();today2.setHours(0,0,0,0);
+    const barData=[];
+    let maxH=0;
+    for(let i=BAR_DAYS-1;i>=0;i--){
+      const d=new Date(today2);d.setDate(d.getDate()-i);
+      const ds=d.toISOString().split('T')[0];
+      const daySess=done.filter(s=>s.started?.startsWith(ds)&&s.done);
+      const flowH=daySess.filter(s=>s.quality==='Flow').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+      const grindH=daySess.filter(s=>s.quality==='Grind').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+      const otherH=daySess.filter(s=>!s.quality||s.quality==='Distracted').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+      const total=flowH+grindH+otherH;
+      if(total>maxH)maxH=total;
+      const dayLabel=i===0?'T':i===1?'Y':d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,1);
+      barData.push({ds,flowH,grindH,otherH,total,dayLabel,isToday:i===0});
+    }
+    const scale=maxH>0?44/maxH:0;
+    const barsHTML=barData.map(b=>{
+      const fH=Math.max(0,Math.round(b.flowH*scale));
+      const gH=Math.max(0,Math.round(b.grindH*scale));
+      const oH=Math.max(0,Math.round(b.otherH*scale));
+      const totalPx=fH+gH+oH;
+      const barContent=totalPx>0
+        ?`<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:${totalPx}px;border-radius:2px 2px 0 0;overflow:hidden">
+            ${oH>0?`<div style="height:${oH}px;background:rgba(180,90,70,0.5)"></div>`:''}
+            ${gH>0?`<div style="height:${gH}px;background:rgba(224,208,168,0.28)"></div>`:''}
+            ${fH>0?`<div style="height:${fH}px;background:rgba(224,208,168,0.75)"></div>`:''}
+          </div>`
+        :`<div style="width:100%;height:2px;background:rgba(255,255,255,0.05);border-radius:1px"></div>`;
+      return`<div class="study-bar-col" style="${b.isToday?'opacity:1':'opacity:0.65'}">
+        <div style="height:44px;display:flex;align-items:flex-end;width:100%">${barContent}</div>
+        <div class="study-bar-day" style="${b.isToday?'color:var(--gold-dim)':''}">${b.dayLabel}</div>
+      </div>`;
+    }).join('');
+    if(maxH>0||done.length){
+      html+=`<div class="study-bars-wrap">
+        <div class="study-bars-label">Last 14 days</div>
+        <div class="study-bars">${barsHTML}</div>
+      </div>`;
+    }
   }
 
   // Focus heatmap
