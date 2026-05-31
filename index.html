@@ -780,6 +780,14 @@ body::after {
 .exam-action-btn:hover{background:rgba(224,208,168,0.14);border-color:rgba(224,208,168,0.45);}
 .exam-action-btn.red{border-color:rgba(192,64,64,0.3);color:#c04040;background:rgba(192,64,64,0.06);}
 .exam-action-btn.red:hover{background:rgba(192,64,64,0.14);}
+.exam-prep-row{display:flex;align-items:center;gap:8px;margin-top:7px;padding-top:7px;border-top:1px solid var(--border);}
+.exam-prep-stat{display:flex;flex-direction:column;gap:1px;}
+.exam-prep-num{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);}
+.exam-prep-label{font-size:7px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);}
+.exam-prep-divider{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+.exam-prep-warn{font-size:7px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#8c2e20;background:rgba(140,46,32,0.12);border:1px solid rgba(140,46,32,0.3);border-radius:2px;padding:2px 5px;margin-left:auto;}
+.exam-past-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:3px;}
+.next-exam-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:4px;}
 </style>
 </head>
 <body>
@@ -2768,11 +2776,15 @@ function renderHome(){
   let examCard=`<div class="next-exam-card"><div class="next-exam-label">Next Exam</div>`;
   if(nextExam){
     const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
+    const{total:nxTotal,recent:nxRecent}=getExamStudyHours(nextExam);
+    const fmtHx=h=>{if(h<0.05)return'0h';const hr=Math.floor(h);const mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
+    const hoursLine=nextExam.subjects.length?`<div class="next-exam-hours">${fmtHx(nxTotal)} studied · ${fmtHx(nxRecent)} this week</div>`:'';
     examCard+=`<div class="next-exam-top">
         <div>
           <div class="next-exam-name">${nextExam.name}</div>
           <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${nextExam.date||'no date'}</div>
           <div class="next-exam-tags">${tags}</div>
+          ${hoursLine}
         </div>
         <div class="countdown-col">
           <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
@@ -3708,6 +3720,19 @@ async function unarchiveExam(examId){
   try{await nPatch(examId,{Archive:{checkbox:false}});await loadExams();renderExams();}catch(e){alert('Error: '+e.message);}
 }
 
+function getExamStudyHours(exam){
+  const subs=(exam.subjects||[]).map(s=>{
+    return [...SUBJECTS].sort((a,b)=>b.length-a.length)
+      .find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()))||s;
+  });
+  const done=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&subs.includes(s.subject));
+  const total=done.reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);cutoff.setHours(0,0,0,0);
+  const recent=done.filter(s=>new Date(s.started)>=cutoff)
+    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+  return{total,recent};
+}
+
 function renderExams(){
   const el=document.getElementById('tab-exams');
   const today=new Date(); today.setHours(0,0,0,0);
@@ -3737,6 +3762,8 @@ function renderExams(){
     const days=countdown(exam.date);
     const gradeNum=exam.grade?parseInt(exam.grade):null;
     const gradeClass=gradeNum?GRADE_COLORS[gradeNum]??'':'';
+    const{total:prepTotal,recent:prepRecent}=getExamStudyHours(exam);
+    const fmtH=h=>{if(h<0.05)return'0h';const hrs=Math.floor(h);const mins=Math.round((h-hrs)*60);return hrs>0?(mins>0?`${hrs}h ${mins}m`:`${hrs}h`):(mins+'m');};
 
     const leftCol=isUpcoming
       ?`<div class="exam-countdown">
@@ -3753,6 +3780,25 @@ function renderExams(){
       ...exam.subjects.map(s=>`<span class="exam-tag subj-tag">${s}</span>`)
     ].join('');
 
+    // Prep row for upcoming exams
+    const isNegligent=days!==null&&days<=5&&prepTotal<5||days!==null&&days<=10&&prepTotal<2;
+    const prepRow=isUpcoming&&exam.subjects.length?`<div class="exam-prep-row">
+      <div class="exam-prep-stat">
+        <div class="exam-prep-num">${fmtH(prepTotal)}</div>
+        <div class="exam-prep-label">Total</div>
+      </div>
+      <div class="exam-prep-divider"></div>
+      <div class="exam-prep-stat">
+        <div class="exam-prep-num">${fmtH(prepRecent)}</div>
+        <div class="exam-prep-label">This week</div>
+      </div>
+      ${isNegligent?`<div class="exam-prep-warn">LOW PREP</div>`:''}
+    </div>`:'';
+
+    // Hours logged on past exam cards
+    const pastHours=!isUpcoming&&exam.subjects.length&&prepTotal>0
+      ?`<div class="exam-past-hours">${fmtH(prepTotal)} studied</div>`:'';
+
     const actions=isUpcoming
       ?`<div style="display:flex;gap:6px;margin-top:8px">
           <button class="exam-action-btn" onclick="openExamGradeModal('${exam.id}')">＋ Grade</button>
@@ -3768,15 +3814,26 @@ function renderExams(){
         <div class="exam-name">${exam.name||'Untitled'}</div>
         <div class="exam-date">${fmtDate(exam.date)}</div>
         ${tagsHTML?`<div class="exam-tags">${tagsHTML}</div>`:''}
+        ${pastHours}
+        ${prepRow}
         ${actions}
       </div>
     </div>`;
   }
 
+  // Sort upcoming by urgency: (hours logged) / (days remaining + 1) ascending — least prepared first
+  const upcomingSorted=[...upcoming].sort((a,b)=>{
+    const da=countdown(a.date)??999,db=countdown(b.date)??999;
+    const ha=getExamStudyHours(a).total,hb=getExamStudyHours(b).total;
+    const scoreA=ha/(da+1),scoreB=hb/(db+1);
+    if(Math.abs(scoreA-scoreB)>0.05)return scoreA-scoreB;
+    return da-db;
+  });
+
   let html='';
-  if(upcoming.length){
+  if(upcomingSorted.length){
     html+=`<div class="exam-section-label">Upcoming</div>`;
-    html+=upcoming.map(examCard).join('');
+    html+=upcomingSorted.map(examCard).join('');
   }
   if(past.length){
     html+=`<div class="exam-section-label">Past</div>`;
