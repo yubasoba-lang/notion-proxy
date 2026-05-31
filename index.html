@@ -376,6 +376,23 @@ body::after {
 .session-active { border-color: var(--gold-dim); }
 .session-active .session-dur { color: var(--gold); animation: pulse-text 2s ease infinite; }
 @keyframes pulse-text { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.session-quality { font-size: 7px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
+.session-quality.flow { background: rgba(224,208,168,0.12); color: var(--gold); }
+.session-quality.grind { background: rgba(200,130,60,0.12); color: #c8824a; }
+.session-quality.distracted { background: rgba(180,60,60,0.1); color: #c06060; }
+/* Quality picker overlay */
+.quality-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; display: flex; align-items: flex-end; justify-content: center; animation: fade-in 0.15s ease; }
+.quality-sheet { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 16px 16px 0 0; padding: 20px 20px 36px; width: 100%; max-width: 420px; }
+.quality-title { font-size: 8px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; text-align: center; }
+.quality-btns { display: flex; gap: 10px; }
+.quality-btn { flex: 1; padding: 14px 0; border-radius: 8px; border: 1px solid var(--border-hi); background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; transition: all 0.15s; }
+.quality-btn.flow { color: var(--gold); }
+.quality-btn.flow:active, .quality-btn.flow.picked { background: rgba(224,208,168,0.1); border-color: var(--gold-dim); }
+.quality-btn.grind { color: #c8824a; }
+.quality-btn.grind:active, .quality-btn.grind.picked { background: rgba(200,130,60,0.1); border-color: #6a4020; }
+.quality-btn.distracted { color: #c06060; }
+.quality-btn.distracted:active, .quality-btn.distracted.picked { background: rgba(180,60,60,0.08); border-color: #6a2020; }
+.quality-skip { display: block; text-align: center; margin-top: 14px; font-size: 9px; color: var(--text-faint); letter-spacing: 0.1em; cursor: pointer; padding: 4px; }
 
 /* Exam cards */
 .exam-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 18px 0 8px; padding-left: 2px; }
@@ -424,12 +441,13 @@ body::after {
 .next-exam-label { font-size: 7px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
 .next-exam-name { font-size: 13px; font-weight: 500; color: var(--text); }
 .next-exam-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
-.countdown-wrap { display: flex; gap: 6px; align-items: flex-end; flex-shrink: 0; margin-left: 12px; }
+.countdown-wrap { display: flex; gap: 6px; align-items: flex-end; }
+.countdown-col { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; margin-left: 12px; }
 .countdown-unit { display: flex; flex-direction: column; align-items: center; }
 .countdown-num { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--gold); line-height: 1; min-width: 26px; text-align: center; }
 .countdown-lbl { font-size: 6px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
 .countdown-sep { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--text-faint); line-height: 1; padding-bottom: 2px; }
-.awake-row { display: flex; align-items: baseline; gap: 8px; padding-top: 7px; margin-top: 2px; border-top: 1px solid rgba(224,208,168,0.06); }
+.awake-row { display: flex; align-items: baseline; gap: 6px; justify-content: flex-end; }
 .awake-val { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #d06848; letter-spacing: 0.04em; line-height: 1; }
 .awake-unit { font-size: 8px; font-weight: 600; color: #9a4832; }
 .awake-sep { color: var(--text-faint); font-size: 10px; }
@@ -1093,7 +1111,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -1185,6 +1203,55 @@ function playChime(freqs=[523,659],vol=0.1,dur=0.5){
 function toggleSound(){soundEnabled=!soundEnabled;localStorage.setItem('grind-sound',soundEnabled?'on':'off');renderHome();}
 
 // ── Day Plan ──
+const MORNING_PAGES_ID='21463a0b-4e7c-81bc-a7db-fdef5af58c0c';
+async function saveTodayPlanToNotion(plan,todayStr){
+  try{
+    // Format blocks for human-readable Notion page
+    const priorityBlocks=plan.priorities.map(p=>({object:'block',type:'bulleted_list_item',bulleted_list_item:{rich_text:[{type:'text',text:{content:p}}]}}));
+    const scheduleBlocks=plan.schedule.map(b=>({object:'block',type:'paragraph',paragraph:{rich_text:[
+      {type:'text',text:{content:`${b.time}  `},annotations:{bold:false,color:'gray'}},
+      {type:'text',text:{content:b.activity},annotations:{bold:true}},
+      {type:'text',text:{content:b.energy&&b.energy!=='—'?` · ${b.energy}`:''}}
+    ]}}));
+    const jsonStr=JSON.stringify(plan);
+    const children=[
+      {object:'block',type:'code',code:{rich_text:[{type:'text',text:{content:jsonStr.slice(0,1990)}}],language:'json'}},
+      {object:'block',type:'heading_3',heading_3:{rich_text:[{type:'text',text:{content:'Priorities'}}]}},
+      ...priorityBlocks,
+      {object:'block',type:'heading_3',heading_3:{rich_text:[{type:'text',text:{content:'Schedule'}}]}},
+      ...scheduleBlocks,
+    ];
+    const page=await nCreate(DB.entries,{
+      Name:{title:[{text:{content:'Morning Plan'}}]},
+      Date:{date:{start:todayStr}},
+      Journal:{relation:[{id:MORNING_PAGES_ID}]},
+    });
+    // Append blocks to the newly created page
+    await nFetch(`/blocks/${page.id}/children`,'PATCH',{children});
+    state.todayPlanEntryId=page.id;
+  }catch(e){console.warn('Plan Notion save failed:',e.message);}
+}
+async function loadTodayPlanFromNotion(todayStr){
+  try{
+    const results=await nQuery(DB.entries,{and:[
+      {property:'Date',date:{equals:todayStr}},
+      {property:'Journal',relation:{contains:MORNING_PAGES_ID}},
+    ]},[{timestamp:'created_time',direction:'descending'}]);
+    if(!results.length)return null;
+    const page=results[0];
+    state.todayPlanEntryId=page.id;
+    // Fetch blocks to find the JSON code block
+    const blocksResp=await nFetch(`/blocks/${page.id}/children`,'GET');
+    const blocks=blocksResp.results||[];
+    const codeBlock=blocks.find(b=>b.type==='code');
+    if(!codeBlock)return null;
+    const jsonStr=codeBlock.code?.rich_text?.map(r=>r.plain_text||r.text?.content||'').join('');
+    if(!jsonStr)return null;
+    const plan=JSON.parse(jsonStr);
+    if(!plan||!Array.isArray(plan.schedule)||!Array.isArray(plan.priorities))return null;
+    return plan;
+  }catch(e){console.warn('Plan Notion load failed:',e.message);return null;}
+}
 function getTodayPlan(){
   try{
     const key='grind-plan-'+new Date().toISOString().split('T')[0];
@@ -1334,6 +1401,7 @@ Be specific — name the subject in each study block. Make the schedule realisti
     const cleaned=raw.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();
     const plan=JSON.parse(cleaned);
     saveTodayPlan(plan);
+    saveTodayPlanToNotion(plan,todayStr);// fire-and-forget, non-blocking
     showToast('Plan ready ✓');
   }catch(e){
     showToast('Plan failed: '+e.message,3000);
@@ -1398,7 +1466,7 @@ const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalX
 const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total XP'])??0};};
 const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);const questId=g.num(q['Quest ID']);const isQuestRaw=g.formula(q['Is Quest']);const isQuest=isQuestRaw===1||isQuestRaw===true||(typeof isQuestRaw==='string'&&isQuestRaw!=='');return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),questId,isQuest,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
-const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete)};};
+const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null};};
 const toExam=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive)};};
 // Muscles Hit uses different delt names from Primary Muscle — normalise on load
 const MUSCLES_HIT_MAP={'Pecs':'Pectoralis','Lats':'Latissimus Dorsi','Quads':'Quadriceps','Front Delts':'Anterior Deltoid','Anterior Delts':'Anterior Deltoid','Side Delts':'Lateral Deltoid','Lateral Delts':'Lateral Deltoid','Rear Delts':'Posterior Deltoid','Posterior Delts':'Posterior Deltoid'};
@@ -1554,6 +1622,7 @@ function getAwakeCountdown(dateStr){
     h:Math.floor(awakeMs/3600000),
     m:Math.floor((awakeMs%3600000)/60000),
     s:Math.floor((awakeMs%60000)/1000),
+    cs:Math.floor((awakeMs%1000)/10),
     nights
   };
 }
@@ -1577,7 +1646,7 @@ function renderExamCountdownDisplay(){
   if(aw){
     const a=getAwakeCountdown(exam.date);
     if(a){
-      aw.innerHTML=`<div class="awake-row"><span class="awake-val">${a.h}<span class="awake-unit">h</span></span><span class="awake-sep">·</span><span class="awake-nights">${a.nights}<span class="awake-unit"> nights</span></span></div>`;
+      aw.innerHTML=`<div class="awake-row"><span class="awake-val">${a.h}<span class="awake-unit">h</span> ${String(a.m).padStart(2,'0')}<span class="awake-unit">m</span> ${String(a.s).padStart(2,'0')}<span class="awake-unit">s</span> <span style="opacity:0.55;font-size:11px">${String(a.cs).padStart(2,'0')}</span></span><span class="awake-sep">·</span><span class="awake-nights">${a.nights}<span class="awake-unit"> nights</span></span></div>`;
     }else{
       aw.innerHTML='';
     }
@@ -1872,6 +1941,7 @@ async function stopSession(){
       }catch(_){}  // non-critical — don't fail the whole stop if log linking fails
 
       showToast(`Stopped · ${hStr} · task logged`,3000);
+      showQualityPicker(wasActive.id);
     }catch(e){showToast('Stopped · task failed: '+e.message);}
   } else {
     showToast('Break skipped');
@@ -1882,6 +1952,26 @@ async function stopSession(){
   _sessionBusy=false;
 }
 
+function showQualityPicker(sessionId){
+  const existing=document.getElementById('qualityOverlay');if(existing)existing.remove();
+  const overlay=document.createElement('div');overlay.id='qualityOverlay';overlay.className='quality-overlay';
+  overlay.innerHTML=`<div class="quality-sheet">
+    <div class="quality-title">How was that session?</div>
+    <div class="quality-btns">
+      <button class="quality-btn flow" onclick="pickQuality('${sessionId}','Flow',this)">Flow</button>
+      <button class="quality-btn grind" onclick="pickQuality('${sessionId}','Grind',this)">Grind</button>
+      <button class="quality-btn distracted" onclick="pickQuality('${sessionId}','Distracted',this)">Distracted</button>
+    </div>
+    <span class="quality-skip" onclick="document.getElementById('qualityOverlay')?.remove()">Skip</span>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+}
+async function pickQuality(sessionId,quality,btn){
+  btn.classList.add('picked');
+  try{await nPatch(sessionId,{Quality:{select:{name:quality}}});}catch(_){}
+  setTimeout(()=>{document.getElementById('qualityOverlay')?.remove();},350);
+}
 async function refresh(force=false){
   setError(null);setSyncBusy(true);
   const skip=!force&&_tabFresh(currentTab);
@@ -1892,6 +1982,12 @@ async function refresh(force=false){
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
       await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick)]);
       if(isFirst)_setLoad(100);
+      // If no local plan, try pulling from Notion
+      if(!getTodayPlan()){
+        const todayStr=new Date().toISOString().split('T')[0];
+        const notionPlan=await loadTodayPlanFromNotion(todayStr);
+        if(notionPlan)saveTodayPlan(notionPlan);
+      }
     }
     _markTabLoaded('home');renderHome();
   }
@@ -2085,9 +2181,11 @@ function renderHome(){
           <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${nextExam.date||'no date'}</div>
           <div class="next-exam-tags">${tags}</div>
         </div>
-        <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
-      </div>
-      <div id="awake-countdown-display"></div>`;
+        <div class="countdown-col">
+          <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
+          <div id="awake-countdown-display"></div>
+        </div>
+      </div>`;
   } else {
     examCard+=`<div style="color:var(--text-dim);font-size:11px;padding:4px 0">No upcoming exams</div>`;
   }
@@ -2143,7 +2241,7 @@ function renderHome(){
   }
   clearInterval(examCountdownInterval);
   renderExamCountdownDisplay();
-  examCountdownInterval=setInterval(renderExamCountdownDisplay,1000);
+  examCountdownInterval=setInterval(renderExamCountdownDisplay,100);
 }
 
 const DIFF_ORDER=['Maintenance','Normal','Heavy','Daily','Important'];
@@ -2888,12 +2986,14 @@ function renderStudyLog(){
       </div>`;
     arr.forEach(s=>{
       const dur=msDur(s);
+      const qCls=s.quality?(s.quality.toLowerCase()):'';
       html+=`<div class="session-card">
         <div class="session-dur">${dur>0?formatDuration(dur):'—'}</div>
         <div class="session-body">
           <div class="session-subject">${s.subject||s.name||'Study'}</div>
           <div class="session-time">${fmtTime(s.started)}${s.done?' → '+fmtTime(s.done):''}</div>
         </div>
+        ${s.quality?`<span class="session-quality ${qCls}">${s.quality}</span>`:''}
       </div>`;
     });
     html+=`</div>`;
