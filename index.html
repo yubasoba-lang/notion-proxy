@@ -1199,7 +1199,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -1383,21 +1383,74 @@ function saveTodayPlan(plan){
   }
 }
 // ── Daily Recap ──
-function getTodayRecap(){
+function getLatestRecap(){
+  // Check localStorage cache first, then fall back to state loaded from Notion
   try{
-    const key='grind-recap-'+new Date().toISOString().split('T')[0];
+    const today=new Date().toISOString().split('T')[0];
+    const key='grind-recap-'+today;
     const raw=localStorage.getItem(key);
-    if(!raw)return null;
-    return JSON.parse(raw);
-  }catch(e){return null;}
+    if(raw){const p=JSON.parse(raw);if(p?.text)return p;}
+  }catch(e){}
+  return state.latestRecap||null;
 }
-function saveTodayRecap(recap){
-  const today=new Date().toISOString().split('T')[0];
-  const key='grind-recap-'+today;
-  localStorage.setItem(key,JSON.stringify({...recap,_savedAt:Date.now()}));
+function cacheRecapLocally(recap){
+  const date=recap.date||new Date().toISOString().split('T')[0];
+  const key='grind-recap-'+date;
+  localStorage.setItem(key,JSON.stringify(recap));
+  // prune old keys
   for(const k of Object.keys(localStorage)){
     if(k.startsWith('grind-recap-')&&k!==key)localStorage.removeItem(k);
   }
+}
+async function loadLatestRecapFromNotion(){
+  try{
+    const pages=await nQuery(DB.entries,
+      {property:'Name',title:{contains:'Daily Recap'}},
+      [{property:'Date',direction:'descending'}]
+    );
+    if(!pages.length)return;
+    const page=pages[0];
+    const date=page.properties?.Date?.date?.start||null;
+    const blocksResp=await nFetch(`/blocks/${page.id}/children`,'GET');
+    const blocks=blocksResp.results||[];
+    const codeBlock=blocks.find(b=>b.type==='code');
+    const paraBlock=blocks.find(b=>b.type==='paragraph');
+    if(!codeBlock)return;
+    const jsonStr=codeBlock.code?.rich_text?.map(r=>r.plain_text||r.text?.content||'').join('');
+    const data=JSON.parse(jsonStr);
+    const text=paraBlock?.paragraph?.rich_text?.map(r=>r.plain_text||r.text?.content||'').join('')||data.text||'';
+    state.latestRecap={...data,text,date};
+    cacheRecapLocally(state.latestRecap);
+  }catch(e){console.warn('Recap load failed',e);}
+}
+async function getRecapJournalId(){
+  // Look in already-loaded journals first
+  let journal=(state.journals||[]).find(j=>j.name.toLowerCase().includes('recap'));
+  if(!journal){
+    // Query fresh
+    const pages=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});
+    const match=pages.find(p=>(p.properties.Name?.title?.[0]?.plain_text||'').toLowerCase().includes('recap'));
+    if(match)journal={id:match.id};
+  }
+  return journal?.id||null;
+}
+async function saveRecapToNotion(recap,todayStr){
+  try{
+    const name=`Daily Recap · ${todayStr}`;
+    const journalId=await getRecapJournalId();
+    const props={
+      Name:{title:[{text:{content:name}}]},
+      Date:{date:{start:todayStr}},
+      ...(journalId?{Journal:{relation:[{id:journalId}]}}:{}),
+    };
+    const page=await nCreate(DB.entries,props);
+    const jsonStr=JSON.stringify(recap);
+    const chunks=[];for(let i=0;i<jsonStr.length;i+=1990)chunks.push(jsonStr.slice(i,i+1990));
+    await nFetch(`/blocks/${page.id}/children`,'PATCH',{children:[
+      {object:'block',type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:recap.text}}]}},
+      {object:'block',type:'code',code:{rich_text:chunks.map(c=>({type:'text',text:{content:c}})),language:'json'}},
+    ]});
+  }catch(e){console.warn('Recap Notion save failed',e);}
 }
 async function generateDailyRecap(){
   if(window._recapGenerating)return;
@@ -1413,18 +1466,22 @@ async function generateDailyRecap(){
     const distractedC=todaySessions.filter(s=>s.quality==='Distracted').length;
     const subjects=[...new Set(todaySessions.map(s=>s.subject||s.name).filter(Boolean))];
     const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
-    const{status,hours:rh}=getRivalLiveStatus();
+    const{hours:rh}=getRivalLiveStatus();
     const rivalGap=totalH-rh;
     const rivalStr=Math.abs(rivalGap)<0.05?'tied with 影':rivalGap>0?`${fmtH(rivalGap)} ahead of 影`:`${fmtH(Math.abs(rivalGap))} behind 影`;
-    const context=`STUDY TODAY: ${fmtH(totalH)} total, ${todaySessions.length} sessions
+    const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+    const context=`DATE: ${fmtDate(todayStr)}
+STUDY: ${fmtH(totalH)} total across ${todaySessions.length} sessions
 SUBJECTS: ${subjects.join(', ')||'none'}
 QUALITY: ${flowC} Flow, ${grindC} Grind, ${distractedC} Distracted
-VS 影: ${rivalStr} (you: ${fmtH(totalH)}, 影: ${fmtH(rh)})`;
-    const system=`You are writing a brutally honest, short daily study recap for a medical student. 2-3 sentences MAX. No fluff, no generic motivation. Acknowledge what was good, call out what wasn't. Reference the actual data. Be direct like a coach, not a cheerleader. Don't start with "Today".`;
+VS 影: ${rivalStr}`;
+    const system=`You are writing a brutally honest, short daily study recap for a medical student. 2-3 sentences MAX. No fluff, no generic motivation. Acknowledge what was good, call out what wasn't. Reference the actual numbers. Be direct like a coach, not a cheerleader. Don't start with "Today".`;
     const text=await callClaude(system,context);
-    const recap={text:text.trim(),totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:todaySessions.length};
-    saveTodayRecap(recap);
-    showToast('Recap ready');
+    const recap={text:text.trim(),date:todayStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:todaySessions.length};
+    state.latestRecap=recap;
+    cacheRecapLocally(recap);
+    saveRecapToNotion(recap,todayStr);// fire-and-forget
+    showToast('Recap saved');
   }catch(e){showToast('Recap failed: '+e.message,3000);}
   finally{window._recapGenerating=false;renderHome();}
 }
@@ -2160,13 +2217,14 @@ async function refresh(force=false){
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
       await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick)]);
       if(isFirst)_setLoad(100);
-      // Auto-generate recap if: past 6pm, sessions exist today, no recap yet
-      if(!getTodayRecap()&&!window._recapGenerating){
-        const todayStr=new Date().toISOString().split('T')[0];
-        const hour=new Date().getHours();
-        const hasSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
-        if(hasSessions&&hour>=18){generateDailyRecap();}
-      }
+      // Load latest recap from Notion (cross-device, persists across days)
+      await loadLatestRecapFromNotion();
+      // Auto-generate recap if: past 6pm, sessions exist today, no recap for today yet
+      const todayStr2=new Date().toISOString().split('T')[0];
+      const hour=new Date().getHours();
+      const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr2));
+      const recapIsToday=state.latestRecap?.date===todayStr2;
+      if(hasToday&&hour>=18&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
     }
     _markTabLoaded('home');renderHome();
   }
@@ -2818,8 +2876,15 @@ function renderHome(){
   </div>`;
 
   // Daily recap card
-  const todayRecap=getTodayRecap();
+  const latestRecap=getLatestRecap();
   const fmtHr=h=>{if(!h||h<0.05)return'0h';const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
+  const fmtRecapDate=d=>{
+    if(!d)return'';
+    const dt=new Date(d+'T00:00:00');const today2=new Date();today2.setHours(0,0,0,0);
+    const diff=Math.round((dt-today2)/86400000);
+    if(diff===0)return'Today';if(diff===-1)return'Yesterday';
+    return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  };
   let planCard;
   if(window._recapGenerating){
     planCard=`<div class="recap-card">
@@ -2831,23 +2896,29 @@ function renderHome(){
         <span style="font-size:11px;color:var(--text-dim)">Claude is writing your recap…</span>
       </div>
     </div>`;
-  } else if(todayRecap){
-    const rivalCol=todayRecap.rivalGap>0?'var(--gold)':todayRecap.rivalGap<0?'#8B8B9B':'var(--text-dim)';
-    const rivalSymbol=todayRecap.rivalGap>0?'↑':todayRecap.rivalGap<0?'↓':'=';
+  } else if(latestRecap){
+    const rivalCol=latestRecap.rivalGap>0?'var(--gold)':latestRecap.rivalGap<0?'#8B8B9B':'var(--text-dim)';
+    const rivalSymbol=latestRecap.rivalGap>0?'↑':latestRecap.rivalGap<0?'↓':'=';
+    const isToday=latestRecap.date===todayStr;
+    const dateLabel=fmtRecapDate(latestRecap.date);
     planCard=`<div class="recap-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
-        <button class="plan-gen-btn" onclick="generateDailyRecap()">↺</button>
+        <div>
+          <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
+          <div style="font-size:8px;color:var(--text-dim);margin-top:2px;letter-spacing:0.06em">${dateLabel}${latestRecap.date?` · ${new Date(latestRecap.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}`:''}</div>
+        </div>
+        <button class="plan-gen-btn" onclick="generateDailyRecap()" title="${isToday?'Regenerate':'Generate today\'s recap'}">${isToday?'↺':'✦ New'}</button>
       </div>
-      <div class="recap-text">${todayRecap.text}</div>
+      ${!isToday?`<div style="font-size:8px;color:var(--text-dim);margin-bottom:8px;font-style:italic">Showing ${dateLabel.toLowerCase()}'s recap — generate one for today after your sessions.</div>`:''}
+      <div class="recap-text">${latestRecap.text}</div>
       <div class="recap-stats">
-        <div class="recap-stat"><div class="recap-stat-num">${fmtHr(todayRecap.totalH)}</div><div class="recap-stat-label">Studied</div></div>
+        <div class="recap-stat"><div class="recap-stat-num">${fmtHr(latestRecap.totalH)}</div><div class="recap-stat-label">Studied</div></div>
         <div class="recap-stat-divider"></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:var(--gold)">${todayRecap.flowC}</div><div class="recap-stat-label">Flow</div></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(224,208,168,0.45)">${todayRecap.grindC}</div><div class="recap-stat-label">Grind</div></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(180,90,70,0.8)">${todayRecap.distractedC}</div><div class="recap-stat-label">Dist.</div></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:var(--gold)">${latestRecap.flowC}</div><div class="recap-stat-label">Flow</div></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(224,208,168,0.45)">${latestRecap.grindC}</div><div class="recap-stat-label">Grind</div></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(180,90,70,0.8)">${latestRecap.distractedC}</div><div class="recap-stat-label">Dist.</div></div>
         <div class="recap-stat-divider"></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:${rivalCol}">${rivalSymbol} ${fmtHr(Math.abs(todayRecap.rivalGap))}</div><div class="recap-stat-label">vs 影</div></div>
+        <div class="recap-stat"><div class="recap-stat-num" style="color:${rivalCol}">${rivalSymbol} ${fmtHr(Math.abs(latestRecap.rivalGap||0))}</div><div class="recap-stat-label">vs 影</div></div>
       </div>
     </div>`;
   } else {
