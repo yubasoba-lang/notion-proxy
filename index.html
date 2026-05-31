@@ -1318,8 +1318,10 @@ async function saveTodayPlanToNotion(plan,todayStr){
       {type:'text',text:{content:b.energy&&b.energy!=='—'?` · ${b.energy}`:''}}
     ]}}));
     const jsonStr=JSON.stringify(plan);
+    // Split JSON into ≤1990-char chunks across multiple rich_text items (Notion per-text limit)
+    const chunks=[];for(let i=0;i<jsonStr.length;i+=1990)chunks.push(jsonStr.slice(i,i+1990));
     const children=[
-      {object:'block',type:'code',code:{rich_text:[{type:'text',text:{content:jsonStr.slice(0,1990)}}],language:'json'}},
+      {object:'block',type:'code',code:{rich_text:chunks.map(c=>({type:'text',text:{content:c}})),language:'json'}},
       {object:'block',type:'heading_3',heading_3:{rich_text:[{type:'text',text:{content:'Priorities'}}]}},
       ...priorityBlocks,
       {object:'block',type:'heading_3',heading_3:{rich_text:[{type:'text',text:{content:'Schedule'}}]}},
