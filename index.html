@@ -2150,7 +2150,7 @@ const MUSCLE_CAT={
   'Pectoralis':'Push','Triceps':'Push','Anterior Deltoid':'Push','Lateral Deltoid':'Push',
   'Latissimus Dorsi':'Pull','Biceps':'Pull','Rhomboids':'Pull','Traps':'Pull','Posterior Deltoid':'Pull',
   'Quadriceps':'Legs','Hamstrings':'Legs','Glutes':'Legs','Calves':'Legs',
-  'Abs':'Core','Obliques':'Core','Lower Back':'Core','Forearms':'Arms',
+  'Abs':'Core','Obliques':'Core','Lower Back':'Core','Forearms':'Pull',
 };
 const CAT_ABBR={Push:'PSH',Pull:'PLL',Legs:'LEG',Core:'COR',Arms:'ARM',Full:'ALL'};
 function _rivalHash(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h;}
@@ -2414,24 +2414,19 @@ function renderRivalPageContent(){
     :trendDiff<0?`<span style="color:#6a9a6a">↓ closing ${fmtH(trendAbs)}</span>`
     :`<span style="color:#c07070">↑ widening ${fmtH(trendAbs)}</span>`;
   // Muscle XP card
-  const XP_CATS=['Push','Pull','Legs','Core','Arms'];
-  const catXP={};XP_CATS.forEach(c=>catXP[c]={userXP:0,rivalXP:0});
-  const uncategorized=[];
+  const XP_CATS=['Push','Pull','Legs','Core'];
+  const catXP={};XP_CATS.forEach(c=>catXP[c]={userXP:0,rivalXP:0,count:0});
   (state.bodyStats||[]).forEach(stat=>{
     const cat=stat.cat||MUSCLE_CAT[stat.name];
-    if(cat&&catXP[cat]){
-      catXP[cat].userXP+=stat.decayedXP||0;
-      catXP[cat].rivalXP+=(getRivalFor(stat)?.totalXP||0);
-    } else if(cat){
-      if(!catXP[cat])catXP[cat]={userXP:0,rivalXP:0};
-      catXP[cat].userXP+=stat.decayedXP||0;
-      catXP[cat].rivalXP+=(getRivalFor(stat)?.totalXP||0);
-    } else {
-      uncategorized.push(stat.name);
-    }
+    if(!cat)return;
+    if(!catXP[cat])catXP[cat]={userXP:0,rivalXP:0,count:0};
+    catXP[cat].userXP+=stat.decayedXP||0;
+    catXP[cat].rivalXP+=(getRivalFor(stat)?.totalXP||0);
+    catXP[cat].count++;
   });
-  const xpCatColors={Push:'#d8956a',Pull:'#6abcaa',Legs:'#9b7ac0',Core:'#c9a84c',Arms:'#c07090'};
-  const xpRows=XP_CATS.filter(c=>catXP[c]&&(catXP[c].userXP>0||catXP[c].rivalXP>0)).map(cat=>{
+  const xpCatColors={Push:'#d8956a',Pull:'#6abcaa',Legs:'#9b7ac0',Core:'#c9a84c'};
+  const activeCats=XP_CATS.filter(c=>catXP[c]?.count>0);
+  const xpRows=activeCats.map(cat=>{
     const{userXP,rivalXP}=catXP[cat];
     const total=Math.max(userXP+rivalXP,1);
     const uPct=(userXP/total*100).toFixed(0);
@@ -2502,7 +2497,7 @@ function renderRivalPageContent(){
     </div>
     <div class="rival-workout-card">
       <div class="rival-section-label">MUSCLE XP</div>
-      ${xpRows||'<div style="font-size:10px;color:var(--text-faint);padding:4px 0">Loading…</div>'}
+      ${xpRows||`<div style="font-size:10px;color:var(--text-faint);padding:4px 0">${(state.bodyStats||[]).length?'No XP data found':'Loading…'}</div>`}
     </div>`;
 }
 async function openRivalPage(){
@@ -2520,11 +2515,10 @@ async function openRivalPage(){
   if(!state.exercises?.length) loads.push(loadExercises());
   if(!state.bodyStats?.length) loads.push(loadBodyStats());
   if(!state.rivals?.length) loads.push(loadRivals());
-  if(loads.length){
-    await Promise.all(loads);
-    const c=document.getElementById('rivalPageContent');
-    if(c)c.innerHTML=renderRivalPageContent();
-  }
+  if(loads.length) await Promise.all(loads);
+  // Always re-render once data is confirmed ready
+  const c=document.getElementById('rivalPageContent');
+  if(c)c.innerHTML=renderRivalPageContent();
   clearInterval(window._rivalInterval);
   window._rivalInterval=setInterval(()=>{const c=document.getElementById('rivalPageContent');if(c)c.innerHTML=renderRivalPageContent();else clearInterval(window._rivalInterval);},60000);
 }
