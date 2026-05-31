@@ -463,6 +463,12 @@ body::after {
 .rival-wl-dot.tie { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15); }
 .rival-wl-dot.future { background: transparent; border: 1px solid rgba(255,255,255,0.08); }
 .rival-wl-record { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; }
+.rival-xp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rival-xp-row:last-child { margin-bottom: 0; }
+.rival-xp-cat { font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; width: 34px; flex-shrink: 0; }
+.rival-xp-bar-wrap { flex: 1; height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; display: flex; overflow: hidden; }
+.rival-xp-bar { height: 100%; transition: width 0.4s ease; }
+.rival-xp-gap { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; width: 54px; text-align: right; flex-shrink: 0; }
 
 /* Exam cards */
 .exam-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 18px 0 8px; padding-left: 2px; }
@@ -2212,9 +2218,23 @@ function getUserStudyHoursToday(){
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(t)&&s.done)
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
-function getUserStudyHoursWeek(){
-  const wa=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
-  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started>=wa&&s.done)
+function getWeekDates(weeksAgo=0){
+  // Returns [Mon,Tue,Wed,Thu,Fri,Sat,Sun] as ISO date strings for given week
+  const now=new Date();
+  const day=now.getDay();
+  const diff=day===0?-6:1-day; // offset to Monday
+  const dates=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(now);
+    d.setDate(now.getDate()+diff-weeksAgo*7+i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+  return dates;
+}
+function getUserStudyHoursWeek(weeksAgo=0){
+  const dates=getWeekDates(weeksAgo);
+  const mon=dates[0],sun=dates[6];
+  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=mon&&s.started.split('T')[0]<=sun)
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
 function getUserHoursOnDay(dateStr){
@@ -2310,10 +2330,17 @@ function renderRivalPageContent(){
   const days=getRivalDays();
   const{status,hours:rh,sessions:todaySessions}=getRivalLiveStatus();
   const uh=getUserStudyHoursToday();
-  const rw=days.slice(-7).reduce((s,d)=>s+d.hours,0);
-  const uw=getUserStudyHoursWeek();
+  // Mon–Sun week
+  const weekDates=getWeekDates(0);
+  const lastWeekDates=getWeekDates(1);
+  const rw=days.filter(d=>d.date>=weekDates[0]&&d.date<=weekDates[6]).reduce((s,d)=>s+d.hours,0);
+  const uw=getUserStudyHoursWeek(0);
+  const rwLast=days.filter(d=>d.date>=lastWeekDates[0]&&d.date<=lastWeekDates[6]).reduce((s,d)=>s+d.hours,0);
+  const uwLast=getUserStudyHoursWeek(1);
   const streak=getRivalStreak();
   const gapD=rh-uh,gapW=rw-uw;
+  const lastGapW=rwLast-uwLast;
+  const trendDiff=gapW-lastGapW; // positive=widening, negative=closing
   const scol=status==='studying'?'#8fb8d8':status==='dark'?'rgba(143,184,216,0.3)':'rgba(143,184,216,0.5)';
   const sdot=status==='studying'?'●':status==='dark'?'○':'◐';
   const gcol=d=>d>0.05?'#c07070':d<-0.05?'#6a9a6a':'var(--text-dim)';
@@ -2334,52 +2361,46 @@ function renderRivalPageContent(){
     const marker=nm>=DS&&nm<=DE?`<div class="rival-now-marker" style="left:${np}%"></div>`:'';
     timelineHTML=`<div class="rival-timeline">${blocks}${marker}</div>`;
   }
-  // 7-day bars + workout
-  const last7=days.slice(-7);
-  const last7dates=last7.map(d=>d.date);
-  const userLast7=last7.map(d=>getUserHoursOnDay(d.date));
-  const maxH=Math.max(...last7.map(d=>d.hours),...userLast7,1);
-  // Workout data
-  const rivalWo=getRivalWorkoutsByDay(last7dates);
-  const userWoMap=getUserWorkoutsByDay(last7dates);
-  const userWoCat={}; last7dates.forEach(d=>{userWoCat[d]=getDayCategory(userWoMap[d]);});
-  // Workout streaks (over last 30 days for meaningful streak)
-  const last30=days.slice(-30).map(d=>d.date);
-  const rivalWo30=getRivalWorkoutsByDay(last30);
-  const userWoMap30=getUserWorkoutsByDay(last30);
-  const userWoCat30={}; last30.forEach(d=>{userWoCat30[d]=getDayCategory(userWoMap30[d]);});
-  const rivalWoStreak=getWorkoutStreak(rivalWo30,last30);
-  const userWoStreak=getWorkoutStreak(userWoCat30,last30);
-  // Cat CSS class
+  // Bar chart: current Mon–Sun week
+  const todayStr=now.toISOString().split('T')[0];
+  const rivalDayMap={};days.forEach(d=>rivalDayMap[d.date]=d);
+  const userHoursForBar=d=>getUserHoursOnDay(d);
+  const weekBars=weekDates.map(ds=>{
+    const rd=rivalDayMap[ds];
+    const rh_=rd?rd.hours:0;const rDark=rd?rd.dark:false;
+    const uh_=userHoursForBar(ds);
+    const isFuture=ds>todayStr;const isToday=ds===todayStr;
+    return{ds,rh:rh_,uh:uh_,rDark,isFuture,isToday};
+  });
+  const maxH=Math.max(...weekBars.map(b=>b.rh),...weekBars.map(b=>b.uh),1);
+  // Workout data for current week
+  const rivalWo=getRivalWorkoutsByDay(weekDates);
+  const userWoMap=getUserWorkoutsByDay(weekDates);
+  const userWoCat={}; weekDates.forEach(d=>{userWoCat[d]=getDayCategory(userWoMap[d]);});
   const catCls=c=>c?c.toLowerCase():'rest';
   const catLbl=c=>c?CAT_ABBR[c]??c.toUpperCase().slice(0,3):'—';
-  const bars=last7.map((d,i)=>{
-    const rPct=d.dark?0:(d.hours/maxH*100).toFixed(0);
-    const uPct=(userLast7[i]/maxH*100).toFixed(0);
-    const isToday=d.date===new Date().toISOString().split('T')[0];
-    const rBg=d.dark?'rgba(143,184,216,0.08)':isToday?'#8fb8d8':'rgba(143,184,216,0.38)';
-    const uBg=userLast7[i]>0?(isToday?'var(--gold)':'rgba(224,208,168,0.45)'):'rgba(224,208,168,0.06)';
-    const day=['S','M','T','W','T','F','S'][new Date(d.date+'T12:00:00').getDay()];
-    const rCat=rivalWo[d.date]; const uCat=userWoCat[d.date];
-    const rCatTag=`<span class="rival-workout-cat ${catCls(rCat)}">${catLbl(rCat)}</span>`;
-    const uCatTag=`<span class="rival-workout-cat ${catCls(uCat)}" style="${uCat?'color:#c8b87a;background:rgba(200,184,122,0.12)':''}">${catLbl(uCat)}</span>`;
-    return`<div class="rival-week-bar-wrap" style="gap:2px;">
+  const bars=weekBars.map(b=>{
+    const rPct=b.rDark||b.isFuture?0:(b.rh/maxH*100).toFixed(0);
+    const uPct=b.isFuture?0:(b.uh/maxH*100).toFixed(0);
+    const rBg=b.rDark?'rgba(143,184,216,0.06)':b.isFuture?'rgba(143,184,216,0.04)':b.isToday?'#8fb8d8':'rgba(143,184,216,0.38)';
+    const uBg=b.uh>0?(b.isToday?'var(--gold)':'rgba(224,208,168,0.45)'):(b.isFuture?'rgba(224,208,168,0.04)':'rgba(224,208,168,0.06)');
+    const day=['S','M','T','W','T','F','S'][new Date(b.ds+'T12:00:00').getDay()];
+    const rCat=rivalWo[b.ds]; const uCat=userWoCat[b.ds];
+    const rCatTag=`<span class="rival-workout-cat ${catCls(rCat)}" style="${b.isFuture?'opacity:0.3':''}">${catLbl(rCat)}</span>`;
+    const uCatTag=`<span class="rival-workout-cat ${catCls(uCat)}" style="${uCat?'color:#c8b87a;background:rgba(200,184,122,0.12)':''}${b.isFuture?';opacity:0.3':''}">${catLbl(uCat)}</span>`;
+    return`<div class="rival-week-bar-wrap" style="gap:2px;${b.isToday?'opacity:1':'opacity:'+(b.isFuture?'0.45':'0.85')}">
       <div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:40px;">
-        <div style="flex:1;height:${rPct}%;background:${rBg};border-radius:2px 2px 0 0;min-height:${d.dark?0:2}px"></div>
-        <div style="flex:1;height:${uPct}%;background:${uBg};border-radius:2px 2px 0 0;min-height:${userLast7[i]>0?2:0}px"></div>
+        <div style="flex:1;height:${rPct}%;background:${rBg};border-radius:2px 2px 0 0;min-height:${(!b.rDark&&!b.isFuture&&b.rh>0)?2:0}px"></div>
+        <div style="flex:1;height:${uPct}%;background:${uBg};border-radius:2px 2px 0 0;min-height:${(b.uh>0&&!b.isFuture)?2:0}px"></div>
       </div>
-      <div class="rival-week-bar-day">${day}</div>
-      <div style="display:flex;gap:2px;justify-content:center;flex-direction:column;align-items:center;gap:2px;">
-        ${rCatTag}
-        ${uCatTag}
-      </div>
+      <div class="rival-week-bar-day" style="${b.isToday?'color:#8fb8d8;':''}">${day}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${rCatTag}${uCatTag}</div>
     </div>`;
   }).join('');
-  // W/L dots
-  const todayStr=new Date().toISOString().split('T')[0];
-  const wlData=last7.map((d,i)=>{
-    if(d.date>todayStr)return'future';
-    const diff=userLast7[i]-d.hours;
+  // W/L dots (current week days up to today)
+  const wlData=weekBars.map(b=>{
+    if(b.isFuture)return'future';
+    const diff=b.uh-b.rh;
     if(Math.abs(diff)<0.1)return'tie';
     return diff>0?'win':'loss';
   });
@@ -2387,8 +2408,47 @@ function renderRivalPageContent(){
   const losses=wlData.filter(x=>x==='loss').length;
   const wcol=wins>losses?'var(--gold)':wins<losses?'rgba(143,184,216,0.7)':'var(--text-dim)';
   const wlDots=wlData.map(s=>`<div class="rival-wl-dot ${s}"></div>`).join('');
-  // Streak dots
-  const dots=last7.map(d=>`<div class="rival-streak-dot ${d.dark?'dark':'active'}"></div>`).join('');
+  // Gap trend
+  const trendAbs=Math.abs(trendDiff);
+  const trendHTML=trendAbs<0.1?`<span style="color:var(--text-dim)">— same as last week</span>`
+    :trendDiff<0?`<span style="color:#6a9a6a">↓ closing ${fmtH(trendAbs)}</span>`
+    :`<span style="color:#c07070">↑ widening ${fmtH(trendAbs)}</span>`;
+  // Muscle XP card
+  const XP_CATS=['Push','Pull','Legs','Core','Arms'];
+  const catXP={};XP_CATS.forEach(c=>catXP[c]={userXP:0,rivalXP:0});
+  const uncategorized=[];
+  (state.bodyStats||[]).forEach(stat=>{
+    const cat=stat.cat||MUSCLE_CAT[stat.name];
+    if(cat&&catXP[cat]){
+      catXP[cat].userXP+=stat.decayedXP||0;
+      catXP[cat].rivalXP+=(getRivalFor(stat)?.totalXP||0);
+    } else if(cat){
+      if(!catXP[cat])catXP[cat]={userXP:0,rivalXP:0};
+      catXP[cat].userXP+=stat.decayedXP||0;
+      catXP[cat].rivalXP+=(getRivalFor(stat)?.totalXP||0);
+    } else {
+      uncategorized.push(stat.name);
+    }
+  });
+  const xpCatColors={Push:'#d8956a',Pull:'#6abcaa',Legs:'#9b7ac0',Core:'#c9a84c',Arms:'#c07090'};
+  const xpRows=XP_CATS.filter(c=>catXP[c]&&(catXP[c].userXP>0||catXP[c].rivalXP>0)).map(cat=>{
+    const{userXP,rivalXP}=catXP[cat];
+    const total=Math.max(userXP+rivalXP,1);
+    const uPct=(userXP/total*100).toFixed(0);
+    const rPct=(rivalXP/total*100).toFixed(0);
+    const gap=userXP-rivalXP;
+    const gapCol=gap>0?'#6a9a6a':'#c07070';
+    const gapTxt=gap===0?'tied':(gap>0?'+':'')+Math.round(gap)+' XP';
+    const col=xpCatColors[cat]||'var(--gold)';
+    return`<div class="rival-xp-row">
+      <div class="rival-xp-cat" style="color:${col}">${cat}</div>
+      <div class="rival-xp-bar-wrap">
+        <div class="rival-xp-bar" style="width:${rPct}%;background:rgba(143,184,216,0.35);border-radius:2px 0 0 2px;"></div>
+        <div class="rival-xp-bar" style="width:${uPct}%;background:${col};opacity:0.7;border-radius:0 2px 2px 0;"></div>
+      </div>
+      <div class="rival-xp-gap" style="color:${gapCol}">${gapTxt}</div>
+    </div>`;
+  }).join('');
   return`
     <div class="rival-status-card">
       <div class="rival-section-label">TODAY</div>
@@ -2401,7 +2461,7 @@ function renderRivalPageContent(){
       ${timelineHTML}
     </div>
     <div class="rival-week-card">
-      <div class="rival-section-label">THIS WEEK</div>
+      <div class="rival-section-label">THIS WEEK <span style="font-size:6px;opacity:0.4;letter-spacing:0.1em">MON–SUN</span></div>
       <div class="rival-week-compare">
         <div class="rival-week-stat">
           <div class="rival-week-name">影</div>
@@ -2413,6 +2473,7 @@ function renderRivalPageContent(){
           <div class="rival-week-hours" style="color:${gcol(-gapW)}">${fmtH(uw)}</div>
         </div>
       </div>
+      <div style="font-size:8px;margin-bottom:12px;letter-spacing:0.04em;">${trendHTML}<span style="color:var(--text-faint);margin-left:6px;font-size:7px;">vs last week</span></div>
       <div class="rival-week-bars" style="height:auto;align-items:flex-start;">${bars}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
         <div style="display:flex;gap:10px;">
@@ -2428,7 +2489,7 @@ function renderRivalPageContent(){
     </div>
     <div class="rival-streak-card">
       <div class="rival-section-label">STUDY STREAK</div>
-      <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:10px;">
+      <div style="display:flex;gap:24px;align-items:flex-end;">
         <div>
           <div style="font-size:7px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(143,184,216,0.4);margin-bottom:2px;">影</div>
           <div><span class="rival-streak-num">${streak}</span><span class="rival-streak-label" style="margin-left:4px;">days</span></div>
@@ -2438,20 +2499,10 @@ function renderRivalPageContent(){
           <div><span style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--gold);line-height:1;">${getUserStudyStreak()}</span><span class="rival-streak-label" style="margin-left:4px;color:rgba(224,208,168,0.35);">days</span></div>
         </div>
       </div>
-      <div class="rival-streak-dots">${dots}</div>
     </div>
     <div class="rival-workout-card">
-      <div class="rival-section-label">WORKOUT STREAK</div>
-      <div class="rival-workout-streaks">
-        <div class="rival-workout-streak-block">
-          <div class="rival-workout-streak-who">影</div>
-          <div><span class="rival-workout-streak-num" style="color:#8fb8d8;">${rivalWoStreak}</span><span class="rival-workout-streak-unit">days</span></div>
-        </div>
-        <div class="rival-workout-streak-block">
-          <div class="rival-workout-streak-who" style="color:rgba(224,208,168,0.4);">You</div>
-          <div><span class="rival-workout-streak-num" style="color:var(--gold);">${userWoStreak}</span><span class="rival-workout-streak-unit" style="color:rgba(224,208,168,0.35);">days</span></div>
-        </div>
-      </div>
+      <div class="rival-section-label">MUSCLE XP</div>
+      ${xpRows||'<div style="font-size:10px;color:var(--text-faint);padding:4px 0">Loading…</div>'}
     </div>`;
 }
 async function openRivalPage(){
@@ -2464,10 +2515,11 @@ async function openRivalPage(){
     <div id="rivalPageContent">${renderRivalPageContent()}</div>
   </div>`;
   document.body.appendChild(el);
-  // Ensure workout data is loaded for comparison
+  // Ensure workout + rival data is loaded for comparison
   const loads=[];
   if(!state.exercises?.length) loads.push(loadExercises());
   if(!state.bodyStats?.length) loads.push(loadBodyStats());
+  if(!state.rivals?.length) loads.push(loadRivals());
   if(loads.length){
     await Promise.all(loads);
     const c=document.getElementById('rivalPageContent');
