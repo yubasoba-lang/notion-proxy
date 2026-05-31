@@ -1493,8 +1493,9 @@ async function generateDailyRecap(targetDate){
     const streak=getUserStudyStreak();
 
     // ── Next exam ──
-    const nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date>=dateStr).sort((a,b)=>a.date.localeCompare(b.date))[0];
-    const daysToExam=nextExam?Math.ceil((new Date(nextExam.date+'T00:00:00')-new Date(dateStr+'T00:00:00'))/(86400000)):null;
+    const nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date.split('T')[0]>=dateStr).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    const examDateMs=nextExam?new Date(nextExam.date.includes('T')?nextExam.date:nextExam.date+'T00:00:00').getTime():null;
+    const daysToExam=examDateMs?Math.ceil((examDateMs-new Date(dateStr+'T00:00:00').getTime())/86400000):null;
     const examPrep=nextExam?getExamStudyHours(nextExam):null;
 
     // ── H2H last 7 days ──
