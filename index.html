@@ -1452,35 +1452,42 @@ async function saveRecapToNotion(recap,todayStr){
     ]});
   }catch(e){console.warn('Recap Notion save failed',e);}
 }
-async function generateDailyRecap(){
+async function generateDailyRecap(targetDate){
   if(window._recapGenerating)return;
   window._recapGenerating=true;
   renderHome();
   try{
     const todayStr=new Date().toISOString().split('T')[0];
-    const todaySessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(todayStr)&&s.done);
-    if(!todaySessions.length){showToast('No sessions today yet');window._recapGenerating=false;renderHome();return;}
-    const totalH=todaySessions.reduce((s,x)=>s+(new Date(x.done)-new Date(x.started))/3600000,0);
-    const flowC=todaySessions.filter(s=>s.quality==='Flow').length;
-    const grindC=todaySessions.filter(s=>s.quality==='Grind').length;
-    const distractedC=todaySessions.filter(s=>s.quality==='Distracted').length;
-    const subjects=[...new Set(todaySessions.map(s=>s.subject||s.name).filter(Boolean))];
+    const dateStr=targetDate||todayStr;
+    const sessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(dateStr)&&s.done);
+    if(!sessions.length){
+      showToast(`No sessions on ${dateStr===todayStr?'today':dateStr}`);
+      window._recapGenerating=false;renderHome();return;
+    }
+    const totalH=sessions.reduce((s,x)=>s+(new Date(x.done)-new Date(x.started))/3600000,0);
+    const flowC=sessions.filter(s=>s.quality==='Flow').length;
+    const grindC=sessions.filter(s=>s.quality==='Grind').length;
+    const distractedC=sessions.filter(s=>s.quality==='Distracted').length;
+    const subjects=[...new Set(sessions.map(s=>s.subject||s.name).filter(Boolean))];
     const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
     const{hours:rh}=getRivalLiveStatus();
-    const rivalGap=totalH-rh;
+    // For past dates, compute rival hours for that day
+    const rivalHours=dateStr===todayStr?rh:(getRivalDays().find(d=>d.date===dateStr)?.hours||0);
+    const rivalGap=totalH-rivalHours;
     const rivalStr=Math.abs(rivalGap)<0.05?'tied with 影':rivalGap>0?`${fmtH(rivalGap)} ahead of 影`:`${fmtH(Math.abs(rivalGap))} behind 影`;
     const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-    const context=`DATE: ${fmtDate(todayStr)}
-STUDY: ${fmtH(totalH)} total across ${todaySessions.length} sessions
+    const context=`DATE: ${fmtDate(dateStr)}
+STUDY: ${fmtH(totalH)} total across ${sessions.length} sessions
 SUBJECTS: ${subjects.join(', ')||'none'}
 QUALITY: ${flowC} Flow, ${grindC} Grind, ${distractedC} Distracted
 VS 影: ${rivalStr}`;
     const system=`You are writing a brutally honest, short daily study recap for a medical student. 2-3 sentences MAX. No fluff, no generic motivation. Acknowledge what was good, call out what wasn't. Reference the actual numbers. Be direct like a coach, not a cheerleader. Don't start with "Today".`;
     const text=await callClaude(system,context);
-    const recap={text:text.trim(),date:todayStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:todaySessions.length};
-    state.latestRecap=recap;
+    const recap={text:text.trim(),date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
+    // Only update latestRecap if this is the most recent date
+    if(!state.latestRecap||dateStr>=state.latestRecap.date){state.latestRecap=recap;}
     cacheRecapLocally(recap);
-    saveRecapToNotion(recap,todayStr);// fire-and-forget
+    saveRecapToNotion(recap,dateStr);
     showToast('Recap saved');
   }catch(e){showToast('Recap failed: '+e.message,3000);}
   finally{window._recapGenerating=false;renderHome();}
@@ -2219,12 +2226,19 @@ async function refresh(force=false){
       if(isFirst)_setLoad(100);
       // Load latest recap from Notion (cross-device, persists across days)
       await loadLatestRecapFromNotion();
-      // Auto-generate recap if: past 6pm, sessions exist today, no recap for today yet
       const todayStr2=new Date().toISOString().split('T')[0];
+      const yestStr=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})();
       const hour=new Date().getHours();
-      const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr2));
-      const recapIsToday=state.latestRecap?.date===todayStr2;
-      if(hasToday&&hour>=18&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
+      // Auto-generate yesterday's recap if missing and yesterday had sessions
+      const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(yestStr));
+      const recapHasYest=state.latestRecap?.date===yestStr||state.latestRecap?.date===todayStr2;
+      if(hasYest&&!recapHasYest&&!window._recapGenerating){generateDailyRecap(yestStr);}
+      // Auto-generate today's recap if: past 6pm, sessions exist, no today recap yet
+      else{
+        const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr2));
+        const recapIsToday=state.latestRecap?.date===todayStr2;
+        if(hasToday&&hour>=18&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
+      }
     }
     _markTabLoaded('home');renderHome();
   }
@@ -2907,7 +2921,11 @@ function renderHome(){
           <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
           <div style="font-size:8px;color:var(--text-dim);margin-top:2px;letter-spacing:0.06em">${dateLabel}${latestRecap.date?` · ${new Date(latestRecap.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}`:''}</div>
         </div>
-        <button class="plan-gen-btn" onclick="generateDailyRecap()" title="${isToday?'Regenerate':'Generate today\'s recap'}">${isToday?'↺':'✦ New'}</button>
+        <div style="display:flex;gap:6px">
+          ${isToday&&(()=>{const y=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})();return(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(y));})()
+            ?`<button class="plan-gen-btn" style="opacity:0.6" onclick="generateDailyRecap('${(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})()}')" title="Generate yesterday's recap">Yest</button>`:''}
+          <button class="plan-gen-btn" onclick="generateDailyRecap(${isToday?'':`'${todayStr}'`})" title="${isToday?'Regenerate':'Generate today\'s recap'}">${isToday?'↺':'✦ New'}</button>
+        </div>
       </div>
       ${!isToday?`<div style="font-size:8px;color:var(--text-dim);margin-bottom:8px;font-style:italic">Showing ${dateLabel.toLowerCase()}'s recap — generate one for today after your sessions.</div>`:''}
       <div class="recap-text">${latestRecap.text}</div>
