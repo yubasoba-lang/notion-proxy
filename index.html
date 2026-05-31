@@ -1009,16 +1009,16 @@ function buildSilhouette(bodyStats){
     const src=MASK_IMGS[name]??'';
     if(!src) return '';
     if(level===3&&!sel) return `<image href="${src}" x="0" y="0" width="612" height="612"
-      style="opacity:0.05;mix-blend-mode:screen;cursor:pointer;" onclick="selectMuscle('${id}','${name}')"/>`;
+      style="opacity:0.15;mix-blend-mode:screen;cursor:pointer;" onclick="selectMuscle('${id}','${name}')"/>`;
     const hex=(col??'#888888').replace('#','');
     const R=(parseInt(hex.slice(0,2),16)/255).toFixed(3);
     const G=(parseInt(hex.slice(2,4),16)/255).toFixed(3);
     const B=(parseInt(hex.slice(4,6),16)/255).toFixed(3);
     const largeMuscle=['Pectoralis','Latissimus Dorsi','Traps','Rhomboids','Glutes','Hamstrings','Quadriceps','Lower Back','Abs'].includes(name);
     const op=largeMuscle
-      ?(sel?0.50:level===0?0.26:level===1?0.17:level===2?0.08:0.02)
-      :(sel?0.70:level===0?0.40:level===1?0.28:level===2?0.13:0.03);
-    const blur=sel?'1.8':level===0?'1.2':level===1?'1.0':'0.6';
+      ?(sel?0.85:level===0?0.55:level===1?0.38:level===2?0.20:0.08)
+      :(sel?0.95:level===0?0.75:level===1?0.55:level===2?0.32:0.12);
+    const blur=sel?'2.5':level===0?'1.8':level===1?'1.4':'0.9';
     const fid=`cf${name.replace(/\s/g,'').slice(0,5)}${sel?1:level}`;
     // Clip mask to current view so stray mask pixels don't bleed across the figure gap.
     const clipId=silView==='front'?'clipFront':'clipBack';
