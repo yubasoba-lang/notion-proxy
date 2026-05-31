@@ -409,6 +409,8 @@ body::after {
 .rival-page-inner { padding: 0 0 40px; max-width: 420px; margin: 0 auto; }
 .rival-page-header { padding: 16px 16px 0; }
 .rival-back { background: transparent; border: none; color: var(--text-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; padding: 6px 0; }
+.rival-break-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: all 0.15s; }
+.rival-break-btn:active { background: rgba(224,208,168,0.06); border-color: rgba(224,208,168,0.2); color: var(--gold-dim); }
 .rival-page-name { font-family: 'Ma Shan Zheng', serif; font-size: 88px; color: #8B8B9B; text-align: center; line-height: 1; margin: 16px 0 2px; }
 .rival-page-subtitle { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(139,139,155,0.4); text-align: center; margin-bottom: 24px; }
 .rival-section-label { font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(139,139,155,0.35); margin-bottom: 8px; }
@@ -912,6 +914,7 @@ const DB={
   workoutLog:     '02a675ed9078420ea9c40957663dd472',
   journals:       '21463a0b4e7c8130b3dec4968c2e0bc5',
   entries:        '21463a0b4e7c81e7b160ddbe50469d9d',
+  appConfig:      '37163a0b4e7c8150ad25da796d5f474e',
 };
 
 /* 
@@ -1182,7 +1185,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[]};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -2292,6 +2295,46 @@ function getWorkoutStreak(workoutDayMap,dates){
   }
   return streak;
 }
+// Break periods: [{start:'2026-06-01', end:'2026-06-14'}, {start:'2026-07-01', end:null}]
+const BREAKS_CONFIG_ID='37163a0b-4e7c-8121-a2f7-f172f43d511d';
+function isOnBreak(){return (state.breakPeriods||[]).some(p=>!p.end);}
+function isDateInBreak(ds){return (state.breakPeriods||[]).some(p=>p.start&&ds>=p.start&&(!p.end||ds<=p.end));}
+async function loadBreakPeriods(){
+  try{
+    const page=await nFetch(`/pages/${BREAKS_CONFIG_ID}`);
+    const raw=page.properties?.Value?.rich_text?.[0]?.plain_text||'[]';
+    state.breakPeriods=JSON.parse(raw);
+  }catch(e){state.breakPeriods=[];}
+}
+async function saveBreakPeriods(){
+  await nPatch(BREAKS_CONFIG_ID,{Value:{rich_text:[{text:{content:JSON.stringify(state.breakPeriods)}}]}});
+}
+async function toggleBreak(){
+  const breaks=state.breakPeriods||[];
+  const today=new Date().toISOString().split('T')[0];
+  const active=breaks.find(p=>!p.end);
+  if(active){active.end=today;}
+  else{breaks.push({start:today,end:null});}
+  state.breakPeriods=breaks;
+  try{await saveBreakPeriods();}catch(e){}
+  const btn=document.getElementById('rivalBreakBtn');
+  if(btn)btn.textContent=isOnBreak()?'End Break':'Take a Break';
+  const c=document.getElementById('rivalPageContent');
+  if(c)c.innerHTML=renderRivalPageContent();
+}
+function getH2HRecord(){
+  const days=getRivalDays();
+  let userWins=0,rivalWins=0,ties=0,skipped=0;
+  days.forEach(d=>{
+    if(isDateInBreak(d.date)){skipped++;return;}
+    const uh=getUserHoursOnDay(d.date);
+    const diff=uh-d.hours;
+    if(Math.abs(diff)<0.1)ties++;
+    else if(diff>0)userWins++;
+    else rivalWins++;
+  });
+  return{userWins,rivalWins,ties,skipped,total:days.length-skipped};
+}
 function getUserStudyStreak(){
   // Compute study streak from sessions: consecutive days (2-day grace) with ≥1 completed session
   const done=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started);
@@ -2371,28 +2414,18 @@ function renderRivalPageContent(){
     return{ds,rh:rh_,uh:uh_,rDark,isFuture,isToday};
   });
   const maxH=Math.max(...weekBars.map(b=>b.rh),...weekBars.map(b=>b.uh),1);
-  // Workout data for current week
-  const rivalWo=getRivalWorkoutsByDay(weekDates);
-  const userWoMap=getUserWorkoutsByDay(weekDates);
-  const userWoCat={}; weekDates.forEach(d=>{userWoCat[d]=getDayCategory(userWoMap[d]);});
-  const catCls=c=>c?c.toLowerCase():'rest';
-  const catLbl=c=>c?CAT_ABBR[c]??c.toUpperCase().slice(0,3):'—';
   const bars=weekBars.map(b=>{
     const rPct=b.rDark||b.isFuture?0:(b.rh/maxH*100).toFixed(0);
     const uPct=b.isFuture?0:(b.uh/maxH*100).toFixed(0);
     const rBg=b.rDark?'rgba(139,139,155,0.06)':b.isFuture?'rgba(139,139,155,0.04)':b.isToday?'#8B8B9B':'rgba(139,139,155,0.38)';
     const uBg=b.uh>0?(b.isToday?'var(--gold)':'rgba(224,208,168,0.45)'):(b.isFuture?'rgba(224,208,168,0.04)':'rgba(224,208,168,0.06)');
     const day=['S','M','T','W','T','F','S'][new Date(b.ds+'T12:00:00').getDay()];
-    const rCat=rivalWo[b.ds]; const uCat=userWoCat[b.ds];
-    const rCatTag=`<span class="rival-workout-cat ${catCls(rCat)}" style="${b.isFuture?'opacity:0.3':''}">${catLbl(rCat)}</span>`;
-    const uCatTag=`<span class="rival-workout-cat ${catCls(uCat)}" style="${uCat?'color:#c8b87a;background:rgba(200,184,122,0.12)':''}${b.isFuture?';opacity:0.3':''}">${catLbl(uCat)}</span>`;
-    return`<div class="rival-week-bar-wrap" style="gap:2px;${b.isToday?'opacity:1':'opacity:'+(b.isFuture?'0.45':'0.85')}">
+    return`<div class="rival-week-bar-wrap" style="${b.isToday?'opacity:1':'opacity:'+(b.isFuture?'0.45':'0.85')}">
       <div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:40px;">
         <div style="flex:1;height:${rPct}%;background:${rBg};border-radius:2px 2px 0 0;min-height:${(!b.rDark&&!b.isFuture&&b.rh>0)?2:0}px"></div>
         <div style="flex:1;height:${uPct}%;background:${uBg};border-radius:2px 2px 0 0;min-height:${(b.uh>0&&!b.isFuture)?2:0}px"></div>
       </div>
       <div class="rival-week-bar-day" style="${b.isToday?'color:#8B8B9B;':''}">${day}</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${rCatTag}${uCatTag}</div>
     </div>`;
   }).join('');
   // W/L dots (current week days up to today)
@@ -2497,6 +2530,32 @@ function renderRivalPageContent(){
       </div>
     </div>
     <div class="rival-streak-card">
+      <div class="rival-section-label">ALL-TIME H2H</div>
+      ${(()=>{const{userWins,rivalWins,ties,skipped,total}=getH2HRecord();const uPct=(userWins/Math.max(total,1)*100).toFixed(0);const rPct=(rivalWins/Math.max(total,1)*100).toFixed(0);const leader=userWins>rivalWins?'you':userWins<rivalWins?'影':'tied';const lcol=leader==='you'?'var(--gold)':leader==='影'?'#8B8B9B':'var(--text-dim)';const onBreak=isOnBreak();return`
+      ${onBreak?`<div style="font-size:8px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(224,208,168,0.35);margin-bottom:10px;">⏸ On Break · Not counting</div>`:''}
+      ${skipped>0&&!onBreak?`<div style="font-size:7px;color:var(--text-faint);margin-bottom:8px;letter-spacing:0.06em;">${skipped} break days excluded</div>`:''}
+
+      <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:12px;">
+        <div>
+          <div style="font-size:7px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(139,139,155,0.4);margin-bottom:2px;">影</div>
+          <div><span style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:#8B8B9B;line-height:1;">${rivalWins}</span></div>
+        </div>
+        <div style="padding-bottom:6px;color:var(--text-faint);font-size:9px;letter-spacing:0.1em;">—</div>
+        <div>
+          <div style="font-size:7px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(224,208,168,0.4);margin-bottom:2px;">You</div>
+          <div><span style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--gold);line-height:1;">${userWins}</span></div>
+        </div>
+        <div style="flex:1;text-align:right;padding-bottom:8px;">
+          <div style="font-size:7px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-faint);">${ties} ties</div>
+          <div style="font-size:8px;font-weight:700;letter-spacing:0.06em;color:${lcol};margin-top:2px;">${leader==='tied'?'dead even':leader+' leading'}</div>
+        </div>
+      </div>
+      <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;display:flex;">
+        <div style="width:${rPct}%;background:rgba(139,139,155,0.45);border-radius:2px 0 0 2px;"></div>
+        <div style="width:${uPct}%;background:rgba(224,208,168,0.45);border-radius:0 2px 2px 0;margin-left:auto;"></div>
+      </div>`;})()}
+    </div>
+    <div class="rival-streak-card">
       <div class="rival-section-label">STUDY STREAK</div>
       <div style="display:flex;gap:24px;align-items:flex-end;">
         <div>
@@ -2518,18 +2577,21 @@ async function openRivalPage(){
   if(document.getElementById('rivalPage'))return;
   const el=document.createElement('div');el.id='rivalPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner">
-    <div class="rival-page-header"><button class="rival-back" onclick="closeRivalPage()">← Back</button></div>
+    <div class="rival-page-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <button class="rival-back" onclick="closeRivalPage()">← Back</button>
+      <button class="rival-break-btn" id="rivalBreakBtn" onclick="toggleBreak()">${isOnBreak()?'End Break':'Take a Break'}</button>
+    </div>
     <div class="rival-page-name">影</div>
     <div class="rival-page-subtitle">Shadow · Rival</div>
     <div id="rivalPageContent">${renderRivalPageContent()}</div>
   </div>`;
   document.body.appendChild(el);
-  // Ensure workout + rival data is loaded for comparison
-  const loads=[];
+  // Ensure workout + rival + break data is loaded
+  const loads=[loadBreakPeriods()];
   if(!state.exercises?.length) loads.push(loadExercises());
   if(!state.bodyStats?.length) loads.push(loadBodyStats());
   if(!state.rivals?.length) loads.push(loadRivals());
-  if(loads.length) await Promise.all(loads);
+  await Promise.all(loads);
   // Always re-render once data is confirmed ready
   const c=document.getElementById('rivalPageContent');
   if(c)c.innerHTML=renderRivalPageContent();
@@ -3501,6 +3563,64 @@ function renderStudyLog(){
       <div id="timer-display-log" class="study-timer" style="font-size:36px;color:var(--gold);font-family:'JetBrains Mono',monospace;margin:6px 0 12px">${elapsed}</div>
       <button class="pomo-screen-stop" onclick="stopSession()">stop</button>
       ${days.length?'<div class="pomo-log-divider"></div>':''}
+    </div>`;
+  }
+
+  // Focus heatmap
+  const tagged=done.filter(s=>s.quality&&s.started);
+  if(tagged.length>=3){
+    const DAY_START=5*60,DAY_END=24*60,DAY_SPAN=DAY_END-DAY_START;
+    const qCol={Flow:'var(--gold)',Grind:'rgba(224,208,168,0.35)',Distracted:'rgba(180,90,70,0.55)'};
+    const qH={Flow:10,Grind:6,Distracted:7};
+    const ticks=tagged.map(s=>{
+      const d=new Date(s.started);
+      const mins=d.getHours()*60+d.getMinutes();
+      const pct=Math.min(100,Math.max(0,((mins-DAY_START)/DAY_SPAN)*100));
+      const h=qH[s.quality]||6;
+      return`<div style="position:absolute;left:${pct.toFixed(1)}%;bottom:0;width:2px;height:${h}px;background:${qCol[s.quality]||'rgba(255,255,255,0.2)'};border-radius:1px;opacity:0.75;"></div>`;
+    }).join('');
+    // Hour labels
+    const hourLabels=[6,9,12,15,18,21].map(h=>{
+      const pct=((h*60-DAY_START)/DAY_SPAN*100).toFixed(1);
+      return`<div style="position:absolute;left:${pct}%;font-size:7px;color:rgba(255,255,255,0.12);transform:translateX(-50%)">${h<12?h+'am':h===12?'12pm':(h-12)+'pm'}</div>`;
+    }).join('');
+    // Peak focus: find 2h window with most Flow sessions
+    const flowMins=tagged.filter(s=>s.quality==='Flow').map(s=>{const d=new Date(s.started);return d.getHours()*60+d.getMinutes();});
+    let peakStr='';
+    if(flowMins.length>=2){
+      let best=0,bestH=9;
+      for(let h=5;h<23;h++){
+        const count=flowMins.filter(m=>m>=h*60&&m<(h+2)*60).length;
+        if(count>best){best=count;bestH=h;}
+      }
+      const fmt=h=>h<12?`${h}am`:h===12?'12pm':`${h-12}pm`;
+      if(best>0)peakStr=`Peak focus ${fmt(bestH)}–${fmt(bestH+2)}`;
+    }
+    const distractedMins=tagged.filter(s=>s.quality==='Distracted').map(s=>{const d=new Date(s.started);return d.getHours()*60+d.getMinutes();});
+    let avoidStr='';
+    if(distractedMins.length>=2){
+      let worst=0,worstH=21;
+      for(let h=5;h<23;h++){
+        const count=distractedMins.filter(m=>m>=h*60&&m<(h+2)*60).length;
+        if(count>worst){worst=count;worstH=h;}
+      }
+      const fmt=h=>h<12?`${h}am`:h===12?'12pm':`${h-12}pm`;
+      if(worst>0)avoidStr=`Avoid ${fmt(worstH)}–${fmt(worstH+2)}`;
+    }
+    html+=`<div style="padding:16px 0 20px;">
+      <div style="font-size:7px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">FOCUS PATTERN</div>
+      <div style="position:relative;height:14px;background:rgba(255,255,255,0.04);border-radius:2px;margin-bottom:6px;">${ticks}</div>
+      <div style="position:relative;height:10px;">${hourLabels}</div>
+      <div style="display:flex;gap:14px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;gap:10px;">
+          <span style="font-size:7px;color:var(--gold);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:var(--gold);border-radius:1px;"></span>Flow</span>
+          <span style="font-size:7px;color:rgba(224,208,168,0.4);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:rgba(224,208,168,0.35);border-radius:1px;"></span>Grind</span>
+          <span style="font-size:7px;color:rgba(180,90,70,0.8);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:rgba(180,90,70,0.55);border-radius:1px;"></span>Distracted</span>
+        </div>
+        <div style="flex:1;text-align:right;font-size:8px;color:var(--text-dim);letter-spacing:0.04em;">
+          ${peakStr?`<span style="color:var(--gold)">${peakStr}</span>`:''}${peakStr&&avoidStr?' · ':''}${avoidStr?`<span style="color:rgba(180,90,70,0.8)">${avoidStr}</span>`:''}
+        </div>
+      </div>
     </div>`;
   }
 
