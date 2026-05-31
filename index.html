@@ -2778,7 +2778,7 @@ function renderHome(){
     const tags=[...nextExam.tags,...nextExam.subjects].map(t=>`<span class="exam-tag ${nextExam.tags.includes(t)?'type-tag':'subj-tag'}">${t}</span>`).join('');
     const{total:nxTotal,recent:nxRecent}=getExamStudyHours(nextExam);
     const fmtHx=h=>{if(h<0.05)return'0h';const hr=Math.floor(h);const mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
-    const hoursLine=nextExam.subjects.length?`<div class="next-exam-hours">${fmtHx(nxTotal)} studied · ${fmtHx(nxRecent)} this week</div>`:'';
+    const hoursLine=nextExam.subjects.length?`<div class="next-exam-hours">${fmtHx(nxTotal)} last 4 wks · ${fmtHx(nxRecent)} this week</div>`:'';
     examCard+=`<div class="next-exam-top">
         <div>
           <div class="next-exam-name">${nextExam.name}</div>
@@ -3721,14 +3721,22 @@ async function unarchiveExam(examId){
 }
 
 function getExamStudyHours(exam){
-  const subs=(exam.subjects||[]).map(s=>{
-    return [...SUBJECTS].sort((a,b)=>b.length-a.length)
-      .find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()))||s;
+  const examSubs=(exam.subjects||[]).map(s=>s.toLowerCase().trim());
+  // Directly compare against real subject/name values from the studied DB (no SUBJECTS constant needed)
+  const done=(state.sessions||[]).filter(s=>{
+    if(s.complete!=='Done'||!s.started||!s.done)return false;
+    const subj=(s.subject||s.name||'').toLowerCase().trim();
+    if(!subj)return false;
+    return examSubs.some(es=>es===subj||es.includes(subj)||subj.includes(es));
   });
-  const done=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&subs.includes(s.subject));
-  const total=done.reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
-  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);cutoff.setHours(0,0,0,0);
-  const recent=done.filter(s=>new Date(s.started)>=cutoff)
+  // Last 4 weeks total (more relevant than all-time)
+  const cutoff4w=new Date();cutoff4w.setDate(cutoff4w.getDate()-28);cutoff4w.setHours(0,0,0,0);
+  const total=done.filter(s=>new Date(s.started)>=cutoff4w)
+    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+  // This week = Mon–Sun calendar week
+  const weekDates=getWeekDates(0);
+  const mon=weekDates[0],sun=weekDates[6];
+  const recent=done.filter(s=>{const d=s.started.split('T')[0];return d>=mon&&d<=sun;})
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
   return{total,recent};
 }
@@ -3785,7 +3793,7 @@ function renderExams(){
     const prepRow=isUpcoming&&exam.subjects.length?`<div class="exam-prep-row">
       <div class="exam-prep-stat">
         <div class="exam-prep-num">${fmtH(prepTotal)}</div>
-        <div class="exam-prep-label">Total</div>
+        <div class="exam-prep-label">4 weeks</div>
       </div>
       <div class="exam-prep-divider"></div>
       <div class="exam-prep-stat">
@@ -3797,7 +3805,7 @@ function renderExams(){
 
     // Hours logged on past exam cards
     const pastHours=!isUpcoming&&exam.subjects.length&&prepTotal>0
-      ?`<div class="exam-past-hours">${fmtH(prepTotal)} studied</div>`:'';
+      ?`<div class="exam-past-hours">${fmtH(prepTotal)} studied (last 4 wks)</div>`:'';
 
     const actions=isUpcoming
       ?`<div style="display:flex;gap:6px;margin-top:8px">
