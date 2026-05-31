@@ -1193,7 +1193,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -2307,6 +2307,32 @@ function getWorkoutStreak(workoutDayMap,dates){
 }
 // Break periods: [{start:'2026-06-01', end:'2026-06-14'}, {start:'2026-07-01', end:null}]
 const BREAKS_CONFIG_ID='37163a0b-4e7c-8121-a2f7-f172f43d511d';
+async function loadH2HStart(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'h2h_start'}});
+    if(pages.length){
+      state.h2hStartDate=pages[0].properties?.Value?.rich_text?.[0]?.plain_text||null;
+      state.h2hStartPageId=pages[0].id;
+    }else{state.h2hStartDate=null;state.h2hStartPageId=null;}
+  }catch(e){state.h2hStartDate=null;}
+}
+async function saveH2HStart(dateStr){
+  try{
+    if(state.h2hStartPageId){
+      await nPatch(state.h2hStartPageId,{Value:{rich_text:[{text:{content:dateStr}}]}});
+    }else{
+      const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'h2h_start'}}]},Value:{rich_text:[{text:{content:dateStr}}]}});
+      state.h2hStartPageId=page.id;
+    }
+    state.h2hStartDate=dateStr;
+  }catch(e){console.warn('H2H save failed',e);}
+}
+async function resetH2H(){
+  const today=new Date().toISOString().split('T')[0];
+  await saveH2HStart(today);
+  const c=document.getElementById('rivalPageContent');
+  if(c)c.innerHTML=renderRivalPageContent();
+}
 function isOnBreak(){return (state.breakPeriods||[]).some(p=>!p.end);}
 function isDateInBreak(ds){return (state.breakPeriods||[]).some(p=>p.start&&ds>=p.start&&(!p.end||ds<=p.end));}
 async function loadBreakPeriods(){
@@ -2334,8 +2360,10 @@ async function toggleBreak(){
 }
 function getH2HRecord(){
   const days=getRivalDays();
+  const startDate=state.h2hStartDate||null;
   let userWins=0,rivalWins=0,ties=0,skipped=0;
   days.forEach(d=>{
+    if(startDate&&d.date<startDate)return;
     if(isDateInBreak(d.date)){skipped++;return;}
     const uh=getUserHoursOnDay(d.date);
     const diff=uh-d.hours;
@@ -2540,11 +2568,23 @@ function renderRivalPageContent(){
       </div>
     </div>
     <div class="rival-streak-card">
-      <div class="rival-section-label">ALL-TIME H2H</div>
-      ${(()=>{const{userWins,rivalWins,ties,skipped,total}=getH2HRecord();const uPct=(userWins/Math.max(total,1)*100).toFixed(0);const rPct=(rivalWins/Math.max(total,1)*100).toFixed(0);const leader=userWins>rivalWins?'you':userWins<rivalWins?'影':'tied';const lcol=leader==='you'?'var(--gold)':leader==='影'?'#8B8B9B':'var(--text-dim)';const onBreak=isOnBreak();return`
+      ${(()=>{
+        const{userWins,rivalWins,ties,skipped,total}=getH2HRecord();
+        const uPct=(userWins/Math.max(total,1)*100).toFixed(0);
+        const rPct=(rivalWins/Math.max(total,1)*100).toFixed(0);
+        const leader=userWins>rivalWins?'you':userWins<rivalWins?'影':'tied';
+        const lcol=leader==='you'?'var(--gold)':leader==='影'?'#8B8B9B':'var(--text-dim)';
+        const onBreak=isOnBreak();
+        const startLabel=state.h2hStartDate
+          ?new Date(state.h2hStartDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+          :'All Time';
+        return`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="rival-section-label" style="margin-bottom:0">H2H · <span style="color:var(--text-faint)">${startLabel}</span></div>
+        <button onclick="resetH2H()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:7px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;cursor:pointer;">Reset</button>
+      </div>
       ${onBreak?`<div style="font-size:8px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(224,208,168,0.35);margin-bottom:10px;">⏸ On Break · Not counting</div>`:''}
       ${skipped>0&&!onBreak?`<div style="font-size:7px;color:var(--text-faint);margin-bottom:8px;letter-spacing:0.06em;">${skipped} break days excluded</div>`:''}
-
       <div style="display:flex;gap:16px;align-items:flex-end;margin-bottom:12px;">
         <div>
           <div style="font-size:7px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(139,139,155,0.4);margin-bottom:2px;">影</div>
@@ -2597,7 +2637,7 @@ async function openRivalPage(){
   </div>`;
   document.body.appendChild(el);
   // Ensure workout + rival + break data is loaded
-  const loads=[loadBreakPeriods()];
+  const loads=[loadBreakPeriods(),loadH2HStart()];
   if(!state.exercises?.length) loads.push(loadExercises());
   if(!state.bodyStats?.length) loads.push(loadBodyStats());
   if(!state.rivals?.length) loads.push(loadRivals());
