@@ -1460,31 +1460,101 @@ async function generateDailyRecap(targetDate){
     const todayStr=new Date().toISOString().split('T')[0];
     const dateStr=targetDate||todayStr;
     const sessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(dateStr)&&s.done);
-    if(!sessions.length){
-      showToast(`No sessions on ${dateStr===todayStr?'today':dateStr}`);
-      window._recapGenerating=false;renderHome();return;
-    }
+    if(!sessions.length){showToast(`No sessions on ${dateStr===todayStr?'today':dateStr}`);window._recapGenerating=false;renderHome();return;}
+
+    const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
+    const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+
+    // ── Core stats ──
     const totalH=sessions.reduce((s,x)=>s+(new Date(x.done)-new Date(x.started))/3600000,0);
     const flowC=sessions.filter(s=>s.quality==='Flow').length;
     const grindC=sessions.filter(s=>s.quality==='Grind').length;
     const distractedC=sessions.filter(s=>s.quality==='Distracted').length;
     const subjects=[...new Set(sessions.map(s=>s.subject||s.name).filter(Boolean))];
-    const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
+
+    // ── Rival ──
     const{hours:rh}=getRivalLiveStatus();
-    // For past dates, compute rival hours for that day
     const rivalHours=dateStr===todayStr?rh:(getRivalDays().find(d=>d.date===dateStr)?.hours||0);
     const rivalGap=totalH-rivalHours;
-    const rivalStr=Math.abs(rivalGap)<0.05?'tied with 影':rivalGap>0?`${fmtH(rivalGap)} ahead of 影`:`${fmtH(Math.abs(rivalGap))} behind 影`;
-    const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+
+    // ── 7-day flow baseline ──
+    const last7=Array.from({length:7},(_,i)=>{const d=new Date(dateStr+'T12:00:00');d.setDate(d.getDate()-i-1);return d.toISOString().split('T')[0];});
+    const last7sess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&last7.some(d=>s.started.startsWith(d)));
+    const flowRate7=last7sess.length>0?Math.round(last7sess.filter(s=>s.quality==='Flow').length/last7sess.length*100):null;
+    const todayFlowRate=sessions.length>0?Math.round(flowC/sessions.length*100):0;
+
+    // ── Week average hours (excluding target day) ──
+    const wDates=getWeekDates(0);
+    const wSess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=wDates[0]&&s.started.split('T')[0]<=wDates[6]&&!s.started.startsWith(dateStr));
+    const wDays=[...new Set(wSess.map(s=>s.started.split('T')[0]))];
+    const wAvgH=wDays.length>0?wSess.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0)/wDays.length:null;
+
+    // ── Study streak ──
+    const streak=getUserStudyStreak();
+
+    // ── Next exam ──
+    const nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date>=dateStr).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    const daysToExam=nextExam?Math.ceil((new Date(nextExam.date+'T00:00:00')-new Date(dateStr+'T00:00:00'))/(86400000)):null;
+    const examPrep=nextExam?getExamStudyHours(nextExam):null;
+
+    // ── H2H last 7 days ──
+    const rivalDays=getRivalDays();
+    let h2hW=0,h2hL=0;
+    last7.forEach(d=>{
+      if(isDateInBreak(d))return;
+      const rd=rivalDays.find(x=>x.date===d);if(!rd)return;
+      const diff=getUserHoursOnDay(d)-rd.hours;
+      if(Math.abs(diff)<0.1)return;
+      diff>0?h2hW++:h2hL++;
+    });
+
+    // ── Peak focus window (all-time from sessions) ──
+    const flowMins=(state.sessions||[]).filter(s=>s.quality==='Flow'&&s.started).map(s=>{const d=new Date(s.started);return d.getHours()*60+d.getMinutes();});
+    let peakWindow='';
+    if(flowMins.length>=3){
+      let best=0,bestH=9;
+      for(let h=5;h<23;h++){const c=flowMins.filter(m=>m>=h*60&&m<(h+2)*60).length;if(c>best){best=c;bestH=h;}}
+      const fmt=h=>h<12?`${h}am`:h===12?'12pm':`${h-12}pm`;
+      if(best>0)peakWindow=`${fmt(bestH)}–${fmt(bestH+2)}`;
+    }
+
+    // ── Sleep & daily log ──
+    let sleepInfo='not logged';
+    try{
+      const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:dateStr}});
+      if(logs.length){
+        const sleepTasks=await nQuery(DB.tasks,{and:[{property:'Cat',select:{equals:'Life'}},{property:'Status',checkbox:{equals:true}}]});
+        const match=sleepTasks.find(p=>(g.title(p.properties.Task)||'').toLowerCase().includes('sleep')&&(p.created_time||'').startsWith(dateStr));
+        sleepInfo=match?(g.title(match.properties.Task)||'logged'):'logged';
+      }
+    }catch(e){}
+
+    // ── Workout scheduled? ──
+    const dayAbbr=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dateStr+'T12:00:00').getDay()];
+    const scheduledEx=(state.exercises||[]).filter(e=>e.day?.includes(dayAbbr));
+    const workoutStr=scheduledEx.length?`${scheduledEx.length} exercises scheduled (${[...new Set(scheduledEx.map(e=>e.primaryMuscle).filter(Boolean))].join(', ')})`:'rest day';
+
+    // ── Build context ──
     const context=`DATE: ${fmtDate(dateStr)}
-STUDY: ${fmtH(totalH)} total across ${sessions.length} sessions
+
+STUDY: ${fmtH(totalH)} total, ${sessions.length} sessions
 SUBJECTS: ${subjects.join(', ')||'none'}
-QUALITY: ${flowC} Flow, ${grindC} Grind, ${distractedC} Distracted
-VS 影: ${rivalStr}`;
-    const system=`You are writing a brutally honest, short daily study recap for a medical student. 2-3 sentences MAX. No fluff, no generic motivation. Acknowledge what was good, call out what wasn't. Reference the actual numbers. Be direct like a coach, not a cheerleader. Don't start with "Today".`;
+QUALITY TODAY: ${flowC} Flow (${todayFlowRate}%), ${grindC} Grind, ${distractedC} Distracted
+${flowRate7!=null?`QUALITY BASELINE (last 7d): ${flowRate7}% Flow`:''}
+${wAvgH!=null?`WEEK AVERAGE: ${fmtH(wAvgH)}/day (today was ${totalH>wAvgH?'above':'below'} average)`:''}
+STUDY STREAK: ${streak} days
+PEAK FOCUS WINDOW: ${peakWindow||'not enough data'}
+
+VS 影: ${Math.abs(rivalGap)<0.05?'tied':`${fmtH(Math.abs(rivalGap))} ${rivalGap>0?'ahead':'behind'}`}
+H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
+
+${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}`:'' }
+WORKOUT: ${workoutStr}
+SLEEP: ${sleepInfo}`;
+
+    const system=`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences MAX. No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. If sleep was logged, factor it in. Be specific, direct, coach-like. Vary your observations based on what actually stands out in the data. Don't start with "Today".`;
     const text=await callClaude(system,context);
     const recap={text:text.trim(),date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
-    // Only update latestRecap if this is the most recent date
     if(!state.latestRecap||dateStr>=state.latestRecap.date){state.latestRecap=recap;}
     cacheRecapLocally(recap);
     saveRecapToNotion(recap,dateStr);
