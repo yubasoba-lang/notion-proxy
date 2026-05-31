@@ -409,7 +409,7 @@ body::after {
 .rival-page-inner { padding: 0 0 40px; max-width: 420px; margin: 0 auto; }
 .rival-page-header { padding: 16px 16px 0; }
 .rival-back { background: transparent; border: none; color: var(--text-dim); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; padding: 6px 0; }
-.rival-page-name { font-family: 'Ma Shan Zheng', serif; font-size: 88px; color: #d4c49a; text-align: center; line-height: 1; margin: 16px 0 2px; }
+.rival-page-name { font-family: 'Ma Shan Zheng', serif; font-size: 88px; color: #6a96b0; text-align: center; line-height: 1; margin: 16px 0 2px; }
 .rival-page-subtitle { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(106,150,176,0.4); text-align: center; margin-bottom: 24px; }
 .rival-section-label { font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(106,150,176,0.35); margin-bottom: 8px; }
 .rival-status-card { background: rgba(106,150,176,0.04); border: 1px solid rgba(106,150,176,0.1); border-radius: 10px; padding: 14px 16px; margin: 0 16px 10px; }
@@ -460,7 +460,7 @@ body::after {
 .rival-wl-dot { width: 9px; height: 9px; border-radius: 50%; }
 .rival-wl-dot.win { background: var(--gold); }
 .rival-wl-dot.loss { background: rgba(106,150,176,0.6); }
-.rival-wl-dot.tie { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15); }
+.rival-wl-dot.tie { background: rgba(255,255,255,0.18); }
 .rival-wl-dot.future { background: transparent; border: 1px solid rgba(255,255,255,0.08); }
 .rival-wl-record { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; }
 .rival-xp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -2479,7 +2479,7 @@ function renderRivalPageContent(){
         <div class="rival-week-sep">vs</div>
         <div class="rival-week-stat">
           <div class="rival-week-name">You</div>
-          <div class="rival-week-hours" style="color:${gcol(-gapW)}">${fmtH(uw)}</div>
+          <div class="rival-week-hours" style="color:var(--gold)">${fmtH(uw)}</div>
         </div>
       </div>
       <div style="font-size:8px;margin-bottom:12px;letter-spacing:0.04em;">${trendHTML}<span style="color:var(--text-faint);margin-left:6px;font-size:7px;">vs last week</span></div>
