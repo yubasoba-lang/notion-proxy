@@ -3257,7 +3257,7 @@ function renderHome(){
     examCard+=`<div class="next-exam-top">
         <div>
           <div class="next-exam-name">${nextExam.name}</div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${nextExam.date||'no date'}</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${nextExam.date?new Date(nextExam.date.slice(0,10)+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'no date'}</div>
           <div class="next-exam-tags">${tags}</div>
           ${hoursLine}
         </div>
