@@ -2219,21 +2219,23 @@ async function completePomoWork(){
 }
 function handlePomoStop(){pomoPhase==='break'?completePomoBreak():stopSession();}
 async function completePomoBreak(){
-  pomoPhase='work';pomoPhaseEnd=null;
-  savePomoPersist();
+  pomoPhase='work';
   playBreakEndSound();
   sendNotification('Break over','Back to work.');
   showPomoFlash(false);
-  if(!lastSubject){renderHome();return;}
+  if(!lastSubject){pomoPhaseEnd=null;savePomoPersist();renderHome();return;}
+  // Set the clock immediately so the ring starts counting right away
+  const workStartedAt=new Date().toISOString();
+  pomoPhaseEnd=Date.now()+POMO_WORK;
+  savePomoPersist();
+  schedulePomoEndSound(POMO_WORK/1000,true);
+  renderHome();startTimer(); // pomo ring visible before Notion responds
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
-    state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
-    pomoPhaseEnd=Date.now()+POMO_WORK;
-    savePomoPersist(); // persist new work session so refresh/cross-device restores correctly
-    // pre-schedule next pomo-end sound (no user gesture here, best effort)
-    schedulePomoEndSound(POMO_WORK/1000,true);
-    renderHome();startTimer();
-  }catch(e){showToast('Auto-start failed');renderHome();}
+    state.activeSession={id:page.id,subject:lastSubject,startedAt:workStartedAt};
+    savePomoPersist(); // re-save with sessionId now known
+    renderHome(); // update subject label in ring
+  }catch(e){showToast('Session log failed — check Notion');}
 }
 // Pre-schedule a sound at an absolute Web Audio time (called during user gesture at pomo start)
 let scheduledSoundNodes=[];
