@@ -2217,6 +2217,7 @@ async function completePomoWork(){
   showPomoFlash(true);
   renderHome();startTimer();
 }
+function handlePomoStop(){pomoPhase==='break'?completePomoBreak():stopSession();}
 async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
   savePomoPersist();
@@ -4025,7 +4026,7 @@ function renderStudyLog(){
       </div>
       <div class="pomo-screen-dots">${dots}</div>
       <div class="pomo-screen-today">${todayCount > 0 ? todayCount+' pomo'+(todayCount>1?'s':'')+' today' : 'first pomo!'}</div>
-      <button class="pomo-screen-stop" onclick="${isBreak?'completePomoBreak()':'stopSession()}">${isBreak?'skip break':'stop'}</button>
+      <button class="pomo-screen-stop" onclick="handlePomoStop()">${isBreak?'skip break':'stop'}</button>
       ${days.length?'<div class="pomo-log-divider"></div>':''}
     </div>`;
   } else if(state.activeSession){
