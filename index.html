@@ -1222,7 +1222,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -1231,13 +1231,17 @@ let pomoGoal=(()=>{const v=parseInt(localStorage.getItem('pomo-goal'));return(v>
 
 function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
-    localStorage.setItem('grind-pomo',JSON.stringify({
+    const data={
       mode:pomoMode,phase:pomoPhase,phaseEnd:pomoPhaseEnd,
       count:pomoCount,subject:lastSubject||'',
       sessionId:state.activeSession?.id??null,
-      startedAt:state.activeSession?.startedAt??null
-    }));
-    // Sync to Notion so it survives across devices (fire-and-forget)
+      startedAt:state.activeSession?.startedAt??null,
+      savedAt:Date.now()
+    };
+    localStorage.setItem('grind-pomo',JSON.stringify(data));
+    // Cross-device: sync to App Config (covers break phase too, no activeSession needed)
+    syncPomoStateToNotion(data).catch(()=>{});
+    // Also patch active session fields (legacy, work phase only)
     if(state.activeSession?.id){
       nPatch(state.activeSession.id,{
         'Pomo Phase':{select:{name:pomoPhase}},
@@ -1247,7 +1251,7 @@ function savePomoPersist(){
     }
   } else {
     localStorage.removeItem('grind-pomo');
-    // Clear pomo state from Notion when session ends
+    syncPomoStateToNotion({}).catch(()=>{});
     if(state.activeSession?.id){
       nPatch(state.activeSession.id,{
         'Pomo Phase':{select:null},
@@ -1256,6 +1260,51 @@ function savePomoPersist(){
       }).catch(()=>{});
     }
   }
+}
+async function syncPomoStateToNotion(data){
+  try{
+    const json=JSON.stringify(data);
+    const rich=json?[{text:{content:json}}]:[];
+    if(!state.pomoStatePageId){
+      const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'pomo_state'}});
+      if(pages.length){state.pomoStatePageId=pages[0].id;}
+    }
+    if(state.pomoStatePageId){
+      await nPatch(state.pomoStatePageId,{Value:{rich_text:rich}});
+    }else{
+      const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'pomo_state'}}]},Value:{rich_text:rich}});
+      state.pomoStatePageId=page.id;
+    }
+  }catch(e){}
+}
+async function loadPomoStateFromNotion(){
+  if(pomoMode)return; // already restored
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'pomo_state'}});
+    if(!pages.length)return;
+    state.pomoStatePageId=pages[0].id;
+    const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'';
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    if(!d.phaseEnd||!d.savedAt)return;
+    const now=Date.now();
+    if(now-d.savedAt>4*3600000)return; // stale (>4h) — ignore
+    if(d.phaseEnd>now){
+      // Phase still running — restore
+      pomoMode=true;pomoPhase=d.phase;pomoPhaseEnd=d.phaseEnd;
+      pomoCount=d.count||0;lastSubject=d.subject||'';
+      if(d.sessionId&&d.startedAt&&!state.activeSession){
+        state.activeSession={id:d.sessionId,subject:d.subject||'',startedAt:d.startedAt};
+      }
+      localStorage.setItem('grind-pomo',JSON.stringify(d));
+      startTimer();renderHome();
+    }else if(d.phase==='work'&&(now-d.savedAt)<3600000){
+      // Work expired while away — auto-advance to break
+      pomoMode=true;pomoCount=(d.count||0)+1;lastSubject=d.subject||'';
+      pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+      savePomoPersist();startTimer();renderHome();
+    }
+  }catch(e){}
 }
 function restorePomoPersist(){
   try{
@@ -1937,6 +1986,9 @@ async function loadSessions(){
         // if break expired — just let it be, no-op
       }
       startTimer();
+    }else{
+      // No active session — try restoring pomo from App Config (break phase or stale)
+      await loadPomoStateFromNotion();
     }
   }catch(e){setError('Sessions: '+e.message);}
 }
@@ -2102,6 +2154,7 @@ async function completePomoBreak(){
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
     state.activeSession={id:page.id,subject:lastSubject,startedAt:new Date().toISOString()};
     pomoPhaseEnd=Date.now()+POMO_WORK;
+    savePomoPersist(); // persist new work session so refresh/cross-device restores correctly
     // pre-schedule next pomo-end sound (no user gesture here, best effort)
     schedulePomoEndSound(POMO_WORK/1000,true);
     renderHome();startTimer();
@@ -4273,6 +4326,7 @@ document.addEventListener('touchstart',e=>{
 
 // Init
 restorePomoPersist();
+if(pomoMode)renderHome(); // show pomo screen instantly before Notion loads
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
 (function initSparks(){
   for(let i=0;i<10;i++){
