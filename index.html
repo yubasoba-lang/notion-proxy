@@ -937,6 +937,36 @@ body::after {
 </div>
 
 <script>
+// ── Early diagnostics — runs before anything else ──
+window.onerror=function(msg,src,line,col,err){
+  const lbl=document.getElementById('loadSublabel');
+  const btn=document.getElementById('loadRetryBtn');
+  const pct=document.getElementById('loadPct');
+  if(lbl)lbl.textContent='JS error (ln '+line+'): '+msg;
+  if(btn)btn.style.display='block';
+  if(pct)pct.textContent='!';
+  return false;
+};
+window.addEventListener('unhandledrejection',function(e){
+  const lbl=document.getElementById('loadSublabel');
+  if(lbl&&lbl.textContent==='Syncing')lbl.textContent='Unhandled error: '+(e.reason?.message||e.reason||'unknown');
+});
+// Quick connectivity check — runs immediately, updates overlay
+(function diagCheck(){
+  fetch('/api/notion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:'/users/me',method:'GET'})})
+    .then(r=>{
+      const lbl=document.getElementById('loadSublabel');
+      if(lbl&&lbl.textContent==='Syncing')lbl.textContent=r.ok?'Syncing':'API error '+r.status;
+    })
+    .catch(err=>{
+      const lbl=document.getElementById('loadSublabel');
+      const pct=document.getElementById('loadPct');
+      if(lbl)lbl.textContent='Cannot reach API: '+err.message;
+      if(pct)pct.textContent='✕';
+    });
+})();
+</script>
+<script>
 const PROXY='/api/notion';
 const DB={
   stats:          '34163a0b4e7c81abb22ae7e6bccdf2c2',
