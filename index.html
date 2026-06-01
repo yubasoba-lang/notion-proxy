@@ -4382,9 +4382,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 
 // Init
-restorePomoPersist();
-if(pomoMode)renderHome(); // show pomo screen instantly before Notion loads
-// Safety net: if still on loading screen after 25s, show retry
+// Safety net first — must be registered before anything that could throw
 setTimeout(()=>{
   const ov=document.getElementById('loadOverlay');
   if(!ov||ov.classList.contains('done'))return;
@@ -4393,6 +4391,11 @@ setTimeout(()=>{
   if(lbl)lbl.textContent='Connection slow or unavailable';
   if(btn)btn.style.display='block';
 },25000);
+restorePomoPersist();
+// Show immediate progress so screen isn't frozen at 0%
+(()=>{const n=document.getElementById('loadPct');const b=document.getElementById('loadBarFill');if(n)n.textContent='1%';if(b)b.style.width='1%';})();
+// Show pomo screen instantly before Notion loads (wrapped so a throw can't kill refresh)
+try{if(pomoMode)renderHome();}catch(e){}
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
 (function initSparks(){
   for(let i=0;i<10;i++){
@@ -4403,7 +4406,12 @@ document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='
     document.body.appendChild(s);
   }
 })();
-refresh();
+refresh().catch(e=>{
+  const lbl=document.getElementById('loadSublabel');
+  const btn=document.getElementById('loadRetryBtn');
+  if(lbl)lbl.textContent='Failed to load — '+e.message;
+  if(btn)btn.style.display='block';
+});
 </script>
 </body>
 </html>
