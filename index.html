@@ -1522,9 +1522,10 @@ async function generateDailyRecap(targetDate){
     const examPrep=nextExam?getExamStudyHours(nextExam):null;
     const examTopicInfo=(()=>{
       if(!nextExam||!nextExam.topics?.length)return null;
-      const checked=(state.topicProgress[nextExam.id]||[]).length;
+      const checkedIdx=(state.topicProgress[nextExam.id]||[]);
       const total=nextExam.topics.length;
-      return `${checked}/${total} (${Math.round(checked/total*100)}%)`;
+      const unchecked=nextExam.topics.map((t,i)=>({n:i+1,t,i})).filter(x=>!checkedIdx.includes(x.i));
+      return{done:checkedIdx.length,total,pct:Math.round(checkedIdx.length/total*100),unchecked};
     })();
 
     // ── H2H last 7 days ──
@@ -1578,11 +1579,11 @@ PEAK FOCUS WINDOW: ${peakWindow||'not enough data'}
 VS 影: ${Math.abs(rivalGap)<0.05?'tied':`${fmtH(Math.abs(rivalGap))} ${rivalGap>0?'ahead':'behind'}`}
 H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 
-${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?` [topics: ${examTopicInfo} checked off]`:''}`:'' }
+${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
 WORKOUT: ${workoutStr}
 SLEEP: ${sleepInfo}`;
 
-    const system=`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences MAX. No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. If sleep was logged, factor it in. Be specific, direct, coach-like. Vary your observations based on what actually stands out in the data. Don't start with "Today".`;
+    const system=`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences, then if there are remaining exam topics, add one short line starting with "Tomorrow:" listing 2-4 specific topics to tackle next (pick the first ones from the remaining list — they're already prioritized). No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. Be specific, direct, coach-like. Don't start with "Today".`;
     const text=await callClaude(system,context);
     const recap={text:text.trim(),date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
     if(!state.latestRecap||dateStr>=state.latestRecap.date){state.latestRecap=recap;}
