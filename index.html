@@ -793,15 +793,28 @@ body::after {
 .exam-prep-divider{width:1px;height:24px;background:var(--border);flex-shrink:0;}
 .exam-prep-warn{font-size:7px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#8c2e20;background:rgba(140,46,32,0.12);border:1px solid rgba(140,46,32,0.3);border-radius:2px;padding:2px 5px;margin-left:auto;}
 .exam-topics{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
-.exam-topic-progress{font-size:7px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.exam-topic-header{display:flex;align-items:center;gap:6px;cursor:pointer;-webkit-user-select:none;user-select:none;padding:2px 0;}
+.exam-topic-header:active{opacity:0.7;}
+.exam-topic-progress-label{font-size:7px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;}
 .exam-topic-progress-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
 .exam-topic-progress-fill{height:100%;background:var(--gold-dim);border-radius:2px;transition:width 0.3s;}
-.exam-topic-item{display:flex;align-items:flex-start;gap:7px;padding:3px 0;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.exam-topic-pct{font-size:7px;font-weight:700;letter-spacing:0.08em;color:var(--text-dim);white-space:nowrap;}
+.exam-topic-chevron{font-size:7px;color:var(--text-dim);margin-left:2px;}
+.exam-topic-tabs{display:flex;gap:4px;margin:6px 0 4px;}
+.exam-topic-tab{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;display:flex;align-items:center;gap:4px;}
+.exam-topic-tab.active{border-color:var(--gold-dim);color:var(--gold);background:rgba(224,208,168,0.05);}
+.exam-topic-tab-count{font-size:8px;opacity:0.7;}
+.exam-topic-list{max-height:180px;overflow-y:auto;padding-right:2px;}
+.exam-topic-list::-webkit-scrollbar{width:3px;}
+.exam-topic-list::-webkit-scrollbar-track{background:transparent;}
+.exam-topic-list::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px;}
+.exam-topic-item{display:flex;align-items:flex-start;gap:7px;padding:4px 0;cursor:pointer;-webkit-user-select:none;user-select:none;}
 .exam-topic-check{width:13px;height:13px;border:1px solid var(--border-hi);border-radius:2px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
 .exam-topic-check.checked{background:var(--gold-dim);border-color:var(--gold-dim);}
 .exam-topic-check.checked::after{content:'✓';font-size:8px;color:var(--gold);font-weight:700;line-height:1;}
 .exam-topic-text{font-size:11px;color:var(--text-dim);line-height:1.4;}
-.exam-topic-text.checked{text-decoration:line-through;opacity:0.45;}
+.exam-topic-text.checked{text-decoration:line-through;opacity:0.4;}
+.exam-topic-empty{font-size:10px;color:var(--text-dim);padding:8px 0;opacity:0.6;}
 .exam-past-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:3px;}
 .next-exam-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:4px;}
 </style>
@@ -1788,6 +1801,8 @@ const toBodyStat=p=>{const q=p.properties;const rivalRel=q.Rivals?.relation;cons
 const toExercise=p=>{const q=p.properties;const pm=g.select(q['Primary Muscle']);return{id:p.id,name:g.title(q.Name),day:g.multiSelect(q.Day),primaryMuscle:MUSCLES_HIT_MAP[pm]??pm,musclesHit:g.multiSelect(q['Muscles Hit']).map(m=>MUSCLES_HIT_MAP[m]??m),xpPerSet:g.num(q['XP per Set'])??0,category:g.select(q.Category),equipment:g.select(q.Equipment)};};
 let selectedExercise=null;
 let expandedExercise=null;
+// Topic list UI state: {[examId]: {open:bool, filter:'todo'|'all'|'done'}}
+const _topicUI={};
 let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
 
 
@@ -4156,25 +4171,35 @@ function renderExams(){
     const pastHours=!isUpcoming&&exam.subjects.length&&prepTotal>0
       ?`<div class="exam-past-hours">${fmtH(prepTotal)} studied (last 4 wks)</div>`:'';
 
-    // Topic list checklist
+    // Topic list checklist (collapsible, filterable)
     const topicsHTML=(()=>{
       if(!isUpcoming||!exam.topics?.length)return'';
       const checked=(state.topicProgress[exam.id]||[]);
       const pct=Math.round(checked.length/exam.topics.length*100);
-      const items=exam.topics.map((t,i)=>{
-        const done=checked.includes(i);
-        return `<div class="exam-topic-item" onclick="toggleTopic('${exam.id}',${i})">
-          <div class="exam-topic-check${done?' checked':''}"></div>
-          <div class="exam-topic-text${done?' checked':''}">${t}</div>
-        </div>`;
+      const ui=_topicUI[exam.id]||(_topicUI[exam.id]={open:false,filter:'todo'});
+      const todoItems=exam.topics.map((t,i)=>({t,i,done:checked.includes(i)})).filter(x=>!x.done);
+      const doneItems=exam.topics.map((t,i)=>({t,i,done:checked.includes(i)})).filter(x=>x.done);
+      const visibleItems=ui.filter==='todo'?todoItems:ui.filter==='done'?doneItems:exam.topics.map((t,i)=>({t,i,done:checked.includes(i)}));
+      const renderItem=({t,i,done})=>`<div class="exam-topic-item" onclick="event.stopPropagation();toggleTopic('${exam.id}',${i})">
+        <div class="exam-topic-check${done?' checked':''}"></div>
+        <div class="exam-topic-text${done?' checked':''}">${t}</div>
+      </div>`;
+      const tabs=['todo','all','done'].map(f=>{
+        const count=f==='todo'?todoItems.length:f==='done'?doneItems.length:exam.topics.length;
+        const active=ui.filter===f;
+        return `<button class="exam-topic-tab${active?' active':''}" onclick="event.stopPropagation();_topicUI['${exam.id}'].filter='${f}';renderExams()">${f==='todo'?'To do':f==='done'?'Done':'All'} <span class="exam-topic-tab-count">${count}</span></button>`;
       }).join('');
+      const listHTML=visibleItems.length
+        ?`<div class="exam-topic-list">${visibleItems.map(renderItem).join('')}</div>`
+        :`<div class="exam-topic-empty">${ui.filter==='todo'?'All topics covered ✓':ui.filter==='done'?'None checked yet':'No topics'}</div>`;
       return `<div class="exam-topics">
-        <div class="exam-topic-progress">
-          <span>${checked.length}/${exam.topics.length} topics</span>
+        <div class="exam-topic-header" onclick="event.stopPropagation();_topicUI['${exam.id}'].open=!_topicUI['${exam.id}'].open;renderExams()">
+          <span class="exam-topic-progress-label">${checked.length}/${exam.topics.length}</span>
           <div class="exam-topic-progress-bar"><div class="exam-topic-progress-fill" style="width:${pct}%"></div></div>
-          <span>${pct}%</span>
+          <span class="exam-topic-pct">${pct}%</span>
+          <span class="exam-topic-chevron">${ui.open?'▲':'▼'}</span>
         </div>
-        ${items}
+        ${ui.open?`<div class="exam-topic-tabs">${tabs}</div>${listHTML}`:''}
       </div>`;
     })();
 
@@ -4201,14 +4226,8 @@ function renderExams(){
     </div>`;
   }
 
-  // Sort upcoming by urgency: (hours logged) / (days remaining + 1) ascending — least prepared first
-  const upcomingSorted=[...upcoming].sort((a,b)=>{
-    const da=countdown(a.date)??999,db=countdown(b.date)??999;
-    const ha=getExamStudyHours(a).total,hb=getExamStudyHours(b).total;
-    const scoreA=ha/(da+1),scoreB=hb/(db+1);
-    if(Math.abs(scoreA-scoreB)>0.05)return scoreA-scoreB;
-    return da-db;
-  });
+  // Sort upcoming by date ascending — closest first
+  const upcomingSorted=[...upcoming].sort((a,b)=>(countdown(a.date)??999)-(countdown(b.date)??999));
 
   let html='';
   if(upcomingSorted.length){
