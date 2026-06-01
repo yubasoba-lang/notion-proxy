@@ -832,9 +832,10 @@ body::after {
   </div>
   <div class="load-text">
     <div class="load-pct" id="loadPct">0%</div>
-    <div class="load-sublabel">Syncing</div>
+    <div class="load-sublabel" id="loadSublabel">Syncing</div>
   </div>
   <div class="load-bar-track"><div class="load-bar-fill" id="loadBarFill"></div></div>
+  <button id="loadRetryBtn" onclick="location.reload()" style="display:none;background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:8px 22px;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;">Retry</button>
 </div>
 <div class="bg-orb orb-1"></div>
 <div class="bg-orb orb-2"></div>
@@ -1842,9 +1843,17 @@ function _setLoad(pct){
 let prevRanks={};
 
 async function nFetch(path,method='GET',body){
-  const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,body})});
-  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error??`Error ${res.status}`);}
-  return res.json();
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),18000);
+  try{
+    const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,body}),signal:ctrl.signal});
+    clearTimeout(timer);
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error??`Error ${res.status}`);}
+    return res.json();
+  }catch(e){
+    clearTimeout(timer);
+    throw e.name==='AbortError'?new Error('Request timed out — check your connection'):e;
+  }
 }
 const nQuery=(dbId,filter,sorts)=>nFetch(`/databases/${dbId}/query`,'POST',{page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{})}).then(d=>d.results??[]);
 const nPatch=(id,props)=>nFetch(`/pages/${id}`,'PATCH',{properties:props});
@@ -4375,6 +4384,15 @@ document.addEventListener('touchstart',e=>{
 // Init
 restorePomoPersist();
 if(pomoMode)renderHome(); // show pomo screen instantly before Notion loads
+// Safety net: if still on loading screen after 25s, show retry
+setTimeout(()=>{
+  const ov=document.getElementById('loadOverlay');
+  if(!ov||ov.classList.contains('done'))return;
+  const lbl=document.getElementById('loadSublabel');
+  const btn=document.getElementById('loadRetryBtn');
+  if(lbl)lbl.textContent='Connection slow or unavailable';
+  if(btn)btn.style.display='block';
+},25000);
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
 (function initSparks(){
   for(let i=0;i<10;i++){
