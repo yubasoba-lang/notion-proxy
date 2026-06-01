@@ -1912,7 +1912,8 @@ const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),ca
 const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
 const toExam=p=>{const q=p.properties;
   const topicsMulti=g.multiSelect(q['Topic list']);
-  const topicsRich=q['Topic list']?.rich_text?.map(r=>r.plain_text).join('\n').split('\n').map(t=>t.trim()).filter(Boolean)||[];
+  const topicsRaw=q['Topic list']?.rich_text?.map(r=>r.plain_text).join('\n').split('\n').map(t=>t.trim()).filter(Boolean)||[];
+  const topicsRich=[];topicsRaw.forEach(line=>{if(/^\d/.test(line)||!topicsRich.length)topicsRich.push(line);else topicsRich[topicsRich.length-1]+=' '+line;});
   const topics=topicsMulti.length?topicsMulti:topicsRich;
   return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive),topics};
 };
