@@ -1610,9 +1610,39 @@ async function generateDailyRecap(targetDate){
     }catch(e){}
 
     // ── Workout scheduled? ──
-    const dayAbbr=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dateStr+'T12:00:00').getDay()];
+    const dayOfWeek=new Date(dateStr+'T12:00:00').getDay();
+    const dayAbbr=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayOfWeek];
+    const isSunday=dayOfWeek===0;
     const scheduledEx=(state.exercises||[]).filter(e=>e.day?.includes(dayAbbr));
     const workoutStr=scheduledEx.length?`${scheduledEx.length} exercises scheduled (${[...new Set(scheduledEx.map(e=>e.primaryMuscle).filter(Boolean))].join(', ')})`:'rest day';
+
+    // ── Weekly summary (Sundays only) ──
+    let weekSummaryContext='';
+    if(isSunday){
+      const allWkSess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=wDates[0]&&s.started.split('T')[0]<=wDates[6]);
+      const weekTotalH=allWkSess.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+      const weekDaysStudied=[...new Set(allWkSess.map(s=>s.started.split('T')[0]))].length;
+      const subjectHours={};
+      allWkSess.forEach(s=>{const subj=s.subject||s.name||'Other';const h=(new Date(s.done)-new Date(s.started))/3600000;subjectHours[subj]=(subjectHours[subj]||0)+h;});
+      const subjectBreakdown=Object.entries(subjectHours).sort((a,b)=>b[1]-a[1]).map(([s,h])=>`${s}: ${fmtH(h)}`).join(', ')||'none';
+      const dayHours={};
+      allWkSess.forEach(s=>{const d=s.started.split('T')[0];const h=(new Date(s.done)-new Date(s.started))/3600000;dayHours[d]=(dayHours[d]||0)+h;});
+      const bestDay=Object.entries(dayHours).sort((a,b)=>b[1]-a[1])[0];
+      const bestDayStr=bestDay?`${new Date(bestDay[0]+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'})} (${fmtH(bestDay[1])})`:'n/a';
+      let wH2hW=0,wH2hL=0;
+      Array.from({length:7},(_,i)=>{const d=new Date(wDates[0]+'T12:00:00');d.setDate(d.getDate()+i);return d.toISOString().split('T')[0];}).forEach(d=>{
+        if(isDateInBreak(d))return;
+        const rd=rivalDays.find(x=>x.date===d);if(!rd)return;
+        const diff=getUserHoursOnDay(d)-rd.hours;
+        if(Math.abs(diff)<0.1)return;
+        diff>0?wH2hW++:wH2hL++;
+      });
+      weekSummaryContext=`\n\nWEEKLY WRAP (include this in your response):
+WEEK TOTAL: ${fmtH(weekTotalH)} over ${weekDaysStudied} days
+SUBJECTS THIS WEEK: ${subjectBreakdown}
+H2H THIS WEEK: ${wH2hW}W ${wH2hL}L vs 影
+BEST DAY: ${bestDayStr}`;
+    }
 
     // ── Build context ──
     const context=`DATE: ${fmtDate(dateStr)}
@@ -1630,9 +1660,11 @@ H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 
 ${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
 WORKOUT: ${workoutStr}
-SLEEP: ${sleepInfo}`;
+SLEEP: ${sleepInfo}${weekSummaryContext}`;
 
-    const system=`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences, then if there are remaining exam topics, add one short line starting with "Tomorrow:" listing 2-4 specific topics to tackle next (pick the first ones from the remaining list — they're already prioritized). No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. Be specific, direct, coach-like. Don't start with "Today".`;
+    const system=isSunday
+      ?`You are writing a daily study recap for a medical student. It's Sunday — weave a weekly wrap-up naturally into the same paragraph(s), no separate headers or sections. 3-5 sentences total covering today and the week as a whole: volume, subject balance, rival record, what worked. Then if there are remaining exam topics, add one short line starting with "Tomorrow:". Brutally honest, coach-like, no fluff. Don't start with "Today".`
+      :`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences, then if there are remaining exam topics, add one short line starting with "Tomorrow:" listing 2-4 specific topics to tackle next (pick the first ones from the remaining list — they're already prioritized). No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. Be specific, direct, coach-like. Don't start with "Today".`;
     const text=await callClaude(system,context);
     const recap={text:text.trim(),date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
     if(!state.latestRecap||dateStr>=state.latestRecap.date){state.latestRecap=recap;}
@@ -2135,6 +2167,7 @@ async function completePomoWork(){
   }catch(e){showToast('Task log failed — check Notion',2500);}
   // sound was pre-scheduled at pomo start; also try immediate fallback
   playPomoCompleteSound();
+  sendNotification('Pomo done ✓',`${subject} · ${pomoCount%4===0?'Long break':'Short break'} time`);
   showQualityPicker(id);
   pomoPhase='break';
   const breakDur=pomoCount%4===0?POMO_LONG:POMO_SHORT;
@@ -2149,6 +2182,7 @@ async function completePomoBreak(){
   pomoPhase='work';pomoPhaseEnd=null;
   savePomoPersist();
   playBreakEndSound();
+  sendNotification('Break over','Back to work.');
   showPomoFlash(false);
   if(!lastSubject){renderHome();return;}
   try{
@@ -2194,6 +2228,19 @@ function schedulePomoEndSound(secsFromNow,isWork){
 }
 function playPomoCompleteSound(){ schedulePomoEndSound(0,true); }
 function playBreakEndSound(){ schedulePomoEndSound(0,false); }
+
+// ── Push Notifications ──
+async function requestNotificationPermission(){
+  if(!('Notification' in window)||Notification.permission!=='default')return;
+  await Notification.requestPermission();
+}
+function sendNotification(title,body){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{
+    const n=new Notification(title,{body,tag:'grind-pomo',renotify:true,silent:false});
+    setTimeout(()=>n.close(),9000);
+  }catch(e){}
+}
 let pomoFlashTimer=null;
 function showPomoFlash(isWork){
   // Tab title blink (visible from other tabs)
@@ -2296,7 +2343,7 @@ async function startSession(subject){
   try{
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
-    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);}
+    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);requestNotificationPermission();}
     startTimer();renderHome();
     showToast('▸ '+subject);
   }catch(e){
@@ -3939,7 +3986,7 @@ function renderStudyLog(){
       </div>
       <div class="pomo-screen-dots">${dots}</div>
       <div class="pomo-screen-today">${todayCount > 0 ? todayCount+' pomo'+(todayCount>1?'s':'')+' today' : 'first pomo!'}</div>
-      <button class="pomo-screen-stop" onclick="stopSession()">${isBreak?'skip break':'stop'}</button>
+      <button class="pomo-screen-stop" onclick="${isBreak?'completePomoBreak()':'stopSession()}">${isBreak?'skip break':'stop'}</button>
       ${days.length?'<div class="pomo-log-divider"></div>':''}
     </div>`;
   } else if(state.activeSession){
