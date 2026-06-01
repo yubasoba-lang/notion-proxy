@@ -1927,7 +1927,18 @@ const _topicUI={};
 let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
 
 
-function setError(msg){const el=document.getElementById('error-bar');if(msg){el.textContent=msg;el.style.display='block';}else el.style.display='none';}
+let _errorDismissTimer=null;
+function setError(msg){
+  const el=document.getElementById('error-bar');
+  if(_errorDismissTimer){clearTimeout(_errorDismissTimer);_errorDismissTimer=null;}
+  if(msg){
+    el.innerHTML=msg+'<span onclick="setError(null)" style="float:right;cursor:pointer;opacity:0.6;padding:0 2px;font-size:13px;">✕</span>';
+    el.style.display='block';
+    _errorDismissTimer=setTimeout(()=>setError(null),12000);
+  }else{
+    el.style.display='none';
+  }
+}
 function showToast(msg,ms=2500){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);}
 let lastSyncedAt=null;
 function setSyncBusy(b){
@@ -1962,7 +1973,16 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
 /* 
    LOADERS
     */
-async function loadStats(){try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}catch(e){setError('Stats: '+e.message);}}
+async function loadStats(){
+  try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}
+  catch(e){
+    // silent retry after 4s
+    setTimeout(async()=>{
+      try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;setError(null);renderHome();}
+      catch(e2){setError('Stats: '+e2.message);}
+    },4000);
+  }
+}
 async function loadBodyStats(){try{const p=await nQuery(DB.bodyStats);const ns=p.map(toBodyStat);checkRankUps(ns);state.bodyStats=ns;}catch(e){setError('Body Stats: '+e.message);}}
 async function loadExercises(){try{const p=await nQuery(DB.exerciseLibrary);state.exercises=p.map(toExercise);}catch(e){setError('Exercises: '+e.message);}}
 async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){}}
