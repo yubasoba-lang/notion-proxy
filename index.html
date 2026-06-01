@@ -2135,6 +2135,7 @@ async function completePomoWork(){
   }catch(e){showToast('Task log failed — check Notion',2500);}
   // sound was pre-scheduled at pomo start; also try immediate fallback
   playPomoCompleteSound();
+  showQualityPicker(id);
   pomoPhase='break';
   const breakDur=pomoCount%4===0?POMO_LONG:POMO_SHORT;
   pomoPhaseEnd=Date.now()+breakDur;
