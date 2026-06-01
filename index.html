@@ -4078,9 +4078,31 @@ function renderStudyLog(){
         <div class="study-bar-day" style="${b.isToday?'color:var(--gold-dim)':''}">${b.dayLabel}</div>
       </div>`;
     }).join('');
+    // 7-day trend
+    const todayD=new Date();todayD.setHours(0,0,0,0);
+    const prev14Start=new Date(todayD);prev14Start.setDate(prev14Start.getDate()-14);
+    const prev7Start=new Date(todayD);prev7Start.setDate(prev7Start.getDate()-7);
+    const last7=done.filter(s=>s.quality&&s.started&&new Date(s.started)>=prev7Start);
+    const prev7=done.filter(s=>s.quality&&s.started&&new Date(s.started)>=prev14Start&&new Date(s.started)<prev7Start);
+    const flowRateNow=last7.length>0?last7.filter(s=>s.quality==='Flow').length/last7.length:null;
+    const flowRatePrev=prev7.length>0?prev7.filter(s=>s.quality==='Flow').length/prev7.length:null;
+    let trendHTML='';
+    if(flowRateNow!==null){
+      const pct=Math.round(flowRateNow*100);
+      if(flowRatePrev!==null){
+        const diff=Math.round((flowRateNow-flowRatePrev)*100);
+        const arrow=diff>0?'↑':diff<0?'↓':'→';
+        const col=diff>0?'var(--gold)':diff<0?'rgba(180,90,70,0.9)':'var(--text-dim)';
+        trendHTML=`<span style="font-size:8px;color:${col};letter-spacing:0.04em;">${arrow} ${Math.abs(diff)}% flow vs prev week</span>`;
+      } else {
+        trendHTML=`<span style="font-size:8px;color:var(--text-dim);letter-spacing:0.04em;">${pct}% flow this week</span>`;
+      }
+    }
     if(maxH>0||done.length){
       html+=`<div class="study-bars-wrap">
-        <div class="study-bars-label">Last 14 days</div>
+        <div class="study-bars-label" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Last 14 days</span>${trendHTML}
+        </div>
         <div class="study-bars">${barsHTML}</div>
       </div>`;
     }
@@ -4142,6 +4164,53 @@ function renderStudyLog(){
         </div>
       </div>
     </div>`;
+  }
+
+  // Quality by subject
+  {
+    const qSess=done.filter(s=>s.quality&&(s.subject||s.name));
+    if(qSess.length>=3){
+      const subMap={};
+      qSess.forEach(s=>{
+        const sub=s.subject||s.name||'Study';
+        if(!subMap[sub])subMap[sub]={flow:0,grind:0,distracted:0,sessions:0};
+        const dur=msDur(s)/3600000;
+        if(s.quality==='Flow')subMap[sub].flow+=dur;
+        else if(s.quality==='Grind')subMap[sub].grind+=dur;
+        else subMap[sub].distracted+=dur;
+        subMap[sub].sessions++;
+      });
+      const subs=Object.entries(subMap)
+        .map(([name,q])=>({name,total:q.flow+q.grind+q.distracted,flow:q.flow,grind:q.grind,distracted:q.distracted,sessions:q.sessions}))
+        .filter(s=>s.sessions>=2)
+        .sort((a,b)=>b.sessions-a.sessions)
+        .slice(0,7);
+      if(subs.length>=2){
+        const rows=subs.map(s=>{
+          const t=s.total||0.001;
+          const fP=(s.flow/t*100).toFixed(0);
+          const gP=(s.grind/t*100).toFixed(0);
+          const dP=(s.distracted/t*100).toFixed(0);
+          const flowRatio=s.flow/t;
+          const fcol=flowRatio>=0.6?'var(--gold)':flowRatio>=0.35?'rgba(224,208,168,0.55)':'var(--text-dim)';
+          const truncName=s.name.length>22?s.name.slice(0,20)+'…':s.name;
+          const fSeg=fP>0?'<div style="width:'+fP+'%;height:100%;background:rgba(224,208,168,0.72);"></div>':'';
+          const gSeg=gP>0?'<div style="width:'+gP+'%;height:100%;background:rgba(224,208,168,0.22);"></div>':'';
+          const dSeg=dP>0?'<div style="width:'+dP+'%;height:100%;background:rgba(180,90,70,0.48);"></div>':'';
+          return`<div style="margin-bottom:9px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;">
+              <div style="font-size:10px;font-weight:500;color:var(--text);">${truncName}</div>
+              <div style="font-size:8px;color:${fcol};letter-spacing:0.04em;flex-shrink:0;margin-left:8px;">${fP}% flow</div>
+            </div>
+            <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;display:flex;">${fSeg}${gSeg}${dSeg}</div>
+          </div>`;
+        }).join('');
+        html+=`<div style="padding:0 0 22px;">
+          <div style="font-size:7px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:13px;">QUALITY BY SUBJECT</div>
+          ${rows}
+        </div>`;
+      }
+    }
   }
 
   if(!days.length&&!isPomoActive&&!state.activeSession){
