@@ -792,6 +792,16 @@ body::after {
 .exam-prep-label{font-size:7px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);}
 .exam-prep-divider{width:1px;height:24px;background:var(--border);flex-shrink:0;}
 .exam-prep-warn{font-size:7px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#8c2e20;background:rgba(140,46,32,0.12);border:1px solid rgba(140,46,32,0.3);border-radius:2px;padding:2px 5px;margin-left:auto;}
+.exam-topics{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.exam-topic-progress{font-size:7px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.exam-topic-progress-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.exam-topic-progress-fill{height:100%;background:var(--gold-dim);border-radius:2px;transition:width 0.3s;}
+.exam-topic-item{display:flex;align-items:flex-start;gap:7px;padding:3px 0;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.exam-topic-check{width:13px;height:13px;border:1px solid var(--border-hi);border-radius:2px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.exam-topic-check.checked{background:var(--gold-dim);border-color:var(--gold-dim);}
+.exam-topic-check.checked::after{content:'✓';font-size:8px;color:var(--gold);font-weight:700;line-height:1;}
+.exam-topic-text{font-size:11px;color:var(--text-dim);line-height:1.4;}
+.exam-topic-text.checked{text-decoration:line-through;opacity:0.45;}
 .exam-past-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:3px;}
 .next-exam-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:4px;}
 </style>
@@ -1199,7 +1209,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null};
 let journalFormOpen=false;let journalSelectedEmotions=new Set();let journalSelectedJournalId=null;
 let timerInterval=null;
 let examCountdownInterval=null;
@@ -1497,6 +1507,12 @@ async function generateDailyRecap(targetDate){
     const examDateMs=nextExam?new Date(nextExam.date.includes('T')?nextExam.date:nextExam.date+'T00:00:00').getTime():null;
     const daysToExam=examDateMs?Math.ceil((examDateMs-new Date(dateStr+'T00:00:00').getTime())/86400000):null;
     const examPrep=nextExam?getExamStudyHours(nextExam):null;
+    const examTopicInfo=(()=>{
+      if(!nextExam||!nextExam.topics?.length)return null;
+      const checked=(state.topicProgress[nextExam.id]||[]).length;
+      const total=nextExam.topics.length;
+      return `${checked}/${total} (${Math.round(checked/total*100)}%)`;
+    })();
 
     // ── H2H last 7 days ──
     const rivalDays=getRivalDays();
@@ -1549,7 +1565,7 @@ PEAK FOCUS WINDOW: ${peakWindow||'not enough data'}
 VS 影: ${Math.abs(rivalGap)<0.05?'tied':`${fmtH(Math.abs(rivalGap))} ${rivalGap>0?'ahead':'behind'}`}
 H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 
-${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}`:'' }
+${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?` [topics: ${examTopicInfo} checked off]`:''}`:'' }
 WORKOUT: ${workoutStr}
 SLEEP: ${sleepInfo}`;
 
@@ -1760,7 +1776,12 @@ const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total
 const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);const questId=g.num(q['Quest ID']);const isQuestRaw=g.formula(q['Is Quest']);const isQuest=isQuestRaw===1||isQuestRaw===true||(typeof isQuestRaw==='string'&&isQuestRaw!=='');return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),questId,isQuest,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
 const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
-const toExam=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive)};};
+const toExam=p=>{const q=p.properties;
+  const topicsMulti=g.multiSelect(q['Topic list']);
+  const topicsRich=q['Topic list']?.rich_text?.map(r=>r.plain_text).join('\n').split('\n').map(t=>t.trim()).filter(Boolean)||[];
+  const topics=topicsMulti.length?topicsMulti:topicsRich;
+  return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive),topics};
+};
 // Muscles Hit uses different delt names from Primary Muscle — normalise on load
 const MUSCLES_HIT_MAP={'Pecs':'Pectoralis','Lats':'Latissimus Dorsi','Quads':'Quadriceps','Front Delts':'Anterior Deltoid','Anterior Delts':'Anterior Deltoid','Side Delts':'Lateral Deltoid','Lateral Delts':'Lateral Deltoid','Rear Delts':'Posterior Deltoid','Posterior Delts':'Posterior Deltoid'};
 const toBodyStat=p=>{const q=p.properties;const rivalRel=q.Rivals?.relation;const rivalId=Array.isArray(rivalRel)&&rivalRel.length>0?rivalRel[0].id:null;return{id:p.id,name:g.title(q.Name),decayedXP:g.rollup(q['Decayed XP'])??0,rankStr:g.formula(q.Rank)??'',level:g.formula(q.L)??1,daysInactive:g.formula(q['Days inactive'])??null,lastTrained:g.rollup(q['Last day trained']),cat:g.select(q.Cat),rivalId};};
@@ -2315,7 +2336,7 @@ async function refresh(force=false){
   }
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests()]);_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
-  if(currentTab==='exams'){if(!skip)await loadExams();_markTabLoaded('exams');renderExams();}
+  if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
   setSyncBusy(false);
@@ -2501,6 +2522,39 @@ function getWorkoutStreak(workoutDayMap,dates){
   }
   return streak;
 }
+// ── Topic Progress (App Config) ──
+async function loadTopicProgress(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'topic_progress'}});
+    if(pages.length){
+      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'{}';
+      try{state.topicProgress=JSON.parse(raw);}catch(e){state.topicProgress={};}
+      state.topicProgressPageId=pages[0].id;
+    }else{state.topicProgress={};state.topicProgressPageId=null;}
+  }catch(e){state.topicProgress={};}
+}
+async function saveTopicProgress(){
+  try{
+    const json=JSON.stringify(state.topicProgress);
+    const chunks=[];for(let i=0;i<json.length;i+=1990)chunks.push(json.slice(i,i+1990));
+    const richText=chunks.map(c=>({text:{content:c}}));
+    if(state.topicProgressPageId){
+      await nPatch(state.topicProgressPageId,{Value:{rich_text:richText}});
+    }else{
+      const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'topic_progress'}}]},Value:{rich_text:richText}});
+      state.topicProgressPageId=page.id;
+    }
+  }catch(e){console.error('saveTopicProgress:',e);}
+}
+async function toggleTopic(examId,idx){
+  if(!state.topicProgress[examId])state.topicProgress[examId]=[];
+  const arr=state.topicProgress[examId];
+  const pos=arr.indexOf(idx);
+  if(pos>=0)arr.splice(pos,1);else arr.push(idx);
+  renderExams();
+  await saveTopicProgress();
+}
+
 // Break periods: [{start:'2026-06-01', end:'2026-06-14'}, {start:'2026-07-01', end:null}]
 const BREAKS_CONFIG_ID='37163a0b-4e7c-8121-a2f7-f172f43d511d';
 async function loadH2HStart(){
@@ -4102,6 +4156,28 @@ function renderExams(){
     const pastHours=!isUpcoming&&exam.subjects.length&&prepTotal>0
       ?`<div class="exam-past-hours">${fmtH(prepTotal)} studied (last 4 wks)</div>`:'';
 
+    // Topic list checklist
+    const topicsHTML=(()=>{
+      if(!isUpcoming||!exam.topics?.length)return'';
+      const checked=(state.topicProgress[exam.id]||[]);
+      const pct=Math.round(checked.length/exam.topics.length*100);
+      const items=exam.topics.map((t,i)=>{
+        const done=checked.includes(i);
+        return `<div class="exam-topic-item" onclick="toggleTopic('${exam.id}',${i})">
+          <div class="exam-topic-check${done?' checked':''}"></div>
+          <div class="exam-topic-text${done?' checked':''}">${t}</div>
+        </div>`;
+      }).join('');
+      return `<div class="exam-topics">
+        <div class="exam-topic-progress">
+          <span>${checked.length}/${exam.topics.length} topics</span>
+          <div class="exam-topic-progress-bar"><div class="exam-topic-progress-fill" style="width:${pct}%"></div></div>
+          <span>${pct}%</span>
+        </div>
+        ${items}
+      </div>`;
+    })();
+
     const actions=isUpcoming
       ?`<div style="display:flex;gap:6px;margin-top:8px">
           <button class="exam-action-btn" onclick="openExamGradeModal('${exam.id}')">＋ Grade</button>
@@ -4119,6 +4195,7 @@ function renderExams(){
         ${tagsHTML?`<div class="exam-tags">${tagsHTML}</div>`:''}
         ${pastHours}
         ${prepRow}
+        ${topicsHTML}
         ${actions}
       </div>
     </div>`;
