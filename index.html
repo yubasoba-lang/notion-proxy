@@ -1274,7 +1274,6 @@ const NOUN_STYLES={
   Hammer:  "font-family:'Inter',sans-serif;font-weight:800;letter-spacing:0.04em",
   Monk:    "font-family:'Ma Shan Zheng',cursive;font-weight:400;letter-spacing:0.12em",
   Machine: "font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.08em",
-  Wolf:    "font-family:'Inter',sans-serif;font-weight:700;letter-spacing:0.06em;font-style:italic",
   Stone:   "font-family:'Inter',sans-serif;font-weight:500;letter-spacing:0.22em",
   Ox:      "font-family:'Inter',sans-serif;font-weight:900;letter-spacing:0.02em",
   Ember:   "font-family:'Inter',sans-serif;font-weight:300;letter-spacing:0.14em;opacity:0.7",
@@ -1299,13 +1298,9 @@ function computeTitle(){
   const weekTasks=(state.tasks||[]).filter(t=>t.dueDate&&t.dueDate>=new Date(weekAgo).toISOString().slice(0,10));
   const taskRate=weekTasks.length?weekTasks.filter(t=>t.status).length/weekTasks.length:0;
   const workoutDays=state.workoutDays7||0;
-  const _today=new Date();_today.setHours(0,0,0,0);
-  const _nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  const examInDays=_nextExam?Math.round((new Date(_nextExam.date.slice(0,10)+'T00:00:00')-_today)/86400000):null;
-  // Noun
+  // Noun — driven purely by hours, consistency, quality, workouts. No exam data.
   let noun='Wanderer';
-  if(examInDays!==null&&examInDays>=0&&examInDays<=5&&studyH>=5)noun='Wolf';
-  else if(studyDays>=6&&workoutDays>=4&&taskRate>=0.7&&studyH>=8)noun='Machine';
+  if(studyDays>=6&&workoutDays>=4&&taskRate>=0.7&&studyH>=8)noun='Machine';
   else if(studyH>=6&&workoutDays>=3&&taskRate>=0.6)noun='Monk';
   else if(workoutDays>=4&&studyH<4)noun='Ox';
   else if(studyH>=10&&flowPct>=0.6)noun='Blade';
