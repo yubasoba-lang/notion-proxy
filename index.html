@@ -1296,15 +1296,11 @@ function computeTitle(){
   const rated=week.filter(s=>s.quality);
   const flowPct=rated.length?rated.filter(s=>s.quality==='Flow').length/rated.length:0;
   const disPct=rated.length?rated.filter(s=>s.quality==='Distracted').length/rated.length:0;
-  const today=new Date();today.setHours(0,0,0,0);
-  const nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  const examInDays=nextExam?Math.ceil((new Date(nextExam.date.slice(0,10)+'T00:00:00')-today)/86400000):null;
   const weekTasks=(state.tasks||[]).filter(t=>t.dueDate&&t.dueDate>=new Date(weekAgo).toISOString().slice(0,10));
   const taskRate=weekTasks.length?weekTasks.filter(t=>t.status).length/weekTasks.length:0;
   // Noun
   let noun='Wanderer';
-  if(examInDays!==null&&examInDays>=0&&examInDays<=5&&studyH>=5)noun='Wolf';
-  else if(studyDays>=6&&taskRate>=0.7&&studyH>=8)noun='Machine';
+  if(studyDays>=6&&taskRate>=0.7&&studyH>=8)noun='Machine';
   else if(studyH>=6&&taskRate>=0.6)noun='Monk';
   else if(studyH>=10&&flowPct>=0.6)noun='Blade';
   else if(studyH>=10)noun='Hammer';
@@ -1313,8 +1309,7 @@ function computeTitle(){
   else if(studyH<1)noun='Ghost';
   // Adjective
   let adj='Steady';
-  if(examInDays!==null&&examInDays>=0&&examInDays<=4){adj=flowPct>=0.5?'Clutch':'Urgent';}
-  else if(flowPct>=0.7&&studyH<10){adj='Sharp';}
+  if(flowPct>=0.7&&studyH<10){adj='Sharp';}
   else if(flowPct>=0.65){adj='Focused';}
   else if(studyDays>=6&&studyH>=10){adj='Relentless';}
   else if(studyDays>=5){adj='Steady';}
@@ -3269,7 +3264,8 @@ function renderHome(){
     return `<option value="${sv}"${sv===lastSubject?' selected':''}>${label}</option>`;
   }).join('');
   const todayStr=localToday();
-  const todayCount=Math.max(pomoCount,state.sessions.filter(ss=>ss.started&&localDay(ss.started)===todayStr&&ss.complete==='Done').length);
+  const todayDoneSessions=state.sessions.filter(ss=>ss.started&&localDay(ss.started)===todayStr&&ss.complete==='Done');
+  const todayCount=todayDoneSessions.length+(state.activeSession&&localDay(state.activeSession.startedAt||'')=== todayStr?1:0);
   const blockPos=pomoCount%4;
   const pomoDots=Array.from({length:4},(_,i)=>`<span class="pomo-dot${i<blockPos?' filled':''}">${i<blockPos?'◉':'○'}</span>`).join('');
   const isBreak=pomoMode&&!state.activeSession&&pomoPhaseEnd;
@@ -3322,7 +3318,7 @@ function renderHome(){
     return sum+Math.max(0,(end-new Date(s.started))/60000);
   },0)+(state.activeSession&&state.activeSession.startedAt&&localDay(state.activeSession.startedAt)===todayStr?Math.max(0,(Date.now()-new Date(state.activeSession.startedAt).getTime())/60000):0);
   const todaySubjects=[...new Set(todaySessions.map(s=>s.subject).filter(Boolean))];
-  const focusCount=Math.max(pomoCount,todaySessions.length)+(state.activeSession?1:0);
+  const focusCount=todaySessions.length+(state.activeSession&&localDay(state.activeSession.startedAt||'')===todayStr?1:0);
   const focusPct=Math.min(100,Math.round(focusCount/pomoGoal*100));
   const focusDone=focusCount>=pomoGoal;
   const focusTimeStr=todayMinutes>=60
@@ -4112,7 +4108,8 @@ function renderStudyLog(){
   const days=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
 
   const todayStr=localToday();
-  const todayCount=Math.max(pomoCount,done.filter(s=>s.started&&localDay(s.started)===todayStr).length);
+  const todayDone=done.filter(s=>s.started&&localDay(s.started)===todayStr);
+  const todayCount=todayDone.length+(state.activeSession&&localDay(state.activeSession.startedAt||'')===todayStr?1:0);
   const isPomoActive=pomoMode&&(state.activeSession||pomoPhaseEnd);
   const isBreak=pomoMode&&!state.activeSession&&pomoPhaseEnd;
   const CIRC=628.318;
