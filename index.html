@@ -1300,7 +1300,7 @@ function computeTitle(){
   const taskRate=weekTasks.length?weekTasks.filter(t=>t.status).length/weekTasks.length:0;
   const lifeTasksDone=(state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.dueDate&&t.dueDate>=weekAgoStr).length;
   const workoutDays=state.workoutDays7||0;
-  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase().includes('sex')&&t.dueDate&&t.dueDate>=weekAgoStr).map(t=>t.dueDate));
+  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&t.dueDate&&t.dueDate>=weekAgoStr).map(t=>t.dueDate));
   let _sexStreak=0,_maxSexStreak=0;
   for(let i=6;i>=0;i--){const ds=localDay(new Date(Date.now()-i*86400000));if(sexDates.has(ds)){_sexStreak++;_maxSexStreak=Math.max(_maxSexStreak,_sexStreak);}else{_sexStreak=0;}}
   const sexDone=_maxSexStreak>=3;
@@ -1432,12 +1432,12 @@ function computeRecoveryScore(dateStr){
   let score=0;
   // Sleep (0-40 pts) — parse from Life sleep task name
   const sleepTask=tasks.find(t=>t.cat==='Life'&&t.status&&t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
-  if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8')?40:n.includes('7')||n.includes('6-7')?30:n.includes('6')?22:10;}
+  if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8+')?40:n.includes('6-7')?25:n.includes('<5')?10:15;}
   // Workout (0-30 pts)
   if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
   // Intimacy (0-30 pts) — today or yesterday
   const prev=prevDay(dateStr);
-  const sexLogged=tasks.some(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase().includes('sex')&&(t.dueDate===dateStr||t.dueDate===prev));
+  const sexLogged=tasks.some(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&(t.dueDate===dateStr||t.dueDate===prev));
   if(sexLogged)score+=30;
   return score;
 }
@@ -1448,7 +1448,7 @@ function computeRecoveryBaseline(){
   sessions.forEach(s=>{if(new Date(s.started)<cutoff)return;const d=localDay(s.started);if(!dayGrouped[d])dayGrouped[d]=[];dayGrouped[d].push(s);});
   const dayFlowMap={};
   Object.entries(dayGrouped).forEach(([d,ss])=>{dayFlowMap[d]=ss.filter(s=>s.quality==='Flow').length/ss.length;});
-  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase().includes('sex')&&t.dueDate).map(t=>t.dueDate));
+  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&t.dueDate).map(t=>t.dueDate));
   const workoutDates=state.workoutDaySet||new Set();
   const all=[],afterSex=[],afterWorkout=[];
   Object.entries(dayFlowMap).forEach(([date,fr])=>{
