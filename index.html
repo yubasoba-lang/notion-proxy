@@ -1266,7 +1266,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -1298,10 +1298,13 @@ function computeTitle(){
   const disPct=rated.length?rated.filter(s=>s.quality==='Distracted').length/rated.length:0;
   const weekTasks=(state.tasks||[]).filter(t=>t.dueDate&&t.dueDate>=new Date(weekAgo).toISOString().slice(0,10));
   const taskRate=weekTasks.length?weekTasks.filter(t=>t.status).length/weekTasks.length:0;
+  const workoutDays=state.workoutDays7||0;
   // Noun
   let noun='Wanderer';
-  if(studyDays>=6&&taskRate>=0.7&&studyH>=8)noun='Machine';
-  else if(studyH>=6&&taskRate>=0.6)noun='Monk';
+  if(examInDays!==null&&examInDays>=0&&examInDays<=5&&studyH>=5)noun='Wolf';
+  else if(studyDays>=6&&workoutDays>=4&&taskRate>=0.7&&studyH>=8)noun='Machine';
+  else if(studyH>=6&&workoutDays>=3&&taskRate>=0.6)noun='Monk';
+  else if(workoutDays>=4&&studyH<4)noun='Ox';
   else if(studyH>=10&&flowPct>=0.6)noun='Blade';
   else if(studyH>=10)noun='Hammer';
   else if(studyDays>=5)noun='Stone';
@@ -1312,6 +1315,7 @@ function computeTitle(){
   if(flowPct>=0.7&&studyH<10){adj='Sharp';}
   else if(flowPct>=0.65){adj='Focused';}
   else if(studyDays>=6&&studyH>=10){adj='Relentless';}
+  else if(workoutDays>=3&&studyDays>=4){adj='Iron';}
   else if(studyDays>=5){adj='Steady';}
   else if(disPct>=0.4){adj='Scattered';}
   else if(studyH>3&&flowPct<0.2){adj='Hollow';}
@@ -1385,8 +1389,10 @@ function openTitleSheet(){
   const daysHeld=Math.max(0,Math.floor((Date.now()-t.since)/86400000));
   const tierLabel=['','I','II','III'][t.tier]||'I';
   const why=buildTitleWhy(t.adj,t.noun);
-  const bigStyle='font-size:26px;'+nStyle;
-  const content='<div class="title-sheet-big" style="'+bigStyle+';color:'+col+'">'+t.adj+' '+t.noun+'</div>'
+  const content='<div class="title-sheet-big">'
+    +'<span style="font-size:13px;font-weight:300;letter-spacing:0.18em;text-transform:uppercase;color:'+col+';opacity:0.75;font-family:Inter,sans-serif;display:block;margin-bottom:4px;">'+t.adj+'</span>'
+    +'<span style="font-size:32px;'+nStyle+';color:'+col+'">'+t.noun+'</span>'
+    +'</div>'
     +'<div class="title-sheet-meta">Tier '+tierLabel+' · held '+daysHeld+' day'+(daysHeld!==1?'s':'')+'</div>'
     +'<div class="title-sheet-why">'+why+'</div>'
     +'<button class="title-sheet-close" onclick="closeTitleSheet()">close</button>';
@@ -2129,6 +2135,14 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
 /* 
    LOADERS
     */
+async function loadWorkoutDays(){
+  try{
+    const since=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+    const pages=await nQuery(DB.workoutLog,{property:'Date',date:{on_or_after:since}});
+    const days=new Set(pages.map(p=>p.properties?.Date?.date?.start?.slice(0,10)).filter(Boolean));
+    state.workoutDays7=days.size;
+  }catch(e){state.workoutDays7=0;}
+}
 async function loadStats(){
   try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}
   catch(e){
@@ -2622,7 +2636,7 @@ function showQualityPicker(sessionId){
       <button class="quality-btn grind" onclick="pickQuality('${sessionId}','Grind',this)">Grind</button>
       <button class="quality-btn distracted" onclick="pickQuality('${sessionId}','Distracted',this)">Distracted</button>
     </div>
-    <span class="quality-skip" onclick="document.getElementById('qualityOverlay')?.remove()">Skip</span>
+    <span class="quality-skip" onclick="pickQuality('${sessionId}','Grind',{classList:{add:()=>{}}})">Skip</span>
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
@@ -2640,7 +2654,7 @@ async function refresh(force=false){
       const isFirst=!_hasLoaded;
       if(isFirst)_setLoad(2);
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
-      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick)]);
+      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays()]);
       if(isFirst)_setLoad(100);
       // Load latest recap from Notion (cross-device, persists across days)
       await loadLatestRecapFromNotion();
@@ -3412,12 +3426,25 @@ function renderHome(){
     const{total:nxTotal,recent:nxRecent}=getExamStudyHours(nextExam);
     const fmtHx=h=>{if(h<0.05)return'0h';const hr=Math.floor(h);const mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
     const hoursLine=nextExam.subjects.length?`<div class="next-exam-hours">${fmtHx(nxTotal)} last 4 wks · ${fmtHx(nxRecent)} this week</div>`:'';
+    const pacingLine=(()=>{
+      if(!nextExam.topics?.length)return'';
+      const checked=(state.topicProgress[nextExam.id]||[]).length;
+      const remaining=nextExam.topics.length-checked;
+      if(remaining<=0)return'<div style="font-size:9px;color:var(--green-text);margin-top:5px;letter-spacing:0.04em;">All topics covered ✓</div>';
+      const examD=nextExam.date?nextExam.date.slice(0,10):null;
+      const daysLeft=examD?Math.round((new Date(examD+'T00:00:00')-new Date(localToday()+'T00:00:00'))/86400000):null;
+      if(!daysLeft||daysLeft<=0)return'';
+      const perDay=Math.ceil(remaining/daysLeft);
+      const urgency=perDay>=15?'rgba(180,90,70,0.9)':perDay>=8?'#d4843a':'var(--text-dim)';
+      return'<div style="font-size:9px;color:'+urgency+';margin-top:5px;letter-spacing:0.04em;">'+remaining+' topics · '+perDay+'/day needed</div>';
+    })();
     examCard+=`<div class="next-exam-top">
         <div>
           <div class="next-exam-name">${nextExam.name}</div>
           <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${fmtExamDateTime(nextExam.date)}</div>
           <div class="next-exam-tags">${tags}</div>
           ${hoursLine}
+          ${pacingLine}
         </div>
         <div class="countdown-col">
           <div class="countdown-wrap" id="exam-countdown-display"><div style="color:var(--text-dim);font-size:11px">…</div></div>
