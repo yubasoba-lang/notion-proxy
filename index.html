@@ -1352,10 +1352,12 @@ function getOrUpdateTitle(){
   localStorage.setItem('grind-title',JSON.stringify({...stored,pending:newPending}));
   return stored;
 }
+function evaluateTitle(){getOrUpdateTitle();}  // call once after data loads
 function renderTitle(){
   const el=document.getElementById('player-title');
   if(!el)return;
-  const t=getOrUpdateTitle();
+  const raw=localStorage.getItem('grind-title');
+  const t=raw?JSON.parse(raw):null;
   if(!t||!t.adj||!t.noun){el.innerHTML='';return;}
   const col=ADJ_COLORS[t.adj]||'var(--text-dim)';
   const nStyle=NOUN_STYLES[t.noun]||'';
@@ -1380,7 +1382,8 @@ function buildTitleWhy(adj,noun){
   return parts.length?parts.join(' · ')+' this week.':'Not enough data yet — start logging sessions.';
 }
 function openTitleSheet(){
-  const t=getOrUpdateTitle();
+  const raw=localStorage.getItem('grind-title');
+  const t=raw?JSON.parse(raw):null;
   if(!t)return;
   const col=ADJ_COLORS[t.adj]||'var(--text-dim)';
   const nStyle=NOUN_STYLES[t.noun]||'';
@@ -1412,6 +1415,9 @@ let timerInterval=null;
 let examCountdownInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=localStorage.getItem('grind-last-subject')||null;
 let pomoGoal=(()=>{const v=parseInt(localStorage.getItem('pomo-goal'));return(v>0&&v<=30)?v:8;})();
+// Convert any Date or ISO string to local YYYY-MM-DD
+function localDay(v){const d=v instanceof Date?v:new Date(v);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function localToday(){return localDay(new Date());}
 
 function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
@@ -1713,9 +1719,9 @@ async function generateDailyRecap(targetDate){
   window._recapGenerating=true;
   renderHome();
   try{
-    const todayStr=new Date().toISOString().split('T')[0];
+    const todayStr=localToday();
     const dateStr=targetDate||todayStr;
-    const sessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(dateStr)&&s.done);
+    const sessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===dateStr&&s.done);
     if(!sessions.length){showToast(`No sessions on ${dateStr===todayStr?'today':dateStr}`);window._recapGenerating=false;renderHome();return;}
 
     const fmtH=h=>{const hr=Math.floor(h),mn=Math.round((h-hr)*60);return hr>0?(mn>0?`${hr}h ${mn}m`:`${hr}h`):(mn+'m');};
@@ -2642,21 +2648,21 @@ async function refresh(force=false){
       if(isFirst)_setLoad(100);
       // Load latest recap from Notion (cross-device, persists across days)
       await loadLatestRecapFromNotion();
-      const todayStr2=new Date().toISOString().split('T')[0];
-      const yestStr=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})();
+      const todayStr2=localToday();
+      const yestStr=(()=>{const d=new Date();d.setDate(d.getDate()-1);return localDay(d);})();
       const hour=new Date().getHours();
       // Auto-generate yesterday's recap if missing and yesterday had sessions
-      const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(yestStr));
+      const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
       const recapHasYest=state.latestRecap?.date===yestStr||state.latestRecap?.date===todayStr2;
       if(hasYest&&!recapHasYest&&!window._recapGenerating){generateDailyRecap(yestStr);}
       // Auto-generate today's recap if: past 6pm, sessions exist, no today recap yet
       else{
-        const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr2));
+        const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr2);
         const recapIsToday=state.latestRecap?.date===todayStr2;
         if(hasToday&&hour>=18&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
       }
     }
-    _markTabLoaded('home');renderHome();
+    evaluateTitle();_markTabLoaded('home');renderHome();
   }
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests()]);_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
@@ -3262,8 +3268,8 @@ function renderHome(){
     const label=examDate?`${sv} · ${daysAway}d`:sv;
     return `<option value="${sv}"${sv===lastSubject?' selected':''}>${label}</option>`;
   }).join('');
-  const todayStr=new Date().toISOString().split('T')[0];
-  const todayCount=Math.max(pomoCount,state.sessions.filter(ss=>ss.started?.startsWith(todayStr)&&ss.complete==='Done').length);
+  const todayStr=localToday();
+  const todayCount=Math.max(pomoCount,state.sessions.filter(ss=>ss.started&&localDay(ss.started)===todayStr&&ss.complete==='Done').length);
   const blockPos=pomoCount%4;
   const pomoDots=Array.from({length:4},(_,i)=>`<span class="pomo-dot${i<blockPos?' filled':''}">${i<blockPos?'◉':'○'}</span>`).join('');
   const isBreak=pomoMode&&!state.activeSession&&pomoPhaseEnd;
@@ -3309,12 +3315,12 @@ function renderHome(){
     </div>`;
   }
   // Today's Focus card
-  const todaySessions=state.sessions.filter(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
+  const todaySessions=state.sessions.filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr);
   const todayMinutes=todaySessions.reduce((sum,s)=>{
     if(!s.started)return sum;
     const end=s.done?new Date(s.done):new Date();
     return sum+Math.max(0,(end-new Date(s.started))/60000);
-  },0)+(state.activeSession&&state.activeSession.startedAt&&state.activeSession.startedAt.startsWith(todayStr)?Math.max(0,(Date.now()-new Date(state.activeSession.startedAt).getTime())/60000):0);
+  },0)+(state.activeSession&&state.activeSession.startedAt&&localDay(state.activeSession.startedAt)===todayStr?Math.max(0,(Date.now()-new Date(state.activeSession.startedAt).getTime())/60000):0);
   const todaySubjects=[...new Set(todaySessions.map(s=>s.subject).filter(Boolean))];
   const focusCount=Math.max(pomoCount,todaySessions.length)+(state.activeSession?1:0);
   const focusPct=Math.min(100,Math.round(focusCount/pomoGoal*100));
@@ -3390,7 +3396,7 @@ function renderHome(){
       </div>
     </div>`;
   } else {
-    const hasSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(todayStr));
+    const hasSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr);
     planCard=`<div class="recap-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
@@ -4105,8 +4111,8 @@ function renderStudyLog(){
   done.forEach(s=>{const k=dayKey(s.started);if(!groups[k])groups[k]=[];groups[k].push(s);});
   const days=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
 
-  const todayStr=new Date().toISOString().split('T')[0];
-  const todayCount=Math.max(pomoCount,done.filter(s=>s.started?.startsWith(todayStr)).length);
+  const todayStr=localToday();
+  const todayCount=Math.max(pomoCount,done.filter(s=>s.started&&localDay(s.started)===todayStr).length);
   const isPomoActive=pomoMode&&(state.activeSession||pomoPhaseEnd);
   const isBreak=pomoMode&&!state.activeSession&&pomoPhaseEnd;
   const CIRC=628.318;
