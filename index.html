@@ -1266,7 +1266,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set()};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -1426,6 +1426,40 @@ let pomoGoal=(()=>{const v=parseInt(localStorage.getItem('pomo-goal'));return(v>
 // Convert any Date or ISO string to local YYYY-MM-DD
 function localDay(v){const d=v instanceof Date?v:new Date(v);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function localToday(){return localDay(new Date());}
+function prevDay(dateStr){return localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-86400000));}
+function computeRecoveryScore(dateStr){
+  const tasks=state.tasks||[];
+  let score=0;
+  // Sleep (0-40 pts) — parse from Life sleep task name
+  const sleepTask=tasks.find(t=>t.cat==='Life'&&t.status&&t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
+  if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8')?40:n.includes('7')||n.includes('6-7')?30:n.includes('6')?22:10;}
+  // Workout (0-30 pts)
+  if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
+  // Intimacy (0-30 pts) — today or yesterday
+  const prev=prevDay(dateStr);
+  const sexLogged=tasks.some(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase().includes('sex')&&(t.dueDate===dateStr||t.dueDate===prev));
+  if(sexLogged)score+=30;
+  return score;
+}
+function computeRecoveryBaseline(){
+  const sessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.quality);
+  const cutoff=new Date(Date.now()-30*86400000);
+  const dayGrouped={};
+  sessions.forEach(s=>{if(new Date(s.started)<cutoff)return;const d=localDay(s.started);if(!dayGrouped[d])dayGrouped[d]=[];dayGrouped[d].push(s);});
+  const dayFlowMap={};
+  Object.entries(dayGrouped).forEach(([d,ss])=>{dayFlowMap[d]=ss.filter(s=>s.quality==='Flow').length/ss.length;});
+  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase().includes('sex')&&t.dueDate).map(t=>t.dueDate));
+  const workoutDates=state.workoutDaySet||new Set();
+  const all=[],afterSex=[],afterWorkout=[];
+  Object.entries(dayFlowMap).forEach(([date,fr])=>{
+    all.push(fr);
+    const pd=prevDay(date);
+    if(sexDates.has(pd))afterSex.push(fr);
+    if(workoutDates.has(pd))afterWorkout.push(fr);
+  });
+  const avg=arr=>arr.length>=3?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*100):null;
+  return{baseline:avg(all),afterSex:avg(afterSex),afterWorkout:avg(afterWorkout),n:all.length};
+}
 
 function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
@@ -1860,11 +1894,12 @@ H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 ${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examTimeStr?' (starts at '+examTimeStr+', so the last full study day is the day before)':''}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
 TASKS COMPLETED TODAY: ${(state.tasks||[]).filter(t=>t.status&&t.dueDate===dateStr&&!t.isStudySession).map(t=>t.name).join(', ')||'none'}
 WORKOUT: ${workoutStr}
-SLEEP: ${sleepInfo}${weekSummaryContext}`;
+SLEEP: ${sleepInfo}
+RECOVERY SCORE: ${(()=>{const sc=computeRecoveryScore(dateStr);const bl=computeRecoveryBaseline();const parts=[];if(bl.baseline!==null)parts.push('baseline flow '+bl.baseline+'%');if(bl.afterSex!==null)parts.push('after intimacy '+bl.afterSex+'%');if(bl.afterWorkout!==null)parts.push('after workout '+bl.afterWorkout+'%');return sc+'/100'+(parts.length?' (30d: '+parts.join(', ')+')':'');})()}${weekSummaryContext}`;
 
     const system=isSunday
       ?`You are writing a daily study recap for a medical student. It's Sunday — weave a weekly wrap-up naturally into the same paragraph(s), no separate headers or sections. 3-5 sentences total covering today and the week as a whole: volume, subject balance, rival record, what worked. Then if there are remaining exam topics, add one short line starting with "Tomorrow:". Brutally honest, coach-like, no fluff. Don't start with "Today".`
-      :`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences, then if there are remaining exam topics, add one short line starting with "Tomorrow:" listing 2-4 specific topics to tackle next (pick the first ones from the remaining list — they're already prioritized). No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. Be specific, direct, coach-like. Don't start with "Today".`;
+      :`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences, then if there are remaining exam topics, add one short line starting with "Tomorrow:" listing 2-4 specific topics to tackle next (pick the first ones from the remaining list — they're already prioritized). No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. When recovery score and baseline data is available, weave it in naturally — only when it's meaningful (e.g. high recovery + high flow, or low recovery + poor focus). If intimacy data shows a correlation with focus, name it directly but briefly. Never list recovery stats robotically. Be specific, direct, coach-like. Don't start with "Today".`;
     const text=await callClaude(system,context);
     const recap={text:text.trim(),date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
     if(!state.latestRecap||dateStr>=state.latestRecap.date){state.latestRecap=recap;}
@@ -2145,11 +2180,13 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
     */
 async function loadWorkoutDays(){
   try{
-    const since=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+    const since=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
     const pages=await nQuery(DB.workoutLog,{property:'Date',date:{on_or_after:since}});
-    const days=new Set(pages.map(p=>p.properties?.Date?.date?.start?.slice(0,10)).filter(Boolean));
-    state.workoutDays7=days.size;
-  }catch(e){state.workoutDays7=0;}
+    const allDays=new Set(pages.map(p=>p.properties?.Date?.date?.start?.slice(0,10)).filter(Boolean));
+    state.workoutDaySet=allDays;
+    const cutoff7=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+    state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
+  }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();}
 }
 async function loadStats(){
   try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}
@@ -3499,6 +3536,12 @@ function renderHome(){
         <rect x="5.3" y="12.2" width="3.4" height="1.2" rx="0.5"/>
       </svg>
       <span class="streak-num${s?'':' loading'}">${s?s.quest??0:'—'}</span>
+    </div>
+    <div class="streak-item" title="Recovery score">
+      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
+        <path d="M7 12 C7 12 1.5 8 1.5 4.5 C1.5 2.8 2.8 1.5 4.5 1.5 C5.5 1.5 6.4 2 7 2.8 C7.6 2 8.5 1.5 9.5 1.5 C11.2 1.5 12.5 2.8 12.5 4.5 C12.5 8 7 12 7 12Z"/>
+      </svg>
+      <span class="streak-num" style="${(()=>{const sc=computeRecoveryScore(localToday());return sc>=70?'color:var(--gold)':sc>=40?'color:#c8824a':'color:var(--text-dim)';})()}">${computeRecoveryScore(localToday())}</span>
     </div>
   </div>`;
 
