@@ -1281,7 +1281,7 @@ const NOUN_STYLES={
   Wanderer:"font-family:'Inter',sans-serif;font-weight:400;letter-spacing:0.10em;font-style:italic",
 };
 const ADJ_COLORS={
-  Focused:'#e0d0a8', Sharp:'#f0e4b8', Relentless:'#d8d0c0', Steady:'#c8c4b8',
+  Focused:'#e0d0a8', Sharp:'#f0e4b8', Relentless:'#d8d0c0', Steady:'#c8c4b8', Alive:'#8abf88', Hard:'#c04848',
   Clutch:'#ffd060',  Urgent:'#d4843a', Iron:'#b8c4cc',   Worn:'#a07840',
   Hollow:'#6a5e44',  Scattered:'#9a7870', Erratic:'#887868', Coasting:'#706860',
   Silent:'#504840',  Dormant:'rgba(56,48,40,0.6)',
@@ -1295,9 +1295,15 @@ function computeTitle(){
   const rated=week.filter(s=>s.quality);
   const flowPct=rated.length?rated.filter(s=>s.quality==='Flow').length/rated.length:0;
   const disPct=rated.length?rated.filter(s=>s.quality==='Distracted').length/rated.length:0;
-  const weekTasks=(state.tasks||[]).filter(t=>t.dueDate&&t.dueDate>=new Date(weekAgo).toISOString().slice(0,10));
+  const weekAgoStr=new Date(weekAgo).toISOString().slice(0,10);
+  const weekTasks=(state.tasks||[]).filter(t=>t.dueDate&&t.dueDate>=weekAgoStr);
   const taskRate=weekTasks.length?weekTasks.filter(t=>t.status).length/weekTasks.length:0;
+  const lifeTasksDone=(state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.dueDate&&t.dueDate>=weekAgoStr).length;
   const workoutDays=state.workoutDays7||0;
+  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase().includes('sex')&&t.dueDate&&t.dueDate>=weekAgoStr).map(t=>t.dueDate));
+  let _sexStreak=0,_maxSexStreak=0;
+  for(let i=6;i>=0;i--){const ds=localDay(new Date(Date.now()-i*86400000));if(sexDates.has(ds)){_sexStreak++;_maxSexStreak=Math.max(_maxSexStreak,_sexStreak);}else{_sexStreak=0;}}
+  const sexDone=_maxSexStreak>=3;
   // Noun — driven purely by hours, consistency, quality, workouts. No exam data.
   let noun='Wanderer';
   if(studyDays>=6&&workoutDays>=4&&taskRate>=0.7&&studyH>=8)noun='Machine';
@@ -1313,6 +1319,8 @@ function computeTitle(){
   if(flowPct>=0.7&&studyH<10){adj='Sharp';}
   else if(flowPct>=0.65){adj='Focused';}
   else if(studyDays>=6&&studyH>=10){adj='Relentless';}
+  else if(sexDone&&studyDays>=3){adj='Hard';}
+  else if(workoutDays>=3&&lifeTasksDone>=2&&studyDays>=3){adj='Alive';}
   else if(workoutDays>=3&&studyDays>=4){adj='Iron';}
   else if(studyDays>=5){adj='Steady';}
   else if(disPct>=0.4){adj='Scattered';}
@@ -1322,31 +1330,32 @@ function computeTitle(){
   else if(studyH<1){adj=studyH<0.5?'Dormant':'Silent';}
   return{adj,noun};
 }
+const TITLE_VER=3; // bump to force reset when noun/adj lists change
 function getOrUpdateTitle(){
   const{adj,noun}=computeTitle();
   const raw=localStorage.getItem('grind-title');
   const stored=raw?JSON.parse(raw):null;
   const now=Date.now();
-  if(!stored){
-    const t={adj,noun,since:now,tier:1,pending:null};
+  if(!stored||stored._v!==TITLE_VER){
+    const t={adj,noun,since:now,tier:1,pending:null,_v:TITLE_VER};
     localStorage.setItem('grind-title',JSON.stringify(t));
     return t;
   }
   if(stored.adj===adj&&stored.noun===noun){
     const days=(now-stored.since)/86400000;
     const tier=days>=18?3:days>=9?2:1;
-    const t={...stored,tier,pending:null};
+    const t={...stored,tier,pending:null,_v:TITLE_VER};
     localStorage.setItem('grind-title',JSON.stringify(t));
     return t;
   }
   const p=stored.pending;
   if(p&&p.adj===adj&&p.noun===noun&&p.count>=1){
-    const t={adj,noun,since:now,tier:1,pending:null};
+    const t={adj,noun,since:now,tier:1,pending:null,_v:TITLE_VER};
     localStorage.setItem('grind-title',JSON.stringify(t));
     return t;
   }
   const newPending=(p&&p.adj===adj&&p.noun===noun)?{adj,noun,count:p.count+1}:{adj,noun,count:1};
-  localStorage.setItem('grind-title',JSON.stringify({...stored,pending:newPending}));
+  localStorage.setItem('grind-title',JSON.stringify({...stored,pending:newPending,_v:TITLE_VER}));
   return stored;
 }
 function evaluateTitle(){getOrUpdateTitle();}  // call once after data loads
@@ -1849,6 +1858,7 @@ VS 影: ${Math.abs(rivalGap)<0.05?'tied':`${fmtH(Math.abs(rivalGap))} ${rivalGap
 H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 
 ${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examTimeStr?' (starts at '+examTimeStr+', so the last full study day is the day before)':''}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
+TASKS COMPLETED TODAY: ${(state.tasks||[]).filter(t=>t.status&&t.dueDate===dateStr&&!t.isStudySession).map(t=>t.name).join(', ')||'none'}
 WORKOUT: ${workoutStr}
 SLEEP: ${sleepInfo}${weekSummaryContext}`;
 
