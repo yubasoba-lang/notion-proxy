@@ -1753,6 +1753,7 @@ async function generateDailyRecap(targetDate){
     const nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date.split('T')[0]>=dateStr).sort((a,b)=>a.date.localeCompare(b.date))[0];
     const examDay=nextExam?nextExam.date.slice(0,10):null;
     const daysToExam=examDay?Math.round((new Date(examDay+'T00:00:00')-new Date(dateStr+'T00:00:00'))/86400000):null;
+    const examTimeStr=(()=>{if(!nextExam?.date||!nextExam.date.includes('T'))return null;const dt=new Date(nextExam.date);const h=dt.getHours(),m=dt.getMinutes();if(h===0&&m===0)return null;return dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});})();
     const examPrep=nextExam?getExamStudyHours(nextExam):null;
     const examTopicInfo=(()=>{
       if(!nextExam||!nextExam.topics?.length)return null;
@@ -1843,7 +1844,7 @@ PEAK FOCUS WINDOW: ${peakWindow||'not enough data'}
 VS 影: ${Math.abs(rivalGap)<0.05?'tied':`${fmtH(Math.abs(rivalGap))} ${rivalGap>0?'ahead':'behind'}`}
 H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 
-${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
+${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examTimeStr?' (starts at '+examTimeStr+', so the last full study day is the day before)':''}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
 WORKOUT: ${workoutStr}
 SLEEP: ${sleepInfo}${weekSummaryContext}`;
 
