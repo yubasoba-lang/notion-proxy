@@ -2851,7 +2851,7 @@ function getUserStudyHoursWeek(weeksAgo=0){
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
 function getUserHoursOnDay(dateStr){
-  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(dateStr)&&s.done)
+  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===dateStr&&s.done)
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
 function getDayCategory(muscles){
