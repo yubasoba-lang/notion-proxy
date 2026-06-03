@@ -2714,7 +2714,7 @@ async function refresh(force=false){
       else{
         const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr2);
         const recapIsToday=state.latestRecap?.date===todayStr2;
-        if(hasToday&&hour>=18&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
+        if(hasToday&&hour>=21&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
       }
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
