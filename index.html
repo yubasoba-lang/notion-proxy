@@ -2854,6 +2854,20 @@ function getUserHoursOnDay(dateStr){
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===dateStr&&s.done)
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
+function debugH2H(dateStr){
+  const sess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done);
+  const onDay=sess.filter(s=>localDay(s.started)===dateStr);
+  const totalH=onDay.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+  const rivalDay=getRivalDays().find(d=>d.date===dateStr);
+  console.log('=== H2H DEBUG: '+dateStr+' ===');
+  console.log('Your sessions on this day: '+onDay.length);
+  onDay.forEach((s,i)=>console.log(' ['+i+'] started='+s.started+' (local='+localDay(s.started)+') done='+s.done+' dur='+((new Date(s.done)-new Date(s.started))/3600000).toFixed(2)+'h'));
+  console.log('Your total: '+totalH.toFixed(2)+'h');
+  console.log('Rival hours: '+(rivalDay?rivalDay.hours.toFixed(2)+'h':'not found'));
+  console.log('Total sessions in state: '+sess.length);
+  console.log('All sessions date sample:',sess.slice(0,5).map(s=>localDay(s.started)));
+  return{yourH:totalH,rivalH:rivalDay?.hours??0};
+}
 function getDayCategory(muscles){
   if(!muscles||!muscles.length)return null;
   const counts={};
