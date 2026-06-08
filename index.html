@@ -2182,7 +2182,7 @@ async function loadWorkoutDays(){
   try{
     const since=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
     const pages=await nQuery(DB.workoutLog,{property:'Date',date:{on_or_after:since}});
-    const allDays=new Set(pages.map(p=>p.properties?.Date?.date?.start?.slice(0,10)).filter(Boolean));
+    const allDays=new Set(pages.map(p=>{const s=p.properties?.Date?.date?.start;return s?localDay(new Date(s)):null;}).filter(Boolean));
     state.workoutDaySet=allDays;
     const cutoff7=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
     state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
