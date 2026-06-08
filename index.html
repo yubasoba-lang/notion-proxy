@@ -1433,7 +1433,8 @@ function computeRecoveryScore(dateStr){
   // Sleep (0-40 pts) — parse from Life sleep task name
   const sleepTask=tasks.find(t=>t.cat==='Life'&&t.status&&t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
   const lifeTasks=tasks.filter(t=>t.cat==='Life');
-  console.log('[Recovery] dateStr=',dateStr,'lifeTasks=',lifeTasks.map(t=>({name:t.name,status:t.status,dueDate:t.dueDate})),'sleepTask=',sleepTask);
+  const sleepRaw=tasks.find(t=>t.name&&t.name.toLowerCase().includes('sleep'));
+  console.log('[Recovery] dateStr=',JSON.stringify(dateStr),'sleepRaw=',sleepRaw?JSON.stringify({name:sleepRaw.name,cat:sleepRaw.cat,status:sleepRaw.status,dueDate:sleepRaw.dueDate}):'none','sleepTask=',sleepTask?'FOUND':'undefined');
   if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8+')?40:n.includes('6-7')?25:n.includes('<5')?10:15;}
   // Workout (0-30 pts)
   if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
