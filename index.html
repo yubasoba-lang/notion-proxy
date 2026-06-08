@@ -1432,12 +1432,15 @@ function computeRecoveryScore(dateStr){
   let score=0;
   // Sleep (0-40 pts) — parse from Life sleep task name
   const sleepTask=tasks.find(t=>t.cat==='Life'&&t.status&&t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
+  const lifeTasks=tasks.filter(t=>t.cat==='Life');
+  console.log('[Recovery] dateStr=',dateStr,'lifeTasks=',lifeTasks.map(t=>({name:t.name,status:t.status,dueDate:t.dueDate})),'sleepTask=',sleepTask);
   if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8+')?40:n.includes('6-7')?25:n.includes('<5')?10:15;}
   // Workout (0-30 pts)
   if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
   // Intimacy (0-30 pts) — today or yesterday
   const prev=prevDay(dateStr);
   const sexLogged=tasks.some(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&(t.dueDate===dateStr||t.dueDate===prev));
+  console.log('[Recovery] prev=',prev,'sexLogged=',sexLogged);
   if(sexLogged)score+=30;
   return score;
 }
