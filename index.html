@@ -1437,6 +1437,8 @@ function computeRecoveryScore(dateStr){
   if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
   // Intimacy (0-30 pts) — today or yesterday
   const prev=prevDay(dateStr);
+  const sexTask=tasks.find(t=>t.name&&t.name.toLowerCase()==='sex');
+  console.log('[Recovery2] tasks.length=',tasks.length,'sexTask=',sexTask?JSON.stringify({name:sexTask.name,cat:sexTask.cat,status:sexTask.status,dueDate:sexTask.dueDate,dateStr,prev}):'none');
   const sexLogged=tasks.some(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&(t.dueDate===dateStr||t.dueDate===prev));
   if(sexLogged)score+=30;
   return score;
