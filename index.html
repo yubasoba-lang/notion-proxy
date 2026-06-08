@@ -1428,18 +1428,16 @@ function localDay(v){const d=v instanceof Date?v:new Date(v);return d.getFullYea
 function localToday(){return localDay(new Date());}
 function prevDay(dateStr){return localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-86400000));}
 function computeRecoveryScore(dateStr){
-  const tasks=state.tasks||[];
+  const doneTasks=state.lifeTasksDone||[];
   let score=0;
   // Sleep (0-40 pts) — parse from Life sleep task name
-  const sleepTask=tasks.find(t=>t.cat==='Life'&&t.status&&t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
+  const sleepTask=doneTasks.find(t=>t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
   if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8+')?40:n.includes('6-7')?25:n.includes('<5')?10:15;}
   // Workout (0-30 pts)
   if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
   // Intimacy (0-30 pts) — today or yesterday
   const prev=prevDay(dateStr);
-  const sexTask=tasks.find(t=>t.name&&t.name.toLowerCase()==='sex');
-  console.log('[Recovery2] tasks.length=',tasks.length,'sexTask=',sexTask?JSON.stringify({name:sexTask.name,cat:sexTask.cat,status:sexTask.status,dueDate:sexTask.dueDate,dateStr,prev}):'none');
-  const sexLogged=tasks.some(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&(t.dueDate===dateStr||t.dueDate===prev));
+  const sexLogged=doneTasks.some(t=>t.name&&t.name.toLowerCase()==='sex'&&(t.dueDate===dateStr||t.dueDate===prev));
   if(sexLogged)score+=30;
   return score;
 }
@@ -2206,6 +2204,18 @@ async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.m
 async function loadJournals(){try{const p=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});state.journals=p.map(x=>({id:x.id,name:x.properties.Name?.title?.[0]?.plain_text??'Untitled'}));}catch(e){setError('Journals: '+e.message);}}
 async function loadEntries(){try{const p=await nQuery(DB.entries,null,[{property:'Date',direction:'descending'}]);state.entries=p.map(x=>{const q=x.properties;return{id:x.id,name:q.Name?.title?.[0]?.plain_text??'Untitled',date:q.Date?.date?.start??null,emotions:q.Emotions?.multi_select?.map(e=>e.name)??[]};});}catch(e){setError('Entries: '+e.message);}}
 
+async function loadLifeTasksDone(){
+  try{
+    const today=localToday();
+    const prev=prevDay(today);
+    const p=await nQuery(DB.tasks,{and:[
+      {property:'Status',checkbox:{equals:true}},
+      {property:'Cat',select:{equals:'Life'}},
+      {or:[{property:'Due Date',date:{equals:today}},{property:'Due Date',date:{equals:prev}}]},
+    ]});
+    state.lifeTasksDone=p.map(toTask);
+  }catch(e){state.lifeTasksDone=[];}
+}
 async function loadTasks(){
   try{
     const today=new Date().toISOString().split('T')[0];
@@ -2701,7 +2711,7 @@ async function refresh(force=false){
       const isFirst=!_hasLoaded;
       if(isFirst)_setLoad(2);
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
-      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks()]);
+      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone()]);
       if(isFirst)_setLoad(100);
       // Load latest recap from Notion (cross-device, persists across days)
       await loadLatestRecapFromNotion();
