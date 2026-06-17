@@ -1,4 +1,4 @@
-]
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -669,6 +669,7 @@ body::after {
 .wec-day-chevron{font-size:10px;color:var(--text-dim);transition:transform 0.2s;}
 .wec-day-header.open .wec-day-chevron{transform:rotate(180deg);}
 .wec-day-body{padding:5px 0 0 0;display:flex;flex-direction:column;gap:3px;}
+.wec-muscle-group-label{font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:10px 14px 4px;opacity:0.6;}
 
 /* ── Ambient background ── */
 .bg-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
@@ -3941,7 +3942,7 @@ function setWorkoutSubTab(v){
   if(slider){
     slider.style.transform=v==='workout'?'translateX(0)':'translateX(-50%)';
     // update pill indicators
-    const btns=slider.previousElementSibling.querySelectorAll('button');
+    const btns=slider.parentElement.previousElementSibling.querySelectorAll('button');
     btns.forEach(b=>{
       const isActive=b.dataset.tab===v;
       b.classList.toggle('active',isActive);
@@ -4026,7 +4027,23 @@ function renderWorkout(){
             <span class="wec-day-chevron">▾</span>
           </div>
         </div>
-        ${isOpen?`<div class="wec-day-body">${dayEx.map(exCard).join('')}</div>`:''}
+        ${(()=>{
+          if(!isOpen)return'';
+          // group by primaryMuscle
+          const groups=[];
+          const seen=new Map();
+          dayEx.forEach(e=>{
+            const key=e.primaryMuscle||'Other';
+            if(!seen.has(key)){seen.set(key,[]); groups.push(key);}
+            seen.get(key).push(e);
+          });
+          let body='';
+          groups.forEach(muscle=>{
+            body+=`<div class="wec-muscle-group-label">${muscle}</div>`;
+            body+=seen.get(muscle).map(exCard).join('');
+          });
+          return`<div class="wec-day-body">${body}</div>`;
+        })()}
       </div>`;
     });
 
