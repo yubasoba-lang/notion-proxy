@@ -1,4 +1,4 @@
-
+]
 
 <!DOCTYPE html>
 <html lang="en">
@@ -3935,7 +3935,21 @@ function toggleWorkoutDay(abbr){
   renderWorkout();
 }
 
-function setWorkoutSubTab(v){workoutSubTab=v;renderWorkout();}
+function setWorkoutSubTab(v){
+  workoutSubTab=v;
+  const slider=document.getElementById('workout-slider');
+  if(slider){
+    slider.style.transform=v==='workout'?'translateX(0)':'translateX(-50%)';
+    // update pill indicators
+    const btns=slider.previousElementSibling.querySelectorAll('button');
+    btns.forEach(b=>{
+      const isActive=b.dataset.tab===v;
+      b.classList.toggle('active',isActive);
+    });
+  } else {
+    renderWorkout();
+  }
+}
 
 function renderWorkout(){
   const el=document.getElementById('tab-workout');
@@ -3945,8 +3959,8 @@ function renderWorkout(){
   }
 
   const switcher=`<div style="display:flex;gap:4px;padding:14px 16px 0;">
-    <button class="sil-toggle-btn${workoutSubTab==='workout'?' active':''}" onclick="setWorkoutSubTab('workout')" style="flex:1;text-align:center">Workout</button>
-    <button class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button>
+    <button data-tab="workout" class="sil-toggle-btn${workoutSubTab==='workout'?' active':''}" onclick="setWorkoutSubTab('workout')" style="flex:1;text-align:center">Workout</button>
+    <button data-tab="bodymap" class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button>
   </div>`;
 
   // Day order and labels matching the training protocol
@@ -3962,7 +3976,8 @@ function renderWorkout(){
   const ABBRS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const todayAbbr=ABBRS[new Date().getDay()];
 
-  if(workoutSubTab==='workout'){
+  // Always build workout panel
+  {
     // Init expandedWorkoutDays to today only on first load
     if(expandedWorkoutDays===null){
       expandedWorkoutDays=new Set([todayAbbr]);
@@ -4035,8 +4050,7 @@ function renderWorkout(){
       </div>`;
     }
 
-    el.innerHTML=switcher+html;
-    return;
+    workoutPanelHTML=html;
   }
 
   // ── Body Map sub-tab ──
@@ -4104,7 +4118,40 @@ function renderWorkout(){
     bodyMapHTML+='</div>';
   }
 
-  el.innerHTML=switcher+bodyMapHTML;
+  const translateX=workoutSubTab==='workout'?'0':'-50%';
+  el.innerHTML=switcher+`<div style="overflow:hidden;width:100%">
+    <div id="workout-slider" style="display:flex;width:200%;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);transform:translateX(${translateX})">
+      <div style="width:50%;flex-shrink:0;min-width:0">${workoutPanelHTML}</div>
+      <div style="width:50%;flex-shrink:0;min-width:0">${bodyMapHTML}</div>
+    </div>
+  </div>`;
+
+  // Touch swipe handling
+  const slider=document.getElementById('workout-slider');
+  if(slider){
+    let startX=0,startY=0,locked=false,dir=null;
+    slider.parentElement.addEventListener('touchstart',function(e){
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+      locked=false;dir=null;
+    },{passive:true});
+    slider.parentElement.addEventListener('touchmove',function(e){
+      if(locked)return;
+      const dx=e.touches[0].clientX-startX;
+      const dy=e.touches[0].clientY-startY;
+      if(dir===null){
+        if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>8){dir='h';}
+        else if(Math.abs(dy)>8){dir='v';locked=true;}
+      }
+      if(dir==='h')e.preventDefault();
+    },{passive:false});
+    slider.parentElement.addEventListener('touchend',function(e){
+      if(locked||dir!=='h')return;
+      const dx=e.changedTouches[0].clientX-startX;
+      if(dx<-40&&workoutSubTab==='workout')setWorkoutSubTab('bodymap');
+      else if(dx>40&&workoutSubTab==='bodymap')setWorkoutSubTab('workout');
+    },{passive:true});
+  }
 }
 
 
