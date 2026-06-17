@@ -2130,6 +2130,7 @@ let expandedExercise=null;
 // Topic list UI state: {[examId]: {open:bool, filter:'todo'|'all'|'done'}}
 const _topicUI={};
 let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
+let workoutSubTab='workout'; // 'workout' | 'bodymap'
 
 
 let _errorDismissTimer=null;
@@ -3934,6 +3935,8 @@ function toggleWorkoutDay(abbr){
   renderWorkout();
 }
 
+function setWorkoutSubTab(v){workoutSubTab=v;renderWorkout();}
+
 function renderWorkout(){
   const el=document.getElementById('tab-workout');
   if(!state.exercises.length){
@@ -3941,7 +3944,102 @@ function renderWorkout(){
     return;
   }
 
-  // ── Body Map ──
+  const switcher=`<div style="display:flex;gap:4px;padding:14px 16px 0;">
+    <button class="sil-toggle-btn${workoutSubTab==='workout'?' active':''}" onclick="setWorkoutSubTab('workout')" style="flex:1;text-align:center">Workout</button>
+    <button class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button>
+  </div>`;
+
+  // Day order and labels matching the training protocol
+  const DAY_DEFS=[
+    {abbr:'Mon',label:'Monday',   sub:'Plyometrics & Core'},
+    {abbr:'Tue',label:'Tuesday',  sub:'Mild Push'},
+    {abbr:'Wed',label:'Wednesday',sub:'Strong Pull'},
+    {abbr:'Thu',label:'Thursday', sub:'Strong Push'},
+    {abbr:'Fri',label:'Friday',   sub:'Mild Pull'},
+    {abbr:'Sat',label:'Saturday', sub:'Legs & Cardio'},
+    {abbr:'Sun',label:'Sunday',   sub:'Rest'},
+  ];
+  const ABBRS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const todayAbbr=ABBRS[new Date().getDay()];
+
+  if(workoutSubTab==='workout'){
+    // Init expandedWorkoutDays to today only on first load
+    if(expandedWorkoutDays===null){
+      expandedWorkoutDays=new Set([todayAbbr]);
+    }
+
+    function exCard(e){
+      const open=expandedExercise===e.id;
+      const meta=[e.primaryMuscle,e.equipment,e.xpPerSet?e.xpPerSet+' XP/set':''].filter(Boolean).join(' · ');
+      const secondary=e.musclesHit.filter(m=>m!==e.primaryMuscle);
+      const muscleTags=(e.primaryMuscle?`<span class="wec-tag wec-primary">${e.primaryMuscle} ×1.0</span>`:'')
+        +secondary.map(m=>`<span class="wec-tag wec-secondary">${m} ×0.5</span>`).join('');
+      const body=open?`<div class="wec-body">
+        <div class="wec-inp-row">
+          <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="3" min="1" max="30"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="10" min="1" max="100"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">kg</div><input type="number" class="wec-inp" id="wec-w-${e.id}" value="0" min="0"></div>
+        </div>
+        <div class="wec-muscles">${muscleTags}</div>
+        <button class="wec-log-btn" id="wec-btn-${e.id}" onclick="event.stopPropagation();logExerciseFromTab('${e.id}')">LOG ${e.name.toUpperCase()}</button>
+      </div>`:'';
+      return `<div class="wec${open?' open':''}" id="wec-${e.id}" onclick="${open?'':'toggleWorkoutExercise(\''+e.id+'\')'}">
+        <div class="wec-row"><div>
+          <div class="wec-name">${e.name}</div>
+          ${meta?`<div class="wec-meta">${meta}</div>`:''}
+        </div><span class="wec-arrow">▾</span></div>
+        ${body}
+      </div>`;
+    }
+
+    let html='';
+    DAY_DEFS.forEach(({abbr,label,sub})=>{
+      const dayEx=state.exercises.filter(e=>e.day.includes(abbr));
+      if(!dayEx.length)return;
+      const isToday=abbr===todayAbbr;
+      const isOpen=expandedWorkoutDays.has(abbr);
+      const headerCls=`wec-day-header${isToday?' today':''}${isOpen?' open':''}`;
+      html+=`<div class="wec-day-section">
+        <div class="${headerCls}" onclick="toggleWorkoutDay('${abbr}')">
+          <div class="wec-day-header-left">
+            <div class="wec-day-dot"></div>
+            <div class="wec-day-title">${label}${isToday?' <span style="font-size:8px;opacity:0.7;letter-spacing:0.05em;text-transform:none;font-weight:400">· today</span>':''}</div>
+            <span class="wec-day-label-sub">${sub}</span>
+          </div>
+          <div class="wec-day-right">
+            <span class="wec-day-count">${dayEx.length}</span>
+            <span class="wec-day-chevron">▾</span>
+          </div>
+        </div>
+        ${isOpen?`<div class="wec-day-body">${dayEx.map(exCard).join('')}</div>`:''}
+      </div>`;
+    });
+
+    const unscheduled=state.exercises.filter(e=>!e.day||e.day.length===0);
+    if(unscheduled.length){
+      const isOpen=expandedWorkoutDays.has('__other__');
+      const headerCls=`wec-day-header${isOpen?' open':''}`;
+      html+=`<div class="wec-day-section">
+        <div class="${headerCls}" onclick="toggleWorkoutDay('__other__')">
+          <div class="wec-day-header-left">
+            <div class="wec-day-dot" style="background:var(--text-dim);opacity:0.3"></div>
+            <div class="wec-day-title" style="opacity:0.5">Other Exercises</div>
+            <span class="wec-day-label-sub">Not in current split</span>
+          </div>
+          <div class="wec-day-right">
+            <span class="wec-day-count">${unscheduled.length}</span>
+            <span class="wec-day-chevron">▾</span>
+          </div>
+        </div>
+        ${isOpen?`<div class="wec-day-body">${unscheduled.map(exCard).join('')}</div>`:''}
+      </div>`;
+    }
+
+    el.innerHTML=switcher+html;
+    return;
+  }
+
+  // ── Body Map sub-tab ──
   const bodyStats=state.bodyStats;
   const selStat=selectedMuscle?bodyStats.find(x=>x.id===selectedMuscle):null;
   let bodyMapHTML='';
@@ -4006,72 +4104,7 @@ function renderWorkout(){
     bodyMapHTML+='</div>';
   }
 
-  // Day order and labels matching the training protocol
-  const DAY_DEFS=[
-    {abbr:'Mon',label:'Monday',   sub:'Plyometrics & Core'},
-    {abbr:'Tue',label:'Tuesday',  sub:'Mild Push'},
-    {abbr:'Wed',label:'Wednesday',sub:'Strong Pull'},
-    {abbr:'Thu',label:'Thursday', sub:'Strong Push'},
-    {abbr:'Fri',label:'Friday',   sub:'Mild Pull'},
-    {abbr:'Sat',label:'Saturday', sub:'Legs & Cardio'},
-    {abbr:'Sun',label:'Sunday',   sub:'Rest'},
-  ];
-  const ABBRS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const todayAbbr=ABBRS[new Date().getDay()];
-
-  // Init expandedWorkoutDays to today only on first load
-  if(expandedWorkoutDays===null){
-    expandedWorkoutDays=new Set([todayAbbr]);
-  }
-
-  function exCard(e){
-    const open=expandedExercise===e.id;
-    const meta=[e.primaryMuscle,e.equipment,e.xpPerSet?e.xpPerSet+' XP/set':''].filter(Boolean).join(' · ');
-    const secondary=e.musclesHit.filter(m=>m!==e.primaryMuscle);
-    const muscleTags=(e.primaryMuscle?`<span class="wec-tag wec-primary">${e.primaryMuscle} ×1.0</span>`:'')
-      +secondary.map(m=>`<span class="wec-tag wec-secondary">${m} ×0.5</span>`).join('');
-    const body=open?`<div class="wec-body">
-      <div class="wec-inp-row">
-        <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="3" min="1" max="30"></div>
-        <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="10" min="1" max="100"></div>
-        <div class="wec-inp-grp"><div class="wec-lbl">kg</div><input type="number" class="wec-inp" id="wec-w-${e.id}" value="0" min="0"></div>
-      </div>
-      <div class="wec-muscles">${muscleTags}</div>
-      <button class="wec-log-btn" id="wec-btn-${e.id}" onclick="event.stopPropagation();logExerciseFromTab('${e.id}')">LOG ${e.name.toUpperCase()}</button>
-    </div>`:'';
-    return `<div class="wec${open?' open':''}" id="wec-${e.id}" onclick="${open?'':'toggleWorkoutExercise(\''+e.id+'\')'}">
-      <div class="wec-row"><div>
-        <div class="wec-name">${e.name}</div>
-        ${meta?`<div class="wec-meta">${meta}</div>`:''}
-      </div><span class="wec-arrow">▾</span></div>
-      ${body}
-    </div>`;
-  }
-
-  let html='';
-  DAY_DEFS.forEach(({abbr,label,sub})=>{
-    const dayEx=state.exercises.filter(e=>e.day.includes(abbr));
-    if(!dayEx.length)return;
-    const isToday=abbr===todayAbbr;
-    const isOpen=expandedWorkoutDays.has(abbr);
-    const headerCls=`wec-day-header${isToday?' today':''}${isOpen?' open':''}`;
-    html+=`<div class="wec-day-section">
-      <div class="${headerCls}" onclick="toggleWorkoutDay('${abbr}')">
-        <div class="wec-day-header-left">
-          <div class="wec-day-dot"></div>
-          <div class="wec-day-title">${label}${isToday?' <span style="font-size:8px;opacity:0.7;letter-spacing:0.05em;text-transform:none;font-weight:400">· today</span>':''}</div>
-          <span class="wec-day-label-sub">${sub}</span>
-        </div>
-        <div class="wec-day-right">
-          <span class="wec-day-count">${dayEx.length}</span>
-          <span class="wec-day-chevron">▾</span>
-        </div>
-      </div>
-      ${isOpen?`<div class="wec-day-body">${dayEx.map(exCard).join('')}</div>`:''}
-    </div>`;
-  });
-
-  el.innerHTML=bodyMapHTML+html;
+  el.innerHTML=switcher+bodyMapHTML;
 }
 
 
