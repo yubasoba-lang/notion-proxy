@@ -860,8 +860,11 @@ body::after {
       <div class="wordmark">GRIND</div>
       <div class="player-title" id="player-title" onclick="openTitleSheet()"></div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
-      <button class="sync-btn" id="syncBtn" onclick="refresh(true)">↺ Sync</button>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button id="tz-btn" onclick="openTzSheet()" style="font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:4px;border:1px solid var(--border-hi);background:transparent;color:var(--text-dim);cursor:pointer">⏱</button>
+        <button class="sync-btn" id="syncBtn" onclick="refresh(true)">↺ Sync</button>
+      </div>
       <span id="sync-time" style="font-size:8px;color:var(--text-faint);letter-spacing:0.06em"></span>
     </div>
   </div>
@@ -1424,8 +1427,68 @@ let timerInterval=null;
 let examCountdownInterval=null;
 let pomoMode=false,pomoPhase='work',pomoPhaseEnd=null,pomoCount=0,lastSubject=localStorage.getItem('grind-last-subject')||null;
 let pomoGoal=(()=>{const v=parseInt(localStorage.getItem('pomo-goal'));return(v>0&&v<=30)?v:8;})();
-// Convert any Date or ISO string to local YYYY-MM-DD
-function localDay(v){const d=v instanceof Date?v:new Date(v);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+// ── Timezone ──────────────────────────────────────────────────────────────────
+let userTimezone=(()=>{
+  const saved=localStorage.getItem('grind-tz');
+  return saved||Intl.DateTimeFormat().resolvedOptions().timeZone;
+})();
+const TZ_PRESETS=[
+  {label:'Device',tz:null},
+  {label:'Hungary',tz:'Europe/Budapest'},
+  {label:'Japan',tz:'Asia/Tokyo'},
+  {label:'India',tz:'Asia/Kolkata'},
+  {label:'UTC',tz:'UTC'},
+];
+function setTimezone(tz){
+  userTimezone=tz||Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if(tz)localStorage.setItem('grind-tz',tz);
+  else localStorage.removeItem('grind-tz');
+  document.getElementById('tz-sheet').style.display='none';
+  renderTzBtn();
+  renderHome();
+}
+function renderTzBtn(){
+  const btn=document.getElementById('tz-btn');
+  if(!btn)return;
+  const saved=localStorage.getItem('grind-tz');
+  const preset=TZ_PRESETS.find(p=>p.tz===saved);
+  btn.textContent=preset?preset.label:'⏱';
+}
+function openTzSheet(){
+  const sheet=document.getElementById('tz-sheet');
+  if(!sheet)return;
+  const saved=localStorage.getItem('grind-tz');
+  const now=new Date();
+  let html='<div style="padding:20px 16px 8px;font-size:10px;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;font-weight:700">Timezone</div>';
+  TZ_PRESETS.forEach(function(p){
+    const activeTz=p.tz||Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeStr=now.toLocaleTimeString('en-GB',{timeZone:activeTz,hour:'2-digit',minute:'2-digit'});
+    const dateStr=now.toLocaleDateString('en-GB',{timeZone:activeTz,weekday:'short',day:'numeric',month:'short'});
+    const isActive=(p.tz===saved)||(p.tz===null&&!saved);
+    html+='<div onclick="setTimezone('+JSON.stringify(p.tz)+')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border-lo);cursor:pointer;background:'+(isActive?'var(--surface-hi)':'transparent')+'">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +(isActive?'<span style="color:var(--gold);font-size:10px">●</span>':'<span style="opacity:0;font-size:10px">●</span>')
+      +'<span style="font-size:14px;color:var(--text-hi);font-weight:'+(isActive?'600':'400')+'">'+p.label+'</span>'
+      +(p.tz?'<span style="font-size:10px;color:var(--text-dim)">'+p.tz+'</span>':'')
+      +'</div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-size:13px;color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums">'+timeStr+'</div>'
+      +'<div style="font-size:10px;color:var(--text-dim)">'+dateStr+'</div>'
+      +'</div>'
+      +'</div>';
+  });
+  html+='<div style="height:32px"></div>';
+  sheet.innerHTML='<div onclick="document.getElementById(\'tz-sheet\').style.display=\'none\'" style="position:absolute;inset:0;background:rgba(0,0,0,0.5)"></div>'
+    +'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--surface-lo);border-radius:16px 16px 0 0;max-height:70vh;overflow-y:auto">'+html+'</div>';
+  sheet.style.display='block';
+}
+
+// Convert any Date or ISO string to YYYY-MM-DD in the user's selected timezone
+function localDay(v){
+  const d=v instanceof Date?v:new Date(v);
+  return d.toLocaleDateString('en-CA',{timeZone:userTimezone});
+}
 function localToday(){return localDay(new Date());}
 function prevDay(dateStr){return localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-86400000));}
 function computeRecoveryScore(dateStr){
@@ -4864,6 +4927,7 @@ document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='
     document.body.appendChild(s);
   }
 })();
+renderTzBtn();
 refresh().catch(e=>{
   const lbl=document.getElementById('loadSublabel');
   const btn=document.getElementById('loadRetryBtn');
@@ -4876,5 +4940,6 @@ refresh().catch(e=>{
     <div id="titleSheetContent"></div>
   </div>
 </div>
+<div id="tz-sheet" style="display:none;position:fixed;inset:0;z-index:1000"></div>
 </body>
 </html>
