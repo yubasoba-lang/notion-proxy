@@ -1478,9 +1478,11 @@ function openTzSheet(){
       +'</div>'
       +'</div>';
   });
-  html+='<div style="height:32px"></div>';
-  sheet.innerHTML='<div onclick="document.getElementById(\'tz-sheet\').style.display=\'none\'" style="position:absolute;inset:0;background:rgba(0,0,0,0.5)"></div>'
-    +'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--surface-lo);border-radius:16px 16px 0 0;max-height:70vh;overflow-y:auto">'+html+'</div>';
+  html+='<div style="height:40px"></div>';
+  sheet.innerHTML='<div onclick="document.getElementById(\'tz-sheet\').style.display=\'none\'" style="position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>'
+    +'<div style="position:absolute;bottom:0;left:0;right:0;background:#1a1a14;border-radius:20px 20px 0 0;border-top:1px solid rgba(200,170,80,0.2);max-height:75vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)">'
+    +'<div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:10px auto 4px"></div>'
+    +html+'</div>';
   sheet.style.display='block';
 }
 
@@ -2678,6 +2680,14 @@ function editPomoGoal(){
 }
 
 let _sessionBusy=false;
+function triggerFocusMode(on){
+  const name=on?'GRIND Start':'GRIND Stop';
+  const url='shortcuts://run-shortcut?name='+encodeURIComponent(name);
+  const a=document.createElement('a');
+  a.href=url;
+  a.click();
+}
+
 async function startSession(subject){
   if(_sessionBusy||!subject||state.activeSession)return;
   _sessionBusy=true;
@@ -2689,6 +2699,7 @@ async function startSession(subject){
     const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
     if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);requestNotificationPermission();}
+    triggerFocusMode(true);
     startTimer();renderHome();
     showToast('▸ '+subject);
   }catch(e){
@@ -2705,6 +2716,7 @@ async function stopSession(){
   pomoPhaseEnd=null;pomoPhase='work';
   cancelScheduledSound();
   savePomoPersist();
+  triggerFocusMode(false);
   const wasActive=state.activeSession;
   state.activeSession=null;
   renderHome();
@@ -4927,6 +4939,7 @@ document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='
     document.body.appendChild(s);
   }
 })();
+
 renderTzBtn();
 refresh().catch(e=>{
   const lbl=document.getElementById('loadSublabel');
@@ -4940,6 +4953,6 @@ refresh().catch(e=>{
     <div id="titleSheetContent"></div>
   </div>
 </div>
-<div id="tz-sheet" style="display:none;position:fixed;inset:0;z-index:1000"></div>
+<div id="tz-sheet" style="display:none;position:fixed;inset:0;z-index:9999"></div>
 </body>
 </html>
