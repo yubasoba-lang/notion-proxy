@@ -124,6 +124,24 @@ body::after {
 .nav-label { display: none; }
 .sidebar { display: contents; }
 
+/* ── Calendar card ── */
+.cal-card { background: rgba(16,16,20,0.8); border: 1px solid rgba(224,208,168,0.09); border-radius: 12px; padding: 16px; transition: border-color 0.2s; }
+.cal-card:hover { border-color: rgba(224,208,168,0.16); }
+.cal-month { font-size: 9px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-hdr { font-size: 7px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); text-align: center; padding: 3px 0 5px; }
+.cal-cell { position: relative; aspect-ratio: 1; border: 1px solid transparent; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 3px 2px 2px; min-height: 32px; }
+.cal-cell.today { border-color: rgba(224,208,168,0.35) !important; }
+.cal-cell.has-exam { border-color: rgba(200,80,80,0.45) !important; }
+.cal-dn { font-size: 9px; font-weight: 600; color: var(--text-dim); line-height: 1; }
+.cal-cell.today .cal-dn { color: var(--gold); }
+.cal-cell.past .cal-dn { opacity: 0.4; }
+.cal-wdot { width: 4px; height: 4px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
+.cal-exam-lbl { font-size: 5.5px; font-weight: 700; text-transform: uppercase; color: rgba(210,100,100,0.95); letter-spacing: 0.04em; text-align: center; line-height: 1.2; margin-top: 1px; width: 100%; overflow: hidden; }
+.cal-legend { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 7px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+.cal-ldot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
 /* ── Desktop / Landscape Dashboard ── */
 @media (min-width: 900px) {
   #app {
@@ -206,6 +224,9 @@ body::after {
   .cmd-item:hover, .cmd-item.selected { background: rgba(224,208,168,0.07); color: var(--text); }
   .cmd-item-icon { font-size: 14px; width: 20px; text-align: center; opacity: 0.7; }
   .cmd-item-hint { margin-left: auto; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+  /* Rival page — don't cover sidebar */
+  .rival-page { left: 220px; }
+  .rival-page-inner { max-width: 860px; padding: 0 40px 60px; }
   /* Glassmorphism cards on desktop */
   .study-widget, .focus-card, .recap-card, .next-exam-card {
     background: rgba(16,16,20,0.8);
@@ -3493,6 +3514,53 @@ function closeRivalPage(){
 /* ═══════════════════════════════════
    RENDERERS
    ═══════════════════════════════════ */
+const CAL_COLORS={Push:{bg:'rgba(180,110,40,0.13)',dot:'#c87830'},Pull:{bg:'rgba(50,90,180,0.13)',dot:'#4a70d0'},Legs:{bg:'rgba(60,150,70,0.12)',dot:'#4aa050'},Core:{bg:'rgba(120,60,160,0.12)',dot:'#8c50b4'}};
+function renderCalendar(){
+  const todayStr=localToday();
+  const now=new Date();
+  const year=now.getFullYear(),month=now.getMonth();
+  const firstDay=new Date(year,month,1);
+  const lastDate=new Date(year,month+1,0).getDate();
+  const startDow=firstDay.getDay();
+  // Workout schedule: dow(0=Sun) → category
+  const schedule=getRivalWorkoutSchedule();
+  // Exam dates
+  const examMap={};
+  (state.exams||[]).filter(e=>!e.archive&&e.date).forEach(e=>{
+    const d=e.date.slice(0,10);
+    if(!examMap[d])examMap[d]=e.name;
+  });
+  const monthLabel=now.toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:userTimezone});
+  const hdrs=['S','M','T','W','T','F','S'].map(d=>`<div class="cal-hdr">${d}</div>`).join('');
+  let cells='';
+  for(let i=0;i<startDow;i++)cells+=`<div class="cal-cell"></div>`;
+  for(let d=1;d<=lastDate;d++){
+    const date=new Date(year,month,d);
+    const ds=date.toLocaleDateString('en-CA',{timeZone:userTimezone});
+    const dow=date.getDay();
+    const isToday=ds===todayStr;
+    const isPast=ds<todayStr;
+    const sched=schedule[dow];
+    const cat=sched?.cat;
+    const wc=cat?CAL_COLORS[cat]:null;
+    const exam=examMap[ds];
+    const bg=wc?wc.bg:exam?'rgba(200,70,70,0.08)':'';
+    cells+=`<div class="cal-cell${isToday?' today':''}${isPast?' past':''}${exam?' has-exam':''}" style="${bg?'background:'+bg+';':''}">
+      <span class="cal-dn">${d}</span>
+      ${cat&&wc?`<span class="cal-wdot" style="background:${wc.dot}" title="${cat}"></span>`:''}
+      ${exam?`<span class="cal-exam-lbl">${exam.length>9?exam.slice(0,8)+'…':exam}</span>`:''}
+    </div>`;
+  }
+  const activeCats=[...new Set(Object.values(schedule).map(s=>s.cat).filter(Boolean))];
+  const legend=activeCats.map(c=>`<span class="cal-legend-item"><span class="cal-ldot" style="background:${CAL_COLORS[c]?.dot||'#888'}"></span>${c}</span>`).join('')
+    +`<span class="cal-legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;border:1px solid rgba(200,80,80,0.5);flex-shrink:0"></span>Exam</span>`;
+  return`<div class="cal-card">
+    <div class="cal-month">${monthLabel}</div>
+    <div class="cal-grid">${hdrs}${cells}</div>
+    <div class="cal-legend">${legend}</div>
+  </div>`;
+}
+
 function renderHome(){
   renderTitle();
   const s=state.streaks;
@@ -3752,7 +3820,7 @@ function renderHome(){
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${rivalTeaser}</div>
-      <div class="home-col-left">${timerWidget}${focusCard}</div>
+      <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
       <div class="home-col-right">${examCard}${planCard}</div>
     </div>`;
   } else {
