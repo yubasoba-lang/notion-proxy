@@ -184,6 +184,37 @@ body::after {
   .header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
   .header > div:last-child { align-items: flex-start !important; width: 100%; }
   .header > div:last-child > div:first-child { flex-wrap: wrap; }
+  /* Home 2-column grid */
+  .home-desktop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .home-col-full { grid-column: 1 / -1; }
+  .home-col-left, .home-col-right { display: flex; flex-direction: column; gap: 14px; }
+  /* Sidebar clock */
+  .sidebar-clock { display: flex; flex-direction: column; padding: 14px 18px 10px; border-top: 1px solid var(--border); margin-top: auto; }
+  .sidebar-clock-time { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.06em; color: var(--gold); opacity: 0.85; line-height: 1; }
+  .sidebar-clock-date { font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-top: 3px; }
+  /* Sidebar active session pill */
+  .sidebar-session { padding: 10px 14px; margin: 0 10px 8px; background: rgba(224,208,168,0.06); border: 1px solid rgba(224,208,168,0.12); border-radius: 8px; cursor: pointer; }
+  .sidebar-session-label { font-size: 7px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+  .sidebar-session-timer { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.08em; color: var(--gold); line-height: 1; }
+  .sidebar-session-subject { font-size: 9px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Command palette */
+  #cmd-palette-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); display: flex; align-items: flex-start; justify-content: center; padding-top: 120px; }
+  #cmd-palette { background: #13130f; border: 1px solid rgba(224,208,168,0.18); border-radius: 12px; width: 520px; max-width: 92vw; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(224,208,168,0.06); }
+  #cmd-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 15px; font-family: 'Inter', sans-serif; padding: 16px 20px; outline: none; letter-spacing: 0.02em; }
+  #cmd-input::placeholder { color: var(--text-faint); }
+  .cmd-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; cursor: pointer; transition: background 0.12s; font-size: 12px; letter-spacing: 0.04em; color: var(--text-dim); }
+  .cmd-item:hover, .cmd-item.selected { background: rgba(224,208,168,0.07); color: var(--text); }
+  .cmd-item-icon { font-size: 14px; width: 20px; text-align: center; opacity: 0.7; }
+  .cmd-item-hint { margin-left: auto; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+  /* Glassmorphism cards on desktop */
+  .study-widget, .focus-card, .recap-card, .next-exam-card {
+    background: rgba(16,16,20,0.8);
+    border: 1px solid rgba(224,208,168,0.09);
+    transition: border-color 0.2s;
+  }
+  .study-widget:hover, .focus-card:hover, .recap-card:hover, .next-exam-card:hover {
+    border-color: rgba(224,208,168,0.16);
+  }
 }
 
 /* ── Loader ── */
@@ -941,6 +972,8 @@ body::after {
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span><span class="nav-label">Study</span></button>
     <button class="nav-btn" onclick="switchTab('journal',this)"><span class="nav-icon">✎</span><span class="nav-label">Journal</span></button>
   </div>
+  <div id="sidebar-session" class="sidebar-session" style="display:none" onclick="switchTab('home',document.querySelector('.nav-btn'))"></div>
+  <div id="sidebar-clock" class="sidebar-clock"></div>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
@@ -2528,7 +2561,7 @@ function tickTimer(){
   if(pomoMode&&pomoPhaseEnd){
     const rem=Math.max(0,pomoPhaseEnd-Date.now());
     const txt=formatDuration(rem);
-    ['timer-display','timer-display-log'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
+    ['timer-display','timer-display-log','sidebar-timer-display'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
     // update ring
     const ring=document.getElementById('pomo-ring-fill');
     if(ring){
@@ -2554,7 +2587,7 @@ function tickTimer(){
   }
   if(!state.activeSession){clearInterval(timerInterval);return;}
   const txt=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
-  ['timer-display','timer-display-log'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
+  ['timer-display','timer-display-log','sidebar-timer-display'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
 }
 async function completePomoWork(){
   if(!state.activeSession)return;
@@ -2766,7 +2799,7 @@ async function startSession(subject){
     state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
     if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);requestNotificationPermission();}
     triggerFocusMode(true);
-    startTimer();renderHome();
+    startTimer();renderHome();updateSidebarSession();
     showToast('▸ '+subject);
   }catch(e){
     showToast('Failed to start: '+e.message);
@@ -2785,7 +2818,7 @@ async function stopSession(){
   triggerFocusMode(false);
   const wasActive=state.activeSession;
   state.activeSession=null;
-  renderHome();
+  renderHome();updateSidebarSession();
   if(wasActive){
     const now=new Date().toISOString();
     try{
@@ -3715,7 +3748,16 @@ function renderHome(){
   </div>`;
 
   const rivalTeaser=renderRivalTeaser();
-  let html=streakRow+rivalTeaser+examCard+timerWidget+focusCard+planCard;
+  let html;
+  if(window.innerWidth>=900){
+    html=`<div class="home-desktop-grid">
+      <div class="home-col-full">${streakRow}${rivalTeaser}</div>
+      <div class="home-col-left">${timerWidget}${focusCard}</div>
+      <div class="home-col-right">${examCard}${planCard}</div>
+    </div>`;
+  } else {
+    html=streakRow+rivalTeaser+examCard+timerWidget+focusCard+planCard;
+  }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
@@ -5013,6 +5055,119 @@ refresh().catch(e=>{
   if(lbl)lbl.textContent='Failed to load — '+e.message;
   if(btn)btn.style.display='block';
 });
+
+// ── Sidebar clock ──
+function updateSidebarClock(){
+  const el=document.getElementById('sidebar-clock');
+  if(!el||window.innerWidth<900)return;
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:userTimezone});
+  const dateStr=now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:userTimezone});
+  el.innerHTML='<div class="sidebar-clock-time">'+timeStr+'</div><div class="sidebar-clock-date">'+dateStr+'</div>';
+}
+updateSidebarClock();
+setInterval(updateSidebarClock,1000);
+
+// Re-render home on resize so grid breakpoint responds
+let _lastGridMode=window.innerWidth>=900;
+window.addEventListener('resize',function(){
+  const isWide=window.innerWidth>=900;
+  updateSidebarClock();
+  updateSidebarSession();
+  if(isWide!==_lastGridMode){_lastGridMode=isWide;if(currentTab==='home')renderHome();}
+});
+// Re-render after overlay fades (initial width may be wrong during preload)
+setTimeout(()=>{if(currentTab==='home')renderHome();},1200);
+
+// ── Sidebar active session ──
+function updateSidebarSession(){
+  const el=document.getElementById('sidebar-session');
+  if(!el||window.innerWidth<900){return;}
+  if(state.activeSession){
+    const elapsed=formatDuration(pomoMode&&pomoPhaseEnd?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
+    el.style.display='block';
+    el.innerHTML='<div class="sidebar-session-label">'+(pomoMode?'Pomodoro':'Live session')+'</div>'
+      +'<div class="sidebar-session-timer" id="sidebar-timer-display">'+elapsed+'</div>'
+      +'<div class="sidebar-session-subject">'+state.activeSession.subject+'</div>';
+  } else if(pomoMode&&pomoPhaseEnd&&Date.now()<pomoPhaseEnd){
+    const rem=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+    el.style.display='block';
+    el.innerHTML='<div class="sidebar-session-label">Break</div>'
+      +'<div class="sidebar-session-timer" id="sidebar-timer-display">'+rem+'</div>'
+      +'<div class="sidebar-session-subject" style="color:var(--green-text)">Rest up</div>';
+  } else {
+    el.style.display='none';
+  }
+}
+setInterval(updateSidebarSession,2000);
+
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openCmdPalette();return;}
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const map={h:'home',t:'tasks',w:'workout',e:'exams',s:'study',j:'journal'};
+  const tab=map[e.key.toLowerCase()];
+  if(tab){
+    const btn=[...document.querySelectorAll('.nav-btn')].find(b=>b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+tab+"'"));
+    switchTab(tab,btn);
+  }
+});
+
+// ── Command palette ──
+const CMD_ACTIONS=[
+  {icon:'⌂',label:'Go to Home',hint:'H',action:()=>{const b=document.querySelector('.nav-btn');switchTab('home',b);}},
+  {icon:'☰',label:'Go to Tasks',hint:'T',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][1];switchTab('tasks',b);}},
+  {icon:'⊕',label:'Go to Workout',hint:'W',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][2];switchTab('workout',b);}},
+  {icon:'✦',label:'Go to Exams',hint:'E',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][3];switchTab('exams',b);}},
+  {icon:'◈',label:'Go to Study',hint:'S',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][4];switchTab('study',b);}},
+  {icon:'✎',label:'Go to Journal',hint:'J',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][5];switchTab('journal',b);}},
+  {icon:'▸',label:'Start Study Session',hint:'',action:()=>{const b=document.querySelector('.nav-btn');switchTab('home',b);setTimeout(()=>{const btn=document.querySelector('.study-start-btn');if(btn)btn.click();},200);}},
+  {icon:'■',label:'Stop Session',hint:'',action:()=>{if(state.activeSession)stopSession();}},
+  {icon:'↺',label:'Sync',hint:'',action:()=>refresh(true)},
+  {icon:'⏱',label:'Switch Timezone',hint:'',action:()=>openTzSheet()},
+];
+let cmdSelectedIdx=0;
+function openCmdPalette(){
+  if(document.getElementById('cmd-palette-overlay'))return;
+  cmdSelectedIdx=0;
+  const overlay=document.createElement('div');
+  overlay.id='cmd-palette-overlay';
+  overlay.onclick=e=>{if(e.target===overlay)closeCmdPalette();};
+  overlay.innerHTML='<div id="cmd-palette"><input id="cmd-input" placeholder="Search actions…" autocomplete="off" spellcheck="false"/><div id="cmd-list"></div></div>';
+  document.body.appendChild(overlay);
+  const input=document.getElementById('cmd-input');
+  input.focus();
+  renderCmdList('');
+  input.addEventListener('input',()=>renderCmdList(input.value));
+  input.addEventListener('keydown',function(e){
+    const items=document.querySelectorAll('.cmd-item');
+    if(e.key==='ArrowDown'){e.preventDefault();cmdSelectedIdx=(cmdSelectedIdx+1)%items.length;updateCmdSelection();}
+    else if(e.key==='ArrowUp'){e.preventDefault();cmdSelectedIdx=(cmdSelectedIdx-1+items.length)%items.length;updateCmdSelection();}
+    else if(e.key==='Enter'){e.preventDefault();items[cmdSelectedIdx]&&items[cmdSelectedIdx].click();}
+    else if(e.key==='Escape'){closeCmdPalette();}
+  });
+}
+function renderCmdList(q){
+  const list=document.getElementById('cmd-list');
+  if(!list)return;
+  const filtered=CMD_ACTIONS.filter(a=>a.label.toLowerCase().includes(q.toLowerCase()));
+  cmdSelectedIdx=0;
+  list.innerHTML=filtered.map((a,i)=>'<div class="cmd-item'+(i===0?' selected':'')+'" onclick="('+a.action.toString()+')();closeCmdPalette()">'
+    +'<span class="cmd-item-icon">'+a.icon+'</span>'
+    +'<span>'+a.label+'</span>'
+    +(a.hint?'<span class="cmd-item-hint">'+a.hint+'</span>':'')
+    +'</div>').join('');
+}
+function updateCmdSelection(){
+  document.querySelectorAll('.cmd-item').forEach((el,i)=>el.classList.toggle('selected',i===cmdSelectedIdx));
+  const sel=document.querySelectorAll('.cmd-item')[cmdSelectedIdx];
+  if(sel)sel.scrollIntoView({block:'nearest'});
+}
+function closeCmdPalette(){
+  const el=document.getElementById('cmd-palette-overlay');
+  if(el)el.remove();
+}
 </script>
 <div id="titleSheetOverlay" class="title-sheet-overlay" style="display:none" onclick="if(event.target===this)closeTitleSheet()">
   <div class="title-sheet">
