@@ -121,6 +121,70 @@ body::after {
 .nav-icon { font-size: 16px; line-height: 1; }
 
 .scroll { flex: 1; overflow-y: auto; padding: 16px 16px 100px; -webkit-overflow-scrolling: touch; }
+.nav-label { display: none; }
+.sidebar { display: contents; }
+
+/* ── Desktop / Landscape Dashboard ── */
+@media (min-width: 900px) {
+  #app {
+    flex-direction: row;
+    max-width: 100%;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    background: rgba(6,6,12,0.99);
+    border-right: 1px solid var(--border);
+  }
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 18px 16px;
+    flex-shrink: 0;
+  }
+  .nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: unset;
+    border-bottom: none;
+    padding: 10px 0;
+    overflow-y: auto;
+  }
+  .nav-btn {
+    justify-content: flex-start;
+    padding: 11px 16px;
+    gap: 11px;
+    border-radius: 7px;
+    margin: 1px 10px;
+  }
+  .nav-btn.active::after { display: none; }
+  .nav-btn.active { background: rgba(224,208,168,0.07); border-left: 2px solid var(--gold); padding-left: 14px; }
+  .nav-icon { font-size: 15px; }
+  .nav-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+  }
+  .scroll {
+    flex: 1;
+    height: 100vh;
+    padding: 28px 48px 60px;
+    max-width: none;
+  }
+  .tab-panel { max-width: 720px; margin: 0 auto; }
+  /* Sidebar header: stack wordmark and buttons vertically */
+  .header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+  .header > div:last-child { align-items: flex-start !important; width: 100%; }
+  .header > div:last-child > div:first-child { flex-wrap: wrap; }
+}
 
 /* ── Loader ── */
 .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 70px 20px; gap: 14px; }
@@ -855,6 +919,7 @@ body::after {
 <div class="vignette"></div>
 <div class="screen-sweep"></div>
 <div id="app">
+  <div class="sidebar">
   <div class="header" style="align-items:flex-start">
     <div style="display:flex;flex-direction:column;">
       <div class="wordmark">GRIND</div>
@@ -869,12 +934,13 @@ body::after {
     </div>
   </div>
   <div class="nav">
-    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span></button>
-    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">☰</span></button>
-    <button class="nav-btn" onclick="switchTab('workout',this)"><span class="nav-icon">⊕</span></button>
-    <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span></button>
-    <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span></button>
-    <button class="nav-btn" onclick="switchTab('journal',this)"><span class="nav-icon">✎</span></button>
+    <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">☰</span><span class="nav-label">Tasks</span></button>
+    <button class="nav-btn" onclick="switchTab('workout',this)"><span class="nav-icon">⊕</span><span class="nav-label">Workout</span></button>
+    <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span><span class="nav-label">Exams</span></button>
+    <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span><span class="nav-label">Study</span></button>
+    <button class="nav-btn" onclick="switchTab('journal',this)"><span class="nav-icon">✎</span><span class="nav-label">Journal</span></button>
+  </div>
   </div>
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
