@@ -944,6 +944,47 @@ body::after {
 .exam-topic-empty{font-size:10px;color:var(--text-dim);padding:8px 0;opacity:0.6;}
 .exam-past-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:3px;}
 .next-exam-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:4px;}
+/* ARC STYLES */
+.arc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;}
+.arc-card-active{border-color:var(--border-glow);background:linear-gradient(135deg,rgba(28,26,16,1) 0%,rgba(36,32,16,1) 100%);}
+.arc-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gold-glow) 0%,transparent 60%);pointer-events:none;opacity:0;}
+.arc-card-active::before{opacity:1;}
+.arc-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.08em;color:var(--gold);line-height:1;}
+.arc-type{font-size:8px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-top:2px;}
+.arc-goal{font-size:11px;color:var(--text);margin:10px 0 12px;line-height:1.5;opacity:0.85;}
+.arc-progress-bar{height:3px;background:var(--bg-hi);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+.arc-progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.5s ease;}
+.arc-meta{display:flex;justify-content:space-between;align-items:center;}
+.arc-days{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);}
+.arc-days-count{color:var(--gold);font-family:'JetBrains Mono',monospace;}
+.arc-list{display:flex;flex-direction:column;gap:10px;}
+.arc-item{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color 0.2s;}
+.arc-item:hover{border-color:var(--border-hi);}
+.arc-item-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.06em;color:var(--gold);}
+.arc-item-type{font-size:8px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-top:1px;}
+.arc-item-goal{font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.4;}
+.arc-item-dates{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-faint);margin-top:4px;}
+.arc-item-badge{font-size:11px;margin-left:auto;}
+.arc-section-title{font-size:8px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 10px;}
+.arc-empty{font-size:11px;color:var(--text-dim);opacity:0.6;padding:20px 0;text-align:center;}
+.arc-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;}
+.arc-type-btn{background:var(--bg-mid);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;text-align:left;transition:border-color 0.2s;}
+.arc-type-btn:hover,.arc-type-btn.selected{border-color:var(--gold);background:rgba(240,216,120,0.06);}
+.arc-type-btn-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.06em;color:var(--gold);}
+.arc-type-btn-label{font-size:8px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-top:2px;}
+.arc-form{display:flex;flex-direction:column;gap:12px;margin-top:16px;}
+.arc-form input,.arc-form textarea{background:var(--bg-mid);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-size:12px;font-family:inherit;outline:none;width:100%;box-sizing:border-box;}
+.arc-form input:focus,.arc-form textarea:focus{border-color:var(--border-glow);}
+.arc-form textarea{resize:none;height:60px;line-height:1.5;}
+.arc-form label{font-size:8px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;display:block;}
+.arc-btn{background:var(--gold);color:#1a1600;font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;border:none;border-radius:6px;padding:10px 20px;cursor:pointer;width:100%;}
+.arc-btn:hover{background:var(--gold-hi);}
+.arc-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:6px;padding:9px 20px;cursor:pointer;width:100%;}
+.arc-btn-ghost:hover{border-color:var(--border-hi);color:var(--text);}
+.arc-complete-btn{background:transparent;border:1px solid var(--border-glow);color:var(--gold);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;border-radius:5px;padding:6px 12px;cursor:pointer;}
+.arc-complete-btn:hover{background:rgba(240,216,120,0.08);}
+.arc-randomize{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);background:transparent;border:none;cursor:pointer;padding:4px 0;text-decoration:underline;}
+.arc-randomize:hover{color:var(--text);}
 </style>
 </head>
 <body>
@@ -992,6 +1033,7 @@ body::after {
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span><span class="nav-label">Exams</span></button>
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span><span class="nav-label">Study</span></button>
     <button class="nav-btn" onclick="switchTab('journal',this)"><span class="nav-icon">✎</span><span class="nav-label">Journal</span></button>
+    <button class="nav-btn" onclick="switchTab('arcs',this)"><span class="nav-icon">◉</span><span class="nav-label">Arcs</span></button>
   </div>
   <div id="sidebar-session" class="sidebar-session" style="display:none" onclick="switchTab('home',document.querySelector('.nav-btn'))"></div>
   <div id="sidebar-clock" class="sidebar-clock"></div>
@@ -1004,6 +1046,7 @@ body::after {
     <div id="tab-exams" class="tab-panel" style="display:none"></div>
     <div id="tab-study" class="tab-panel" style="display:none"></div>
     <div id="tab-journal" class="tab-panel" style="display:none"></div>
+    <div id="tab-arcs" class="tab-panel" style="display:none"></div>
   </div>
 </div>
 <div class="workout-modal" id="workoutModal" onclick="if(event.target===this)closeWorkoutModal()">
@@ -1108,6 +1151,8 @@ const PROXY='/api/notion';
 const DB={
   stats:          '34163a0b4e7c81abb22ae7e6bccdf2c2',
   rivals:         'f925bdca42f3428fa6f2c61594ae512a',
+  books:          'c5bdc58231ac47ccb0fec0c2b8cd6ba2',
+  arcs:           'cbc49f9933e14e59b6c10e7eddbefb62',
   tasks:          '34163a0b4e7c81a5a8aefb94b96a6b36',
   templates:      '34163a0b4e7c81a08eefdcd464d0a5a6',
   dailyLog:       '35063a0b4e7c80c9889cf67fa1166d90',
@@ -1137,7 +1182,7 @@ const TIER_GLOW={
   Titan:'rgba(200,32,32,0.55)',Olympian:'rgba(208,128,0,0.55)'
 };
 const ROMANS=['I','II','III'];
-const TIER_XP=[[0,50,120],[220,360,550],[800,1100,1500],[2000,2700,3600],[4800,6300,8100],[10200,12600,15300],[18300,21600,25200],[29100,33300,38000]];
+const TIER_XP=[[0,18,72],[162,288,450],[648,882,1152],[1458,1800,2178],[2592,3200,3872],[4608,6050,7688],[9800,12800,16200],[20000,25000,30000]];
 const ALL_RANKS=[];
 TIER_NAMES.forEach((name,ti)=>TIER_XP[ti].forEach((min,ri)=>ALL_RANKS.push({name,roman:ROMANS[ri],color:TIER_COLORS[name],glow:TIER_GLOW[name],min,full:`${name} ${ROMANS[ri]}`})));
 
@@ -1390,7 +1435,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set()};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[]};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -2404,25 +2449,52 @@ async function loadWorkoutXP(){
     hasMore=data.has_more??false;
     cursor=data.next_cursor;
   }
-  state.bodyStats.forEach(s=>{if(xpMap[s.id]!=null)s.decayedXP=xpMap[s.id];});
+  state.bodyStats.forEach(s=>{if(xpMap[s.id]!=null)s.decayedXP=xpMap[s.id];s.rankStr='';});
 }
 async function loadBodyStats(){try{const p=await nQuery(DB.bodyStats);const ns=p.map(toBodyStat);checkRankUps(ns);state.bodyStats=ns;await loadWorkoutXP();}catch(e){setError('Body Stats: '+e.message);}}
 async function loadExercises(){try{const p=await nQuery(DB.exerciseLibrary);state.exercises=p.map(toExercise);}catch(e){setError('Exercises: '+e.message);}}
 async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){}}
-async function loadJournals(){try{const p=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});state.journals=p.map(x=>({id:x.id,name:x.properties.Name?.title?.[0]?.plain_text??'Untitled'}));}catch(e){setError('Journals: '+e.message);}}
-async function loadEntries(){try{const p=await nQuery(DB.entries,null,[{property:'Date',direction:'descending'}]);state.entries=p.map(x=>{const q=x.properties;return{id:x.id,name:q.Name?.title?.[0]?.plain_text??'Untitled',date:q.Date?.date?.start??null,emotions:q.Emotions?.multi_select?.map(e=>e.name)??[]};});}catch(e){setError('Entries: '+e.message);}}
-
-async function loadLifeTasksDone(){
+const ARC_TYPES=[
+  {type:'The Endless Mile',icon:'🏃',desc:'Endurance'},
+  {type:'The Frequency',icon:'🎵',desc:'Music making'},
+  {type:'The Vault',icon:'💰',desc:'Finance'},
+  {type:'The Hollow',icon:'🧘',desc:'Monk mode'},
+  {type:'The Archive',icon:'📖',desc:'Reading'},
+  {type:'01',icon:'💻',desc:'Coding'},
+];
+function toArc(p){
+  const q=p.properties;
+  return{id:p.id,name:g.title(q.Name),type:g.select(q.Type),goal:g.text(q.Goal),
+    start:q.Start&&q.Start.date?q.Start.date.start:null,
+    end:q.End&&q.End.date?q.End.date.start:null,
+    completed:q.Completed?q.Completed.checkbox:false,
+    notes:g.text(q.Notes)};
+}
+function toBook(p){
+  const q=p.properties;
+  return{id:p.id,name:g.title(q.Name),status:g.select(q.Status),
+    finishedDate:q['Finished Date']&&q['Finished Date'].date?q['Finished Date'].date.start:null,
+    rating:g.select(q.Rating),notes:g.text(q.Notes)};
+}
+async function loadStreaks(){
   try{
-    const today=localToday();
-    const prev=prevDay(today);
-    const p=await nQuery(DB.tasks,{and:[
-      {property:'Status',checkbox:{equals:true}},
-      {property:'Cat',select:{equals:'Life'}},
-      {or:[{property:'Due Date',date:{equals:today}},{property:'Due Date',date:{equals:prev}}]},
-    ]});
-    state.lifeTasksDone=p.map(toTask);
-  }catch(e){state.lifeTasksDone=[];}
+    const p=await nQuery(DB.streaks);
+    if(p.length){
+      const q=p[0].properties;
+      state.streaks={
+        workout:g.formula(q.Workout)??g.num(q.Workout)??g.rollup(q.Workout)??0,
+        mind:g.formula(q.Mind)??g.num(q.Mind)??g.rollup(q.Mind)??0,
+        sleep:g.formula(q.Sleep)??g.num(q.Sleep)??g.rollup(q.Sleep)??0,
+        quest:g.formula(q.Quest)??g.num(q.Quest)??g.rollup(q.Quest)??0,
+      };
+    }
+  }catch(e){setError('Streaks: '+e.message);}
+}
+async function loadSessions(){
+  try{
+    const p=await nQuery(DB.studied,null,[{timestamp:'created_time',direction:'descending'}]);
+    state.sessions=p.map(toSession);
+  }catch(e){setError('Sessions: '+e.message);}
 }
 async function loadTasks(){
   try{
@@ -2442,535 +2514,220 @@ async function loadTodayQuests(){
     const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
     if(logs.length){
       const q=logs[0].properties;
-      console.log('[quests] daily log props:',Object.keys(q));
-      console.log('[quests] Q1 raw:',q['Quest 1'],'Q2:',q['Quest 2'],'Q3:',q['Quest 3']);
-      // Quest 1/2/3 may be formula, number, or rollup — try all
       const getQNum=v=>{const n=g.num(v)??g.formula(v)??g.rollup(v);return n!=null?Number(n):null;};
       const ids=[getQNum(q['Quest 1']),getQNum(q['Quest 2']),getQNum(q['Quest 3'])].filter(n=>n!=null&&n>0);
-      console.log('[quests] resolved ids:',ids);
       state.todayQuests=ids;
-    }else{state.todayQuests=[];console.log('[quests] no log found for today');}
+    }else{state.todayQuests=[];}
   }catch(e){state.todayQuests=[];}
 }
-async function loadStreaks(){
+async function loadLifeTasksDone(){
   try{
-    // Streaks DB has single "Shite" row with all computed streak formulas
-    const pages=await nQuery(DB.streaks);
-    if(pages.length){
-      const q=pages[0].properties;
-      function parseStreak(val){
-        if(typeof val==='number') return val;
-        if(!val) return 0;
-        // Extract number from strings like "Workout Streak - ❄ 14 days"
-        const m=String(val).match(/\d+/);
-        return m?parseInt(m[0]):0;
-      }
-      state.streaks={
-        workout: parseStreak(g.formula(q['Work streak'])),
-        mind:    parseStreak(g.formula(q['Mind streak'])),
-        sleep:   parseStreak(g.formula(q['Sleep streak'])),
-        quest:   parseStreak(g.formula(q['Quest streak'])),
-      };
-    }
-  }catch(e){setError('Streaks: '+e.message);}
+    const today=localToday();
+    const prev=prevDay(today);
+    const p=await nQuery(DB.tasks,{and:[
+      {property:'Status',checkbox:{equals:true}},
+      {property:'Cat',select:{equals:'Life'}},
+      {or:[{property:'Due Date',date:{equals:today}},{property:'Due Date',date:{equals:prev}}]},
+    ]});
+    state.lifeTasksDone=p.map(toTask);
+  }catch(e){state.lifeTasksDone=[];}
 }
-
+async function loadArcs(){try{const p=await nQuery(DB.arcs);state.arcs=p.map(toArc);}catch(e){setError('Arcs: '+e.message);}}
+async function loadBooks(){try{const p=await nQuery(DB.books);state.books=p.map(toBook);}catch(e){setError('Books: '+e.message);}}
 async function loadExams(){
   try{
-    const upcoming=await nQuery(DB.exams,{property:'Archive',checkbox:{equals:false}},[{property:'Exam Date',direction:'ascending'}]);
-    const past=await nQuery(DB.exams,{property:'Archive',checkbox:{equals:true}},[{property:'Exam Date',direction:'descending'}]);
-    state.exams=[...upcoming.map(toExam),...past.map(toExam)];
+    const p=await nQuery(DB.exams,{property:'Archive',checkbox:{equals:false}});
+    state.exams=p.map(toExam);
   }catch(e){setError('Exams: '+e.message);}
 }
-
-async function loadSessions(){
-  try{
-    const p=await nQuery(DB.studied,null,[{timestamp:'created_time',direction:'descending'}]);
-    state.sessions=p.map(toSession);
-    // detect any lingering In Progress session
-    const active=state.sessions.find(s=>s.complete==='In progress');
-    if(active){
-      state.activeSession={id:active.id,subject:active.subject||active.name,startedAt:active.started};
-      // Restore pomo from Notion if no local state (cross-device)
-      const hasLocal=!!localStorage.getItem('grind-pomo');
-      if(!hasLocal&&active.pomoPhase&&active.pomoEnd){
-        const phaseEnd=new Date(active.pomoEnd).getTime();
-        const now=Date.now();
-        if(phaseEnd>now){
-          // Phase still running — restore it
-          pomoMode=true;pomoPhase=active.pomoPhase;
-          pomoPhaseEnd=phaseEnd;pomoCount=active.pomoCount??0;
-          lastSubject=active.subject||active.name||'';
-          savePomoPersist();
-        } else if(active.pomoPhase==='work'){
-          // Work phase expired while away — auto-advance to break
-          pomoMode=true;pomoCount=(active.pomoCount??0)+1;
-          lastSubject=active.subject||active.name||'';
-          pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
-          savePomoPersist();
-        }
-        // if break expired — just let it be, no-op
-      }
-      startTimer();
-    }else{
-      // No active session — try restoring pomo from App Config (break phase or stale)
-      await loadPomoStateFromNotion();
-    }
-  }catch(e){setError('Sessions: '+e.message);}
+async function loadJournals(){try{const p=await nQuery(DB.journals,{property:'Archive',checkbox:{equals:false}});state.journals=p.map(x=>({id:x.id,name:x.properties.Name?.title?.[0]?.plain_text??'Untitled'}));}catch(e){setError('Journals: '+e.message);}}
+async function loadEntries(){try{const p=await nQuery(DB.entries);state.entries=p.map(toEntry);}catch(e){setError('Entries: '+e.message);}}
+function getActiveArc(){
+  const today=localToday();
+  return state.arcs.find(function(a){return a.start&&a.end&&a.start<=today&&a.end>=today&&!a.completed;})||null;
 }
-
-function getExamCountdown(dateStr){
-  if(!dateStr)return null;
-  // Parse full ISO string to preserve timezone (e.g. +02:00 for Hungary)
-  // If no time component, fall back to end of local day
-  const hasTime=dateStr.includes('T');
-  const target=hasTime?new Date(dateStr):new Date(dateStr+'T23:59:59');
-  const diff=target-Date.now();
-  if(diff<0)return null;
-  return{
-    d:Math.floor(diff/86400000),
-    h:Math.floor((diff%86400000)/3600000),
-    m:Math.floor((diff%3600000)/60000),
-    s:Math.floor((diff%60000)/1000)
-  };
+function renderActiveArc(){
+  const arc=getActiveArc();
+  if(!arc)return '';
+  const start=new Date(arc.start);
+  const end=new Date(arc.end);
+  const today=new Date(localToday());
+  const total=Math.round((end-start)/(1000*60*60*24))+1;
+  const elapsed=Math.round((today-start)/(1000*60*60*24))+1;
+  const pct=Math.min(Math.round((elapsed/total)*100),100);
+  const daysLeft=Math.max(Math.round((end-today)/(1000*60*60*24)),0);
+  const typeInfo=ARC_TYPES.find(function(t){return t.type===arc.type;})||{icon:'◉'};
+  return '<div class="arc-card arc-card-active" onclick="arcGoToTab()" style="cursor:pointer">'
+    +'<div class="arc-type">'+typeInfo.icon+' Active Arc</div>'
+    +'<div class="arc-name">'+arc.name+'</div>'
+    +(arc.goal?'<div class="arc-goal">'+arc.goal+'</div>':'')
+    +'<div class="arc-progress-bar"><div class="arc-progress-fill" style="width:'+pct+'%"></div></div>'
+    +'<div class="arc-meta">'
+    +'<div class="arc-days"><span class="arc-days-count">'+daysLeft+'</span> days left</div>'
+    +'<div class="arc-days">'+pct+'% through</div>'
+    +'</div></div>';
 }
-function getAwakeCountdown(dateStr){
-  if(!dateStr)return null;
-  const hasTime=dateStr.includes('T');
-  const target=hasTime?new Date(dateStr):new Date(dateStr+'T23:59:59');
-  const now=new Date();
-  const diff=target-now;
-  if(diff<=0)return null;
-  // Count midnights that will pass between now and the exam — each = 1 night of sleep
-  let nights=0;
-  let midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
-  while(midnight<target){nights++;midnight=new Date(midnight.getTime()+86400000);}
-  const awakeMs=Math.max(0,diff-(nights*7*3600000));
-  return{
-    h:Math.floor(awakeMs/3600000),
-    m:Math.floor((awakeMs%3600000)/60000),
-    s:Math.floor((awakeMs%60000)/1000),
-    cs:Math.floor((awakeMs%1000)/10),
-    nights
-  };
+function arcGoToTab(){
+  var b=document.querySelector('[onclick*="arcs"]');
+  if(b)switchTab('arcs',b);
 }
-function renderExamCountdownDisplay(){
-  const exam=state.exams.filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  if(!exam)return;
-  const c=getExamCountdown(exam.date);
-  const el=document.getElementById('exam-countdown-display');
-  if(!el)return;
-  if(!c){el.innerHTML=`<div style="color:var(--red-hi);font-size:11px;font-weight:700;letter-spacing:0.08em">EXAM DAY</div>`;return;}
-  el.innerHTML=`
-    <div class="countdown-unit"><div class="countdown-num">${String(c.d).padStart(2,'0')}</div><div class="countdown-lbl">days</div></div>
-    <div class="countdown-sep">:</div>
-    <div class="countdown-unit"><div class="countdown-num">${String(c.h).padStart(2,'0')}</div><div class="countdown-lbl">hrs</div></div>
-    <div class="countdown-sep">:</div>
-    <div class="countdown-unit"><div class="countdown-num">${String(c.m).padStart(2,'0')}</div><div class="countdown-lbl">min</div></div>
-    <div class="countdown-sep">:</div>
-    <div class="countdown-unit"><div class="countdown-num">${String(c.s).padStart(2,'0')}</div><div class="countdown-lbl">sec</div></div>`;
-  // Awake counter
-  const aw=document.getElementById('awake-countdown-display');
-  if(aw){
-    const a=getAwakeCountdown(exam.date);
-    if(a){
-      aw.innerHTML=`<div class="awake-row"><span class="awake-val">${a.h}<span class="awake-unit">h</span> ${String(a.m).padStart(2,'0')}<span class="awake-unit">m</span> ${String(a.s).padStart(2,'0')}<span class="awake-unit">s</span> <span style="opacity:0.55;font-size:11px">${String(a.cs).padStart(2,'0')}</span></span><span class="awake-sep">·</span><span class="awake-nights">${a.nights}<span class="awake-unit"> nights</span></span></div>`;
-    }else{
-      aw.innerHTML='';
-    }
-  }
-}
-function formatDuration(ms){
-  const s=Math.floor(ms/1000);
-  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
-  if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-function fmtSessionDur(startedISO,doneISO){
-  if(!startedISO)return'—';
-  const end=doneISO?new Date(doneISO):new Date();
-  const ms=end-new Date(startedISO);
-  if(ms<0)return'—';
-  return formatDuration(ms);
-}
-
-function startTimer(){
-  clearInterval(timerInterval);
-  tickTimer();
-  timerInterval=setInterval(tickTimer,1000);
-}
-function tickTimer(){
-  if(pomoMode&&pomoPhaseEnd){
-    const rem=Math.max(0,pomoPhaseEnd-Date.now());
-    const txt=formatDuration(rem);
-    ['timer-display','timer-display-log','sidebar-timer-display'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
-    // update ring
-    const ring=document.getElementById('pomo-ring-fill');
-    if(ring){
-      const totalMs=pomoPhase==='work'?POMO_WORK:(pomoCount%4===0?POMO_LONG:POMO_SHORT);
-      const pct=Math.min(1,(totalMs-rem)/totalMs);
-      ring.setAttribute('stroke-dashoffset',(628.318*pct).toFixed(2));
-      // Keep ring color in sync with phase (in case renderStudyLog hasn't re-run yet)
-      const ringCol=pomoPhase==='break'?'var(--green-text)':'var(--gold)';
-      if(ring.getAttribute('stroke')!==ringCol)ring.setAttribute('stroke',ringCol);
-      ['pomo-orbit-halo','pomo-orbit-glow'].forEach(id=>{const el=document.getElementById(id);if(el&&el.getAttribute('fill')!==ringCol)el.setAttribute('fill',ringCol);});
-      // Update orbital dot position
-      const ORB_R=114;
-      const angle=-Math.PI/2+pct*2*Math.PI;
-      const ox=(120+ORB_R*Math.cos(angle)).toFixed(2);
-      const oy=(120+ORB_R*Math.sin(angle)).toFixed(2);
-      ['pomo-orbit-dot','pomo-orbit-halo','pomo-orbit-glow'].forEach(id=>{
-        const el=document.getElementById(id);
-        if(el){el.setAttribute('cx',ox);el.setAttribute('cy',oy);}
-      });
-    }
-    if(rem<=0){clearInterval(timerInterval);timerInterval=null;pomoPhase==='work'?completePomoWork():completePomoBreak();}
+function arcSelectType(t){_arcNewType=t;renderArcs();}
+function arcSetView(v){_arcView=v;renderArcs();}
+function arcSurprise(){_arcNewType=ARC_TYPES[Math.floor(Math.random()*ARC_TYPES.length)].type;renderArcs();}
+let _arcView='list';
+let _arcNewType='';
+function renderArcs(){
+  const panel=document.getElementById('tab-arcs');
+  if(!panel)return;
+  const active=getActiveArc();
+  const past=state.arcs.filter(function(a){return a.id!==((active&&active.id)||'');});
+  if(_arcView==='new'){
+    const types=ARC_TYPES.map(function(t){
+      const sel=_arcNewType===t.type?' selected':'';
+      return '<button class="arc-type-btn'+sel+'" onclick="arcSelectType(\''+t.type+'\')">'
+        +'<div class="arc-type-btn-name">'+t.icon+' '+t.type+'</div>'
+        +'<div class="arc-type-btn-label">'+t.desc+'</div>'
+        +'</button>';
+    }).join('');
+    panel.innerHTML='<div style="max-width:480px;margin:0 auto;padding:0 0 40px">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'
+      +'<button class="arc-btn-ghost" style="width:auto;padding:7px 14px" onclick="arcSetView(\'list\')">← Back</button>'
+      +'<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--gold)">New Arc</div>'
+      +'</div>'
+      +'<div class="arc-section-title">Choose your arc</div>'
+      +'<div class="arc-type-grid">'+types+'</div>'
+      +'<button class="arc-randomize" onclick="arcSurprise()">↻ Surprise me</button>'
+      +'<div class="arc-form">'
+      +'<div><label>Arc Name</label><input id="arc-input-name" type="text" placeholder="e.g. The Vault" value="'+(_arcNewType||'')+'" /></div>'
+      +'<div><label>Your Goal</label><textarea id="arc-input-goal" placeholder="One sentence — what does winning this month look like?"></textarea></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      +'<div><label>Start Date</label><input id="arc-input-start" type="date" value="'+localToday()+'" /></div>'
+      +'<div><label>End Date</label><input id="arc-input-end" type="date" /></div>'
+      +'</div>'
+      +'<button class="arc-btn" onclick="saveNewArc()">Activate Arc</button>'
+      +'</div></div>';
     return;
   }
-  if(!state.activeSession){clearInterval(timerInterval);return;}
-  const txt=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
-  ['timer-display','timer-display-log','sidebar-timer-display'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=txt;});
-}
-async function completePomoWork(){
-  if(!state.activeSession)return;
-  const now=new Date().toISOString(),{id,subject,startedAt}=state.activeSession;
-  pomoCount++;state.activeSession=null;
-  nPatch(id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}}).catch(()=>{});
-  // Create task + link to daily log (same as stopSession)
-  try{
-    const dateStr=new Date(startedAt).toISOString().split('T')[0];
-    const taskPage=await nCreate(DB.tasks,{
-      Task:{title:[{text:{content:subject}}]},
-      Cat:{select:{name:'Mind'}},
-      Difficulty:{select:{name:'Normal'}},
-      Base:{number:5},
-      Status:{checkbox:true},
-      'Due Date':{date:{start:dateStr}},
+  if(_arcView==='complete'&&active){
+    panel.innerHTML='<div style="max-width:480px;margin:0 auto;padding:0 0 40px">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'
+      +'<button class="arc-btn-ghost" style="width:auto;padding:7px 14px" onclick="arcSetView(\'list\')">← Back</button>'
+      +'<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--gold)">Close Arc</div>'
+      +'</div>'
+      +'<div class="arc-card arc-card-active" style="margin-bottom:16px">'
+      +'<div class="arc-name">'+active.name+'</div>'
+      +'<div class="arc-goal">'+(active.goal||'')+'</div>'
+      +'</div>'
+      +'<div class="arc-form">'
+      +'<div><label>Did you hit your goal?</label>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">'
+      +'<button id="arc-yes-btn" class="arc-btn-ghost" onclick="arcMarkGoal(true)">Yes ✓</button>'
+      +'<button id="arc-no-btn" class="arc-btn-ghost" onclick="arcMarkGoal(false)">Not quite</button>'
+      +'</div></div>'
+      +'<div><label>Reflection (optional)</label><textarea id="arc-close-notes" placeholder="What did this arc teach you?"></textarea></div>'
+      +'<button class="arc-btn" onclick="closeArc(\''+active.id+'\')">Seal the Arc</button>'
+      +'</div></div>';
+    return;
+  }
+  var html='<div style="max-width:480px;margin:0 auto;padding:0 0 40px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:28px;letter-spacing:0.08em;color:var(--gold)">Arcs</div>'
+    +(active?'':'<button class="arc-btn" style="width:auto;padding:8px 18px" onclick="arcSetView(\'new\')">+ New Arc</button>')
+    +'</div>';
+  if(active){
+    const start=new Date(active.start);
+    const end=new Date(active.end);
+    const today=new Date(localToday());
+    const total=Math.round((end-start)/(1000*60*60*24))+1;
+    const elapsed=Math.round((today-start)/(1000*60*60*24))+1;
+    const pct=Math.min(Math.round((elapsed/total)*100),100);
+    const daysLeft=Math.max(Math.round((end-today)/(1000*60*60*24)),0);
+    const typeInfo=ARC_TYPES.find(function(t){return t.type===active.type;})||{icon:'◉'};
+    html+='<div class="arc-section-title">Active</div>'
+      +'<div class="arc-card arc-card-active">'
+      +'<div class="arc-type">'+typeInfo.icon+' '+active.type+'</div>'
+      +'<div class="arc-name">'+active.name+'</div>'
+      +(active.goal?'<div class="arc-goal">'+active.goal+'</div>':'')
+      +'<div class="arc-progress-bar"><div class="arc-progress-fill" style="width:'+pct+'%"></div></div>'
+      +'<div class="arc-meta">'
+      +'<div class="arc-days"><span class="arc-days-count">'+daysLeft+'</span> days left &middot; '+active.start+' &rarr; '+active.end+'</div>'
+      +'<button class="arc-complete-btn" onclick="arcSetView(\'complete\')">Close Arc</button>'
+      +'</div></div>'
+      +'<div style="margin-top:12px"><button class="arc-btn" style="width:auto;padding:8px 18px" onclick="arcSetView(\'new\')">+ Queue Next Arc</button></div>';
+  }
+  if(past.length){
+    html+='<div class="arc-section-title">History</div><div class="arc-list">';
+    past.slice().reverse().forEach(function(a){
+      const typeInfo=ARC_TYPES.find(function(t){return t.type===a.type;})||{icon:'◉'};
+      const badge=a.completed?'✓':'✗';
+      const badgeColor=a.completed?'var(--gold)':'var(--text-faint)';
+      html+='<div class="arc-item">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between">'
+        +'<div>'
+        +'<div class="arc-item-name">'+a.name+'</div>'
+        +'<div class="arc-item-type">'+typeInfo.icon+' '+a.type+'</div>'
+        +(a.goal?'<div class="arc-item-goal">'+a.goal+'</div>':'')
+        +(a.start&&a.end?'<div class="arc-item-dates">'+a.start+' &rarr; '+a.end+'</div>':'')
+        +'</div>'
+        +'<div style="font-size:16px;color:'+badgeColor+'">'+badge+'</div>'
+        +'</div></div>';
     });
-    const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:dateStr}});
-    if(logs.length)await nPatch(taskPage.id,{'Daily log':{relation:[{id:logs[0].id}]}});
-  }catch(e){showToast('Task log failed — check Notion',2500);}
-  // sound was pre-scheduled at pomo start; also try immediate fallback
-  playPomoCompleteSound();
-  sendNotification('Pomo done ✓',`${subject} · ${pomoCount%4===0?'Long break':'Short break'} time`);
-  showQualityPicker(id);
-  pomoPhase='break';
-  const breakDur=pomoCount%4===0?POMO_LONG:POMO_SHORT;
-  pomoPhaseEnd=Date.now()+breakDur;
-  savePomoPersist();
-  // pre-schedule break-end sound now (timer callback — may be suspended, but worth trying)
-  schedulePomoEndSound(breakDur/1000,false);
-  showPomoFlash(true);
-  renderHome();if(currentTab==='study')renderStudyLog();startTimer();
+    html+='</div>';
+  }
+  if(!active&&!past.length){
+    html+='<div class="arc-empty">No arcs yet.<br>Start your first arc and make this month mean something.</div>';
+  }
+  html+='</div>';
+  panel.innerHTML=html;
 }
-function handlePomoStop(){pomoPhase==='break'?completePomoBreak():stopSession();}
-async function completePomoBreak(){
-  pomoPhase='work';
-  playBreakEndSound();
-  sendNotification('Break over','Back to work.');
-  showPomoFlash(false);
-  if(!lastSubject){pomoPhaseEnd=null;savePomoPersist();renderHome();if(currentTab==='study')renderStudyLog();return;}
-  // Set the clock immediately so the ring starts counting right away
-  const workStartedAt=new Date().toISOString();
-  pomoPhaseEnd=Date.now()+POMO_WORK;
-  savePomoPersist();
-  schedulePomoEndSound(POMO_WORK/1000,true);
-  renderHome();if(currentTab==='study')renderStudyLog();startTimer(); // pomo ring visible before Notion responds
+function arcMarkGoal(val){
+  window._arcCompleted=val;
+  var yes=document.getElementById('arc-yes-btn');
+  var no=document.getElementById('arc-no-btn');
+  if(!yes||!no)return;
+  if(val){yes.style.borderColor='var(--gold)';yes.style.color='var(--gold)';no.style.borderColor='';no.style.color='';}
+  else{no.style.borderColor='var(--gold)';no.style.color='var(--gold)';yes.style.borderColor='';yes.style.color='';}
+}
+async function saveNewArc(){
+  const name=(document.getElementById('arc-input-name')||{}).value;
+  const goal=(document.getElementById('arc-input-goal')||{}).value;
+  const start=(document.getElementById('arc-input-start')||{}).value;
+  const end=(document.getElementById('arc-input-end')||{}).value;
+  if(!name||!name.trim()||!start||!end){showToast('Fill in name, start and end date');return;}
   try{
-    const page=await nCreate(DB.studied,{Name:{title:[{text:{content:lastSubject}}]},Subject:{status:{name:lastSubject}}});
-    state.activeSession={id:page.id,subject:lastSubject,startedAt:workStartedAt};
-    savePomoPersist(); // re-save with sessionId now known
-    renderHome();if(currentTab==='study')renderStudyLog(); // update subject label in ring
-  }catch(e){showToast('Session log failed — check Notion');}
+    await nCreate(DB.arcs,{
+      Name:{title:[{text:{content:name.trim()}}]},
+      Type:{select:{name:_arcNewType||name.trim()}},
+      Goal:{rich_text:[{text:{content:(goal||'').trim()}}]},
+      Start:{date:{start}},
+      End:{date:{start:end}},
+      Completed:{checkbox:false},
+    });
+    await loadArcs();
+    _arcView='list';
+    renderArcs();
+    renderHome();
+    showToast('Arc activated: '+name.trim());
+  }catch(e){showToast('Error: '+e.message);}
 }
-// Pre-schedule a sound at an absolute Web Audio time (called during user gesture at pomo start)
-let scheduledSoundNodes=[];
-function cancelScheduledSound(){
-  scheduledSoundNodes.forEach(({o,g})=>{try{o.stop();g.disconnect();}catch(e){}});
-  scheduledSoundNodes=[];
-}
-function schedulePomoEndSound(secsFromNow,isWork){
-  if(!soundEnabled)return;
+async function closeArc(id){
+  const completed=window._arcCompleted||false;
+  const notesEl=document.getElementById('arc-close-notes');
+  const notes=notesEl?notesEl.value.trim():'';
   try{
-    const ctx=getAudioCtx();
-    const schedule=()=>{
-      cancelScheduledSound();
-      const notes=isWork?[523,659,784,1047]:[659,587];
-      const vols=isWork?[0.13,0.13,0.13,0.16]:[0.09,0.08];
-      const gap=isWork?0.13:0.18;
-      const t0=ctx.currentTime+secsFromNow;
-      notes.forEach((hz,i)=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.connect(g);g.connect(ctx.destination);
-        o.type='sine';o.frequency.value=hz;
-        const t=t0+i*gap;
-        g.gain.setValueAtTime(0,t);
-        g.gain.linearRampToValueAtTime(vols[i],t+0.04);
-        g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
-        o.start(t);o.stop(t+0.56);
-        scheduledSoundNodes.push({o,g});
-      });
-    };
-    if(ctx.state==='suspended')ctx.resume().then(schedule);else schedule();
-  }catch(e){}
-}
-function playPomoCompleteSound(){ schedulePomoEndSound(0,true); }
-function playBreakEndSound(){ schedulePomoEndSound(0,false); }
-
-// ── Push Notifications ──
-async function requestNotificationPermission(){
-  if(!('Notification' in window)||Notification.permission!=='default')return;
-  await Notification.requestPermission();
-}
-function sendNotification(title,body){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
-  try{
-    const n=new Notification(title,{body,tag:'grind-pomo',renotify:true,silent:false});
-    setTimeout(()=>n.close(),9000);
-  }catch(e){}
-}
-let pomoFlashTimer=null;
-function showPomoFlash(isWork){
-  // Tab title blink (visible from other tabs)
-  if(isWork){
-    flashTitle('✓ POMO '+pomoCount+' DONE');
-  } else {
-    flashTitle('▸ BREAK OVER — FOCUS');
-  }
-
-  // Screen flash (3 pulses for work, 1 for break)
-  const pulseCount=isWork?3:1;
-  for(let i=0;i<pulseCount;i++){
-    const fl=document.createElement('div');
-    fl.className='screen-flash-el';
-    fl.style.animationDelay=(i*0.22)+'s';
-    document.body.appendChild(fl);
-    setTimeout(()=>fl.remove(),1200+i*220);
-  }
-
-  const ov=document.getElementById('pomoFlashOverlay');
-  if(!ov)return;
-
-  // Populate
-  document.getElementById('pfEyebrow').textContent=isWork?'POMO COMPLETE':'BREAK OVER';
-  document.getElementById('pfGlyph').textContent=isWork?pomoCount:'▸';
-  document.getElementById('pfSub').textContent=isWork
-    ?( (pomoCount%4===0)?'LONG BREAK EARNED — REST UP':'SHORT BREAK — BREATHE')
-    :'TIME TO FOCUS';
-
-  // Session dots (up to 8 shown, last 4 in current set)
-  const dotsRow=document.getElementById('pfDotsRow');
-  dotsRow.innerHTML='';
-  const total=Math.min(pomoCount,8);
-  for(let i=0;i<4;i++){
-    const d=document.createElement('div');
-    const setStart=Math.floor((pomoCount-1)/4)*4;
-    d.className='pf-session-dot'+(i<(pomoCount-setStart)?' done':'');
-    dotsRow.appendChild(d);
-  }
-
-  // Particles
-  const pfP=document.getElementById('pfParticles');
-  pfP.innerHTML='';
-  const colors=['rgba(224,208,168,0.9)','rgba(180,160,100,0.7)','rgba(255,230,130,0.8)','rgba(140,120,60,0.6)'];
-  for(let i=0;i<22;i++){
-    const dot=document.createElement('div');
-    dot.className='pf-dot';
-    const sz=4+Math.random()*8;
-    dot.style.cssText=`width:${sz}px;height:${sz}px;left:${8+Math.random()*84}%;background:${colors[i%colors.length]};animation-delay:${Math.random()*0.5}s;animation-duration:${1.4+Math.random()*0.8}s;`;
-    pfP.appendChild(dot);
-  }
-
-  // Reset bar animation
-  const bar=document.getElementById('pfBar');
-  bar.style.animation='none';
-  bar.offsetHeight; // reflow
-  bar.style.animation='pf-drain 3s linear forwards';
-
-  ov.classList.add('visible');
-  if(pomoFlashTimer)clearTimeout(pomoFlashTimer);
-  pomoFlashTimer=setTimeout(closePomoFlash,3200);
-}
-function closePomoFlash(){
-  if(pomoFlashTimer){clearTimeout(pomoFlashTimer);pomoFlashTimer=null;}
-  const ov=document.getElementById('pomoFlashOverlay');
-  if(ov)ov.classList.remove('visible');
+    await nPatch(id,{
+      Completed:{checkbox:completed},
+      Notes:{rich_text:[{text:{content:notes}}]},
+    });
+    await loadArcs();
+    _arcView='list';
+    window._arcCompleted=undefined;
+    renderArcs();
+    renderHome();
+    showToast(completed?'Arc sealed. Well done.':'Arc closed.');
+  }catch(e){showToast('Error: '+e.message);}
 }
 
-function setPomoMode(v){pomoMode=v;renderHome();}
-function changeSessionSubject(){
-  if(!state.activeSession)return;
-  const opts=SUBJECTS.join('\n');
-  const cur=state.activeSession.subject;
-  const next=prompt(`Change subject:\n${SUBJECTS.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\nCurrent: ${cur}\nType name or number:`)?.trim();
-  if(!next)return;
-  const byNum=parseInt(next);
-  const resolved=(!isNaN(byNum)&&byNum>=1&&byNum<=SUBJECTS.length)?SUBJECTS[byNum-1]:SUBJECTS.find(s=>s.toLowerCase()===next.toLowerCase())||next;
-  if(resolved===cur)return;
-  state.activeSession.subject=resolved;
-  lastSubject=resolved;
-  localStorage.setItem('grind-last-subject',resolved);
-  nPatch(state.activeSession.id,{Name:{title:[{text:{content:resolved}}]},Subject:{status:{name:resolved}}}).catch(()=>{});
-  renderHome();
-  showToast('Subject → '+resolved);
-}
-function editPomoGoal(){
-  const v=prompt('Daily pomo goal:',pomoGoal);
-  const n=parseInt(v);
-  if(n>0&&n<=30){pomoGoal=n;localStorage.setItem('pomo-goal',n);renderHome();}
-}
-
-let _sessionBusy=false;
-function triggerFocusMode(on){
-  const name=on?'GRIND Start':'GRIND Stop';
-  const url='shortcuts://run-shortcut?name='+encodeURIComponent(name);
-  const a=document.createElement('a');
-  a.href=url;
-  a.click();
-}
-
-async function startSession(subject){
-  if(_sessionBusy||!subject||state.activeSession)return;
-  _sessionBusy=true;
-  lastSubject=subject;
-  localStorage.setItem('grind-last-subject',subject);
-  const startBtn=document.querySelector('.study-start-btn');
-  if(startBtn){startBtn.disabled=true;startBtn.textContent='…';}
-  try{
-    const page=await nCreate(DB.studied,{Name:{title:[{text:{content:subject}}]},Subject:{status:{name:subject}}});
-    state.activeSession={id:page.id,subject,startedAt:new Date().toISOString()};
-    if(pomoMode){pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;savePomoPersist();schedulePomoEndSound(POMO_WORK/1000,true);requestNotificationPermission();}
-    triggerFocusMode(true);
-    startTimer();renderHome();updateSidebarSession();
-    showToast('▸ '+subject);
-  }catch(e){
-    showToast('Failed to start: '+e.message);
-    if(startBtn){startBtn.disabled=false;startBtn.textContent='▸ Start';}
-  }
-  finally{_sessionBusy=false;}
-}
-
-async function stopSession(){
-  if(_sessionBusy)return;
-  _sessionBusy=true;
-  clearInterval(timerInterval);timerInterval=null;
-  pomoPhaseEnd=null;pomoPhase='work';
-  cancelScheduledSound();
-  savePomoPersist();
-  triggerFocusMode(false);
-  const wasActive=state.activeSession;
-  state.activeSession=null;
-  renderHome();updateSidebarSession();
-  if(wasActive){
-    const now=new Date().toISOString();
-    try{
-      // 1. Mark session as done in Studied DB
-      await nPatch(wasActive.id,{Done:{date:{start:now}},Complete:{status:{name:'Done'}}});
-
-      // 2. Calculate duration display string
-      const startedAt=new Date(wasActive.startedAt);
-      const hours=(Date.now()-startedAt.getTime())/(1000*60*60);
-      const dateStr=startedAt.toISOString().split('T')[0];
-      const hStr=hours<0.1?'<6m':hours<1?Math.round(hours*60)+'m':hours.toFixed(1)+'h';
-
-      // 3. Create a completed Task for this session — flat 5 XP regardless of duration
-      const taskPage=await nCreate(DB.tasks,{
-        Task:{title:[{text:{content:wasActive.subject}}]},
-        Cat:{select:{name:'Mind'}},
-        Difficulty:{select:{name:'Normal'}},
-        Base:{number:5},
-        Status:{checkbox:true},
-        'Due Date':{date:{start:dateStr}},
-      });
-
-      // 4. Find daily log for that date and link the task to it
-      try{
-        const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:dateStr}});
-        if(logs.length)await nPatch(taskPage.id,{'Daily log':{relation:[{id:logs[0].id}]}});
-      }catch(_){}  // non-critical — don't fail the whole stop if log linking fails
-
-      showToast(`Stopped · ${hStr} · task logged`,3000);
-      showQualityPicker(wasActive.id);
-    }catch(e){showToast('Stopped · task failed: '+e.message);}
-  } else {
-    showToast('Break skipped');
-  }
-  delete _tabLoadedAt['home'];delete _tabLoadedAt['study'];delete _tabLoadedAt['tasks'];
-  if(currentTab==='study'){await loadSessions();renderStudyLog();}
-  if(currentTab==='tasks'){await Promise.all([loadTasks(),loadTodayQuests()]);renderTasks();}
-  _sessionBusy=false;
-}
-
-function showQualityPicker(sessionId){
-  const existing=document.getElementById('qualityOverlay');if(existing)existing.remove();
-  const overlay=document.createElement('div');overlay.id='qualityOverlay';overlay.className='quality-overlay';
-  overlay.innerHTML=`<div class="quality-sheet">
-    <div class="quality-title">How was that session?</div>
-    <div class="quality-btns">
-      <button class="quality-btn flow" onclick="pickQuality('${sessionId}','Flow',this)">Flow</button>
-      <button class="quality-btn grind" onclick="pickQuality('${sessionId}','Grind',this)">Grind</button>
-      <button class="quality-btn distracted" onclick="pickQuality('${sessionId}','Distracted',this)">Distracted</button>
-    </div>
-    <span class="quality-skip" onclick="pickQuality('${sessionId}','Grind',{classList:{add:()=>{}}})">Skip</span>
-  </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
-}
-async function pickQuality(sessionId,quality,btn){
-  btn.classList.add('picked');
-  try{await nPatch(sessionId,{Quality:{select:{name:quality}}});}catch(_){}
-  setTimeout(()=>{document.getElementById('qualityOverlay')?.remove();},350);
-}
-async function refresh(force=false){
-  setError(null);setSyncBusy(true);
-  const skip=!force&&_tabFresh(currentTab);
-  if(currentTab==='home'){
-    if(!skip){
-      const isFirst=!_hasLoaded;
-      if(isFirst)_setLoad(2);
-      let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
-      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone()]);
-      if(isFirst)_setLoad(100);
-      // Load latest recap from Notion (cross-device, persists across days)
-      await loadLatestRecapFromNotion();
-      const todayStr2=localToday();
-      const yestStr=(()=>{const d=new Date();d.setDate(d.getDate()-1);return localDay(d);})();
-      const hour=new Date().getHours();
-      // Auto-generate yesterday's recap if missing and yesterday had sessions
-      const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
-      const recapHasYest=state.latestRecap?.date===yestStr||state.latestRecap?.date===todayStr2;
-      if(hasYest&&!recapHasYest&&!window._recapGenerating){generateDailyRecap(yestStr);}
-      // Auto-generate today's recap if: past 6pm, sessions exist, no today recap yet
-      else{
-        const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr2);
-        const recapIsToday=state.latestRecap?.date===todayStr2;
-        if(hasToday&&hour>=21&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
-      }
-    }
-    evaluateTitle();_markTabLoaded('home');renderHome();
-  }
-  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests()]);_markTabLoaded('tasks');renderTasks();}
-  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
-  if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
-  if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
-  if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
-  setSyncBusy(false);
-}
-function switchTab(tab,btn){
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p=>{p.style.display='none';p.classList.remove('active');});
-  btn.classList.add('active');
-  const panel=document.getElementById('tab-'+tab);panel.style.display='block';panel.classList.add('active');
-  if(tab!=='home'){clearInterval(examCountdownInterval);examCountdownInterval=null;}
-  currentTab=tab;refresh(false);
-}
-
-function getRivalFor(stat){if(!stat?.rivalId)return null;return state.rivals.find(r=>r.id===stat.rivalId)??null;}
-
-
-/* ═══════════════════════════════════
-   RIVAL SIMULATION
-   ═══════════════════════════════════ */
 const RIVAL_CFG={
   startDate:'2026-01-01',
   restChance:0.10,
@@ -3532,6 +3289,49 @@ function closeRivalPage(){
   clearInterval(window._rivalInterval);
 }
 
+async function refresh(force=true){
+  setSyncBusy(true);
+  const skip=!force&&_tabFresh(currentTab);
+  if(currentTab==='home'){
+    if(!skip){
+      const isFirst=!_hasLoaded;
+      if(isFirst)_setLoad(2);
+      let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
+      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs()]);
+      if(isFirst)_setLoad(100);
+      await loadLatestRecapFromNotion();
+      const todayStr2=localToday();
+      const yestStr=(()=>{const d=new Date();d.setDate(d.getDate()-1);return localDay(d);})();
+      const hour=new Date().getHours();
+      const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
+      const recapHasYest=state.latestRecap?.date===yestStr||state.latestRecap?.date===todayStr2;
+      if(hasYest&&!recapHasYest&&!window._recapGenerating){generateDailyRecap(yestStr);}
+      else{
+        const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr2);
+        const recapIsToday=state.latestRecap?.date===todayStr2;
+        if(hasToday&&hour>=21&&!recapIsToday&&!window._recapGenerating){generateDailyRecap();}
+      }
+    }
+    evaluateTitle();_markTabLoaded('home');renderHome();
+  }
+  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests()]);_markTabLoaded('tasks');renderTasks();}
+  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
+  if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
+  if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
+  if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
+  if(currentTab==='arcs'){if(!skip)await Promise.all([loadArcs(),loadBooks()]);_markTabLoaded('arcs');renderArcs();}
+  setSyncBusy(false);
+}
+function switchTab(tab,btn){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>{p.style.display='none';p.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  const panel=document.getElementById('tab-'+tab);if(panel){panel.style.display='block';panel.classList.add('active');}
+  if(tab!=='home'){clearInterval(examCountdownInterval);examCountdownInterval=null;}
+  currentTab=tab;refresh(false);
+}
+
+
 /* ═══════════════════════════════════
    RENDERERS
    ═══════════════════════════════════ */
@@ -3582,6 +3382,32 @@ function renderCalendar(){
   </div>`;
 }
 
+function renderExamCountdownDisplay(){
+  const cdEl=document.getElementById('exam-countdown-display');
+  const awakeEl=document.getElementById('awake-countdown-display');
+  if(!cdEl&&!awakeEl)return;
+  const nextExam=(state.exams||[]).filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  if(!nextExam){if(cdEl)cdEl.innerHTML='';if(awakeEl)awakeEl.innerHTML='';return;}
+  const now=new Date();
+  const examDate=new Date(nextExam.date);
+  const diffMs=examDate-now;
+  const diffDays=Math.floor(diffMs/(1000*60*60*24));
+  const diffHrs=Math.floor((diffMs%(1000*60*60*24))/(1000*60*60));
+  const diffMins=Math.floor((diffMs%(1000*60*60))/(1000*60));
+  const diffSecs=Math.floor((diffMs%(1000*60))/1000);
+  if(cdEl){
+    if(diffMs<=0){
+      cdEl.innerHTML='<div style="font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--text-dim)">TODAY</div>';
+    } else if(diffDays>=2){
+      cdEl.innerHTML='<div class="cd-block"><span class="cd-num">'+diffDays+'</span><span class="cd-lbl">days</span></div>';
+    } else {
+      cdEl.innerHTML='<div class="cd-block"><span class="cd-num">'+(diffDays*24+diffHrs)+'</span><span class="cd-lbl">hrs</span></div>'
+        +'<div class="cd-block"><span class="cd-num">'+String(diffMins).padStart(2,'0')+'</span><span class="cd-lbl">min</span></div>'
+        +'<div class="cd-block"><span class="cd-num">'+String(diffSecs).padStart(2,'0')+'</span><span class="cd-lbl">sec</span></div>';
+    }
+  }
+  if(awakeEl){awakeEl.innerHTML='';}
+}
 function renderHome(){
   renderTitle();
   const s=state.streaks;
@@ -3838,14 +3664,15 @@ function renderHome(){
 
   const rivalTeaser=renderRivalTeaser();
   let html;
+  const arcCard=renderActiveArc();
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${examCard}${planCard}</div>
+      <div class="home-col-right">${arcCard}${examCard}${planCard}</div>
     </div>`;
   } else {
-    html=streakRow+rivalTeaser+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+rivalTeaser+arcCard+examCard+timerWidget+focusCard+planCard;
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -5213,6 +5040,7 @@ const CMD_ACTIONS=[
   {icon:'✦',label:'Go to Exams',hint:'E',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][3];switchTab('exams',b);}},
   {icon:'◈',label:'Go to Study',hint:'S',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][4];switchTab('study',b);}},
   {icon:'✎',label:'Go to Journal',hint:'J',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][5];switchTab('journal',b);}},
+  {icon:'◉',label:'Go to Arcs',hint:'',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][6];switchTab('arcs',b);}},
   {icon:'▸',label:'Start Study Session',hint:'',action:()=>{const b=document.querySelector('.nav-btn');switchTab('home',b);setTimeout(()=>{const btn=document.querySelector('.study-start-btn');if(btn)btn.click();},200);}},
   {icon:'■',label:'Stop Session',hint:'',action:()=>{if(state.activeSession)stopSession();}},
   {icon:'↺',label:'Sync',hint:'',action:()=>refresh(true)},
