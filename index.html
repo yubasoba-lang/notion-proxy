@@ -12,23 +12,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:        #0b0a08;
-  --bg-card:   #131109;
-  --bg-mid:    #191710;
-  --bg-hi:     #201e15;
-  --border:    #2a261a;
-  --border-hi: #38331f;
-  --border-glow: #48422a;
-  --text:      #d4c8a8;
-  --text-dim:  #6a5e44;
-  --text-faint:#2a2418;
-  --gold:      #e0d0a8;
-  --gold-hi:   #ecddb8;
-  --gold-dim:  #4a4030;
-  --gold-glow: rgba(224,208,168,0.1);
-  --green:     #1a180e;
-  --green-hi:  #242010;
-  --green-text:#7a9a60;
+  --bg:        #111009;
+  --bg-card:   #1c1a10;
+  --bg-mid:    #232015;
+  --bg-hi:     #2d2a1c;
+  --border:    #3a3520;
+  --border-hi: #504830;
+  --border-glow: #6a6038;
+  --text:      #ede0bc;
+  --text-dim:  #a09060;
+  --text-faint:#4a4228;
+  --gold:      #f0d878;
+  --gold-hi:   #f8e898;
+  --gold-dim:  #6a5c30;
+  --gold-glow: rgba(240,216,120,0.15);
+  --green:     #1c1c10;
+  --green-hi:  #282814;
+  --green-text:#90b870;
   --red-text:  #5a2018;
   --red-hi:    #8c2e20;
 }
@@ -2309,7 +2309,7 @@ const toExam=p=>{const q=p.properties;
 };
 // Muscles Hit uses different delt names from Primary Muscle — normalise on load
 const MUSCLES_HIT_MAP={'Pecs':'Pectoralis','Lats':'Latissimus Dorsi','Quads':'Quadriceps','Front Delts':'Anterior Deltoid','Anterior Delts':'Anterior Deltoid','Side Delts':'Lateral Deltoid','Lateral Delts':'Lateral Deltoid','Rear Delts':'Posterior Deltoid','Posterior Delts':'Posterior Deltoid'};
-const toBodyStat=p=>{const q=p.properties;const rivalRel=q.Rivals?.relation;const rivalId=Array.isArray(rivalRel)&&rivalRel.length>0?rivalRel[0].id:null;return{id:p.id,name:g.title(q.Name),decayedXP:g.rollup(q['Decayed XP'])??0,rankStr:g.formula(q.Rank)??'',level:g.formula(q.L)??1,daysInactive:g.formula(q['Days inactive'])??null,lastTrained:g.rollup(q['Last day trained']),cat:g.select(q.Cat),rivalId};};
+const toBodyStat=p=>{const q=p.properties;const rivalRel=q.Rivals?.relation;const rivalId=Array.isArray(rivalRel)&&rivalRel.length>0?rivalRel[0].id:null;const decayedXP=g.rollup(q['Decayed XP'])??g.formula(q['Decayed XP'])??g.num(q['Decayed XP'])??0;return{id:p.id,name:g.title(q.Name),decayedXP,rankStr:g.formula(q.Rank)??g.text(q.Rank)??'',level:g.formula(q.L)??1,daysInactive:g.formula(q['Days inactive'])??null,lastTrained:g.rollup(q['Last day trained']),cat:g.select(q.Cat),rivalId};};
 const toExercise=p=>{const q=p.properties;const pm=g.select(q['Primary Muscle']);return{id:p.id,name:g.title(q.Name),day:g.multiSelect(q.Day),primaryMuscle:MUSCLES_HIT_MAP[pm]??pm,musclesHit:g.multiSelect(q['Muscles Hit']).map(m=>MUSCLES_HIT_MAP[m]??m),xpPerSet:g.num(q['XP per Set'])??0,category:g.select(q.Category),equipment:g.select(q.Equipment)};};
 let selectedExercise=null;
 let expandedExercise=null;
@@ -4365,7 +4365,9 @@ function renderWorkout(){
     bodyMapHTML+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
     [...bodyStats].sort((a,b)=>(b.decayedXP??0)-(a.decayedXP??0)).forEach(stat=>{
       const parsed=parseRankStr(stat.rankStr);
-      const{rank,next,pct}=getRankFromXP(stat.decayedXP);
+      // If Notion XP rollup is 0 but rank string indicates a higher tier, floor XP to that rank's minimum
+      const effectiveXP=(stat.decayedXP>0||!parsed||parsed.min===0)?stat.decayedXP:parsed.min;
+      const{rank,next,pct}=getRankFromXP(effectiveXP);
       const r=parsed??rank;
       const rival=getRivalFor(stat);
       const gap=rival?rival.totalXP-stat.decayedXP:null;
