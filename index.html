@@ -363,6 +363,14 @@ body::after { display: none; }
 .task-item:active { transform: scale(0.99); }
 .task-item.done { opacity: 0.22; }
 .task-item.done .task-name { text-decoration: line-through; }
+.penalty-item { background: rgba(185,28,28,0.08); border: 1px solid rgba(185,28,28,0.4); border-radius: 3px; padding: 11px 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; position: relative; animation: penalty-pulse 3s ease-in-out infinite; }
+.penalty-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red-hi); border-radius: 0; }
+@keyframes penalty-pulse { 0%,100% { border-color: rgba(185,28,28,0.35); } 50% { border-color: rgba(220,38,38,0.65); } }
+.penalty-cb { width: 20px; height: 20px; border-radius: 2px; border: 1px solid rgba(185,28,28,0.6); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--red-hi); transition: all 0.2s; }
+.penalty-cb:active { background: rgba(185,28,28,0.2); }
+.penalty-name { font-size: 13px; color: var(--text); flex: 1; }
+.penalty-tag { font-size: 7px; font-weight: 800; letter-spacing: 0.18em; color: var(--red-hi); background: rgba(185,28,28,0.15); border: 1px solid rgba(185,28,28,0.3); border-radius: 2px; padding: 2px 5px; }
+.penalty-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: var(--red-hi); text-transform: uppercase; margin: 4px 0 8px; opacity: 0.8; }
 .task-item.is-quest { border-color: rgba(232,234,240,0.55); background: linear-gradient(105deg, rgba(232,234,240,0.13) 0%, rgba(232,234,240,0.06) 45%, var(--bg-card) 75%); box-shadow: 0 0 24px rgba(232,234,240,0.10), 0 2px 10px rgba(0,0,0,0.35); overflow: hidden; animation: quest-pulse 4s ease-in-out infinite; }
 .task-item.is-quest::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, #ecddb8, var(--gold), rgba(232,234,240,0.35)); border-radius: 0 1px 1px 0; box-shadow: 0 0 8px rgba(232,234,240,0.5); }
 .task-item.is-quest::after { content: ''; position: absolute; top: 0; bottom: 0; width: 45%; background: linear-gradient(90deg, transparent, rgba(232,234,240,0.10), transparent); animation: quest-shine 5s ease-in-out infinite; left: -50%; pointer-events: none; }
@@ -1436,7 +1444,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null,wealthLog:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null,wealthLog:[],penalties:[]};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -3665,7 +3673,7 @@ async function refresh(force=true){
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
   }
-  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests()]);_markTabLoaded('tasks');renderTasks();}
+  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties()]);if(!skip)await checkAndIssuePenalties();_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
@@ -4078,6 +4086,19 @@ function renderTasks(){
   const dOrder=['Today','Yesterday'];
   const dSorted=Object.keys(dGroups).sort((a,b)=>{const ai=dOrder.indexOf(a),bi=dOrder.indexOf(b);if(ai>-1&&bi>-1)return ai-bi;if(ai>-1)return -1;if(bi>-1)return 1;const an=parseInt(a),bn=parseInt(b);return isNaN(an)||isNaN(bn)?0:bn-an;});
 
+  // Penalty quests
+  const activePenalties=(state.penalties||[]).filter(p=>!p.done);
+  if(activePenalties.length){
+    html+=`<div class="penalty-section-label">⚠ Penalty Quests</div>`;
+    activePenalties.forEach((p,i)=>{
+      html+=`<div class="penalty-item">
+        <div class="penalty-cb" onclick="completePenalty(${i})">✓</div>
+        <div class="penalty-name">${p.penalty}</div>
+        <span class="penalty-tag">PENALTY</span>
+      </div>`;
+    });
+  }
+
   html+=`<div class="section-label">Tasks</div>`;
   if(!state.tasks.length){html+='<div class="empty">No pending tasks</div>';}
   else{
@@ -4172,14 +4193,79 @@ async function quickAdd(tid,name,cat,type){
    plus the sleep task (already complete), all linked together.
 */
 const DAILY_TASKS=[
-  {name:'Study German',          cat:'German',diff:'Daily', questId:1},
-  {name:'Meditate for 10 mins',  cat:'Life',  diff:'Daily', questId:2},
-  {name:'Journal',               cat:'Life',  diff:'Daily', questId:3},
-  {name:'Clean Room',            cat:'Life',  diff:'Daily', questId:4},
-  {name:'Read 30 mins',          cat:'Mind',  diff:'Daily', questId:5},
-  {name:'Practice Music',        cat:'Creative',diff:'Daily',questId:6},
-  {name:'Workout',               cat:'Body',  diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5'},
+  {name:'Study German',          cat:'German',  diff:'Daily', questId:1, penalty:'Study German for 45 mins'},
+  {name:'Meditate for 10 mins',  cat:'Life',    diff:'Daily', questId:2, penalty:'Meditate for 20 mins'},
+  {name:'Journal',               cat:'Life',    diff:'Daily', questId:3, penalty:'Write 2 journal entries'},
+  {name:'Clean Room',            cat:'Life',    diff:'Daily', questId:4, penalty:'Deep clean + organise entire room'},
+  {name:'Read 30 mins',          cat:'Mind',    diff:'Daily', questId:5, penalty:'Read 1 hour'},
+  {name:'Practice Music',        cat:'Creative',diff:'Daily', questId:6, penalty:'Practice Music for 30 mins'},
+  {name:'Workout',               cat:'Body',    diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5', penalty:'Workout + 20 min run'},
 ];
+
+// ── PENALTY QUEST SYSTEM ──────────────────────────────────────────────────────
+let _penaltyPageId=null;
+
+async function loadPenalties(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'penalty_quests'}});
+    if(pages.length){
+      _penaltyPageId=pages[0].id;
+      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'[]';
+      state.penalties=JSON.parse(raw).filter(p=>!p.done);
+    }else{state.penalties=[];}
+  }catch(e){state.penalties=[];}
+}
+
+async function savePenalties(){
+  const json=JSON.stringify(state.penalties||[]);
+  const rich=[{text:{content:json}}];
+  if(_penaltyPageId){await nPatch(_penaltyPageId,{Value:{rich_text:rich}});}
+  else{const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'penalty_quests'}}]},Value:{rich_text:rich}});_penaltyPageId=p.id;}
+}
+
+async function checkAndIssuePenalties(){
+  try{
+    const today=localToday();
+    const yesterday=prevDay(today);
+    // Load yesterday's daily log to get quest IDs
+    const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:yesterday}});
+    if(!logs.length)return;
+    const q=logs[0].properties;
+    const getQNum=v=>{const n=g.num(v)??g.formula(v)??g.rollup(v);return n!=null?Number(n):null;};
+    const yesterdayQuestIds=[getQNum(q['Quest 1']),getQNum(q['Quest 2']),getQNum(q['Quest 3'])].filter(n=>n!=null&&n>0);
+    if(!yesterdayQuestIds.length)return;
+    // Get completed daily tasks from yesterday
+    const doneTasks=await nQuery(DB.tasks,{and:[
+      {property:'Status',checkbox:{equals:true}},
+      {property:'Difficulty',select:{equals:'Daily'}},
+      {property:'Due Date',date:{equals:yesterday}},
+    ]});
+    const doneNames=new Set(doneTasks.map(p=>g.title(p.properties.Task)));
+    // Find which quests were missed
+    const missedTasks=DAILY_TASKS.filter(t=>
+      t.questId&&yesterdayQuestIds.includes(t.questId)&&!doneNames.has(t.name)
+    );
+    if(!missedTasks.length)return;
+    // Only issue penalties not already active for today
+    const existing=new Set((state.penalties||[]).filter(p=>p.issued===today).map(p=>p.task));
+    const newPenalties=missedTasks
+      .filter(t=>t.penalty&&!existing.has(t.name))
+      .map(t=>({task:t.name,penalty:t.penalty,cat:t.cat,issued:today,done:false}));
+    if(!newPenalties.length)return;
+    state.penalties=[...(state.penalties||[]),...newPenalties];
+    await savePenalties();
+    showToast(`${newPenalties.length} PENALTY QUEST${newPenalties.length>1?'S':''} ISSUED`,4000);
+  }catch(e){}
+}
+
+async function completePenalty(idx){
+  if(!state.penalties||!state.penalties[idx])return;
+  state.penalties[idx].done=true;
+  state.penalties=state.penalties.filter(p=>!p.done);
+  await savePenalties();
+  showToast('Penalty cleared.');
+  renderTasks();
+}
 
 async function addSleepLog(sleepName, tier){
   // Disable all 3 buttons while running
