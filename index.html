@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#070810">
 <title>GRIND</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&family=Ma+Shan+Zheng&family=Rajdhani:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:        #000000;
@@ -473,23 +473,16 @@ body::after { display: none; }
 
 /* Pomo fullscreen countdown */
 .pomo-screen { display: flex; flex-direction: column; align-items: center; padding: 24px 0 10px; }
-.pomo-free-active { display: flex; flex-direction: column; align-items: center; padding: 48px 0 32px; min-height: 55vh; justify-content: center; }
-.free-timer-header { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
-.free-timer-header-line { flex: 1; height: 1px; width: 60px; background: linear-gradient(to right, transparent, var(--border-glow)); }
-.free-timer-header-line.right { background: linear-gradient(to left, transparent, var(--border-glow)); }
-.free-timer-subject { font-size: 8px; font-weight: 800; letter-spacing: 0.38em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
-.free-timer-pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim); animation: ft-pulse 2s ease-in-out infinite; flex-shrink: 0; }
-@keyframes ft-pulse { 0%,100%{opacity:0.25;transform:scale(1)} 50%{opacity:0.9;transform:scale(1.4)} }
-.free-timer-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 32px; }
-.free-timer-digits { font-family: 'JetBrains Mono', monospace; font-size: clamp(80px, 18vw, 200px); font-weight: 600; color: #d8d8d8; letter-spacing: -0.04em; line-height: 1; text-shadow: 0 0 80px rgba(220,220,230,0.18), 0 0 160px rgba(220,220,230,0.08); }
-.free-timer-sep { opacity: 0.25; animation: sep-blink 1s step-start infinite; }
-@keyframes sep-blink { 0%,49%{opacity:0.25} 50%,100%{opacity:0.07} }
-.free-timer-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.free-timer-elapsed { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--text-dim); }
-.free-timer-bar { width: 400px; height: 1px; background: var(--border); position: relative; }
-.free-timer-bar-fill { position: absolute; left: 0; top: 0; height: 1px; background: linear-gradient(to right, rgba(200,200,210,0.3), rgba(200,200,210,0.85)); box-shadow: 0 0 6px rgba(200,200,210,0.4); width: 0%; transition: width 1s linear; }
-.free-timer-stop { margin-top: 4px; background: transparent; border: 1px solid var(--border-hi); color: var(--text-dim); font-size: 7px; font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase; padding: 9px 28px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
-.free-timer-stop:hover { border-color: var(--red-hi); color: var(--red-hi); }
+.pomo-free-active { display: flex; flex-direction: column; align-items: flex-start; padding: 48px 0 32px; min-height: 58vh; justify-content: center; }
+.free-timer-subject { font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 400; letter-spacing: 0.36em; text-transform: uppercase; color: #2e2e2e; margin-bottom: 16px; }
+.free-timer-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin-bottom: 0; }
+.free-timer-digits { font-family: 'Bebas Neue', sans-serif; font-size: clamp(100px, 20vw, 220px); font-weight: 400; color: #d4d4d6; letter-spacing: 0.02em; line-height: 0.88; }
+.free-timer-sep { opacity: 0.35; animation: sep-blink 1s step-start infinite; }
+@keyframes sep-blink { 0%,49%{opacity:0.35} 50%,100%{opacity:0.1} }
+.free-timer-bar { width: 100%; max-width: 560px; height: 1px; background: #151515; position: relative; margin-top: 28px; }
+.free-timer-bar-fill { position: absolute; left: 0; top: 0; height: 1px; background: #505050; width: 0%; transition: width 1s linear; }
+.free-timer-stop { margin-top: 28px; background: transparent; border: none; color: #1e1e1e; font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 500; letter-spacing: 0.36em; text-transform: uppercase; padding: 0; cursor: pointer; transition: color 0.2s; }
+.free-timer-stop:hover { color: #b91c1c; }
 .pomo-screen-phase { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; animation: phase-fade-in 0.4s ease; }
 .pomo-screen-subject { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.06em; margin-bottom: 24px; animation: phase-fade-in 0.5s ease; }
 .pomo-ring-wrap { position: relative; width: 230px; height: 230px; margin: 0 auto; overflow: visible; }
@@ -5025,20 +5018,12 @@ function renderStudyLog(){
     const mmStr=String(mm).padStart(2,'0');
     const ssStr=String(ss).padStart(2,'0');
     html+=`<div class="pomo-free-active">
-      <div class="free-timer-header">
-        <div class="free-timer-header-line"></div>
-        <div class="free-timer-pulse"></div>
-        <div class="free-timer-subject">${state.activeSession.subject}</div>
-        <div class="free-timer-pulse"></div>
-        <div class="free-timer-header-line right"></div>
-      </div>
+      <div class="free-timer-subject">${state.activeSession.subject}</div>
       <div class="free-timer-wrap">
         <div id="timer-display-log" class="free-timer-digits">${hhStr}${mmStr}<span class="free-timer-sep">:</span>${ssStr}</div>
-        <div class="free-timer-bar-wrap">
-          <div class="free-timer-bar"><div class="free-timer-bar-fill" id="free-timer-bar-fill"></div></div>
-        </div>
+        <div class="free-timer-bar"><div class="free-timer-bar-fill" id="free-timer-bar-fill"></div></div>
       </div>
-      <button class="free-timer-stop" onclick="stopSession()">stop session</button>
+      <button class="free-timer-stop" onclick="stopSession()">end</button>
       ${days.length?'<div class="pomo-log-divider"></div>':''}
     </div>`;
   }
