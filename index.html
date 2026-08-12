@@ -2485,7 +2485,7 @@ function toBook(p){
   const q=p.properties;
   return{id:p.id,name:g.title(q.Name),status:g.select(q.Status),
     finishedDate:q['Finished Date']&&q['Finished Date'].date?q['Finished Date'].date.start:null,
-    rating:g.select(q.Rating),notes:g.text(q.Notes)};
+    rating:g.select(q.Rating)};
 }
 async function loadStreaks(){
   try{
@@ -2596,7 +2596,15 @@ async function loadLifeStats(){
       wealth=computeWealthXP(state.wealthLog);
     }else{state.wealthLog=[];}
     state.lifeStats={intelligence,vitality,discipline,creativity,wisdom,wealth};
-  }catch(e){state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};}
+    state.lifeStatCounts={
+      intelligence:{count:sessions.length,unit:'study session',rate:1},
+      vitality:{count:uniqueWorkoutDays,unit:'workout day',rate:10},
+      discipline:{count:dailyDone.filter(p=>g.title(p.properties.Task)!=='Practice Music').length,unit:'daily task',rate:5},
+      creativity:{count:musicDone.length,unit:'music session',rate:10},
+      wisdom:{count:entries.length,unit:'journal entry',rate:5},
+      wealth:{count:null,unit:null,rate:null},
+    };
+  }catch(e){state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};state.lifeStatCounts={};}
 }
 
 async function addWealthXP(amount){
@@ -2616,11 +2624,46 @@ function renderLifeStats(){
     const pct=Math.round(lifeStatProgress(xp)*100);
     const roman=LIFE_ROMAN[lv-1];
     const extra=m.key==='wealth'
-      ?'<button onclick="openWealthLog()" style="font-size:8px;font-weight:700;letter-spacing:0.1em;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;padding:2px 6px;cursor:pointer;margin-left:4px">'+(lastBal!=null?'UPDATE':'LOG')+'</button>'
+      ?'<button onclick="event.stopPropagation();openWealthLog()" style="font-size:8px;font-weight:700;letter-spacing:0.1em;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;padding:2px 6px;cursor:pointer;margin-left:4px">'+(lastBal!=null?'UPDATE':'LOG')+'</button>'
       :'';
-    return '<div class="life-stat-row"><span class="life-stat-icon">'+m.icon+'</span><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
+    return '<div class="life-stat-row" onclick="showLifeStatDetail(\''+m.key+'\')" style="cursor:pointer"><span class="life-stat-icon">'+m.icon+'</span><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
   }).join('');
   return '<div class="arc-card" style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
+}
+
+function showLifeStatDetail(key){
+  const meta=LIFE_STATS_META.find(m=>m.key===key);
+  const xp=(state.lifeStats||{})[key]||0;
+  const lv=lifeStatLevel(xp);
+  const roman=LIFE_ROMAN[lv-1];
+  const pct=Math.round(lifeStatProgress(xp)*100);
+  const nextThresh=lv<10?LIFE_XP_THRESH[lv]:null;
+  const toNext=nextThresh!=null?nextThresh-xp:null;
+  const c=(state.lifeStatCounts||{})[key]||{};
+  let sourceLine='';
+  if(key==='wealth'){
+    const log=state.wealthLog||[];
+    sourceLine=log.length<2?'No balance entries yet':'Positive balance gains: '+xp+' XP';
+  }else{
+    sourceLine=(c.count||0)+' '+c.unit+(c.count!==1?'s':'')+(c.rate?'  ×  '+c.rate+' XP  =  '+xp+' XP':'');
+  }
+  const nextLine=toNext!=null?toNext+' XP to Level '+LIFE_ROMAN[lv]:'Max level reached';
+  const existing=document.getElementById('life-stat-modal');if(existing)existing.remove();
+  const el=document.createElement('div');
+  el.id='life-stat-modal';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;';
+  el.innerHTML='<div style="background:var(--bg-card);border:1px solid var(--border-glow);border-radius:14px;padding:28px 24px;max-width:320px;width:100%;text-align:center;">'
+    +'<div style="font-size:32px;margin-bottom:8px">'+meta.icon+'</div>'
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">'+meta.label+'</div>'
+    +'<div style="font-size:40px;font-weight:700;color:var(--gold);letter-spacing:0.04em;line-height:1">'+roman+'</div>'
+    +'<div style="margin:16px 0 8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--gold);border-radius:2px"></div></div>'
+    +'<div style="font-size:10px;color:var(--text-dim);margin-bottom:20px">'+pct+'% through level</div>'
+    +'<div style="font-size:12px;color:var(--text);margin-bottom:6px">'+sourceLine+'</div>'
+    +'<div style="font-size:10px;color:var(--gold);opacity:0.7">'+nextLine+'</div>'
+    +'<button onclick="document.getElementById(\'life-stat-modal\').remove()" style="margin-top:20px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:6px;padding:8px 20px;cursor:pointer">CLOSE</button>'
+    +'</div>';
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.body.appendChild(el);
 }
 
 function openWealthLog(){
@@ -2804,8 +2847,91 @@ function renderArcs(){
   if(!active&&!past.length){
     html+='<div class="arc-empty">No arcs yet.<br>Start your first arc and make this month mean something.</div>';
   }
+  // Books section
+  html+=renderBooksSection();
   html+='</div>';
   panel.innerHTML=html;
+}
+
+function renderBooksSection(){
+  const books=state.books||[];
+  const reading=books.filter(function(b){return b.status==='Reading';});
+  const finished=books.filter(function(b){return b.status==='Finished';});
+  const want=books.filter(function(b){return b.status==='Want to Read'||b.status==='To Read';});
+  const STARS=['★★★★★','★★★★☆','★★★☆☆','★★☆☆☆','★☆☆☆☆'];
+  const RATINGS=['5','4','3','2','1'];
+  function bookCard(b){
+    const stars=b.rating?STARS[RATINGS.indexOf(b.rating)]||b.rating:'';
+    const fin=b.finishedDate?'<span style="font-size:9px;color:var(--text-dim)">'+b.finishedDate+'</span>':'';
+    const markBtn=b.status!=='Finished'?'<button onclick="bookMarkFinished(\''+b.id+'\')" style="font-size:8px;font-weight:700;letter-spacing:0.1em;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;padding:2px 7px;cursor:pointer;margin-top:6px">MARK DONE</button>':'';
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+b.name+'</div>'
+      +(stars?'<div style="color:var(--gold);font-size:11px;margin-top:2px">'+stars+'</div>':'')
+      +(fin?'<div style="margin-top:2px">'+fin+'</div>':'')
+      +markBtn
+      +'</div>';
+  }
+  var out='<div style="margin-top:28px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
+    +'<div class="arc-section-title" style="margin:0">Books</div>'
+    +'<button onclick="bookOpenAdd()" style="font-size:9px;font-weight:700;letter-spacing:0.12em;background:transparent;border:1px solid var(--border-glow);color:var(--gold);border-radius:5px;padding:5px 12px;cursor:pointer">+ ADD</button>'
+    +'</div>';
+  if(reading.length){out+='<div style="font-size:8px;font-weight:700;letter-spacing:0.14em;color:var(--text-dim);margin-bottom:6px">READING</div>';reading.forEach(function(b){out+=bookCard(b);});}
+  if(want.length){out+='<div style="font-size:8px;font-weight:700;letter-spacing:0.14em;color:var(--text-dim);margin:12px 0 6px">WANT TO READ</div>';want.forEach(function(b){out+=bookCard(b);});}
+  if(finished.length){out+='<div style="font-size:8px;font-weight:700;letter-spacing:0.14em;color:var(--text-dim);margin:12px 0 6px">FINISHED ('+finished.length+')</div>';finished.slice().reverse().forEach(function(b){out+=bookCard(b);});}
+  if(!books.length){out+='<div style="color:var(--text-dim);font-size:12px;padding:12px 0">No books yet. Add one to start tracking.</div>';}
+  out+='</div>';
+  return out;
+}
+
+function bookOpenAdd(){
+  const existing=document.getElementById('book-add-modal');if(existing)existing.remove();
+  const el=document.createElement('div');
+  el.id='book-add-modal';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;';
+  el.innerHTML='<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:320px;width:100%">'
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--text-dim);margin-bottom:16px">ADD BOOK</div>'
+    +'<input id="book-title-inp" placeholder="Book title" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px;color:var(--text);font-size:14px;margin-bottom:10px">'
+    +'<select id="book-status-inp" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px;color:var(--text);font-size:13px;margin-bottom:16px">'
+    +'<option value="Want to Read">Want to Read</option>'
+    +'<option value="Reading">Reading</option>'
+    +'<option value="Finished">Finished</option>'
+    +'</select>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="bookSaveAdd()" style="flex:1;background:var(--gold);color:#0d0c09;font-size:10px;font-weight:700;letter-spacing:0.12em;border:none;border-radius:7px;padding:10px;cursor:pointer">SAVE</button>'
+    +'<button onclick="document.getElementById(\'book-add-modal\').remove()" style="flex:1;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:10px;font-weight:700;letter-spacing:0.12em;border-radius:7px;padding:10px;cursor:pointer">CANCEL</button>'
+    +'</div></div>';
+  el.addEventListener('click',function(e){if(e.target===el)el.remove();});
+  document.body.appendChild(el);
+  setTimeout(function(){const inp=document.getElementById('book-title-inp');if(inp)inp.focus();},100);
+}
+
+async function bookSaveAdd(){
+  const title=(document.getElementById('book-title-inp').value||'').trim();
+  const status=document.getElementById('book-status-inp').value;
+  if(!title)return;
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    const props={Name:{title:[{text:{content:title}}]},Status:{select:{name:status}}};
+    if(status==='Finished')props['Finished Date']={date:{start:today}};
+    await nCreate(DB.books,props);
+    if(status==='Finished'&&state.lifeStats){state.lifeStats.wisdom=(state.lifeStats.wisdom||0)+10;showToast('📖 Book finished! +10 Wisdom XP',3000);}
+    document.getElementById('book-add-modal').remove();
+    await loadBooks();renderArcs();
+  }catch(e){showToast('Failed: '+e.message);}
+}
+
+async function bookMarkFinished(id){
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    await nPatch(id,{Status:{select:{name:'Finished'}},'Finished Date':{date:{start:today}}});
+    state.books=(state.books||[]).map(function(b){return b.id===id?Object.assign({},b,{status:'Finished',finishedDate:today}):b;});
+    if(state.lifeStats){
+      const oldWisdom=state.lifeStats.wisdom||0;
+      state.lifeStats.wisdom=oldWisdom+10;
+      showToast('📖 Book finished! +10 Wisdom XP',3000);
+    }
+    renderArcs();
+  }catch(e){showToast('Failed: '+e.message);}
 }
 function arcMarkGoal(val){
   window._arcCompleted=val;
