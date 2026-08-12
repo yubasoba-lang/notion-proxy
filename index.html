@@ -36,32 +36,28 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
 
-/* Ambient light field */
+/* Ambient glow orbs */
 body::before {
   content: '';
-  position: fixed; inset: -10%;
+  position: fixed; inset: 0;
   background-image:
-    radial-gradient(ellipse at 18% 12%,  rgba(232,234,240,0.11) 0%, transparent 42%),
-    radial-gradient(ellipse at 82% 84%,  rgba(180,160,100,0.07) 0%, transparent 38%),
-    radial-gradient(ellipse at 52% 52%,  rgba(120,100,55,0.05)  0%, transparent 60%),
-    radial-gradient(ellipse at 72% 16%,  rgba(160,138,80,0.05)  0%, transparent 32%),
-    radial-gradient(ellipse at 22% 82%,  rgba(100,82,40,0.04)   0%, transparent 36%);
+    radial-gradient(ellipse 60% 50% at 15% 20%,  rgba(232,234,240,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 55% at 88% 78%,  rgba(232,234,240,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 45% at 50% 50%,  rgba(232,234,240,0.025) 0%, transparent 65%);
   pointer-events: none; z-index: 0;
-  animation: bg-drift 180s ease-in-out infinite alternate;
+  animation: orb-breathe 14s ease-in-out infinite alternate;
 }
-@keyframes bg-drift {
-  0%   { transform: translate(0%,     0%);    opacity: 1;    }
-  25%  { transform: translate(0.8%,  -0.5%);  opacity: 0.93; }
-  50%  { transform: translate(-0.5%,  1%);    opacity: 0.96; }
-  75%  { transform: translate(1%,     0.6%);  opacity: 0.91; }
-  100% { transform: translate(-0.8%, -0.8%);  opacity: 0.94; }
+@keyframes orb-breathe {
+  0%   { opacity: 0.6; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.7; }
 }
 body::after {
   content: '';
   position: fixed; inset: 0;
-  background-image: radial-gradient(circle, rgba(232,234,240,0.22) 1px, transparent 1px);
-  background-size: 30px 30px;
-  opacity: 0.055;
+  background-image: radial-gradient(circle, rgba(232,234,240,0.18) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.03;
   pointer-events: none; z-index: 0;
 }
 
@@ -815,13 +811,12 @@ body::after {
   background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,0.45) 100%); }
 
 /* Sparks */
-.spark { position: fixed; bottom: 0; border-radius: 50%; background: var(--gold);
-  pointer-events: none; z-index: 0; animation: spark-rise linear infinite; }
-@keyframes spark-rise {
-  0%   { transform: translateY(0) translateX(0);   opacity: 0; }
-  5%   { opacity: 0.4; }
-  85%  { opacity: 0.15; }
-  100% { transform: translateY(-100vh) translateX(18px); opacity: 0; }
+.glow-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(232,234,240,0.12) 0%, transparent 70%);
+  filter: blur(40px); animation: orb-pulse ease-in-out infinite alternate; }
+@keyframes orb-pulse {
+  0%   { opacity: 0.3; transform: scale(0.92); }
+  100% { opacity: 0.8; transform: scale(1.08); }
 }
 
 /* Tab enter animation */
@@ -5315,14 +5310,19 @@ restorePomoPersist();
 // Show pomo screen instantly before Notion loads (wrapped so a throw can't kill refresh)
 try{if(pomoMode)renderHome();}catch(e){}
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
-(function initSparks(){
-  for(let i=0;i<10;i++){
-    const s=document.createElement('div');
-    s.className='spark';
-    const sz=0.8+Math.random()*1.2;
-    s.style.cssText=`left:${8+Math.random()*84}%;width:${sz}px;height:${sz}px;animation-duration:${14+Math.random()*16}s;animation-delay:${-Math.random()*25}s;opacity:${0.15+Math.random()*0.25}`;
-    document.body.appendChild(s);
-  }
+(function initGlowOrbs(){
+  const positions=[
+    {top:'5%',left:'10%',size:320},{top:'55%',right:'8%',size:280},
+    {top:'30%',left:'50%',size:200},{top:'80%',left:'20%',size:240},
+  ];
+  positions.forEach((pos,i)=>{
+    const o=document.createElement('div');
+    o.className='glow-orb';
+    const dur=9+i*2.5;
+    const delay=-(i*3.1);
+    o.style.cssText=`width:${pos.size}px;height:${pos.size}px;top:${pos.top||'auto'};left:${pos.left||'auto'};right:${pos.right||'auto'};bottom:${pos.bottom||'auto'};animation-duration:${dur}s;animation-delay:${delay}s;`;
+    document.body.appendChild(o);
+  });
 })();
 
 renderTzBtn();
