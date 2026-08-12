@@ -2318,7 +2318,7 @@ function startTimer(){
       const ms=Date.now()-new Date(state.activeSession.startedAt).getTime();
       const tot=Math.floor(ms/1000);
       const hh=Math.floor(tot/3600),mm=Math.floor((tot%3600)/60),ss=tot%60;
-      const hhStr=hh>0?String(hh).padStart(2,'0')+':':'';
+      const hhStr=hh>0?String(hh).padStart(2,'0')+'<span class="free-timer-sep"> </span>':'';
       const mmStr=String(mm).padStart(2,'0');
       const ssStr=String(ss).padStart(2,'0');
       logEl.innerHTML=`${hhStr}${mmStr}<span class="free-timer-sep"> </span>${ssStr}`;
