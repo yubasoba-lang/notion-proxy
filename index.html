@@ -477,8 +477,8 @@ body::after { display: none; }
 .free-timer-subject { font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 400; letter-spacing: 0.36em; text-transform: uppercase; color: #2e2e2e; margin-bottom: 16px; }
 .free-timer-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin-bottom: 0; }
 .free-timer-digits { font-family: 'Bebas Neue', sans-serif; font-size: clamp(100px, 20vw, 220px); font-weight: 400; color: #d4d4d6; letter-spacing: 0.02em; line-height: 0.88; }
-.free-timer-sep { opacity: 0.35; animation: sep-blink 1s step-start infinite; }
-@keyframes sep-blink { 0%,49%{opacity:0.35} 50%,100%{opacity:0.1} }
+.free-timer-sep { display: inline-block; width: 2px; height: 0.55em; background: #d4d4d6; vertical-align: middle; margin: 0 6px; animation: sep-blink 1s step-start infinite; }
+@keyframes sep-blink { 0%,49%{opacity:0.5} 50%,100%{opacity:0.1} }
 .free-timer-bar { width: 100%; max-width: 560px; height: 1px; background: #151515; position: relative; margin-top: 28px; }
 .free-timer-bar-fill { position: absolute; left: 0; top: 0; height: 1px; background: #505050; width: 0%; transition: width 1s linear; }
 .free-timer-stop { margin-top: 28px; background: transparent; border: none; color: #1e1e1e; font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 500; letter-spacing: 0.36em; text-transform: uppercase; padding: 0; cursor: pointer; transition: color 0.2s; }
@@ -2321,7 +2321,7 @@ function startTimer(){
       const hhStr=hh>0?String(hh).padStart(2,'0')+':':'';
       const mmStr=String(mm).padStart(2,'0');
       const ssStr=String(ss).padStart(2,'0');
-      logEl.innerHTML=`${hhStr}${mmStr}<span class="free-timer-sep">:</span>${ssStr}`;
+      logEl.innerHTML=`${hhStr}${mmStr}<span class="free-timer-sep"> </span>${ssStr}`;
       // Bar fills 1px per minute up to 120min (2h)
       const barFill=document.getElementById('free-timer-bar-fill');
       if(barFill)barFill.style.width=Math.min(100,ms/7200000*100)+'%';
@@ -5020,7 +5020,7 @@ function renderStudyLog(){
     html+=`<div class="pomo-free-active">
       <div class="free-timer-subject">${state.activeSession.subject}</div>
       <div class="free-timer-wrap">
-        <div id="timer-display-log" class="free-timer-digits">${hhStr}${mmStr}<span class="free-timer-sep">:</span>${ssStr}</div>
+        <div id="timer-display-log" class="free-timer-digits">${hhStr}${mmStr}<span class="free-timer-sep"> </span>${ssStr}</div>
         <div class="free-timer-bar"><div class="free-timer-bar-fill" id="free-timer-bar-fill"></div></div>
       </div>
       <button class="free-timer-stop" onclick="stopSession()">end</button>
