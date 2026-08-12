@@ -2940,6 +2940,7 @@ function getRivalStreak(){
   return streak;
 }
 function fmtH(h){const hrs=Math.floor(h),mins=Math.round((h-hrs)*60);if(hrs===0)return mins+'m';if(mins===0)return hrs+'h';return hrs+'h '+mins+'m';}
+function formatDuration(ms){if(!ms||ms<=0)return'0m';const tot=Math.floor(ms/60000);const h=Math.floor(tot/60),m=tot%60;if(h===0)return m+'m';if(m===0)return h+'h';return h+'h '+m+'m';}
 function getUserStudyHoursToday(){
   const t=new Date().toISOString().split('T')[0];
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(t)&&s.done)
