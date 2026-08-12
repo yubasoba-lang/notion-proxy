@@ -2332,11 +2332,59 @@ function startTimer(){
   },1000);
 }
 
+async function closeOrphanSessions(excludeId){
+  // Close any open sessions in Notion (no Done date, not Complete) except excludeId
+  try{
+    const open=await nQuery(DB.studied,{and:[
+      {property:'Complete',status:{does_not_equal:'Done'}},
+    ]},[{timestamp:'created_time',direction:'descending'}]);
+    const orphans=open.filter(p=>p.id!==excludeId);
+    if(!orphans.length)return;
+    const doneTime=new Date().toISOString();
+    await Promise.all(orphans.map(p=>
+      nPatch(p.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(()=>{})
+    ));
+  }catch(e){}
+}
+
+async function restoreSessionFromNotion(){
+  // If no active session in memory, check Notion for a recent open one
+  if(state.activeSession)return;
+  try{
+    const open=await nQuery(DB.studied,{and:[
+      {property:'Complete',status:{does_not_equal:'Done'}},
+    ]},[{timestamp:'created_time',direction:'descending'}]);
+    if(!open.length)return;
+    const cutoff=Date.now()-8*3600000; // 8 hours
+    const recent=open.filter(p=>new Date(p.created_time).getTime()>cutoff);
+    const stale=open.filter(p=>new Date(p.created_time).getTime()<=cutoff);
+    // Auto-close stale orphans
+    if(stale.length){
+      const doneTime=new Date().toISOString();
+      stale.forEach(p=>nPatch(p.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(()=>{}));
+    }
+    if(!recent.length)return;
+    // Restore most recent as active session, close the rest
+    const active=recent[0];
+    const others=recent.slice(1);
+    if(others.length){
+      const doneTime=new Date().toISOString();
+      others.forEach(p=>nPatch(p.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(()=>{}));
+    }
+    const subject=g.title(active.properties.Name)||lastSubject||'';
+    state.activeSession={id:active.id,subject,startedAt:active.created_time};
+    startTimer();renderHome();
+    showToast('Session restored: '+subject,3000);
+  }catch(e){}
+}
+
 async function startSession(subject){
   if(!subject){showToast('Pick a subject first');return;}
   lastSubject=subject;
   localStorage.setItem('grind-last-subject',subject);
   try{
+    // Close any orphaned open sessions before starting a new one
+    await closeOrphanSessions(null);
     const page=await nCreate(DB.studied,{
       Name:{title:[{text:{content:subject}}]},
     });
@@ -3658,6 +3706,8 @@ async function refresh(force=true){
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
       await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs(),loadLifeStats()]);
       if(isFirst)_setLoad(100);
+      await loadPomoStateFromNotion();
+      if(!state.activeSession)await restoreSessionFromNotion();
       await loadLatestRecapFromNotion();
       const todayStr2=localToday();
       const yestStr=(()=>{const d=new Date();d.setDate(d.getDate()-1);return localDay(d);})();
