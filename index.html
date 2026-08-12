@@ -985,6 +985,14 @@ body::after {
 .arc-complete-btn:hover{background:rgba(240,216,120,0.08);}
 .arc-randomize{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);background:transparent;border:none;cursor:pointer;padding:4px 0;text-decoration:underline;}
 .arc-randomize:hover{color:var(--text);}
+.life-stats-grid{display:flex;flex-direction:column;gap:7px;}
+.life-stat-row{display:flex;align-items:center;gap:8px;}
+.life-stat-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+.life-stat-mid{flex:1;min-width:0;}
+.life-stat-name{font-size:9px;font-weight:600;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:3px;text-transform:uppercase;}
+.life-stat-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.life-stat-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.5s ease;}
+.life-stat-level{font-size:11px;font-weight:700;color:var(--gold);min-width:26px;text-align:right;font-variant-numeric:tabular-nums;}
 </style>
 </head>
 <body>
@@ -1147,7 +1155,7 @@ window.addEventListener('unhandledrejection',function(e){
 })();
 </script>
 <script>
-const PROXY='/api/notion';
+const PROXY=location.hostname==='localhost'?'https://notion-proxy-red-one.vercel.app/api/notion':'/api/notion';
 const DB={
   stats:          '34163a0b4e7c81abb22ae7e6bccdf2c2',
   rivals:         'f925bdca42f3428fa6f2c61594ae512a',
@@ -1435,7 +1443,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -2534,6 +2542,64 @@ async function loadLifeTasksDone(){
 }
 async function loadArcs(){try{const p=await nQuery(DB.arcs);state.arcs=p.map(toArc);}catch(e){setError('Arcs: '+e.message);}}
 async function loadBooks(){try{const p=await nQuery(DB.books);state.books=p.map(toBook);}catch(e){setError('Books: '+e.message);}}
+
+// ── LIFE STATS ────────────────────────────────────────────────────────────────
+const LIFE_STATS_META=[
+  {key:'intelligence',label:'Intelligence',icon:'📚'},
+  {key:'vitality',    label:'Vitality',    icon:'💪'},
+  {key:'discipline',  label:'Discipline',  icon:'⚡'},
+  {key:'creativity',  label:'Creativity',  icon:'🎵'},
+  {key:'wisdom',      label:'Wisdom',      icon:'🔮'},
+  {key:'wealth',      label:'Wealth',      icon:'💰'},
+];
+const LIFE_XP_THRESH=[0,20,60,120,200,300,420,560,720,900];
+const LIFE_ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+let _lifeStatsPageId=null;
+
+function lifeStatLevel(xp){for(let i=LIFE_XP_THRESH.length-1;i>=0;i--){if(xp>=LIFE_XP_THRESH[i])return i+1;}return 1;}
+function lifeStatProgress(xp){const lv=lifeStatLevel(xp);if(lv>=10)return 1;return(xp-LIFE_XP_THRESH[lv-1])/(LIFE_XP_THRESH[lv]-LIFE_XP_THRESH[lv-1]);}
+
+async function loadLifeStats(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'life_stats'}});
+    if(pages.length){
+      _lifeStatsPageId=pages[0].id;
+      const val=g.text(pages[0].properties.Value);
+      try{state.lifeStats=JSON.parse(val);}catch(e){}
+    }
+    if(!state.lifeStats||typeof state.lifeStats!=='object'){
+      state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
+    }
+  }catch(e){state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};}
+}
+
+async function addLifeXP(statKey,amount){
+  if(!state.lifeStats)state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
+  const oldLv=lifeStatLevel(state.lifeStats[statKey]||0);
+  state.lifeStats[statKey]=(state.lifeStats[statKey]||0)+amount;
+  const newLv=lifeStatLevel(state.lifeStats[statKey]);
+  const json=JSON.stringify(state.lifeStats);
+  const rich=[{text:{content:json}}];
+  try{
+    if(_lifeStatsPageId){await nPatch(_lifeStatsPageId,{Value:{rich_text:rich}});}
+    else{const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'life_stats'}}]},Value:{rich_text:rich}});_lifeStatsPageId=page.id;}
+    if(newLv>oldLv){const m=LIFE_STATS_META.find(x=>x.key===statKey);showToast(m.icon+' '+m.label+' → Level '+LIFE_ROMAN[newLv-1]+'!',4000);}
+  }catch(e){state.lifeStats[statKey]=(state.lifeStats[statKey]||0)-amount;}
+}
+
+function renderLifeStats(){
+  const ls=state.lifeStats||{};
+  const rows=LIFE_STATS_META.map(m=>{
+    const xp=ls[m.key]||0;
+    const lv=lifeStatLevel(xp);
+    const pct=Math.round(lifeStatProgress(xp)*100);
+    const roman=LIFE_ROMAN[lv-1];
+    return '<div class="life-stat-row"><span class="life-stat-icon">'+m.icon+'</span><div class="life-stat-mid"><div class="life-stat-name">'+m.label+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div><span class="life-stat-level">'+roman+'</span></div>';
+  }).join('');
+  return '<div class="arc-card" style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function loadExams(){
   try{
     const p=await nQuery(DB.exams,{property:'Archive',checkbox:{equals:false}});
@@ -3297,7 +3363,7 @@ async function refresh(force=true){
       const isFirst=!_hasLoaded;
       if(isFirst)_setLoad(2);
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
-      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs()]);
+      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs(),loadLifeStats()]);
       if(isFirst)_setLoad(100);
       await loadLatestRecapFromNotion();
       const todayStr2=localToday();
@@ -3665,14 +3731,15 @@ function renderHome(){
   const rivalTeaser=renderRivalTeaser();
   let html;
   const arcCard=renderActiveArc();
+  const lifeStatsCard=renderLifeStats();
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${examCard}${planCard}</div>
+      <div class="home-col-right">${arcCard}${lifeStatsCard}${examCard}${planCard}</div>
     </div>`;
   } else {
-    html=streakRow+rivalTeaser+arcCard+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+rivalTeaser+arcCard+lifeStatsCard+examCard+timerWidget+focusCard+planCard;
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -3782,7 +3849,14 @@ async function toggleTask(taskId,current){
   try{
     await nPatch(taskId,{Status:{checkbox:next}});
     showToast(next?' Done':'Reopened');
-    if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
+    if(next){
+      const task=state.tasks.find(t=>t.id===taskId);
+      if(task){
+        if(task.name==='Practice Music')addLifeXP('creativity',2);
+        else if(task.difficulty==='Daily')addLifeXP('discipline',1);
+      }
+      setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
+    }
   }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:current}:t);renderTasks();showToast('Update failed');}
 }
 
@@ -3825,6 +3899,7 @@ const DAILY_TASKS=[
   {name:'Journal',               cat:'Life',  diff:'Daily', questId:3},
   {name:'Clean Room',            cat:'Life',  diff:'Daily', questId:4},
   {name:'Read 30 mins',          cat:'Mind',  diff:'Daily', questId:5},
+  {name:'Practice Music',        cat:'Creative',diff:'Daily',questId:6},
   {name:'Workout',               cat:'Body',  diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5'},
 ];
 
@@ -3990,6 +4065,7 @@ async function submitWorkout(){
   const weight=parseFloat(document.getElementById('wWeight').value)||0;
   try{
     const n=await _logExercise(selectedExercise,sets,reps,weight);
+    addLifeXP('vitality',1);
     closeWorkoutModal();
     showToast(`Logged ${selectedExercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
     if(currentTab==='workout')renderWorkout();
@@ -4300,6 +4376,7 @@ async function saveJournalEntry(){
       ...(journalSelectedJournalId?{Journal:{relation:[{id:journalSelectedJournalId}]}}:{}),
     };
     const page=await nCreate(DB.entries,props);
+    addLifeXP('wisdom',1);
     if(body&&page?.id){
       const paragraphs=body.split('\n').filter(l=>l.trim()).map(l=>({type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:l}}]}}));
       if(paragraphs.length)await nAddBlocks(page.id,paragraphs).catch(()=>{});
