@@ -2584,11 +2584,17 @@ async function loadStreaks(){
     const p=await nQuery(DB.streaks);
     if(p.length){
       const q=p[0].properties;
+      const parseStreak=v=>{
+        const s=g.formula(v)??g.num(v)??g.rollup(v);
+        if(typeof s==='number')return s;
+        if(typeof s==='string'){const m=s.match(/(\d+)/);return m?parseInt(m[1]):0;}
+        return 0;
+      };
       state.streaks={
-        workout:g.formula(q.Workout)??g.num(q.Workout)??g.rollup(q.Workout)??0,
-        mind:g.formula(q.Mind)??g.num(q.Mind)??g.rollup(q.Mind)??0,
-        sleep:g.formula(q.Sleep)??g.num(q.Sleep)??g.rollup(q.Sleep)??0,
-        quest:g.formula(q.Quest)??g.num(q.Quest)??g.rollup(q.Quest)??0,
+        workout:parseStreak(q['Work streak']),
+        mind:parseStreak(q['Mind streak']),
+        sleep:parseStreak(q['Sleep streak']),
+        quest:parseStreak(q['Quest streak']),
       };
     }
   }catch(e){setError('Streaks: '+e.message);}
