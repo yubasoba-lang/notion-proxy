@@ -102,7 +102,7 @@ body::after {
 
 /* ── Nav ── */
 .nav {
-  display: grid; grid-template-columns: repeat(6, 1fr);
+  display: grid; grid-template-columns: repeat(7, 1fr);
   background: rgba(6,6,12,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -1446,7 +1446,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null,wealthLog:[]};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -2555,51 +2555,109 @@ const LIFE_STATS_META=[
   {key:'wisdom',      label:'Wisdom',      icon:'🔮'},
   {key:'wealth',      label:'Wealth',      icon:'💰'},
 ];
-const LIFE_XP_THRESH=[0,20,60,120,200,300,420,560,720,900];
+const LIFE_XP_THRESH=[0,100,300,600,1000,1500,2200,3000,4000,5500];
 const LIFE_ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
-let _lifeStatsPageId=null;
+let _wealthPageId=null;
 
 function lifeStatLevel(xp){for(let i=LIFE_XP_THRESH.length-1;i>=0;i--){if(xp>=LIFE_XP_THRESH[i])return i+1;}return 1;}
 function lifeStatProgress(xp){const lv=lifeStatLevel(xp);if(lv>=10)return 1;return(xp-LIFE_XP_THRESH[lv-1])/(LIFE_XP_THRESH[lv]-LIFE_XP_THRESH[lv-1]);}
 
+async function nQueryAll(dbId,filter){
+  let results=[];let cursor=undefined;
+  do{
+    const body={page_size:100,...(filter?{filter}:{}),...(cursor?{start_cursor:cursor}:{})};
+    const d=await nFetch('/databases/'+dbId+'/query','POST',body);
+    results=results.concat(d.results??[]);
+    cursor=d.has_more?d.next_cursor:undefined;
+  }while(cursor);
+  return results;
+}
+
 async function loadLifeStats(){
   try{
-    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'life_stats'}});
-    if(pages.length){
-      _lifeStatsPageId=pages[0].id;
-      const val=g.text(pages[0].properties.Value);
-      try{state.lifeStats=JSON.parse(val);}catch(e){}
-    }
-    if(!state.lifeStats||typeof state.lifeStats!=='object'){
-      state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
-    }
+    const[sessions,workoutPages,dailyDone,musicDone,entries,wealthCfg]=await Promise.all([
+      nQueryAll(DB.studied),
+      nQueryAll(DB.workoutLog),
+      nQueryAll(DB.tasks,{and:[{property:'Difficulty',select:{equals:'Daily'}},{property:'Status',checkbox:{equals:true}}]}),
+      nQueryAll(DB.tasks,{and:[{property:'Task',title:{equals:'Practice Music'}},{property:'Status',checkbox:{equals:true}}]}),
+      nQueryAll(DB.entries),
+      nQuery(DB.appConfig,{property:'Key',title:{equals:'wealth_log'}}),
+    ]);
+    const uniqueWorkoutDays=new Set(workoutPages.map(p=>g.date(p.properties.Date)||p.created_time?.slice(0,10))).size;
+    const intelligence=sessions.length*1;
+    const vitality=uniqueWorkoutDays*10;
+    const discipline=dailyDone.filter(p=>g.title(p.properties.Task)!=='Practice Music').length*5;
+    const creativity=musicDone.length*10;
+    const wisdom=entries.length*5;
+    let wealth=0;
+    if(wealthCfg.length){
+      _wealthPageId=wealthCfg[0].id;
+      try{state.wealthLog=JSON.parse(g.text(wealthCfg[0].properties.Value));}catch(e){state.wealthLog=[];}
+      wealth=computeWealthXP(state.wealthLog);
+    }else{state.wealthLog=[];}
+    state.lifeStats={intelligence,vitality,discipline,creativity,wisdom,wealth};
   }catch(e){state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};}
 }
 
-async function addLifeXP(statKey,amount){
+async function addWealthXP(amount){
   if(!state.lifeStats)state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
-  const oldLv=lifeStatLevel(state.lifeStats[statKey]||0);
-  state.lifeStats[statKey]=(state.lifeStats[statKey]||0)+amount;
-  const newLv=lifeStatLevel(state.lifeStats[statKey]);
-  const json=JSON.stringify(state.lifeStats);
-  const rich=[{text:{content:json}}];
-  try{
-    if(_lifeStatsPageId){await nPatch(_lifeStatsPageId,{Value:{rich_text:rich}});}
-    else{const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'life_stats'}}]},Value:{rich_text:rich}});_lifeStatsPageId=page.id;}
-    if(newLv>oldLv){const m=LIFE_STATS_META.find(x=>x.key===statKey);showToast(m.icon+' '+m.label+' → Level '+LIFE_ROMAN[newLv-1]+'!',4000);}
-  }catch(e){state.lifeStats[statKey]=(state.lifeStats[statKey]||0)-amount;}
+  state.lifeStats.wealth=(state.lifeStats.wealth||0)+amount;
+  const rich=[{text:{content:String(state.lifeStats.wealth)}}];
+  if(_wealthPageId){await nPatch(_wealthPageId,{Value:{rich_text:rich}});}
+  else{const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'wealth_xp'}}]},Value:{rich_text:rich}});_wealthPageId=p.id;}
 }
 
 function renderLifeStats(){
   const ls=state.lifeStats||{};
+  const lastBal=state.wealthLog&&state.wealthLog.length?state.wealthLog[state.wealthLog.length-1].balance:null;
   const rows=LIFE_STATS_META.map(m=>{
     const xp=ls[m.key]||0;
     const lv=lifeStatLevel(xp);
     const pct=Math.round(lifeStatProgress(xp)*100);
     const roman=LIFE_ROMAN[lv-1];
-    return '<div class="life-stat-row"><span class="life-stat-icon">'+m.icon+'</span><div class="life-stat-mid"><div class="life-stat-name">'+m.label+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div><span class="life-stat-level">'+roman+'</span></div>';
+    const extra=m.key==='wealth'
+      ?'<button onclick="openWealthLog()" style="font-size:8px;font-weight:700;letter-spacing:0.1em;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;padding:2px 6px;cursor:pointer;margin-left:4px">'+(lastBal!=null?'UPDATE':'LOG')+'</button>'
+      :'';
+    return '<div class="life-stat-row"><span class="life-stat-icon">'+m.icon+'</span><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
   }).join('');
   return '<div class="arc-card" style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
+}
+
+function openWealthLog(){
+  const last=state.wealthLog&&state.wealthLog.length?state.wealthLog[state.wealthLog.length-1].balance:null;
+  const hint=last!=null?'Last logged: $'+last.toLocaleString():'Log your current bank balance';
+  const val=prompt(hint+'\n\nEnter current balance ($):');
+  if(val===null)return;
+  const balance=parseFloat(val.replace(/[^0-9.]/g,''));
+  if(isNaN(balance)||balance<0){alert('Invalid amount');return;}
+  saveWealthLog(balance);
+}
+
+async function saveWealthLog(balance){
+  const date=new Date().toISOString().split('T')[0];
+  if(!state.wealthLog)state.wealthLog=[];
+  state.wealthLog.push({date,balance});
+  const xp=computeWealthXP(state.wealthLog);
+  if(!state.lifeStats)state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
+  state.lifeStats.wealth=xp;
+  const json=JSON.stringify(state.wealthLog);
+  const rich=[{text:{content:json}}];
+  try{
+    if(_wealthPageId){await nPatch(_wealthPageId,{Value:{rich_text:rich}});}
+    else{const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'wealth_log'}}]},Value:{rich_text:rich}});_wealthPageId=p.id;}
+    showToast('Balance logged · '+xp+' Wealth XP',3000);
+    renderHome();
+  }catch(e){showToast('Failed: '+e.message);}
+}
+
+function computeWealthXP(log){
+  if(!log||log.length<2)return 0;
+  let xp=0;
+  for(let i=1;i<log.length;i++){
+    const delta=log[i].balance-log[i-1].balance;
+    if(delta>0)xp+=Math.floor(delta/100);
+  }
+  return xp;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -3852,14 +3910,7 @@ async function toggleTask(taskId,current){
   try{
     await nPatch(taskId,{Status:{checkbox:next}});
     showToast(next?' Done':'Reopened');
-    if(next){
-      const task=state.tasks.find(t=>t.id===taskId);
-      if(task){
-        if(task.name==='Practice Music')addLifeXP('creativity',2);
-        else if(task.difficulty==='Daily')addLifeXP('discipline',1);
-      }
-      setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
-    }
+    if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
   }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:current}:t);renderTasks();showToast('Update failed');}
 }
 
@@ -4068,7 +4119,6 @@ async function submitWorkout(){
   const weight=parseFloat(document.getElementById('wWeight').value)||0;
   try{
     const n=await _logExercise(selectedExercise,sets,reps,weight);
-    addLifeXP('vitality',1);
     closeWorkoutModal();
     showToast(`Logged ${selectedExercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
     if(currentTab==='workout')renderWorkout();
@@ -4379,7 +4429,6 @@ async function saveJournalEntry(){
       ...(journalSelectedJournalId?{Journal:{relation:[{id:journalSelectedJournalId}]}}:{}),
     };
     const page=await nCreate(DB.entries,props);
-    addLifeXP('wisdom',1);
     if(body&&page?.id){
       const paragraphs=body.split('\n').filter(l=>l.trim()).map(l=>({type:'paragraph',paragraph:{rich_text:[{type:'text',text:{content:l}}]}}));
       if(paragraphs.length)await nAddBlocks(page.id,paragraphs).catch(()=>{});
