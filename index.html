@@ -2292,6 +2292,108 @@ Be specific — name the subject in each study block. Make the schedule realisti
   }
 }
 const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
+
+function startTimer(){
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    // Update inline timer display if visible
+    const el=document.getElementById('timer-display');
+    if(el){
+      if(pomoMode&&pomoPhaseEnd){
+        el.textContent=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+      }else if(state.activeSession){
+        el.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+      }
+    }
+    // Check pomo phase expiry
+    if(pomoMode&&pomoPhaseEnd&&Date.now()>=pomoPhaseEnd){
+      if(pomoPhase==='work'){
+        pomoCount++;
+        if(soundEnabled)playBell();
+        pomoPhase='break';pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+        if(state.activeSession){
+          // Save the completed work session
+          const dur=POMO_WORK;
+          const doneTime=new Date().toISOString();
+          nPatch(state.activeSession.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(()=>{});
+          state.sessions.unshift({...state.activeSession,complete:'Done',done:doneTime});
+          state.activeSession=null;
+        }
+        savePomoPersist();
+        showPomoFlash('break');
+        renderHome();
+      }else{
+        // Break over — clear pomo so user manually starts next
+        pomoPhase='work';pomoPhaseEnd=null;
+        clearInterval(timerInterval);timerInterval=null;
+        savePomoPersist();
+        showPomoFlash('work');
+        renderHome();
+      }
+    }
+  },1000);
+}
+
+async function startSession(subject){
+  if(!subject){showToast('Pick a subject first');return;}
+  lastSubject=subject;
+  localStorage.setItem('grind-last-subject',subject);
+  try{
+    const startedAt=new Date().toISOString();
+    const page=await nCreate(DB.studied,{
+      Name:{title:[{text:{content:subject}}]},
+      Subject:{status:{name:subject}},
+      Started:{created_time:startedAt},
+    });
+    state.activeSession={id:page.id,subject,startedAt};
+    if(pomoMode){
+      pomoPhase='work';pomoPhaseEnd=Date.now()+POMO_WORK;
+      savePomoPersist();
+    }
+    startTimer();renderHome();
+  }catch(e){showToast('Failed to start: '+e.message);}
+}
+
+async function stopSession(){
+  if(pomoMode&&!state.activeSession&&pomoPhaseEnd){
+    // Skip break
+    clearInterval(timerInterval);timerInterval=null;
+    pomoPhase='work';pomoPhaseEnd=null;
+    savePomoPersist();renderHome();return;
+  }
+  if(!state.activeSession)return;
+  clearInterval(timerInterval);timerInterval=null;
+  const doneTime=new Date().toISOString();
+  const dur=Date.now()-new Date(state.activeSession.startedAt).getTime();
+  const id=state.activeSession.id;
+  const sub=state.activeSession.subject;
+  try{
+    await nPatch(id,{
+      Complete:{status:{name:'Done'}},
+      Done:{date:{start:doneTime}},
+    });
+  }catch(e){showToast('Save failed: '+e.message);}
+  state.sessions.unshift({id,subject:sub,started:state.activeSession.startedAt,done:doneTime,complete:'Done',quality:null,pomoPhase:null,pomoEnd:null,pomoCount:null});
+  state.activeSession=null;
+  if(pomoMode){pomoPhase='work';pomoPhaseEnd=null;savePomoPersist();}
+  renderHome();
+}
+
+function setPomoMode(on){
+  pomoMode=!!on;
+  if(!pomoMode){pomoPhase='work';pomoPhaseEnd=null;clearInterval(timerInterval);timerInterval=null;savePomoPersist();}
+  renderHome();
+}
+
+async function changeSessionSubject(){
+  if(!state.activeSession)return;
+  const sub=prompt('Change subject to:',state.activeSession.subject);
+  if(!sub||sub===state.activeSession.subject)return;
+  lastSubject=sub;localStorage.setItem('grind-last-subject',sub);
+  state.activeSession.subject=sub;
+  nPatch(state.activeSession.id,{Name:{title:[{text:{content:sub}}]},Subject:{status:{name:sub}}}).catch(()=>{});
+  renderHome();
+}
 const SUBJECTS=['Immunology','Microbiology I','Physiology II','Physiology I','Molecular Cell Biology II','Biochemistry II','Anatomy','Microanatomy II','Microanatomy I','Other'];
 let currentTab='home';
 const _tabLoadedAt={};
@@ -2356,6 +2458,8 @@ const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total
 const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);const questId=g.num(q['Quest ID']);const isQuestRaw=g.formula(q['Is Quest']);const isQuest=isQuestRaw===1||isQuestRaw===true||(typeof isQuestRaw==='string'&&isQuestRaw!=='');return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),questId,isQuest,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
 const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
+const toEntry=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),date:g.date(q.Date),emotions:(q.Emotions?.multi_select??[]).map(e=>e.name)};};
+
 const toExam=p=>{const q=p.properties;
   const topicsMulti=g.multiSelect(q['Topic list']);
   const topicsRaw=q['Topic list']?.rich_text?.map(r=>r.plain_text).join('\n').split('\n').map(t=>t.trim()).filter(Boolean)||[];
@@ -2626,7 +2730,7 @@ function renderLifeStats(){
     const extra=m.key==='wealth'
       ?'<button onclick="event.stopPropagation();openWealthLog()" style="font-size:8px;font-weight:700;letter-spacing:0.1em;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;padding:2px 6px;cursor:pointer;margin-left:4px">'+(lastBal!=null?'UPDATE':'LOG')+'</button>'
       :'';
-    return '<div class="life-stat-row" onclick="showLifeStatDetail(\''+m.key+'\')" style="cursor:pointer"><span class="life-stat-icon">'+m.icon+'</span><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
+    return '<div class="life-stat-row" onclick="showLifeStatDetail(\''+m.key+'\')" style="cursor:pointer"><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
   }).join('');
   return '<div class="arc-card" style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
 }
@@ -2653,7 +2757,6 @@ function showLifeStatDetail(key){
   el.id='life-stat-modal';
   el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;';
   el.innerHTML='<div style="background:var(--bg-card);border:1px solid var(--border-glow);border-radius:14px;padding:28px 24px;max-width:320px;width:100%;text-align:center;">'
-    +'<div style="font-size:32px;margin-bottom:8px">'+meta.icon+'</div>'
     +'<div style="font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">'+meta.label+'</div>'
     +'<div style="font-size:40px;font-weight:700;color:var(--gold);letter-spacing:0.04em;line-height:1">'+roman+'</div>'
     +'<div style="margin:16px 0 8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--gold);border-radius:2px"></div></div>'
@@ -2728,7 +2831,7 @@ function renderActiveArc(){
   const daysLeft=Math.max(Math.round((end-today)/(1000*60*60*24)),0);
   const typeInfo=ARC_TYPES.find(function(t){return t.type===arc.type;})||{icon:'◉'};
   return '<div class="arc-card arc-card-active" onclick="arcGoToTab()" style="cursor:pointer">'
-    +'<div class="arc-type">'+typeInfo.icon+' Active Arc</div>'
+    +'<div class="arc-type">Active Arc</div>'
     +'<div class="arc-name">'+arc.name+'</div>'
     +(arc.goal?'<div class="arc-goal">'+arc.goal+'</div>':'')
     +'<div class="arc-progress-bar"><div class="arc-progress-fill" style="width:'+pct+'%"></div></div>'
@@ -2755,7 +2858,7 @@ function renderArcs(){
     const types=ARC_TYPES.map(function(t){
       const sel=_arcNewType===t.type?' selected':'';
       return '<button class="arc-type-btn'+sel+'" onclick="arcSelectType(\''+t.type+'\')">'
-        +'<div class="arc-type-btn-name">'+t.icon+' '+t.type+'</div>'
+        +'<div class="arc-type-btn-name">'+t.type+'</div>'
         +'<div class="arc-type-btn-label">'+t.desc+'</div>'
         +'</button>';
     }).join('');
@@ -2815,7 +2918,7 @@ function renderArcs(){
     const typeInfo=ARC_TYPES.find(function(t){return t.type===active.type;})||{icon:'◉'};
     html+='<div class="arc-section-title">Active</div>'
       +'<div class="arc-card arc-card-active">'
-      +'<div class="arc-type">'+typeInfo.icon+' '+active.type+'</div>'
+      +'<div class="arc-type">'+active.type+'</div>'
       +'<div class="arc-name">'+active.name+'</div>'
       +(active.goal?'<div class="arc-goal">'+active.goal+'</div>':'')
       +'<div class="arc-progress-bar"><div class="arc-progress-fill" style="width:'+pct+'%"></div></div>'
@@ -2835,7 +2938,7 @@ function renderArcs(){
         +'<div style="display:flex;align-items:flex-start;justify-content:space-between">'
         +'<div>'
         +'<div class="arc-item-name">'+a.name+'</div>'
-        +'<div class="arc-item-type">'+typeInfo.icon+' '+a.type+'</div>'
+        +'<div class="arc-item-type">'+a.type+'</div>'
         +(a.goal?'<div class="arc-item-goal">'+a.goal+'</div>':'')
         +(a.start&&a.end?'<div class="arc-item-dates">'+a.start+' &rarr; '+a.end+'</div>':'')
         +'</div>'
