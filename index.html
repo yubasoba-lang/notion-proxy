@@ -1155,7 +1155,7 @@ window.addEventListener('unhandledrejection',function(e){
 })();
 </script>
 <script>
-const PROXY=location.hostname==='localhost'?'https://notion-proxy-red-one.vercel.app/api/notion':'/api/notion';
+const PROXY=(location.hostname===''||location.hostname==='localhost')?'https://notion-proxy-red-one.vercel.app/api/notion':'/api/notion';
 const DB={
   stats:          '34163a0b4e7c81abb22ae7e6bccdf2c2',
   rivals:         'f925bdca42f3428fa6f2c61594ae512a',
@@ -1280,6 +1280,9 @@ function badgeSVG(rankObj, size=40){
 
 function badgeHTML(rankObj,size=56){
   return `<div class="badge-wrap">${badgeSVG(rankObj,size)}</div>`;
+}
+function getRivalFor(stat){
+  return(stat.rivalXP!=null&&stat.rivalXP>0)?{totalXP:stat.rivalXP}:null;
 }
 
 /* 
