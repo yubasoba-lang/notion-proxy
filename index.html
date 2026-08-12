@@ -473,7 +473,14 @@ body::after { display: none; }
 
 /* Pomo fullscreen countdown */
 .pomo-screen { display: flex; flex-direction: column; align-items: center; padding: 24px 0 10px; }
-.pomo-free-active { display: flex; flex-direction: column; align-items: center; padding: 32px 0 16px; }
+.pomo-free-active { display: flex; flex-direction: column; align-items: center; padding: 48px 0 32px; min-height: 55vh; justify-content: center; }
+.free-timer-subject { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 20px; }
+.free-timer-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 28px; }
+.free-timer-digits { font-family: 'JetBrains Mono', monospace; font-size: clamp(80px, 18vw, 200px); font-weight: 600; color: var(--text); letter-spacing: -0.04em; line-height: 1; }
+.free-timer-sep { opacity: 0.3; animation: sep-blink 1s step-start infinite; }
+@keyframes sep-blink { 0%,49%{opacity:0.3} 50%,100%{opacity:0.08} }
+.free-timer-bar { width: 360px; height: 1px; background: var(--border-hi); position: relative; }
+.free-timer-bar-fill { position: absolute; left: 0; top: 0; height: 1px; background: var(--text); width: 0%; transition: width 1s linear; }
 .pomo-screen-phase { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; animation: phase-fade-in 0.4s ease; }
 .pomo-screen-subject { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.06em; margin-bottom: 24px; animation: phase-fade-in 0.5s ease; }
 .pomo-ring-wrap { position: relative; width: 230px; height: 230px; margin: 0 auto; overflow: visible; }
@@ -2294,7 +2301,7 @@ const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 function startTimer(){
   if(timerInterval)clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
-    // Update inline timer display if visible
+    // Update home tab inline timer
     const el=document.getElementById('timer-display');
     if(el){
       if(pomoMode&&pomoPhaseEnd){
@@ -2302,6 +2309,25 @@ function startTimer(){
       }else if(state.activeSession){
         el.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
       }
+    }
+    // Update study tab free timer (HH:MM:SS)
+    const logEl=document.getElementById('timer-display-log');
+    if(logEl&&state.activeSession&&!pomoMode){
+      const ms=Date.now()-new Date(state.activeSession.startedAt).getTime();
+      const tot=Math.floor(ms/1000);
+      const hh=Math.floor(tot/3600),mm=Math.floor((tot%3600)/60),ss=tot%60;
+      const hhStr=hh>0?String(hh).padStart(2,'0')+':':'';
+      const mmStr=String(mm).padStart(2,'0');
+      const ssStr=String(ss).padStart(2,'0');
+      logEl.innerHTML=`${hhStr}${mmStr}<span class="free-timer-sep">:</span>${ssStr}`;
+      // Bar fills 1px per minute up to 120min (2h)
+      const barFill=document.getElementById('free-timer-bar-fill');
+      if(barFill)barFill.style.width=Math.min(100,ms/7200000*100)+'%';
+    }
+    // Update sidebar timer
+    const sideEl=document.getElementById('sidebar-timer-display');
+    if(sideEl&&state.activeSession){
+      sideEl.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
     }
     // Check pomo phase expiry
     if(pomoMode&&pomoPhaseEnd&&Date.now()>=pomoPhaseEnd){
@@ -4983,10 +5009,18 @@ function renderStudyLog(){
     </div>`;
   } else if(state.activeSession){
     // free mode active
-    const elapsed=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+    const ms=Date.now()-new Date(state.activeSession.startedAt).getTime();
+    const tot=Math.floor(ms/1000);
+    const hh=Math.floor(tot/3600),mm=Math.floor((tot%3600)/60),ss=tot%60;
+    const hhStr=hh>0?String(hh).padStart(2,'0')+':':'';
+    const mmStr=String(mm).padStart(2,'0');
+    const ssStr=String(ss).padStart(2,'0');
     html+=`<div class="pomo-free-active">
-      <div class="pomo-screen-subject">${state.activeSession.subject}</div>
-      <div id="timer-display-log" class="study-timer" style="font-size:36px;color:var(--gold);font-family:'JetBrains Mono',monospace;margin:6px 0 12px">${elapsed}</div>
+      <div class="free-timer-subject">${state.activeSession.subject}</div>
+      <div class="free-timer-wrap">
+        <div id="timer-display-log" class="free-timer-digits">${hhStr}${mmStr}<span class="free-timer-sep">:</span>${ssStr}</div>
+        <div class="free-timer-bar"><div class="free-timer-bar-fill" id="free-timer-bar-fill"></div></div>
+      </div>
       <button class="pomo-screen-stop" onclick="stopSession()">stop</button>
       ${days.length?'<div class="pomo-log-divider"></div>':''}
     </div>`;
@@ -5116,7 +5150,8 @@ function renderStudyLog(){
     </div>`;
   }
 
-  // Quality by subject
+  // Quality by subject (hidden when session active)
+  if(!state.activeSession){
   {
     const qSess=done.filter(s=>s.quality&&(s.subject||s.name));
     if(qSess.length>=3){
@@ -5162,12 +5197,13 @@ function renderStudyLog(){
       }
     }
   }
+  } // end !state.activeSession block for quality by subject
 
   if(!days.length&&!isPomoActive&&!state.activeSession){
     html+=`<div style="text-align:center;padding:60px 20px;color:var(--text-dim);font-size:12px;letter-spacing:0.06em;">No sessions yet</div>`;
   }
 
-  days.forEach(day=>{
+  if(!state.activeSession) days.forEach(day=>{
     const arr=groups[day];
     const tot=totalMs(arr);
     html+=`<div class="study-day-group">
