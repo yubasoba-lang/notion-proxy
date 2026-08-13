@@ -363,14 +363,28 @@ body::after { display: none; }
 .task-item:active { transform: scale(0.99); }
 .task-item.done { opacity: 0.22; }
 .task-item.done .task-name { text-decoration: line-through; }
-.penalty-item { background: rgba(185,28,28,0.08); border: 1px solid rgba(185,28,28,0.4); border-radius: 3px; padding: 11px 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; position: relative; animation: penalty-pulse 3s ease-in-out infinite; }
-.penalty-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red-hi); border-radius: 0; }
-@keyframes penalty-pulse { 0%,100% { border-color: rgba(185,28,28,0.35); } 50% { border-color: rgba(220,38,38,0.65); } }
-.penalty-cb { width: 20px; height: 20px; border-radius: 2px; border: 1px solid rgba(185,28,28,0.6); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--red-hi); transition: all 0.2s; }
-.penalty-cb:active { background: rgba(185,28,28,0.2); }
+.penalty-item { background: rgba(120,40,40,0.07); border: 1px solid rgba(120,40,40,0.28); border-radius: 3px; padding: 11px 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; position: relative; animation: penalty-pulse 3s ease-in-out infinite; }
+.penalty-item.stage-2 { background: rgba(120,40,40,0.12); border-color: rgba(140,50,50,0.45); }
+.penalty-item.stage-3 { background: rgba(120,40,40,0.18); border-color: rgba(160,60,60,0.65); animation: penalty-pulse-peak 2.5s ease-in-out infinite; }
+.penalty-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #6e3030; border-radius: 0; }
+.penalty-item.stage-2::before { background: #7a3535; }
+.penalty-item.stage-3::before { background: #8a3a3a; }
+@keyframes penalty-pulse { 0%,100%{border-color:rgba(120,40,40,0.28)} 50%{border-color:rgba(140,50,50,0.45)} }
+@keyframes penalty-pulse-peak { 0%,100%{border-color:rgba(140,50,50,0.5)} 50%{border-color:rgba(160,60,60,0.75)} }
+.penalty-cb { width: 20px; height: 20px; border-radius: 2px; border: 1px solid rgba(120,40,40,0.4); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #7a3535; transition: all 0.2s; }
+.penalty-cb:active { background: rgba(120,40,40,0.15); }
 .penalty-name { font-size: 13px; color: var(--text); flex: 1; }
-.penalty-tag { font-size: 7px; font-weight: 800; letter-spacing: 0.18em; color: var(--red-hi); background: rgba(185,28,28,0.15); border: 1px solid rgba(185,28,28,0.3); border-radius: 2px; padding: 2px 5px; }
-.penalty-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: var(--red-hi); text-transform: uppercase; margin: 4px 0 8px; opacity: 0.8; }
+.penalty-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.penalty-tag { font-size: 7px; font-weight: 800; letter-spacing: 0.18em; color: #7a3838; border: 1px solid rgba(120,40,40,0.35); border-radius: 2px; padding: 2px 5px; }
+.penalty-tag.peak { color: #a04848; border-color: rgba(140,50,50,0.5); }
+.penalty-timer { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #504040; letter-spacing: 0.06em; }
+.penalty-section-label { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: #7a3838; text-transform: uppercase; margin: 4px 0 8px; }
+.ztd-banner { border: 1px solid rgba(120,40,40,0.5); border-left: 3px solid #8a3a3a; background: rgba(120,40,40,0.08); border-radius: 3px; padding: 10px 13px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.ztd-banner-label { font-size: 8px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase; color: #8a3a3a; }
+.ztd-banner-sub { font-size: 8px; letter-spacing: 0.1em; color: #504040; }
+.task-item.is-lockdown { border-color: rgba(120,40,40,0.22); }
+.task-item.is-lockdown::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: rgba(120,40,40,0.4); border-radius: 0; }
+.lockdown-pill { font-size: 7px; font-weight: 800; letter-spacing: 0.16em; color: rgba(120,40,40,0.65); border: 1px solid rgba(120,40,40,0.25); border-radius: 2px; padding: 2px 5px; }
 .task-item.is-quest { border-color: rgba(232,234,240,0.55); background: linear-gradient(105deg, rgba(232,234,240,0.13) 0%, rgba(232,234,240,0.06) 45%, var(--bg-card) 75%); box-shadow: 0 0 24px rgba(232,234,240,0.10), 0 2px 10px rgba(0,0,0,0.35); overflow: hidden; animation: quest-pulse 4s ease-in-out infinite; }
 .task-item.is-quest::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, #ecddb8, var(--gold), rgba(232,234,240,0.35)); border-radius: 0 1px 1px 0; box-shadow: 0 0 8px rgba(232,234,240,0.5); }
 .task-item.is-quest::after { content: ''; position: absolute; top: 0; bottom: 0; width: 45%; background: linear-gradient(90deg, transparent, rgba(232,234,240,0.10), transparent); animation: quest-shine 5s ease-in-out infinite; left: -50%; pointer-events: none; }
@@ -2801,7 +2815,7 @@ function renderLifeStats(){
   const ls=state.lifeStats||{};
   const lastBal=state.wealthLog&&state.wealthLog.length?state.wealthLog[state.wealthLog.length-1].balance:null;
   const rows=LIFE_STATS_META.map(m=>{
-    const xp=ls[m.key]||0;
+    const xp=getEffectiveLifeXP(m.key);
     const lv=lifeStatLevel(xp);
     const pct=Math.round(lifeStatProgress(xp)*100);
     const roman=LIFE_ROMAN[lv-1];
@@ -2815,7 +2829,7 @@ function renderLifeStats(){
 
 function showLifeStatDetail(key){
   const meta=LIFE_STATS_META.find(m=>m.key===key);
-  const xp=(state.lifeStats||{})[key]||0;
+  const xp=getEffectiveLifeXP(key);
   const lv=lifeStatLevel(xp);
   const roman=LIFE_ROMAN[lv-1];
   const pct=Math.round(lifeStatProgress(xp)*100);
@@ -3751,7 +3765,7 @@ async function refresh(force=true){
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
   }
-  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties()]);if(!skip)await checkAndIssuePenalties();_markTabLoaded('tasks');renderTasks();}
+  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()]);if(!skip){await checkAndIssuePenalties();await syncXPBleeds();}_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
@@ -4164,15 +4178,32 @@ function renderTasks(){
   const dOrder=['Today','Yesterday'];
   const dSorted=Object.keys(dGroups).sort((a,b)=>{const ai=dOrder.indexOf(a),bi=dOrder.indexOf(b);if(ai>-1&&bi>-1)return ai-bi;if(ai>-1)return -1;if(bi>-1)return 1;const an=parseInt(a),bn=parseInt(b);return isNaN(an)||isNaN(bn)?0:bn-an;});
 
+  // Zero tolerance day banner
+  if(state.ztd){
+    html+=`<div class="ztd-banner">
+      <span class="ztd-banner-label">ZERO TOLERANCE</span>
+      <span class="ztd-banner-sub">2× bleed on all missed tasks</span>
+    </div>`;
+  }
+
   // Penalty quests
   const activePenalties=(state.penalties||[]).filter(p=>!p.done);
   if(activePenalties.length){
-    html+=`<div class="penalty-section-label">⚠ Penalty Quests</div>`;
+    html+=`<div class="penalty-section-label">OPEN GATES — ${activePenalties.length}</div>`;
     activePenalties.forEach((p,i)=>{
-      html+=`<div class="penalty-item">
+      const now=Date.now();
+      const hoursOld=(now-new Date(p.issuedAt).getTime())/3600000;
+      const expiresInH=Math.max(0,PENALTY_EXPIRY_HOURS-hoursOld);
+      const nextEscalateH=p.stage===1?Math.max(0,PENALTY_STAGE_HOURS[1]-hoursOld):p.stage===2?Math.max(0,PENALTY_STAGE_HOURS[2]-hoursOld):0;
+      const stageLabel=p.stage===3?'PEAK':p.stage===2?'STAGE II':'STAGE I';
+      const timerStr=nextEscalateH>0?`escalates in ${Math.ceil(nextEscalateH)}h`:`expires in ${Math.ceil(expiresInH)}h`;
+      html+=`<div class="penalty-item stage-${p.stage}">
         <div class="penalty-cb" onclick="completePenalty(${i})">✓</div>
-        <div class="penalty-name">${p.penalty}</div>
-        <span class="penalty-tag">PENALTY</span>
+        <div class="penalty-name">${p.text||p.penalty||''}</div>
+        <div class="penalty-meta">
+          <span class="penalty-tag${p.stage===3?' peak':''}">${stageLabel}</span>
+          <span class="penalty-timer">${timerStr}</span>
+        </div>
       </div>`;
     });
   }
@@ -4200,11 +4231,16 @@ function taskHTML(task,today){
   const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
   const diff=task.difficulty;
   const isQ=task.isQuest||(!!task.questId&&(state.todayQuests||[]).map(Number).includes(Number(task.questId)));
-  return `<div class="task-item ${task.status?'done':''} ${isQ?'is-quest':''}" id="task-${task.id}">
+  // Check if this task has an active lockdown — override display name
+  const lockdown=(state.lockdowns||[]).find(l=>l.task===task.name&&Date.now()<new Date(l.until).getTime());
+  const displayName=lockdown?lockdown.text:(task.name||'Unnamed');
+  const daysLeft=lockdown?Math.ceil((new Date(lockdown.until).getTime()-Date.now())/86400000):0;
+  return `<div class="task-item ${task.status?'done':''} ${isQ?'is-quest':''} ${lockdown?'is-lockdown':''}" id="task-${task.id}">
     <div class="task-cb" onclick="toggleTask('${task.id}',${task.status})">${task.status?'':''}</div>
     <div class="task-body">
-      <div class="task-name">${task.name||'Unnamed'}</div>
+      <div class="task-name">${displayName}</div>
       <div class="task-tags">
+        ${lockdown?`<span class="lockdown-pill">LOCKDOWN ${daysLeft}d</span>`:''}
         ${isQ?'<span class="quest-tag"> QUEST</span>':''}
         ${task.isStudySession?'<span class="task-study-tag">◈ Study</span>':''}
         ${diff&&!task.isStudySession?`<span class="diff-pill diff-${diff}" onclick="cycleDiff(event,'${task.id}','${diff}')">${diff}</span>`:''}
@@ -4271,14 +4307,168 @@ async function quickAdd(tid,name,cat,type){
    plus the sleep task (already complete), all linked together.
 */
 const DAILY_TASKS=[
-  {name:'Study German',          cat:'German',  diff:'Daily', questId:1, penalty:'Study German for 45 mins'},
-  {name:'Meditate for 10 mins',  cat:'Life',    diff:'Daily', questId:2, penalty:'Meditate for 20 mins'},
-  {name:'Journal',               cat:'Life',    diff:'Daily', questId:3, penalty:'Write 2 journal entries'},
-  {name:'Clean Room',            cat:'Life',    diff:'Daily', questId:4, penalty:'Deep clean + organise entire room'},
-  {name:'Read 30 mins',          cat:'Mind',    diff:'Daily', questId:5, penalty:'Read 1 hour'},
-  {name:'Practice Music',        cat:'Creative',diff:'Daily', questId:6, penalty:'Practice Music for 30 mins'},
-  {name:'Workout',               cat:'Body',    diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5', penalty:'Workout + 20 min run'},
+  {name:'Study German',         cat:'German',  diff:'Daily', questId:1,
+    p1:'Study German for 45 mins', p2:'Study German for 1.5 hours', p3:'Study German for 1.5 hours + write 10 sentences from memory'},
+  {name:'Meditate for 10 mins', cat:'Life',    diff:'Daily', questId:2,
+    p1:'Meditate for 20 mins', p2:'Meditate for 40 mins — no phone 1hr before or after', p3:'Meditate for 1 hour + journal what came up after'},
+  {name:'Journal',              cat:'Life',    diff:'Daily', questId:3,
+    p1:'Write 2 journal entries', p2:'Write 3 entries + reflection on why you missed it', p3:'Write a full page on where your head has been this week'},
+  {name:'Clean Room',           cat:'Life',    diff:'Daily', questId:4,
+    p1:'Deep clean + organise entire room', p2:'Deep clean room + clean bathroom', p3:'Deep clean entire living space + laundry + no mess for 48 hours after'},
+  {name:'Read 30 mins',         cat:'Mind',    diff:'Daily', questId:5,
+    p1:'Read 1 hour', p2:'Read 1.5 hours + write a summary', p3:'Read 2 hours + write a full page reflection'},
+  {name:'Practice Music',       cat:'Creative',diff:'Daily', questId:6,
+    p1:'Practice Music for 30 mins', p2:'Practice 1 hour + record yourself', p3:'Practice 1.5 hours + learn something new + record it'},
+  {name:'Workout',              cat:'Body',    diff:'Daily', base:30, stat:'35563a0b-4e7c-80ea-984e-e216e2abfff5',
+    p1:'Workout + 20 min run', p2:'Workout + 40 min run + 50 pushups', p3:'Workout + 1hr cardio + 100 pushups + 100 squats'},
 ];
+// Escalation timing in hours
+const PENALTY_STAGE_HOURS=[0,48,96]; // stage 1 at 0h, stage 2 at 48h, stage 3 at 96h
+const PENALTY_EXPIRY_HOURS=168; // 7 days → auto-fail
+const PENALTY_LOCKDOWN_DAYS=7; // days the cleared version haunts as daily
+
+// ── ZERO TOLERANCE DAY ────────────────────────────────────────────────────────
+let _ztdPageId=null;
+
+async function loadZeroToleranceDay(){
+  try{
+    const today=localToday();
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'zero_tolerance'}});
+    if(pages.length){
+      _ztdPageId=pages[0].id;
+      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'{}';
+      const data=JSON.parse(raw);
+      if(data.date===today){
+        state.ztd=data.active;
+        return;
+      }
+    }
+    // New day — roll
+    const active=Math.random()<0.15;
+    state.ztd=active;
+    const json=JSON.stringify({date:today,active});
+    const rich=[{text:{content:json}}];
+    if(_ztdPageId){await nPatch(_ztdPageId,{Value:{rich_text:rich}});}
+    else{const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'zero_tolerance'}}]},Value:{rich_text:rich}});_ztdPageId=p.id;}
+    if(active)showToast('ZERO TOLERANCE DAY — ALL PENALTIES DOUBLED',5000);
+  }catch(e){state.ztd=false;}
+}
+
+// ── XP DEBT SYSTEM ────────────────────────────────────────────────────────────
+let _xpDebtPageId=null;
+
+const PENALTY_STAT_MAP={
+  'Workout':       'vitality',
+  'Study German':  'intelligence',
+  'Read 30 mins':  'intelligence',
+  'Meditate for 10 mins': 'discipline',
+  'Journal':       'discipline',
+  'Clean Room':    'discipline',
+  'Practice Music':'creativity',
+};
+
+async function loadXPDebts(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'xp_debts'}});
+    if(pages.length){
+      _xpDebtPageId=pages[0].id;
+      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'[]';
+      state.xpDebts=JSON.parse(raw);
+    }else{state.xpDebts=[];}
+  }catch(e){state.xpDebts=[];}
+}
+
+async function saveXPDebts(){
+  const json=JSON.stringify(state.xpDebts||[]);
+  const rich=[{text:{content:json}}];
+  if(_xpDebtPageId){await nPatch(_xpDebtPageId,{Value:{rich_text:rich}});}
+  else{const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'xp_debts'}}]},Value:{rich_text:rich}});_xpDebtPageId=p.id;}
+}
+
+function computeBleedForPenalty(p){
+  const now=Date.now();
+  const issuedMs=new Date(p.issuedAt).getTime();
+  const endMs=p.completedAt?new Date(p.completedAt).getTime():now;
+  const hoursActive=Math.max(0,(endMs-issuedMs)/3600000);
+  const rate=p.ztd?2:1;
+  return Math.min(Math.floor(hoursActive*rate), PENALTY_EXPIRY_HOURS*rate);
+}
+
+async function syncXPBleeds(){
+  // Called after loadPenalties + loadXPDebts
+  // For each active penalty, ensure a debt entry exists and amount is up to date
+  const debts=state.xpDebts||[];
+  let changed=false;
+  (state.penalties||[]).filter(p=>!p.done).forEach(p=>{
+    const stat=PENALTY_STAT_MAP[p.task];
+    if(!stat)return;
+    const bleed=computeBleedForPenalty(p);
+    const existing=debts.find(d=>d.penaltyId===p.issuedAt&&!d.finalized);
+    if(!existing){
+      debts.push({penaltyId:p.issuedAt,task:p.task,stat,amount:bleed,finalized:false});
+      changed=true;
+    }else if(existing.amount!==bleed){
+      existing.amount=bleed;
+      changed=true;
+    }
+  });
+  state.xpDebts=debts;
+  if(changed)await saveXPDebts();
+}
+
+function getTotalDebt(stat){
+  return (state.xpDebts||[]).filter(d=>d.stat===stat).reduce((s,d)=>s+(d.amount||0),0);
+}
+
+function getEffectiveLifeXP(key){
+  const raw=(state.lifeStats||{})[key]||0;
+  return Math.max(0, raw - getTotalDebt(key));
+}
+
+async function finalizeDebtOnExpiry(p){
+  const stat=PENALTY_STAT_MAP[p.task];
+  if(!stat)return;
+  const debt=state.xpDebts.find(d=>d.penaltyId===p.issuedAt&&!d.finalized);
+  const finalAmount=PENALTY_EXPIRY_HOURS; // full 168h bled
+  if(debt){debt.amount=finalAmount;debt.finalized=true;}
+  else state.xpDebts.push({penaltyId:p.issuedAt,task:p.task,stat,amount:finalAmount,finalized:true});
+  // Trigger rank drop overlay
+  const rawXP=(state.lifeStats||{})[stat]||0;
+  const beforeXP=Math.max(0,rawXP-getTotalDebt(stat)+finalAmount); // before this debt finalized
+  const afterXP=Math.max(0,rawXP-getTotalDebt(stat));
+  const before=lifeStatLevel(beforeXP);
+  const after=lifeStatLevel(afterXP);
+  await saveXPDebts();
+  if(after<before){
+    const statMeta=LIFE_STATS_META.find(m=>m.key===stat);
+    triggerRankDrop(statMeta?.label||stat, LIFE_ROMAN[before-1], LIFE_ROMAN[after-1]);
+  }
+}
+
+function triggerRankDrop(statName, fromRoman, toRoman){
+  const overlay=document.getElementById('rankupOverlay');
+  if(!overlay)return;
+  document.getElementById('rankupEyebrow')||Object.assign(overlay.querySelector('.rankup-eyebrow')||{},{});
+  const eyebrow=overlay.querySelector('.rankup-eyebrow');
+  const muscle=document.getElementById('rankupMuscle');
+  const newEl=document.getElementById('rankupNew');
+  if(eyebrow)eyebrow.textContent='RANK DROP';
+  if(muscle){muscle.textContent=fromRoman+' → '+toRoman;muscle.style.color='#8a3a3a';}
+  if(newEl)newEl.textContent=statName.toUpperCase()+' DEGRADED';
+  overlay.classList.add('visible');
+}
+
+async function completeDebtForPenalty(p){
+  const stat=PENALTY_STAT_MAP[p.task];
+  if(!stat)return;
+  const debt=state.xpDebts.find(d=>d.penaltyId===p.issuedAt&&!d.finalized);
+  if(!debt)return;
+  // Lock in the bleed up to this point — freeze it, don't keep accumulating
+  debt.amount=computeBleedForPenalty({...p,completedAt:new Date().toISOString()});
+  debt.finalized=true;
+  debt.completedAt=new Date().toISOString();
+  await saveXPDebts();
+}
 
 // ── PENALTY QUEST SYSTEM ──────────────────────────────────────────────────────
 let _penaltyPageId=null;
@@ -4288,47 +4478,89 @@ async function loadPenalties(){
     const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'penalty_quests'}});
     if(pages.length){
       _penaltyPageId=pages[0].id;
-      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'[]';
-      state.penalties=JSON.parse(raw).filter(p=>!p.done);
-    }else{state.penalties=[];}
-  }catch(e){state.penalties=[];}
+      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'{}';
+      const data=JSON.parse(raw);
+      state.penalties=(data.penalties||[]).filter(p=>!p.done);
+      state.lockdowns=data.lockdowns||[];
+    }else{state.penalties=[];state.lockdowns=[];}
+    escalatePenalties();
+    await expirePenalties();
+  }catch(e){state.penalties=[];state.lockdowns=[];}
 }
 
 async function savePenalties(){
-  const json=JSON.stringify(state.penalties||[]);
+  // prune expired lockdowns
+  const now=Date.now();
+  state.lockdowns=(state.lockdowns||[]).filter(l=>now<new Date(l.until).getTime());
+  const json=JSON.stringify({penalties:state.penalties||[],lockdowns:state.lockdowns});
   const rich=[{text:{content:json}}];
   if(_penaltyPageId){await nPatch(_penaltyPageId,{Value:{rich_text:rich}});}
   else{const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'penalty_quests'}}]},Value:{rich_text:rich}});_penaltyPageId=p.id;}
+}
+
+function getPenaltyText(taskDef,stage){return taskDef['p'+stage]||taskDef.p1||'';}
+
+function escalatePenalties(){
+  const now=Date.now();
+  let changed=false;
+  (state.penalties||[]).forEach(p=>{
+    if(p.done)return;
+    const hoursOld=(now-new Date(p.issuedAt).getTime())/3600000;
+    const newStage=hoursOld>=PENALTY_STAGE_HOURS[2]?3:hoursOld>=PENALTY_STAGE_HOURS[1]?2:1;
+    if(newStage>p.stage){
+      p.stage=newStage;
+      const def=DAILY_TASKS.find(t=>t.name===p.task);
+      if(def)p.text=getPenaltyText(def,newStage);
+      changed=true;
+    }
+  });
+  if(changed)savePenalties();
+}
+
+async function expirePenalties(){
+  const now=Date.now();
+  const expired=(state.penalties||[]).filter(p=>{
+    const hoursOld=(now-new Date(p.issuedAt).getTime())/3600000;
+    return hoursOld>=PENALTY_EXPIRY_HOURS&&!p.done;
+  });
+  if(!expired.length)return;
+  for(const p of expired){
+    showToast(`GATE BROKEN — ${p.task.toUpperCase()} — STAT DEGRADED`,5000);
+    await finalizeDebtOnExpiry(p);
+    p.scarred=true;
+    p.scarredAt=new Date().toISOString();
+  }
+  state.penalties=(state.penalties||[]).filter(p=>{
+    const hoursOld=(now-new Date(p.issuedAt).getTime())/3600000;
+    return hoursOld<PENALTY_EXPIRY_HOURS;
+  });
+  savePenalties();
 }
 
 async function checkAndIssuePenalties(){
   try{
     const today=localToday();
     const yesterday=prevDay(today);
-    // Load yesterday's daily log to get quest IDs
     const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:yesterday}});
     if(!logs.length)return;
     const q=logs[0].properties;
     const getQNum=v=>{const n=g.num(v)??g.formula(v)??g.rollup(v);return n!=null?Number(n):null;};
     const yesterdayQuestIds=[getQNum(q['Quest 1']),getQNum(q['Quest 2']),getQNum(q['Quest 3'])].filter(n=>n!=null&&n>0);
     if(!yesterdayQuestIds.length)return;
-    // Get completed daily tasks from yesterday
     const doneTasks=await nQuery(DB.tasks,{and:[
       {property:'Status',checkbox:{equals:true}},
       {property:'Difficulty',select:{equals:'Daily'}},
       {property:'Due Date',date:{equals:yesterday}},
     ]});
     const doneNames=new Set(doneTasks.map(p=>g.title(p.properties.Task)));
-    // Find which quests were missed
     const missedTasks=DAILY_TASKS.filter(t=>
       t.questId&&yesterdayQuestIds.includes(t.questId)&&!doneNames.has(t.name)
     );
     if(!missedTasks.length)return;
-    // Only issue penalties not already active for today
-    const existing=new Set((state.penalties||[]).filter(p=>p.issued===today).map(p=>p.task));
+    const existingTasks=new Set((state.penalties||[]).map(p=>p.task));
     const newPenalties=missedTasks
-      .filter(t=>t.penalty&&!existing.has(t.name))
-      .map(t=>({task:t.name,penalty:t.penalty,cat:t.cat,issued:today,done:false}));
+      .filter(t=>t.p1&&!existingTasks.has(t.name))
+      .map(t=>({task:t.name,text:t.p1,cat:t.cat,stage:1,issuedAt:new Date().toISOString(),done:false,...(state.ztd?{ztd:true}:{})}));
     if(!newPenalties.length)return;
     state.penalties=[...(state.penalties||[]),...newPenalties];
     await savePenalties();
@@ -4338,10 +4570,21 @@ async function checkAndIssuePenalties(){
 
 async function completePenalty(idx){
   if(!state.penalties||!state.penalties[idx])return;
-  state.penalties[idx].done=true;
+  const p=state.penalties[idx];
+  const def=DAILY_TASKS.find(t=>t.name===p.task);
+  // Set lockdown — cleared stage haunts as daily for 7 days
+  if(def){
+    const until=new Date(Date.now()+PENALTY_LOCKDOWN_DAYS*86400000).toISOString();
+    state.lockdowns=state.lockdowns||[];
+    state.lockdowns=state.lockdowns.filter(l=>l.task!==p.task); // replace existing
+    state.lockdowns.push({task:p.task,stage:p.stage,text:p.text,cat:p.cat,until});
+  }
+  p.done=true;
+  await completeDebtForPenalty(p);
   state.penalties=state.penalties.filter(p=>!p.done);
   await savePenalties();
-  showToast('Penalty cleared.');
+  const stageLabel=p.stage===3?'PEAK':p.stage===2?'STAGE II':'STAGE I';
+  showToast(`PENALTY CLEARED [${stageLabel}] — ${PENALTY_LOCKDOWN_DAYS} DAY LOCKDOWN ACTIVE`,4000);
   renderTasks();
 }
 
