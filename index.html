@@ -2554,6 +2554,97 @@ const toExam=p=>{const q=p.properties;
   return{id:p.id,name:g.title(q.Exam),date:g.date(q['Exam Date']),subjects:g.multiSelect(q.Subject),tags:g.multiSelect(q.Tags),grade:g.select(q.Grades),percentage:g.num(q.Percentage),archive:g.checkbox(q.Archive),topics};
 };
 // Muscles Hit uses different delt names from Primary Muscle — normalise on load
+// ── PR GATE SYSTEM ────────────────────────────────────────────────────────────
+const PR_THRESHOLDS={
+  'Rhomboids':          {exercise:'Seated Cable Row',    minReps:8,  thresholds:[35,40,45,50,55,60,65,70,75,80,87,95,100,107,115,120,127,135,140,147,155,160]},
+  'Latissimus Dorsi':   {exercise:'Lat Pulldown',        minReps:8,  thresholds:[35,40,45,50,55,60,65,70,80,87,95,105,115,125,135,145,155,165,175,185,195,205]},
+  'Biceps':             {exercise:'Bicep Curl Machine',  minReps:8,  thresholds:[25,30,35,38,42,46,50,54,58,62,67,72,77,83,89,95,101,108,115,122,130,138]},
+  'Forearms':           {exercise:'Dumbbell Wrist Curl', minReps:30, thresholds:[4,5,6,7,8,9,10,11,12,13,15,17,19,21,23,25,27,30,33,36,40,45]},
+  'Posterior Deltoid':  {exercise:'Face Pulls',          minReps:8,  thresholds:[15,18,21,24,27,30,33,36,40,44,48,52,57,62,67,72,78,84,90,97,104,112]},
+  'Anterior Deltoid':   {exercise:'Machine Shoulder Press',minReps:8,thresholds:[25,27,30,33,36,40,44,48,52,57,62,68,74,80,87,94,101,109,117,125,134,144]},
+  'Lateral Deltoid':    {exercise:'Cable Lateral Raises', minReps:8, thresholds:[4,5,6,7,8,10,11,12,14,15,17,19,21,23,25,27,30,33,36,39,43,47]},
+  'Traps':              {exercise:'Face Pulls',           minReps:8, thresholds:[15,18,21,24,27,30,33,36,40,44,48,52,57,62,67,72,78,84,90,97,104,112]},
+  'Triceps':            {exercise:'Cable Overhead Tricep Extension',minReps:8,thresholds:[20,22,25,28,31,34,38,42,46,50,55,60,65,71,77,83,90,97,104,112,120,130]},
+  'Pectoralis':         {exercise:'Pectoral Fly',         minReps:8, thresholds:[40,47,55,60,65,70,75,80,85,90,97,105,112,120,128,136,144,153,162,171,180,190]},
+  'Hamstrings':         {exercise:'Hamstring Curl Machine',minReps:8,thresholds:[30,35,40,45,50,55,60,65,70,76,82,88,95,102,110,118,126,135,144,153,163,174]},
+  'Quadriceps':         {exercise:'Leg Press',            minReps:8, thresholds:[70,80,90,100,110,120,132,144,157,170,184,199,215,231,248,266,285,305,326,348,371,395]},
+  'Glutes':             {exercise:'Leg Press',            minReps:8, thresholds:[70,80,90,100,110,120,132,144,157,170,184,199,215,231,248,266,285,305,326,348,371,395]},
+  'Abs':                {exercise:'Ab Roller',            minReps:1, isReps:true,thresholds:[5,8,12,15,18,22,25,28,32,35,38,42,45,48,52,55,60,65,70,75,80,90]},
+  'Obliques':           {exercise:'DB Russian Twists',    minReps:8, thresholds:[6,7,8,9,10,12,13,15,17,19,21,23,25,28,31,34,37,41,45,49,53,58]},
+  'Calves':             {exercise:'Calf Raise Machine',   minReps:20,thresholds:[8,9,10,12,14,16,18,20,23,26,29,32,36,40,44,49,54,59,65,71,78,85]},
+  'Lower Back':         {exercise:'Romanian Deadlift',    minReps:8, thresholds:[8,12,15,20,25,30,36,42,48,55,62,70,78,87,96,106,116,127,138,150,162,175]},
+};
+// 22 thresholds = Bronze I/II/III, Silver I/II/III, Gold I/II/III, Platinum I/II/III, Diamond I/II/III, Champion I/II/III, Titan I/II/III, Olympian
+const PR_RANK_INDEX=ALL_RANKS.map(r=>r.full); // index matches threshold array
+
+function getPRGate(muscleName, prValue){
+  const def=PR_THRESHOLDS[muscleName];
+  if(!def||prValue==null)return null; // no gate data
+  const thresholds=def.thresholds;
+  // Find highest rank unlocked by PR
+  let unlockedIdx=-1;
+  for(let i=thresholds.length-1;i>=0;i--){
+    if(prValue>=thresholds[i]){unlockedIdx=i;break;}
+  }
+  if(unlockedIdx<0)return{unlockedRank:null,nextThreshold:thresholds[0],gated:true};
+  const unlockedRank=ALL_RANKS[unlockedIdx]??ALL_RANKS[ALL_RANKS.length-1];
+  const nextThreshold=thresholds[unlockedIdx+1]??null;
+  return{unlockedRank,nextThreshold,gated:false,unlockedIdx};
+}
+
+function getGatedRank(stat, xpRank){
+  const pr=state.prs?.[stat.name];
+  const gate=getPRGate(stat.name, pr);
+  if(!gate)return{r:xpRank,gated:false,gate:null};
+  if(gate.unlockedRank===null){
+    // No PR at all — fully frozen at Bronze I
+    return{r:ALL_RANKS[0],gated:true,gate};
+  }
+  const xpIdx=ALL_RANKS.indexOf(xpRank);
+  const gateIdx=ALL_RANKS.indexOf(gate.unlockedRank);
+  if(xpIdx>gateIdx){
+    // XP ahead of PR — freeze at PR rank
+    return{r:gate.unlockedRank,gated:true,gate};
+  }
+  return{r:xpRank,gated:false,gate};
+}
+
+async function loadPRs(){
+  try{
+    if(!state.exercises?.length)return;
+    const prs={};
+    // Get all workout log entries
+    let cursor=undefined,hasMore=true,pages=[];
+    while(hasMore){
+      const body={page_size:100,...(cursor?{start_cursor:cursor}:{})};
+      const data=await nFetch(`/databases/${DB.workoutLog}/query`,'POST',body);
+      pages=pages.concat(data.results||[]);
+      hasMore=data.has_more??false;
+      cursor=data.next_cursor;
+    }
+    // Build exercise name → primary muscle map
+    const exToMuscle={};
+    state.exercises.forEach(e=>{if(e.primaryMuscle)exToMuscle[e.name]=e.primaryMuscle;});
+    // For each log entry, check if it qualifies as a PR
+    pages.forEach(p=>{
+      const props=p.properties;
+      const name=props.Name?.title?.[0]?.plain_text||'';
+      const baseName=name.replace(' (2°)','').trim();
+      const muscle=exToMuscle[baseName];
+      if(!muscle)return;
+      const def=PR_THRESHOLDS[muscle];
+      if(!def)return;
+      const reps=props.Reps?.number??0;
+      const weight=props['Weight (kg)']?.number??0;
+      const value=def.isReps?reps:weight;
+      const qualifies=def.isReps?(reps>=def.thresholds[0]):(reps>=def.minReps);
+      if(!qualifies)return;
+      if(prs[muscle]==null||value>prs[muscle])prs[muscle]=value;
+    });
+    state.prs=prs;
+  }catch(e){state.prs={};}
+}
+
 const MUSCLES_HIT_MAP={'Pecs':'Pectoralis','Lats':'Latissimus Dorsi','Quads':'Quadriceps','Front Delts':'Anterior Deltoid','Anterior Delts':'Anterior Deltoid','Side Delts':'Lateral Deltoid','Lateral Delts':'Lateral Deltoid','Rear Delts':'Posterior Deltoid','Posterior Delts':'Posterior Deltoid'};
 const toBodyStat=p=>{const q=p.properties;const rivalRel=q.Rivals?.relation;const rivalId=Array.isArray(rivalRel)&&rivalRel.length>0?rivalRel[0].id:null;const decayedXP=g.rollup(q['Decayed XP'])??g.formula(q['Decayed XP'])??g.num(q['Decayed XP'])??0;return{id:p.id,name:g.title(q.Name),decayedXP,rankStr:g.formula(q.Rank)??g.text(q.Rank)??'',level:g.formula(q.L)??1,daysInactive:g.formula(q['Days inactive'])??null,lastTrained:g.rollup(q['Last day trained']),cat:g.select(q.Cat),rivalId};};
 const toExercise=p=>{const q=p.properties;const pm=g.select(q['Primary Muscle']);return{id:p.id,name:g.title(q.Name),day:g.multiSelect(q.Day),primaryMuscle:MUSCLES_HIT_MAP[pm]??pm,musclesHit:g.multiSelect(q['Muscles Hit']).map(m=>MUSCLES_HIT_MAP[m]??m),xpPerSet:g.num(q['XP per Set'])??0,category:g.select(q.Category),equipment:g.select(q.Equipment)};};
@@ -3766,7 +3857,7 @@ async function refresh(force=true){
     evaluateTitle();_markTabLoaded('home');renderHome();
   }
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()]);if(!skip){await checkAndIssuePenalties();await syncXPBleeds();}_markTabLoaded('tasks');renderTasks();}
-  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);_markTabLoaded('workout');renderWorkout();}
+  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
@@ -4780,7 +4871,19 @@ async function logExerciseFromTab(id){
   try{
     const n=await _logExercise(exercise,sets,reps,weight);
     expandedExercise=null;
-    showToast(`Logged ${exercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
+    // Check PR
+    const prMuscle=exercise.primaryMuscle;
+    const prDef=PR_THRESHOLDS[prMuscle];
+    if(prDef&&prMuscle){
+      const value=prDef.isReps?reps:weight;
+      const minOk=prDef.isReps?(reps>=prDef.thresholds[0]):(reps>=prDef.minReps);
+      const prev=state.prs?.[prMuscle]??0;
+      if(minOk&&value>prev){
+        if(!state.prs)state.prs={};
+        state.prs[prMuscle]=value;
+        showToast(`PR — ${prMuscle.toUpperCase()} — ${prDef.isReps?value+' reps':value+'kg'}`,5000);
+      }else{showToast(`Logged ${exercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);}
+    }else{showToast(`Logged ${exercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);}
     renderWorkout();
   }catch(e){
     showToast('Failed: '+e.message);
@@ -4849,7 +4952,12 @@ function renderWorkout(){
       const secondary=e.musclesHit.filter(m=>m!==e.primaryMuscle);
       const muscleTags=(e.primaryMuscle?`<span class="wec-tag wec-primary">${e.primaryMuscle} ×1.0</span>`:'')
         +secondary.map(m=>`<span class="wec-tag wec-secondary">${m} ×0.5</span>`).join('');
+      const prMuscle=e.primaryMuscle;
+      const prDef=PR_THRESHOLDS[prMuscle];
+      const prVal=prMuscle&&state.prs?.[prMuscle]!=null?state.prs[prMuscle]:null;
+      const pbStr=prVal!=null?(prDef?.isReps?`PB  ${prVal} reps`:`PB  ${prVal}kg`):'';
       const body=open?`<div class="wec-body">
+        ${pbStr?`<div style="font-size:8px;font-weight:700;letter-spacing:0.18em;color:var(--text-dim);margin-bottom:8px">${pbStr}</div>`:''}
         <div class="wec-inp-row">
           <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="3" min="1" max="30"></div>
           <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="10" min="1" max="100"></div>
@@ -4951,18 +5059,24 @@ function renderWorkout(){
     if(selStat){
       const parsed=parseRankStr(selStat.rankStr);
       const{rank,next,pct}=getRankFromXP(selStat.decayedXP);
-      const r=parsed??rank;
+      const xpRank=parsed??rank;
+      const{r,gated,gate}=getGatedRank(selStat,xpRank);
+      const displayColor=gated?'#e8e8f0':r.color;
       const rival=getRivalFor(selStat);
       const gap=rival?rival.totalXP-selStat.decayedXP:null;
       const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
       const lastStr=selStat.lastTrained?new Date(selStat.lastTrained).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
+      const def=PR_THRESHOLDS[selStat.name];
+      const prVal=state.prs?.[selStat.name];
+      const prStr=prVal!=null?(def?.isReps?prVal+' reps':prVal+'kg'):'none';
+      const gateStr=gated&&gate?.nextThreshold!=null?`🔒 ${xpRank.full} — need ${def?.isReps?gate.nextThreshold+' reps':gate.nextThreshold+'kg'}`:'';
       bodyMapHTML+=`<div class="detail-panel" id="detailPanel">
         <div class="detail-header">
-          <div><div class="detail-name" style="color:${r.color}">${selStat.name}</div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-weight:600;letter-spacing:0.1em">${Math.round(pct)}% of ${r.full}</div></div>
-          ${badgeHTML(r,96)}
+          <div><div class="detail-name" style="color:${displayColor}">${selStat.name}</div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-weight:600;letter-spacing:0.1em">${gated?gateStr:Math.round(pct)+'% of '+r.full}</div></div>
+          ${gated?`<div style="filter:grayscale(1) brightness(2)">${badgeHTML(r,96)}</div>`:badgeHTML(r,96)}
         </div>
         <div class="detail-stats">
-          <div class="detail-stat"><div class="detail-stat-label">Progress</div><div class="detail-stat-val" style="color:${r.color}">${Math.round(pct)}%</div></div>
+          <div class="detail-stat"><div class="detail-stat-label">PR</div><div class="detail-stat-val" style="color:${displayColor};font-size:10px">${prStr}</div></div>
           <div class="detail-stat-div"></div>
           <div class="detail-stat"><div class="detail-stat-label">vs </div><div class="detail-stat-val" style="color:${isAhead?'var(--red-hi)':isBehind?'var(--green-hi)':'var(--text-dim)'}">${gap!==null?(isAhead?'▼':'▲')+Math.abs(gap):'—'}</div></div>
           <div class="detail-stat-div"></div>
@@ -4973,20 +5087,24 @@ function renderWorkout(){
     bodyMapHTML+=`<div class="section-label">All Muscles</div><div class="muscle-cards">`;
     [...bodyStats].sort((a,b)=>(b.decayedXP??0)-(a.decayedXP??0)).forEach(stat=>{
       const parsed=parseRankStr(stat.rankStr);
-      // If Notion XP rollup is 0 but rank string indicates a higher tier, floor XP to that rank's minimum
       const effectiveXP=(stat.decayedXP>0||!parsed||parsed.min===0)?stat.decayedXP:parsed.min;
       const{rank,next,pct}=getRankFromXP(effectiveXP);
-      const r=parsed??rank;
+      const xpRank=parsed??rank;
+      const{r,gated,gate}=getGatedRank(stat,xpRank);
+      const displayColor=gated?'#e8e8f0':r.color;
       const rival=getRivalFor(stat);
       const gap=rival?rival.totalXP-stat.decayedXP:null;
       const isAhead=gap!==null&&gap>0,isBehind=gap!==null&&gap<0;
       const sel=selectedMuscle===stat.id;
-      bodyMapHTML+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${r.color};`:''}">
-        <div class="muscle-card-top-bar" style="background:${sel?r.color:'transparent'}"></div>
-        <div class="muscle-card-top"><span class="muscle-card-name">${stat.name}</span>${badgeHTML(r,56)}</div>
-        <div class="muscle-pct-big" style="color:${r.color}">${Math.round(pct)}%</div>
-        <div class="muscle-of">of ${r.full}</div>
-        <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color}44,${r.color})"></div></div>
+      const def=PR_THRESHOLDS[stat.name];
+      const prVal=state.prs?.[stat.name];
+      const gateLabel=gated&&gate?.nextThreshold!=null?`🔒 ${def?.isReps?gate.nextThreshold+' reps':gate.nextThreshold+'kg'}`:'';
+      bodyMapHTML+=`<div class="muscle-card ${sel?'selected':''}" onclick="selectMuscle('${stat.id}','${stat.name}')" style="${sel?`border-color:${displayColor};`:''}${gated?'border-color:rgba(232,234,240,0.25);':''}">
+        <div class="muscle-card-top-bar" style="background:${sel?displayColor:'transparent'}"></div>
+        <div class="muscle-card-top"><span class="muscle-card-name" style="${gated?'color:#e8e8f0':''}">${stat.name}</span>${gated?`<div style="filter:grayscale(1) brightness(2)">${badgeHTML(r,56)}</div>`:badgeHTML(r,56)}</div>
+        <div class="muscle-pct-big" style="color:${displayColor}">${gated?'—':Math.round(pct)+'%'}</div>
+        <div class="muscle-of" style="${gated?'color:#e8e8f0;font-size:8px':''}">${gated?gateLabel:'of '+r.full}</div>
+        <div class="prog-track"><div class="prog-fill" style="width:${gated?100:pct}%;background:${gated?'linear-gradient(90deg,rgba(232,234,240,0.15),rgba(232,234,240,0.4))':'linear-gradient(90deg,'+r.color+'44,'+r.color+')'}"></div></div>
         <div class="muscle-bottom-row">
           ${stat.daysInactive!=null?`<span class="days-inactive ${stat.daysInactive===0?'active':stat.daysInactive<=5?'recent':'stale'}">${stat.daysInactive===0?'Today':stat.daysInactive+'d ago'}</span>`:''}
           ${gap!==null?`<span class="muscle-vs" style="color:${isAhead?'var(--red-hi)':isBehind?'var(--green-text)':'var(--text-dim)'}">${isAhead?'▼':isBehind?'▲':'='} ${Math.abs(gap)}</span>`:''}
