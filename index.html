@@ -4644,8 +4644,14 @@ async function checkAndIssuePenalties(){
       {property:'Due Date',date:{equals:yesterday}},
     ]});
     const doneNames=new Set(doneTasks.map(p=>g.title(p.properties.Task)));
+    const missedMarked=await nQuery(DB.tasks,{and:[
+      {property:'Missed check1',checkbox:{equals:true}},
+      {property:'Difficulty',select:{equals:'Daily'}},
+      {property:'Due Date',date:{equals:yesterday}},
+    ]});
+    const missedNames=new Set(missedMarked.map(p=>g.title(p.properties.Task)));
     const missedTasks=DAILY_TASKS.filter(t=>
-      t.questId&&yesterdayQuestIds.includes(t.questId)&&!doneNames.has(t.name)
+      t.questId&&yesterdayQuestIds.includes(t.questId)&&missedNames.has(t.name)
     );
     if(!missedTasks.length)return;
     const existingTasks=new Set((state.penalties||[]).map(p=>p.task));
