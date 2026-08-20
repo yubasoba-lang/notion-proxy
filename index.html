@@ -2573,6 +2573,8 @@ const PR_THRESHOLDS={
   'Obliques':           {exercise:'DB Russian Twists',    minReps:8, thresholds:[6,7,8,9,10,12,13,15,17,19,21,23,25,28,31,34,37,41,45,49,53,58]},
   'Calves':             {exercise:'Calf Raise Machine',   minReps:20,thresholds:[8,9,10,12,14,16,18,20,23,26,29,32,36,40,44,49,54,59,65,71,78,85]},
   'Lower Back':         {exercise:'Romanian Deadlift',    minReps:8, thresholds:[8,12,15,20,25,30,36,42,48,55,62,70,78,87,96,106,116,127,138,150,162,175]},
+  'Hip Abductors':      {exercise:'Hip Abduction Machine',minReps:12,thresholds:[20,25,30,35,40,45,50,55,60,65,72,79,86,93,100,108,116,124,132,141,150,160]},
+  'Hip Adductors':      {exercise:'Hip Adduction Machine',minReps:12,thresholds:[25,30,35,40,46,52,58,64,70,77,84,91,99,107,115,123,132,141,150,160,170,180]},
 };
 // 22 thresholds = Bronze I/II/III, Silver I/II/III, Gold I/II/III, Platinum I/II/III, Diamond I/II/III, Champion I/II/III, Titan I/II/III, Olympian
 const PR_RANK_INDEX=ALL_RANKS.map(r=>r.full); // index matches threshold array
@@ -3288,7 +3290,7 @@ const RIVAL_CFG={
 const MUSCLE_CAT={
   'Pectoralis':'Push','Triceps':'Push','Anterior Deltoid':'Push','Lateral Deltoid':'Push',
   'Latissimus Dorsi':'Pull','Biceps':'Pull','Rhomboids':'Pull','Traps':'Pull','Posterior Deltoid':'Pull',
-  'Quadriceps':'Legs','Hamstrings':'Legs','Glutes':'Legs','Calves':'Legs',
+  'Quadriceps':'Legs','Hamstrings':'Legs','Glutes':'Legs','Calves':'Legs','Hip Abductors':'Legs','Hip Adductors':'Legs',
   'Abs':'Core','Obliques':'Core','Lower Back':'Core','Forearms':'Pull','Cardio':'Core','Plyometrics':'Core',
 };
 const CAT_ABBR={Push:'PSH',Pull:'PLL',Legs:'LEG',Core:'COR',Arms:'ARM',Full:'ALL'};
@@ -4644,19 +4646,13 @@ async function checkAndIssuePenalties(){
       {property:'Due Date',date:{equals:yesterday}},
     ]});
     const doneNames=new Set(doneTasks.map(p=>g.title(p.properties.Task)));
-    const missedMarked=await nQuery(DB.tasks,{and:[
-      {property:'Missed check1',checkbox:{equals:true}},
-      {property:'Difficulty',select:{equals:'Daily'}},
-      {property:'Due Date',date:{equals:yesterday}},
-    ]});
-    const missedNames=new Set(missedMarked.map(p=>g.title(p.properties.Task)));
     const missedTasks=DAILY_TASKS.filter(t=>
-      t.questId&&yesterdayQuestIds.includes(t.questId)&&missedNames.has(t.name)
+      t.questId&&t.p1&&yesterdayQuestIds.includes(t.questId)&&!doneNames.has(t.name)
     );
     if(!missedTasks.length)return;
     const existingTasks=new Set((state.penalties||[]).map(p=>p.task));
     const newPenalties=missedTasks
-      .filter(t=>t.p1&&!existingTasks.has(t.name))
+      .filter(t=>!existingTasks.has(t.name))
       .map(t=>({task:t.name,text:t.p1,cat:t.cat,stage:1,issuedAt:new Date().toISOString(),done:false,...(state.ztd?{ztd:true}:{})}));
     if(!newPenalties.length)return;
     state.penalties=[...(state.penalties||[]),...newPenalties];
@@ -4929,7 +4925,7 @@ function renderWorkout(){
 
   const switcher=`<div style="display:flex;gap:4px;padding:14px 16px 0;">
     <button data-tab="workout" class="sil-toggle-btn${workoutSubTab==='workout'?' active':''}" onclick="setWorkoutSubTab('workout')" style="flex:1;text-align:center">Workout</button>
-    <button data-tab="bodymap" class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button>
+    <!-- <button data-tab="bodymap" class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button> -->
   </div>`;
 
   // Day order and labels matching the training protocol
