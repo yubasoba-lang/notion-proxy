@@ -4323,7 +4323,9 @@ function taskHTML(task,today){
   const overdue=task.dueDate&&new Date(task.dueDate)<today;
   const dueStr=task.dueDate?new Date(task.dueDate).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):null;
   const diff=task.difficulty;
-  const isQ=task.isQuest||(!!task.questId&&(state.todayQuests||[]).map(Number).includes(Number(task.questId)));
+  // Quests only apply to today's tasks — past tasks keep whatever they were, never re-flagged
+  const dueToday=!task.dueDate||String(task.dueDate).slice(0,10)===localToday();
+  const isQ=dueToday&&(task.isQuest||(!!task.questId&&(state.todayQuests||[]).map(Number).includes(Number(task.questId))));
   // Check if this task has an active lockdown — override display name
   const lockdown=(state.lockdowns||[]).find(l=>l.task===task.name&&Date.now()<new Date(l.until).getTime());
   const displayName=lockdown?lockdown.text:(task.name||'Unnamed');
@@ -4634,6 +4636,13 @@ async function checkAndIssuePenalties(){
   try{
     const today=localToday();
     const yesterday=prevDay(today);
+    // Only run once per day — skip if already checked today
+    const checkedPages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'penalty_check_date'}});
+    const lastChecked=checkedPages.length?checkedPages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join(''):'';
+    if(lastChecked===today)return;
+    // Mark as checked for today
+    if(checkedPages.length){await nPatch(checkedPages[0].id,{Value:{rich_text:[{text:{content:today}}]}});}
+    else{await nCreate(DB.appConfig,{Key:{title:[{text:{content:'penalty_check_date'}}]},Value:{rich_text:[{text:{content:today}}]}});}
     const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:yesterday}});
     if(!logs.length)return;
     const q=logs[0].properties;
@@ -4642,7 +4651,6 @@ async function checkAndIssuePenalties(){
     if(!yesterdayQuestIds.length)return;
     const doneTasks=await nQuery(DB.tasks,{and:[
       {property:'Status',checkbox:{equals:true}},
-      {property:'Difficulty',select:{equals:'Daily'}},
       {property:'Due Date',date:{equals:yesterday}},
     ]});
     const doneNames=new Set(doneTasks.map(p=>g.title(p.properties.Task)));
