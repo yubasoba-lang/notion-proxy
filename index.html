@@ -785,6 +785,8 @@ body::after { display: none; }
 .wec-inp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:9px;}
 .wec-inp-grp{display:flex;flex-direction:column;gap:3px;}
 .wec-lbl{font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);}
+.wec-last{font-size:9px;color:var(--text-dim);letter-spacing:0.04em;margin-bottom:4px;}
+.wec-sugg{font-size:9px;color:var(--gold);letter-spacing:0.04em;font-weight:700;margin-bottom:8px;}
 .wec-inp{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 6px;font-size:14px;font-weight:700;color:var(--text);text-align:center;width:100%;box-sizing:border-box;font-family:inherit;}
 .wec-inp:focus{outline:none;border-color:var(--gold);}
 .wec-muscles{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
@@ -1770,7 +1772,7 @@ async function syncPomoStateToNotion(data){
       const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'pomo_state'}}]},Value:{rich_text:rich}});
       state.pomoStatePageId=page.id;
     }
-  }catch(e){}
+  }catch(e){warn('syncPomoStateToNotion',e);}
 }
 async function loadPomoStateFromNotion(){
   if(pomoMode)return; // already restored
@@ -1799,7 +1801,7 @@ async function loadPomoStateFromNotion(){
       pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
       savePomoPersist();startTimer();renderHome();
     }
-  }catch(e){}
+  }catch(e){warn('loadPomoStateFromNotion',e);}
 }
 function restorePomoPersist(){
   try{
@@ -1933,17 +1935,17 @@ async function loadTodayPlanFromNotion(todayStr){
 }
 function getTodayPlan(){
   try{
-    const key='grind-plan-'+new Date().toISOString().split('T')[0];
+    const key='grind-plan-'+localToday();
     const raw=localStorage.getItem(key);
     if(!raw)return null;
     const plan=JSON.parse(raw);
     // Validate required shape
     if(!plan||!Array.isArray(plan.schedule)||!Array.isArray(plan.priorities))return null;
     return plan;
-  }catch(e){localStorage.removeItem('grind-plan-'+new Date().toISOString().split('T')[0]);return null;}
+  }catch(e){localStorage.removeItem('grind-plan-'+localToday());return null;}
 }
 function saveTodayPlan(plan){
-  const key='grind-plan-'+new Date().toISOString().split('T')[0];
+  const key='grind-plan-'+localToday();
   localStorage.setItem(key,JSON.stringify({...plan,_savedAt:Date.now()}));
   for(const k of Object.keys(localStorage)){
     if(k.startsWith('grind-plan-')&&k!==key)localStorage.removeItem(k);
@@ -1953,15 +1955,15 @@ function saveTodayPlan(plan){
 function getLatestRecap(){
   // Check localStorage cache first, then fall back to state loaded from Notion
   try{
-    const today=new Date().toISOString().split('T')[0];
+    const today=localToday();
     const key='grind-recap-'+today;
     const raw=localStorage.getItem(key);
     if(raw){const p=JSON.parse(raw);if(p?.text)return p;}
-  }catch(e){}
+  }catch(e){warn('getLatestRecap',e);}
   return state.latestRecap||null;
 }
 function cacheRecapLocally(recap){
-  const date=recap.date||new Date().toISOString().split('T')[0];
+  const date=recap.date||localToday();
   const key='grind-recap-'+date;
   localStorage.setItem(key,JSON.stringify(recap));
   // prune old keys
@@ -2046,14 +2048,18 @@ async function generateDailyRecap(targetDate){
 
     // ── 7-day flow baseline ──
     const last7=Array.from({length:7},(_,i)=>{const d=new Date(dateStr+'T12:00:00');d.setDate(d.getDate()-i-1);return d.toISOString().split('T')[0];});
-    const last7sess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&last7.some(d=>s.started.startsWith(d)));
+    const last7sess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&last7.includes(localDay(s.started)));
     const flowRate7=last7sess.length>0?Math.round(last7sess.filter(s=>s.quality==='Flow').length/last7sess.length*100):null;
     const todayFlowRate=sessions.length>0?Math.round(flowC/sessions.length*100):0;
 
     // ── Week average hours (excluding target day) ──
     const wDates=getWeekDates(0);
-    const wSess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=wDates[0]&&s.started.split('T')[0]<=wDates[6]&&!s.started.startsWith(dateStr));
-    const wDays=[...new Set(wSess.map(s=>s.started.split('T')[0]))];
+    const wSess=(state.sessions||[]).filter(s=>{
+      if(s.complete!=='Done'||!s.started||!s.done)return false;
+      const day=localDay(s.started);
+      return day>=wDates[0]&&day<=wDates[6]&&day!==dateStr;
+    });
+    const wDays=[...new Set(wSess.map(s=>localDay(s.started)))];
     const wAvgH=wDays.length>0?wSess.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0)/wDays.length:null;
 
     // ── Study streak ──
@@ -2103,7 +2109,7 @@ async function generateDailyRecap(targetDate){
         const match=sleepTasks.find(p=>(g.title(p.properties.Task)||'').toLowerCase().includes('sleep')&&(p.created_time||'').startsWith(dateStr));
         sleepInfo=match?(g.title(match.properties.Task)||'logged'):'logged';
       }
-    }catch(e){}
+    }catch(e){warn('generateDailyRecap',e);}
 
     // ── Workout scheduled? ──
     const dayOfWeek=new Date(dateStr+'T12:00:00').getDay();
@@ -2191,8 +2197,8 @@ async function generateDayPlan(){
     const timeStr=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
     const dayName=now.toLocaleDateString('en-US',{weekday:'long'});
     const dateStr=now.toLocaleDateString('en-US',{month:'long',day:'numeric'});
-    const todayStr=now.toISOString().split('T')[0];
-    const weekAgo=new Date(now-7*24*60*60*1000).toISOString().split('T')[0];
+    const todayStr=localDay(now);
+    const weekAgo=localDay(new Date(now-7*24*60*60*1000));
 
     // Gather data already in state
     const exams=(state.exams||[])
@@ -2386,7 +2392,7 @@ async function closeOrphanSessions(excludeId){
     await Promise.all(orphans.map(p=>
       nPatch(p.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(()=>{})
     ));
-  }catch(e){}
+  }catch(e){warn('closeOrphanSessions',e);}
 }
 
 async function restoreSessionFromNotion(){
@@ -2417,7 +2423,7 @@ async function restoreSessionFromNotion(){
     state.activeSession={id:active.id,subject,startedAt:active.created_time};
     startTimer();renderHome();
     showToast('Session restored: '+subject,3000);
-  }catch(e){}
+  }catch(e){warn('restoreSessionFromNotion',e);}
 }
 
 async function startSession(subject){
@@ -2506,23 +2512,118 @@ function _setLoad(pct){
 }
 let prevRanks={};
 
-async function nFetch(path,method='GET',body){
+// Non-fatal failures still get recorded. Keeps `catch(e){}` from hiding real bugs —
+// check window.__grindErrors in the console to see what has quietly failed this session.
+window.__grindErrors=[];
+function warn(where,e){
+  try{
+    window.__grindErrors.push({where,msg:e?.message??String(e),at:new Date().toISOString()});
+    console.warn(`[GRIND] ${where}:`,e);
+  }catch(_){}
+}
+
+async function nFetchOnce(path,method='GET',body){
   const ctrl=new AbortController();
   const timer=setTimeout(()=>ctrl.abort(),18000);
   try{
     const res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,method,body}),signal:ctrl.signal});
     clearTimeout(timer);
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error??`Error ${res.status}`);}
+    if(!res.ok){
+      const e=await res.json().catch(()=>({}));
+      const err=new Error(e.error??`Error ${res.status}`);
+      err.status=res.status;
+      throw err;
+    }
     return res.json();
   }catch(e){
     clearTimeout(timer);
     throw e.name==='AbortError'?new Error('Request timed out — check your connection'):e;
   }
 }
-const nQuery=(dbId,filter,sorts)=>nFetch(`/databases/${dbId}/query`,'POST',{page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{})}).then(d=>d.results??[]);
+
+// Retry transient failures (network drop, timeout, 5xx, rate limit). Never retry
+// 4xx other than 429 — those are our bug, not the network's, and retrying hides them.
+function isTransient(e){
+  const s=e?.status;
+  if(s!=null)return s===429||s>=500;
+  return true; // network error / timeout — no status
+}
+// Only reads retry. A POST /pages that timed out may have succeeded server-side —
+// retrying it would duplicate a logged set or task. Queries are POST but are reads.
+function isRetryable(path,method){
+  if(method==='GET')return true;
+  if(method==='POST'&&/\/query$/.test(path))return true;
+  return false;
+}
+async function nFetch(path,method='GET',body){
+  const attempts=isRetryable(path,method)?3:1;
+  let lastErr;
+  for(let i=0;i<attempts;i++){
+    try{return await nFetchOnce(path,method,body);}
+    catch(e){
+      lastErr=e;
+      if(i===attempts-1||!isTransient(e))throw e;
+      await new Promise(r=>setTimeout(r,400*Math.pow(2,i))); // 400ms, 800ms
+    }
+  }
+  throw lastErr;
+}
+
+// Follows next_cursor so results are never silently truncated at 100 rows.
+async function nQuery(dbId,filter,sorts){
+  const out=[];
+  let cursor;
+  for(let guard=0;guard<50;guard++){
+    const body={page_size:100,...(filter?{filter}:{}),...(sorts?{sorts}:{}),...(cursor?{start_cursor:cursor}:{})};
+    const d=await nFetch(`/databases/${dbId}/query`,'POST',body);
+    out.push(...(d.results??[]));
+    if(!d.has_more||!d.next_cursor)break;
+    cursor=d.next_cursor;
+  }
+  return out;
+}
 const nPatch=(id,props)=>nFetch(`/pages/${id}`,'PATCH',{properties:props});
 const nCreate=(dbId,props)=>nFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
 const nAddBlocks=(pageId,children)=>nFetch(`/blocks/${pageId}/children`,'PATCH',{children});
+
+// ── Offline write queue ────────────────────────────────────────────────────
+// Property patches that fail on a dead connection are parked in localStorage and
+// replayed when we're back online, so a tick made on the tube is never lost.
+// Only nPatch is queued: a patch sets an absolute value, so replaying it is safe.
+// Creates are deliberately excluded — replaying one can duplicate a logged set.
+const WQ_KEY='grind-write-queue';
+function wqRead(){
+  try{return JSON.parse(localStorage.getItem(WQ_KEY)||'[]');}catch(e){return [];}
+}
+function wqWrite(q){
+  try{localStorage.setItem(WQ_KEY,JSON.stringify(q));}catch(e){warn('wqWrite',e);}
+}
+// Last write for a given page+property wins — no point replaying a tick then an untick.
+function queuePatch(pageId,props){
+  const q=wqRead().filter(w=>!(w.pageId===pageId&&Object.keys(w.props).join()===Object.keys(props).join()));
+  q.push({pageId,props,at:Date.now()});
+  wqWrite(q);
+}
+let _flushing=false;
+async function flushWriteQueue(){
+  if(_flushing)return;
+  const q=wqRead();
+  if(!q.length)return;
+  _flushing=true;
+  const failed=[];
+  let ok=0;
+  for(const w of q){
+    // Drop anything older than 7 days rather than replaying stale state forever.
+    if(Date.now()-w.at>7*86400000)continue;
+    try{await nPatch(w.pageId,w.props);ok++;}
+    catch(e){warn('flushWriteQueue',e);failed.push(w);}
+  }
+  wqWrite(failed);
+  _flushing=false;
+  if(ok)showToast(`${ok} offline change${ok>1?'s':''} synced`,3000);
+  return ok;
+}
+window.addEventListener('online',()=>{flushWriteQueue();});
 
 const g={
   title:v=>v?.title?.[0]?.plain_text??'',
@@ -2627,24 +2728,67 @@ async function loadPRs(){
     // Build exercise name → primary muscle map
     const exToMuscle={};
     state.exercises.forEach(e=>{if(e.primaryMuscle)exToMuscle[e.name]=e.primaryMuscle;});
-    // For each log entry, check if it qualifies as a PR
+    // Same pass also builds:
+    //   lastSets — most recent logged set per exercise, for prefill + overload nudge
+    //   volume   — per-muscle tonnage (sets×reps×kg) bucketed by ISO week, for the volume view
+    const lastSets={};
+    const volume={};
+    const cutoff28=localDay(new Date(Date.now()-28*86400000));
     pages.forEach(p=>{
       const props=p.properties;
       const name=props.Name?.title?.[0]?.plain_text||'';
+      const isSecondary=name.includes(' (2°)');
       const baseName=name.replace(' (2°)','').trim();
       const muscle=exToMuscle[baseName];
+      const sets=props.Sets?.number??0;
+      const reps=props.Reps?.number??0;
+      const weight=props['Weight (kg)']?.number??0;
+      const date=props.Date?.date?.start?String(props.Date.date.start).slice(0,10):null;
+
+      // ── last session per exercise (primary rows only — 2° rows duplicate the same set)
+      if(!isSecondary&&date&&baseName){
+        const prev=lastSets[baseName];
+        if(!prev||date>prev.date)lastSets[baseName]={sets,reps,weight,date};
+      }
+
+      // ── rolling 28-day volume, per muscle stat this row is attributed to
+      if(date&&date>=cutoff28){
+        const statRel=props['Muscle Stat']?.relation;
+        const statId=Array.isArray(statRel)&&statRel.length?statRel[0].id:null;
+        if(statId){
+          // secondary rows count half, mirroring the XP multiplier
+          const tonnage=sets*reps*weight*(isSecondary?0.5:1);
+          if(!volume[statId])volume[statId]={tonnage:0,sets:0,days:new Set()};
+          volume[statId].tonnage+=tonnage;
+          volume[statId].sets+=sets*(isSecondary?0.5:1);
+          volume[statId].days.add(date);
+        }
+      }
+
       if(!muscle)return;
       const def=PR_THRESHOLDS[muscle];
       if(!def)return;
-      const reps=props.Reps?.number??0;
-      const weight=props['Weight (kg)']?.number??0;
       const value=def.isReps?reps:weight;
       const qualifies=def.isReps?(reps>=def.thresholds[0]):(reps>=def.minReps);
       if(!qualifies)return;
       if(prs[muscle]==null||value>prs[muscle])prs[muscle]=value;
     });
     state.prs=prs;
-  }catch(e){state.prs={};}
+    state.lastSets=lastSets;
+    state.volume=volume;
+  }catch(e){warn('loadPRs',e);state.prs={};state.lastSets={};state.volume={};}
+}
+
+// Progressive overload rule: if the last session hit its rep target across all sets,
+// suggest the next increment. Deliberately conservative — small jumps, isolation
+// movements step slower than compounds since the absolute loads are lower.
+function overloadSuggestion(exercise,last){
+  if(!last||!last.weight||!last.reps)return null;
+  const def=PR_THRESHOLDS[exercise.primaryMuscle];
+  const target=def?.minReps??8;
+  if(last.reps<target)return null;
+  const step=exercise.category==='Isolation'?1.25:2.5;
+  return Math.round((last.weight+step)*100)/100;
 }
 
 const MUSCLES_HIT_MAP={'Pecs':'Pectoralis','Lats':'Latissimus Dorsi','Quads':'Quadriceps','Front Delts':'Anterior Deltoid','Anterior Delts':'Anterior Deltoid','Side Delts':'Lateral Deltoid','Lateral Delts':'Lateral Deltoid','Rear Delts':'Posterior Deltoid','Posterior Delts':'Posterior Deltoid'};
@@ -2655,7 +2799,7 @@ let expandedExercise=null;
 // Topic list UI state: {[examId]: {open:bool, filter:'todo'|'all'|'done'}}
 const _topicUI={};
 let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
-let workoutSubTab='workout'; // 'workout' | 'bodymap'
+let workoutSubTab='workout'; // 'workout' | 'volume'  ('bodymap' pane is commented out)
 
 
 let _errorDismissTimer=null;
@@ -2706,11 +2850,11 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
     */
 async function loadWorkoutDays(){
   try{
-    const since=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+    const since=localDay(new Date(Date.now()-30*86400000));
     const pages=await nQuery(DB.workoutLog,{property:'Date',date:{on_or_after:since}});
     const allDays=new Set(pages.map(p=>{const s=p.properties?.Date?.date?.start;return s?localDay(new Date(s)):null;}).filter(Boolean));
     state.workoutDaySet=allDays;
-    const cutoff7=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+    const cutoff7=localDay(new Date(Date.now()-7*86400000));
     state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
   }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();}
 }
@@ -2747,7 +2891,7 @@ async function loadWorkoutXP(){
 }
 async function loadBodyStats(){try{const p=await nQuery(DB.bodyStats);const ns=p.map(toBodyStat);checkRankUps(ns);state.bodyStats=ns;await loadWorkoutXP();}catch(e){setError('Body Stats: '+e.message);}}
 async function loadExercises(){try{const p=await nQuery(DB.exerciseLibrary);state.exercises=p.map(toExercise);}catch(e){setError('Exercises: '+e.message);}}
-async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){}}
+async function loadRivals(){try{const p=await nQuery(DB.rivals);state.rivals=p.map(toRival);}catch(e){warn('loadRivals',e);}}
 const ARC_TYPES=[
   {type:'The Endless Mile',icon:'🏃',desc:'Endurance'},
   {type:'The Frequency',icon:'🎵',desc:'Music making'},
@@ -2798,7 +2942,7 @@ async function loadSessions(){
 }
 async function loadTasks(){
   try{
-    const today=new Date().toISOString().split('T')[0];
+    const today=localToday();
     const p=await nQuery(DB.tasks,{and:[
       {property:'Status',checkbox:{equals:false}},
       {property:'Missed check1',checkbox:{equals:false}},
@@ -2810,7 +2954,7 @@ async function loadTasks(){
 async function loadTemplates(){try{const p=await nQuery(DB.templates);state.templates=p.map(toTemplate);}catch(e){setError('Templates: '+e.message);}}
 async function loadTodayQuests(){
   try{
-    const today=new Date().toISOString().split('T')[0];
+    const today=localToday();
     const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:today}});
     if(logs.length){
       const q=logs[0].properties;
@@ -2851,16 +2995,8 @@ let _wealthPageId=null;
 function lifeStatLevel(xp){for(let i=LIFE_XP_THRESH.length-1;i>=0;i--){if(xp>=LIFE_XP_THRESH[i])return i+1;}return 1;}
 function lifeStatProgress(xp){const lv=lifeStatLevel(xp);if(lv>=10)return 1;return(xp-LIFE_XP_THRESH[lv-1])/(LIFE_XP_THRESH[lv]-LIFE_XP_THRESH[lv-1]);}
 
-async function nQueryAll(dbId,filter){
-  let results=[];let cursor=undefined;
-  do{
-    const body={page_size:100,...(filter?{filter}:{}),...(cursor?{start_cursor:cursor}:{})};
-    const d=await nFetch('/databases/'+dbId+'/query','POST',body);
-    results=results.concat(d.results??[]);
-    cursor=d.has_more?d.next_cursor:undefined;
-  }while(cursor);
-  return results;
-}
+// nQuery paginates now, so this is just an alias kept for the call sites below.
+const nQueryAll=(dbId,filter)=>nQuery(dbId,filter);
 
 async function loadLifeStats(){
   try{
@@ -2965,7 +3101,7 @@ function openWealthLog(){
 }
 
 async function saveWealthLog(balance){
-  const date=new Date().toISOString().split('T')[0];
+  const date=localToday();
   if(!state.wealthLog)state.wealthLog=[];
   state.wealthLog.push({date,balance});
   const xp=computeWealthXP(state.wealthLog);
@@ -3197,7 +3333,7 @@ async function bookSaveAdd(){
   const title=(document.getElementById('book-title-inp').value||'').trim();
   const status=document.getElementById('book-status-inp').value;
   if(!title)return;
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   try{
     const props={Name:{title:[{text:{content:title}}]},Status:{select:{name:status}}};
     if(status==='Finished')props['Finished Date']={date:{start:today}};
@@ -3209,7 +3345,7 @@ async function bookSaveAdd(){
 }
 
 async function bookMarkFinished(id){
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   try{
     await nPatch(id,{Status:{select:{name:'Finished'}},'Finished Date':{date:{start:today}}});
     state.books=(state.books||[]).map(function(b){return b.id===id?Object.assign({},b,{status:'Finished',finishedDate:today}):b;});
@@ -3298,11 +3434,11 @@ function _rivalHash(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.cha
 function _rivalRng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 let _rivalCache=null,_rivalCacheDate=null;
 function getRivalDays(){
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   if(_rivalCache&&_rivalCacheDate===today)return _rivalCache;
   const days=[];let cur=new Date(RIVAL_CFG.startDate);const end=new Date(today);let prevDark=false;
   while(cur<=end){
-    const ds=cur.toISOString().split('T')[0];
+    const ds=localDay(cur);
     const rng=_rivalRng(_rivalHash(ds+'kage'));
     const forceReset=ds>=RIVAL_CFG.streakReset.from&&ds<=RIVAL_CFG.streakReset.to;
     const rc=prevDark?RIVAL_CFG.darkClusterChance:RIVAL_CFG.restChance;
@@ -3356,8 +3492,10 @@ function getRivalStreak(){
 function fmtH(h){const hrs=Math.floor(h),mins=Math.round((h-hrs)*60);if(hrs===0)return mins+'m';if(mins===0)return hrs+'h';return hrs+'h '+mins+'m';}
 function formatDuration(ms){if(!ms||ms<=0)return'0m';const tot=Math.floor(ms/60000);const h=Math.floor(tot/60),m=tot%60;if(h===0)return m+'m';if(m===0)return h+'h';return h+'h '+m+'m';}
 function getUserStudyHoursToday(){
-  const t=new Date().toISOString().split('T')[0];
-  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started?.startsWith(t)&&s.done)
+  const t=localToday();
+  // s.started is a UTC timestamp — compare its LOCAL day, not its string prefix,
+  // or late-evening sessions get attributed to the wrong day.
+  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===t&&s.done)
     .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
 }
 function getWeekDates(weeksAgo=0){
@@ -3369,7 +3507,7 @@ function getWeekDates(weeksAgo=0){
   for(let i=0;i<7;i++){
     const d=new Date(now);
     d.setDate(now.getDate()+diff-weeksAgo*7+i);
-    dates.push(d.toISOString().split('T')[0]);
+    dates.push(localDay(d));
   }
   return dates;
 }
@@ -3506,7 +3644,7 @@ async function saveH2HStart(dateStr){
   }catch(e){console.warn('H2H save failed',e);}
 }
 async function resetH2H(){
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   await saveH2HStart(today);
   const c=document.getElementById('rivalPageContent');
   if(c)c.innerHTML=renderRivalPageContent();
@@ -3525,12 +3663,12 @@ async function saveBreakPeriods(){
 }
 async function toggleBreak(){
   const breaks=state.breakPeriods||[];
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   const active=breaks.find(p=>!p.end);
   if(active){active.end=today;}
   else{breaks.push({start:today,end:null});}
   state.breakPeriods=breaks;
-  try{await saveBreakPeriods();}catch(e){}
+  try{await saveBreakPeriods();}catch(e){warn('toggleBreak.saveBreakPeriods',e);}
   const btn=document.getElementById('rivalBreakBtn');
   if(btn)btn.textContent=isOnBreak()?'End Break':'Take a Break';
   const c=document.getElementById('rivalPageContent');
@@ -3559,7 +3697,7 @@ function getUserStudyStreak(){
   const today=new Date();
   for(let i=0;i<60;i++){
     const d=new Date(today);d.setDate(d.getDate()-i);
-    const ds=d.toISOString().split('T')[0];
+    const ds=localDay(d);
     if(studiedDates.has(ds)){streak++;cd=0;}
     else{cd++;if(cd>=3)break;}
   }
@@ -3619,7 +3757,7 @@ function renderRivalPageContent(){
     timelineHTML=`<div class="rival-timeline">${blocks}${marker}</div>`;
   }
   // Bar chart: current Mon–Sun week
-  const todayStr=now.toISOString().split('T')[0];
+  const todayStr=localDay(now);
   const rivalDayMap={};days.forEach(d=>rivalDayMap[d.date]=d);
   const userHoursForBar=d=>getUserHoursOnDay(d);
   const weekBars=weekDates.map(ds=>{
@@ -3858,6 +3996,8 @@ async function refresh(force=true){
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
   }
+  // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
+  if(currentTab==='tasks'&&!skip)await flushWriteQueue();
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()]);if(!skip){await checkAndIssuePenalties();await syncXPBleeds();}_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
@@ -3956,7 +4096,7 @@ function renderHome(){
   renderTitle();
   const s=state.streaks;
   // Sort subjects: closest exam first, then most recently studied, then rest
-  const todayISO=new Date().toISOString().split('T')[0];
+  const todayISO=localToday();
   const upcomingExams=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date>=todayISO);
   const subjectExamDate={};
   upcomingExams.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
@@ -4088,6 +4228,15 @@ function renderHome(){
     const rivalSymbol=latestRecap.rivalGap>0?'↑':latestRecap.rivalGap<0?'↓':'=';
     const isToday=latestRecap.date===todayStr;
     const dateLabel=fmtRecapDate(latestRecap.date);
+    // Hoisted out of the template literal: keeps the local-day logic in one place and
+    // avoids a ternary containing `}` inside a ${...}, which Safari mis-parses.
+    const yestStr=prevDay(todayStr);
+    const hasYestSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
+    const showYestBtn=isToday&&hasYestSessions;
+    let yestBtn='';
+    if(showYestBtn){
+      yestBtn=`<button class="plan-gen-btn" style="opacity:0.6" onclick="generateDailyRecap('${yestStr}')" title="Generate yesterday's recap">Yest</button>`;
+    }
     planCard=`<div class="recap-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
@@ -4095,8 +4244,7 @@ function renderHome(){
           <div style="font-size:8px;color:var(--text-dim);margin-top:2px;letter-spacing:0.06em">${dateLabel}${latestRecap.date?` · ${new Date(latestRecap.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}`:''}</div>
         </div>
         <div style="display:flex;gap:6px">
-          ${isToday&&(()=>{const y=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})();return(state.sessions||[]).some(s=>s.complete==='Done'&&s.started?.startsWith(y));})()
-            ?`<button class="plan-gen-btn" style="opacity:0.6" onclick="generateDailyRecap('${(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0];})()}')" title="Generate yesterday's recap">Yest</button>`:''}
+          ${yestBtn}
           <button class="plan-gen-btn" onclick="generateDailyRecap(${isToday?'':`'${todayStr}'`})" title="${isToday?'Regenerate':'Generate today\'s recap'}">${isToday?'↺':'✦ New'}</button>
         </div>
       </div>
@@ -4230,7 +4378,8 @@ function renderHome(){
   }
   clearInterval(examCountdownInterval);
   renderExamCountdownDisplay();
-  examCountdownInterval=setInterval(renderExamCountdownDisplay,100);
+  // Display resolves to seconds, so ticking faster than 1Hz is wasted work + battery.
+  examCountdownInterval=setInterval(renderExamCountdownDisplay,1000);
 }
 
 const DIFF_ORDER=['Maintenance','Normal','Heavy','Daily','Important'];
@@ -4365,7 +4514,13 @@ async function toggleTask(taskId,current){
     await nPatch(taskId,{Status:{checkbox:next}});
     showToast(next?' Done':'Reopened');
     if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
-  }catch(e){state.tasks=state.tasks.map(t=>t.id===taskId?{...t,status:current}:t);renderTasks();showToast('Update failed');}
+  }catch(e){
+    warn('toggleTask',e);
+    // Keep the optimistic tick and replay it later rather than silently losing it.
+    queuePatch(taskId,{Status:{checkbox:next}});
+    showToast('Saved offline — will sync',3000);
+    if(next)setTimeout(()=>{state.tasks=state.tasks.filter(t=>t.id!==taskId);renderTasks();},700);
+  }
 }
 
 async function missTask(e,taskId){
@@ -4374,7 +4529,11 @@ async function missTask(e,taskId){
   try{
     await nPatch(taskId,{'Missed check1':{checkbox:true}});
     showToast('Missed');
-  }catch(err){await loadTasks();renderTasks();showToast('Update failed');}
+  }catch(err){
+    warn('missTask',err);
+    queuePatch(taskId,{'Missed check1':{checkbox:true}});
+    showToast('Saved offline — will sync',3000);
+  }
 }
 
 async function cycleDiff(e,taskId,cur){
@@ -4386,7 +4545,7 @@ async function cycleDiff(e,taskId,cur){
 }
 
 async function quickAdd(tid,name,cat,type){
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   try{
     await nCreate(DB.tasks,{Task:{title:[{text:{content:name}}]},...(cat?{Cat:{select:{name:cat}}}:{}),
       ...(type==='Daily'?{Difficulty:{select:{name:'Daily'}}}:type==='Weekly'?{Difficulty:{select:{name:'Heavy'}}}:{}),
@@ -4666,7 +4825,7 @@ async function checkAndIssuePenalties(){
     state.penalties=[...(state.penalties||[]),...newPenalties];
     await savePenalties();
     showToast(`${newPenalties.length} PENALTY QUEST${newPenalties.length>1?'S':''} ISSUED`,4000);
-  }catch(e){}
+  }catch(e){warn('checkAndIssuePenalties',e);}
 }
 
 async function completePenalty(idx){
@@ -4694,7 +4853,7 @@ async function addSleepLog(sleepName, tier){
   const btns=['great','ok','bad'].map(t=>document.getElementById('sleepBtn-'+t));
   btns.forEach(b=>{if(b){b.disabled=true;b.textContent='…';}});
 
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   const todayLabel=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 
   try{
@@ -4817,7 +4976,7 @@ function closeWorkoutModal(){
 
 // ── Shared exercise logging core ────────────────────────────────────────────
 async function _logExercise(exercise, sets, reps, weight){
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   const muscleMap={};state.bodyStats.forEach(s=>{muscleMap[s.name]=s.id;});
   const primary=exercise.primaryMuscle;
   const secondary=exercise.musclesHit.filter(m=>m!==primary);
@@ -4933,6 +5092,7 @@ function renderWorkout(){
 
   const switcher=`<div style="display:flex;gap:4px;padding:14px 16px 0;">
     <button data-tab="workout" class="sil-toggle-btn${workoutSubTab==='workout'?' active':''}" onclick="setWorkoutSubTab('workout')" style="flex:1;text-align:center">Workout</button>
+    <button data-tab="volume" class="sil-toggle-btn${workoutSubTab==='volume'?' active':''}" onclick="setWorkoutSubTab('volume')" style="flex:1;text-align:center">Volume</button>
     <!-- <button data-tab="bodymap" class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button> -->
   </div>`;
 
@@ -4966,12 +5126,32 @@ function renderWorkout(){
       const prDef=PR_THRESHOLDS[prMuscle];
       const prVal=prMuscle&&state.prs?.[prMuscle]!=null?state.prs[prMuscle]:null;
       const pbStr=prVal!=null?(prDef?.isReps?`PB  ${prVal} reps`:`PB  ${prVal}kg`):'';
+      // Prefill from the last logged session so you never retype what you already did.
+      const last=state.lastSets?.[e.name]||null;
+      const sugg=overloadSuggestion(e,last);
+      const vSets=last?last.sets:3;
+      const vReps=last?last.reps:10;
+      const vWeight=sugg!=null?sugg:(last?last.weight:0);
+      let lastLine='';
+      if(last){
+        const days=Math.round((new Date(localToday()+'T00:00:00')-new Date(last.date+'T00:00:00'))/86400000);
+        let ago='today';
+        if(days===1)ago='yesterday';
+        else if(days>1)ago=days+'d ago';
+        lastLine=`<div class="wec-last">Last: ${last.sets}×${last.reps} @ ${last.weight}kg · ${ago}</div>`;
+      }
+      let suggLine='';
+      if(sugg!=null){
+        suggLine=`<div class="wec-sugg">↑ Hit ${last.reps} reps — try ${sugg}kg</div>`;
+      }
       const body=open?`<div class="wec-body">
         ${pbStr?`<div style="font-size:8px;font-weight:700;letter-spacing:0.18em;color:var(--text-dim);margin-bottom:8px">${pbStr}</div>`:''}
+        ${lastLine}
+        ${suggLine}
         <div class="wec-inp-row">
-          <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="3" min="1" max="30"></div>
-          <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="10" min="1" max="100"></div>
-          <div class="wec-inp-grp"><div class="wec-lbl">kg</div><input type="number" class="wec-inp" id="wec-w-${e.id}" value="0" min="0"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="${vSets}" min="1" max="30"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="${vReps}" min="1" max="100"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">kg</div><input type="number" class="wec-inp" id="wec-w-${e.id}" value="${vWeight}" min="0"></div>
         </div>
         <div class="wec-muscles">${muscleTags}</div>
         <button class="wec-log-btn" id="wec-btn-${e.id}" onclick="event.stopPropagation();logExerciseFromTab('${e.id}')">LOG ${e.name.toUpperCase()}</button>
@@ -5124,11 +5304,43 @@ function renderWorkout(){
     bodyMapHTML+='</div>';
   }
 
+  // ── Volume panel: rolling 28-day tonnage per muscle ──────────────────────
+  // Answers "am I actually training this enough" — especially for muscles that sit
+  // on every day (shoulders/forearms) vs ones on a single day.
+  let volumeHTML='<div style="padding:16px">';
+  const statIdToName={};
+  (state.bodyStats||[]).forEach(s=>{statIdToName[s.id]=s.name;});
+  const volRows=Object.entries(state.volume||{})
+    .map(([id,v])=>({name:statIdToName[id]||null,tonnage:v.tonnage,sets:v.sets,days:v.days.size}))
+    .filter(r=>r.name&&r.tonnage>0)
+    .sort((a,b)=>b.tonnage-a.tonnage);
+  if(!volRows.length){
+    volumeHTML+='<div style="color:var(--text-dim);font-size:11px;text-align:center;padding:32px 0">No sets logged in the last 28 days.</div>';
+  }else{
+    const maxTon=volRows[0].tonnage;
+    volumeHTML+=`<div style="font-size:8px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Volume · last 28 days</div>
+      <div style="font-size:9px;color:var(--text-dim);margin-bottom:14px">Tonnage = sets × reps × kg. Secondary muscles count half.</div>`;
+    volRows.forEach(r=>{
+      const pct=Math.max(2,Math.round(r.tonnage/maxTon*100));
+      const tons=r.tonnage>=1000?(r.tonnage/1000).toFixed(1)+'t':Math.round(r.tonnage)+'kg';
+      volumeHTML+=`<div style="margin-bottom:11px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+          <span style="font-size:11px;color:var(--text)">${r.name}</span>
+          <span style="font-size:9px;color:var(--text-dim)">${tons} · ${Math.round(r.sets)} sets · ${r.days}d</span>
+        </div>
+        <div style="height:4px;background:var(--bg-soft,#1a1a1a);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--gold)"></div>
+        </div>
+      </div>`;
+    });
+  }
+  volumeHTML+='</div>';
+
   const translateX=workoutSubTab==='workout'?'0':'-50%';
   el.innerHTML=switcher+`<div style="overflow:hidden;width:100%">
     <div id="workout-slider" style="display:flex;width:200%;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);transform:translateX(${translateX})">
       <div style="width:50%;flex-shrink:0;min-width:0">${workoutPanelHTML}</div>
-      <div style="width:50%;flex-shrink:0;min-width:0">${bodyMapHTML}</div>
+      <div style="width:50%;flex-shrink:0;min-width:0">${volumeHTML}</div>
     </div>
   </div>`;
 
@@ -5154,8 +5366,8 @@ function renderWorkout(){
     slider.parentElement.addEventListener('touchend',function(e){
       if(locked||dir!=='h')return;
       const dx=e.changedTouches[0].clientX-startX;
-      if(dx<-40&&workoutSubTab==='workout')setWorkoutSubTab('bodymap');
-      else if(dx>40&&workoutSubTab==='bodymap')setWorkoutSubTab('workout');
+      if(dx<-40&&workoutSubTab==='workout')setWorkoutSubTab('volume');
+      else if(dx>40&&workoutSubTab==='volume')setWorkoutSubTab('workout');
     },{passive:true});
   }
 }
@@ -5199,7 +5411,7 @@ async function saveJournalEntry(){
 
 function renderJournal(){
   const el=document.getElementById('tab-journal');
-  const today=new Date().toISOString().split('T')[0];
+  const today=localToday();
   const allEmos=Object.keys(EMO_COLOR);
 
   if(journalFormOpen){
@@ -5407,8 +5619,8 @@ function renderStudyLog(){
     let maxH=0;
     for(let i=BAR_DAYS-1;i>=0;i--){
       const d=new Date(today2);d.setDate(d.getDate()-i);
-      const ds=d.toISOString().split('T')[0];
-      const daySess=done.filter(s=>s.started?.startsWith(ds)&&s.done);
+      const ds=localDay(d);
+      const daySess=done.filter(s=>s.started&&localDay(s.started)===ds&&s.done);
       const flowH=daySess.filter(s=>s.quality==='Flow').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
       const grindH=daySess.filter(s=>s.quality==='Grind').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
       const otherH=daySess.filter(s=>!s.quality||s.quality==='Distracted').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
@@ -5852,7 +6064,7 @@ restorePomoPersist();
 // Show immediate progress so screen isn't frozen at 0%
 (()=>{const n=document.getElementById('loadPct');const b=document.getElementById('loadBarFill');if(n)n.textContent='1%';if(b)b.style.width='1%';})();
 // Show pomo screen instantly before Notion loads (wrapped so a throw can't kill refresh)
-try{if(pomoMode)renderHome();}catch(e){}
+try{if(pomoMode)renderHome();}catch(e){warn('initialRenderHome',e);}
 document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='none';});
 (function initGlowOrbs(){
   const positions=[
