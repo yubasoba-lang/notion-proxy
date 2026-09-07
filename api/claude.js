@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     let body = req.body;
     if (typeof body === "string") body = JSON.parse(body);
 
-    const { system, message } = body;
+    const { system, message, max_tokens, model } = body;
     console.log("system length:", system?.length, "message length:", message?.length);
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -22,8 +22,8 @@ export default async function handler(req, res) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-    model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        model: model || "claude-opus-5",
+        max_tokens: max_tokens || 2000,
         system,
         messages: [{ role: "user", content: message }],
       }),
