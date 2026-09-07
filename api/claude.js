@@ -32,7 +32,11 @@ export default async function handler(req, res) {
     const data = await response.json();
     console.log("Anthropic status:", response.status, JSON.stringify(data).slice(0, 300));
     if (!response.ok) throw new Error(data.error?.message || "API error");
-    res.status(200).json({ text: data.content[0].text });
+    // Opus 5 thinks by default, so content[0] can be a thinking block.
+    // Take the first actual text block rather than assuming index 0.
+    const textBlock = (data.content || []).find(b => b.type === "text");
+    if (!textBlock) throw new Error("no text block in response");
+    res.status(200).json({ text: textBlock.text });
 
   } catch (err) {
     console.error("claude handler error:", err.message);
