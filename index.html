@@ -2493,6 +2493,17 @@ async function nQuery(dbId,filter,sorts){
    burst share it. Rows come back NEWEST FIRST, which also fixes a real bug:
    duplicate rows for the same key existed (four `penalty_quests`), and taking
    whatever Notion listed first could read a stale row while writing another. */
+/* Notion rejects any single rich_text block over 2000 characters, so a growing
+   JSON blob eventually 400s — which is exactly how the Tasks tab went blank once
+   xp_debts reached 2036 chars. Split across blocks; Notion rejoins them on read. */
+function richChunks(str){
+  const s=String(str??'');
+  if(!s)return [{text:{content:''}}];
+  const out=[];
+  for(let i=0;i<s.length;i+=1900)out.push({text:{content:s.slice(i,i+1900)}});
+  return out;
+}
+
 let _acRows=null,_acAt=0,_acInflight=null;
 const AC_TTL=15000;
 async function appConfigAll(force){
@@ -3042,7 +3053,7 @@ async function saveWealthLog(balance){
   if(!state.lifeStats)state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
   state.lifeStats.wealth=xp;
   const json=JSON.stringify(state.wealthLog);
-  const rich=[{text:{content:json}}];
+  const rich=richChunks(json);
   try{
     if(_wealthPageId){await nPatch(_wealthPageId,{Value:{rich_text:rich}});}
     else{appConfigInvalidate();const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'wealth_log'}}]},Value:{rich_text:rich}});_wealthPageId=p.id;}
@@ -3955,7 +3966,7 @@ async function loadBreakPeriods(){
   }catch(e){state.breakPeriods=[];}
 }
 async function saveBreakPeriods(){
-  await nPatch(BREAKS_CONFIG_ID,{Value:{rich_text:[{text:{content:JSON.stringify(state.breakPeriods)}}]}});
+  await nPatch(BREAKS_CONFIG_ID,{Value:{rich_text:richChunks(JSON.stringify(state.breakPeriods))}});
 }
 async function toggleBreak(){
   const breaks=state.breakPeriods||[];
@@ -4295,8 +4306,11 @@ async function refresh(force=true){
     evaluateTitle();_markTabLoaded('home');renderHome();
   }
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
-  if(currentTab==='tasks'&&!skip)await flushWriteQueue();
-  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()]);if(!skip){await checkAndIssuePenalties();await syncXPBleeds();}_markTabLoaded('tasks');renderTasks();}
+  // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
+  if(currentTab==='tasks'&&!skip)await flushWriteQueue().catch(e=>warn('flushWriteQueue',e));
+  // Loaders and background syncs are individually guarded: one failure used to
+  // reject the whole chain and skip renderTasks entirely, leaving a blank tab.
+  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()].map(p=>Promise.resolve(p).catch(e=>warn('tasksLoad',e))));if(!skip){await checkAndIssuePenalties().catch(e=>warn('checkAndIssuePenalties',e));await syncXPBleeds().catch(e=>warn('syncXPBleeds',e));}_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
@@ -4922,7 +4936,7 @@ async function loadZeroToleranceDay(){
     const active=Math.random()<0.15;
     state.ztd=active;
     const json=JSON.stringify({date:today,active});
-    const rich=[{text:{content:json}}];
+    const rich=richChunks(json);
     if(_ztdPageId){await nPatch(_ztdPageId,{Value:{rich_text:rich}});}
     else{appConfigInvalidate();const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'zero_tolerance'}}]},Value:{rich_text:rich}});_ztdPageId=p.id;}
     if(active)showToast('ZERO TOLERANCE DAY — ALL PENALTIES DOUBLED',5000);
@@ -4955,7 +4969,7 @@ async function loadXPDebts(){
 
 async function saveXPDebts(){
   const json=JSON.stringify(state.xpDebts||[]);
-  const rich=[{text:{content:json}}];
+  const rich=richChunks(json);
   if(_xpDebtPageId){await nPatch(_xpDebtPageId,{Value:{rich_text:rich}});}
   else{appConfigInvalidate();const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'xp_debts'}}]},Value:{rich_text:rich}});_xpDebtPageId=p.id;}
 }
@@ -5068,7 +5082,7 @@ async function savePenalties(){
   const now=Date.now();
   state.lockdowns=(state.lockdowns||[]).filter(l=>now<new Date(l.until).getTime());
   const json=JSON.stringify({penalties:state.penalties||[],lockdowns:state.lockdowns});
-  const rich=[{text:{content:json}}];
+  const rich=richChunks(json);
   if(_penaltyPageId){await nPatch(_penaltyPageId,{Value:{rich_text:rich}});}
   else{appConfigInvalidate();const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'penalty_quests'}}]},Value:{rich_text:rich}});_penaltyPageId=p.id;}
 }
