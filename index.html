@@ -839,6 +839,7 @@ body::after { display: none; }
 .rk-stale{flex-shrink:0;font-size:8px;color:#b06a4a;border:1px solid #4a2f24;border-radius:3px;padding:0 3px;}
 .rk-item-bar{flex-shrink:0;width:38px;height:3px;background:var(--bg-soft,#1a1a1a);border-radius:2px;overflow:hidden;display:inline-block;}
 .rk-item-bar>span{display:block;height:100%;}
+.session-capped{display:inline-block;margin-left:7px;font-size:8px;color:#b06a4a;border:1px solid #4a2f24;border-radius:3px;padding:0 4px;vertical-align:middle;}
 .lec-item-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lec-item-d{flex-shrink:0;font-size:9px;opacity:0.75;}
 .lec-item-x{flex-shrink:0;cursor:pointer;opacity:0.35;padding:0 2px;}
@@ -1396,7 +1397,7 @@ function computeTitle(){
   const done=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started);
   const weekAgo=Date.now()-7*86400000;
   const week=done.filter(s=>new Date(s.started)>=weekAgo);
-  const studyH=week.reduce((a,s)=>a+(s.done?(new Date(s.done)-new Date(s.started))/3600000:0),0);
+  const studyH=week.reduce((a,s)=>a+sessionH(s),0);
   const studyDays=new Set(week.map(s=>s.started.slice(0,10))).size;
   const rated=week.filter(s=>s.quality);
   const flowPct=rated.length?rated.filter(s=>s.quality==='Flow').length/rated.length:0;
@@ -1482,7 +1483,7 @@ function renderTitle(){
 function buildTitleWhy(adj,noun){
   const done=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started);
   const week=done.filter(s=>new Date(s.started)>=Date.now()-7*86400000);
-  const studyH=week.reduce((a,s)=>a+(s.done?(new Date(s.done)-new Date(s.started))/3600000:0),0);
+  const studyH=week.reduce((a,s)=>a+sessionH(s),0);
   const studyDays=new Set(week.map(s=>s.started.slice(0,10))).size;
   const rated=week.filter(s=>s.quality);
   const flowPct=rated.length?Math.round(rated.filter(s=>s.quality==='Flow').length/rated.length*100):null;
@@ -1938,7 +1939,7 @@ async function generateDailyRecap(targetDate){
     const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
 
     // ── Core stats ──
-    const totalH=sessions.reduce((s,x)=>s+(new Date(x.done)-new Date(x.started))/3600000,0);
+    const totalH=sessions.reduce((s,x)=>s+sessionH(x),0);
     const flowC=sessions.filter(s=>s.quality==='Flow').length;
     const grindC=sessions.filter(s=>s.quality==='Grind').length;
     const distractedC=sessions.filter(s=>s.quality==='Distracted').length;
@@ -1963,7 +1964,7 @@ async function generateDailyRecap(targetDate){
       return day>=wDates[0]&&day<=wDates[6]&&day!==dateStr;
     });
     const wDays=[...new Set(wSess.map(s=>localDay(s.started)))];
-    const wAvgH=wDays.length>0?wSess.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0)/wDays.length:null;
+    const wAvgH=wDays.length>0?wSess.reduce((a,s)=>a+sessionH(s),0)/wDays.length:null;
 
     // ── Study streak ──
     const streak=getUserStudyStreak();
@@ -2025,13 +2026,13 @@ async function generateDailyRecap(targetDate){
     let weekSummaryContext='';
     if(isSunday){
       const allWkSess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=wDates[0]&&s.started.split('T')[0]<=wDates[6]);
-      const weekTotalH=allWkSess.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+      const weekTotalH=allWkSess.reduce((a,s)=>a+sessionH(s),0);
       const weekDaysStudied=[...new Set(allWkSess.map(s=>s.started.split('T')[0]))].length;
       const subjectHours={};
-      allWkSess.forEach(s=>{const subj=s.subject||s.name||'Other';const h=(new Date(s.done)-new Date(s.started))/3600000;subjectHours[subj]=(subjectHours[subj]||0)+h;});
+      allWkSess.forEach(s=>{const subj=s.subject||s.name||'Other';const h=sessionH(s);subjectHours[subj]=(subjectHours[subj]||0)+h;});
       const subjectBreakdown=Object.entries(subjectHours).sort((a,b)=>b[1]-a[1]).map(([s,h])=>`${s}: ${fmtH(h)}`).join(', ')||'none';
       const dayHours={};
-      allWkSess.forEach(s=>{const d=s.started.split('T')[0];const h=(new Date(s.done)-new Date(s.started))/3600000;dayHours[d]=(dayHours[d]||0)+h;});
+      allWkSess.forEach(s=>{const d=s.started.split('T')[0];const h=sessionH(s);dayHours[d]=(dayHours[d]||0)+h;});
       const bestDay=Object.entries(dayHours).sort((a,b)=>b[1]-a[1])[0];
       const bestDayStr=bestDay?`${new Date(bestDay[0]+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'})} (${fmtH(bestDay[1])})`:'n/a';
       let wH2hW=0,wH2hL=0;
@@ -2054,6 +2055,7 @@ BEST DAY: ${bestDayStr}`;
 
 STUDY: ${fmtH(totalH)} total, ${sessions.length} sessions
 SUBJECTS: ${subjects.join(', ')||'none'}
+${(()=>{const rw=sessions.filter(isRunaway);if(!rw.length)return '';return `NOTE: ${rw.length} session${rw.length>1?'s':''} had the timer left running (raw ${rw.map(s=>Math.round(sessionRawH(s))+'h').join(', ')}) and ${rw.length>1?'were':'was'} capped at ${SESSION_CAP_H}h. Mention this — the study total is a floor, and leaving timers running is worth calling out.`;})()}
 QUALITY TODAY: ${flowC} Flow (${todayFlowRate}%), ${grindC} Grind, ${distractedC} Distracted
 ${flowRate7!=null?`QUALITY BASELINE (last 7d): ${flowRate7}% Flow`:''}
 ${wAvgH!=null?`WEEK AVERAGE: ${fmtH(wAvgH)}/day (today was ${totalH>wAvgH?'above':'below'} average)`:''}
@@ -2587,6 +2589,25 @@ const toStat=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),finalX
 const toRival=p=>{const q=p.properties;return{id:p.id,totalXP:g.formula(q['Total XP'])??0};};
 const toTask=p=>{const q=p.properties;const name=g.title(q.Task);const cat=g.select(q.Cat);const diff=g.select(q.Difficulty);const questId=g.num(q['Quest ID']);const isQuestRaw=g.formula(q['Is Quest']);const isQuest=isQuestRaw===1||isQuestRaw===true||(typeof isQuestRaw==='string'&&isQuestRaw!=='');return{id:p.id,name,cat,difficulty:diff,status:g.checkbox(q.Status),missed:g.checkbox(q['Missed check1']),dueDate:g.date(q['Due Date']),questId,isQuest,isStudySession:cat==='Mind'&&diff==='Normal'&&SUBJECTS.includes(name)};};
 const toTemplate=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),cat:g.select(q.Cat),type:g.select(q.Type)};};
+/* A study session longer than this was a timer left running, not real study.
+   37 such sessions accounted for 261 of 1002 recorded hours (26%) — they wrecked
+   totals, streaks and the rival comparison. Duration is computed in one place now
+   and clamped, so nothing downstream inherits a 122-hour "session". */
+const SESSION_CAP_H=8;
+function sessionMs(s){
+  if(!s||!s.started||!s.done)return 0;
+  const ms=new Date(s.done)-new Date(s.started);
+  if(!(ms>0))return 0;
+  return Math.min(ms,SESSION_CAP_H*3600000);
+}
+function sessionH(s){return sessionMs(s)/3600000;}
+function sessionRawH(s){
+  if(!s||!s.started||!s.done)return 0;
+  const ms=new Date(s.done)-new Date(s.started);
+  return ms>0?ms/3600000:0;
+}
+function isRunaway(s){return sessionRawH(s)>SESSION_CAP_H;}
+
 const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
 const toEntry=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),date:g.date(q.Date),emotions:(q.Emotions?.multi_select??[]).map(e=>e.name)};};
 
@@ -3518,7 +3539,7 @@ function getUserStudyHoursToday(){
   // s.started is a UTC timestamp — compare its LOCAL day, not its string prefix,
   // or late-evening sessions get attributed to the wrong day.
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===t&&s.done)
-    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+    .reduce((sum,s)=>sum+sessionH(s),0);
 }
 function getWeekDates(weeksAgo=0){
   // Returns [Mon,Tue,Wed,Thu,Fri,Sat,Sun] as ISO date strings for given week
@@ -3537,20 +3558,20 @@ function getUserStudyHoursWeek(weeksAgo=0){
   const dates=getWeekDates(weeksAgo);
   const mon=dates[0],sun=dates[6];
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=mon&&s.started.split('T')[0]<=sun)
-    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+    .reduce((sum,s)=>sum+sessionH(s),0);
 }
 function getUserHoursOnDay(dateStr){
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===dateStr&&s.done)
-    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+    .reduce((sum,s)=>sum+sessionH(s),0);
 }
 function debugH2H(dateStr){
   const sess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done);
   const onDay=sess.filter(s=>localDay(s.started)===dateStr);
-  const totalH=onDay.reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+  const totalH=onDay.reduce((a,s)=>a+sessionH(s),0);
   const rivalDay=getRivalDays().find(d=>d.date===dateStr);
   console.log('=== H2H DEBUG: '+dateStr+' ===');
   console.log('Your sessions on this day: '+onDay.length);
-  onDay.forEach((s,i)=>console.log(' ['+i+'] started='+s.started+' (local='+localDay(s.started)+') done='+s.done+' dur='+((new Date(s.done)-new Date(s.started))/3600000).toFixed(2)+'h'));
+  onDay.forEach((s,i)=>console.log(' ['+i+'] started='+s.started+' (local='+localDay(s.started)+') done='+s.done+' dur='+(sessionH(s)).toFixed(2)+'h'));
   console.log('Your total: '+totalH.toFixed(2)+'h');
   console.log('Rival hours: '+(rivalDay?rivalDay.hours.toFixed(2)+'h':'not found'));
   console.log('Total sessions in state: '+sess.length);
@@ -5922,7 +5943,7 @@ function renderStudyLog(){
     return dt.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
   }
   function fmtTime(iso){if(!iso)return'';return new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
-  function msDur(s){if(!s.started||!s.done)return 0;return new Date(s.done)-new Date(s.started);}
+  function msDur(s){return sessionMs(s);}
   function totalMs(arr){return arr.reduce((a,s)=>a+msDur(s),0);}
 
   const done=state.sessions.filter(s=>s.complete==='Done'&&s.started);
@@ -6041,9 +6062,9 @@ function renderStudyLog(){
       const d=new Date(today2);d.setDate(d.getDate()-i);
       const ds=localDay(d);
       const daySess=done.filter(s=>s.started&&localDay(s.started)===ds&&s.done);
-      const flowH=daySess.filter(s=>s.quality==='Flow').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
-      const grindH=daySess.filter(s=>s.quality==='Grind').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
-      const otherH=daySess.filter(s=>!s.quality||s.quality==='Distracted').reduce((a,s)=>a+(new Date(s.done)-new Date(s.started))/3600000,0);
+      const flowH=daySess.filter(s=>s.quality==='Flow').reduce((a,s)=>a+sessionH(s),0);
+      const grindH=daySess.filter(s=>s.quality==='Grind').reduce((a,s)=>a+sessionH(s),0);
+      const otherH=daySess.filter(s=>!s.quality||s.quality==='Distracted').reduce((a,s)=>a+sessionH(s),0);
       const total=flowH+grindH+otherH;
       if(total>maxH)maxH=total;
       const dayLabel=i===0?'T':i===1?'Y':d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,1);
@@ -6219,11 +6240,14 @@ function renderStudyLog(){
     arr.forEach(s=>{
       const dur=msDur(s);
       const qCls=s.quality?(s.quality.toLowerCase()):'';
+      // Be explicit when a timer clearly ran on — don't silently show a fake number.
+      let capNote='';
+      if(isRunaway(s))capNote=`<span class="session-capped" title="Timer left running — counted as ${SESSION_CAP_H}h">timer ran ${Math.round(sessionRawH(s))}h · capped</span>`;
       html+=`<div class="session-card">
         <div class="session-dur">${dur>0?formatDuration(dur):'—'}</div>
         <div class="session-body">
           <div class="session-subject">${s.subject||s.name||'Study'}</div>
-          <div class="session-time">${fmtTime(s.started)}${s.done?' → '+fmtTime(s.done):''}</div>
+          <div class="session-time">${fmtTime(s.started)}${s.done?' → '+fmtTime(s.done):''}${capNote}</div>
         </div>
         ${s.quality?`<span class="session-quality ${qCls}">${s.quality}</span>`:''}
       </div>`;
@@ -6300,12 +6324,12 @@ function getExamStudyHours(exam){
   // Last 4 weeks total (more relevant than all-time)
   const cutoff4w=new Date();cutoff4w.setDate(cutoff4w.getDate()-28);cutoff4w.setHours(0,0,0,0);
   const total=done.filter(s=>new Date(s.started)>=cutoff4w)
-    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+    .reduce((sum,s)=>sum+sessionH(s),0);
   // This week = Mon–Sun calendar week
   const weekDates=getWeekDates(0);
   const mon=weekDates[0],sun=weekDates[6];
   const recent=done.filter(s=>{const d=s.started.split('T')[0];return d>=mon&&d<=sun;})
-    .reduce((sum,s)=>sum+(new Date(s.done)-new Date(s.started))/3600000,0);
+    .reduce((sum,s)=>sum+sessionH(s),0);
   return{total,recent};
 }
 
