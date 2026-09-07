@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2658,15 +2657,8 @@ async function loadPRs(){
   try{
     if(!state.exercises?.length)return;
     const prs={};
-    // Get all workout log entries
-    let cursor=undefined,hasMore=true,pages=[];
-    while(hasMore){
-      const body={page_size:100,...(cursor?{start_cursor:cursor}:{})};
-      const data=await nFetch(`/databases/${DB.workoutLog}/query`,'POST',body);
-      pages=pages.concat(data.results||[]);
-      hasMore=data.has_more??false;
-      cursor=data.next_cursor;
-    }
+    // Shared with loadWorkoutXP — same rows, fetched once per tab visit.
+    const pages=await fetchWorkoutLog();
     // Build exercise name → primary muscle map
     const exToMuscle={};
     state.exercises.forEach(e=>{if(e.primaryMuscle)exToMuscle[e.name]=e.primaryMuscle;});
@@ -2813,24 +2805,39 @@ async function loadStats(){
     },4000);
   }
 }
+/* loadWorkoutXP and loadPRs each used to walk the entire Workout Log, so opening
+   the Workout tab read ~500 rows twice (~6s). They need the same rows, so fetch
+   once and share within a tab visit.
+
+   Deliberately NOT cached to localStorage like sessions: 'Workout Decayed XP' is
+   a formula that decays over time, so a persisted copy would freeze your decay.
+   A short in-memory TTL only collapses the duplicate work inside one visit. */
+let _wlogRows=null,_wlogAt=0,_wlogInflight=null;
+const WLOG_TTL=60000;
+function invalidateWorkoutLog(){_wlogRows=null;_wlogAt=0;}
+async function fetchWorkoutLog(){
+  if(_wlogRows&&Date.now()-_wlogAt<WLOG_TTL)return _wlogRows;
+  if(_wlogInflight)return _wlogInflight;           // concurrent callers share one fetch
+  _wlogInflight=(async()=>{
+    try{
+      const rows=await nQuery(DB.workoutLog);
+      _wlogRows=rows;_wlogAt=Date.now();
+      return rows;
+    }finally{_wlogInflight=null;}
+  })();
+  return _wlogInflight;
+}
+
 async function loadWorkoutXP(){
   // Notion API returns 0 for rollup-of-formula properties on bodyStats.
   // Instead, read Workout Log directly and aggregate Workout Decayed XP by muscle.
   const xpMap={};
-  let cursor=undefined,hasMore=true;
-  while(hasMore){
-    const body={page_size:100};
-    if(cursor)body.start_cursor=cursor;
-    const data=await nFetch(`/databases/${DB.workoutLog}/query`,'POST',body);
-    for(const page of data.results||[]){
-      const props=page.properties;
-      const rel=props['Muscle Stat']?.relation;
-      const muscleId=rel?.[0]?.id;
-      const xp=props['Workout Decayed XP']?.formula?.number??0;
-      if(muscleId&&xp>0)xpMap[muscleId]=(xpMap[muscleId]||0)+xp;
-    }
-    hasMore=data.has_more??false;
-    cursor=data.next_cursor;
+  for(const page of await fetchWorkoutLog()){
+    const props=page.properties;
+    const rel=props['Muscle Stat']?.relation;
+    const muscleId=rel?.[0]?.id;
+    const xp=props['Workout Decayed XP']?.formula?.number??0;
+    if(muscleId&&xp>0)xpMap[muscleId]=(xpMap[muscleId]||0)+xp;
   }
   state.bodyStats.forEach(s=>{if(xpMap[s.id]!=null)s.decayedXP=xpMap[s.id];s.rankStr='';});
 }
@@ -5376,6 +5383,7 @@ async function _logExercise(exercise, sets, reps, weight){
     }else skipped.push(m);
   });
   if(!creates.length)throw new Error('No Body Stats row for: '+(skipped.join(', ')||'this exercise'));
+  invalidateWorkoutLog();  // new sets must show up straight away, not after the TTL
   if(skipped.length){
     warn('_logExercise.missingBodyStat',new Error(skipped.join(', ')));
     showToast('Not logged — no Body Stats row for '+skipped.join(', '),5000);
