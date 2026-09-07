@@ -3641,6 +3641,7 @@ const LECTURE_COURSES=[
   {id:'cpp',  name:'Clinical Pathophysiology', day:'Mon',     short:'Clin Patho'},
   // One course, three slots a week: Mon 12:00, Wed 8:00, and the Wed 13:45 seminar.
   {id:'path', name:'Pathology',                day:'Mon/Wed', short:'Pathology'},
+  {id:'pharm',name:'Pharmacology I',            day:'Tue',     short:'Pharm'},
   {id:'ecg',  name:'ECG',                      day:'Fri',     short:'ECG'},
 ];
 /* Known timetables. These are merged in on load, so a lecture enters the review
@@ -3692,6 +3693,23 @@ const LECTURE_SYLLABUS={
     {d:'2026-12-02',t:"Infectious diseases",sub:"Viral (tick-borne, polio, smallpox, herpes, CMV, EBV, rubella, varicella, mumps, influenza), Rickettsiae, Spirochetes. Bacteria (tularaemia, pertussis, legionella, brucellosis, listeriosis, clostridial, Streptococci). Actinomycosis. Mycobacteria (TB, leprosy). Protozoa (malaria, toxoplasmosis, amebiasis).",by:"Lotz"},
     {d:'2026-12-07',t:"Environmental and nutritional pathology",sub:"Smoking, alcoholism, drugs. Iatrogenic injuries. Environmental chemical and physical factors. Obesity, protein malnutrition, vitamins.",by:"Kocsmár"},
     {d:'2026-12-09',t:"Tumours of the bone",by:"Pencz"},
+  ],
+  // Pharmacology I â Tuesdays 9:30-11:00, NET-Green Lecture Hall.
+  pharm:[
+    {d:'2026-09-08',t:"Introduction to Pharmacology",sub:"Development, pharmacogenomics, basics of toxicology, history of the Hungarian pharmaceutical industry.",by:"Ferdinandy"},
+    {d:'2026-09-15',t:"Pharmacodynamics",sub:"Receptor theories, drug-receptor interactions.",by:"Riba"},
+    {d:'2026-09-22',t:"Pharmacokinetics I",by:"Gyires"},
+    {d:'2026-09-29',t:"Pharmacokinetics II",sub:"Habilitation lecture.",by:"Ágg"},
+    {d:'2026-10-06',t:"Cholinergic and adrenergic transmission",sub:"Presynaptic stimulation and inhibition.",by:"Riba"},
+    {d:'2026-10-13',t:"NSAIDs and minor analgesics",sub:"Non-steroidal anti-inflammatory drugs.",by:"Gyires"},
+    {d:'2026-10-20',t:"Local anesthetics",by:"Al-Khrasani"},
+    {d:'2026-10-27',t:"Antipsychotics",by:"Görbe"},
+    {d:'2026-11-03',t:"Extrapyramidal system drugs",sub:"Drugs acting on the extrapyramidal motoric system. Nootropic agents.",by:"Riba"},
+    {d:'2026-11-10',t:"General anesthetics",by:"Görbe"},
+    {d:'2026-11-17',t:"Antiviral drugs",by:"Giricz"},
+    {d:'2026-11-24',t:"Antifungal and antimycobacterial drugs",by:"Varga"},
+    {d:'2026-12-01',t:"Drugs of Abuse",by:"Riba"},
+    {d:'2026-12-08',t:"Biological and orphan drugs",sub:"Advanced Therapy Medicines. Vaccines.",by:"Görbe"},
   ],
   // Lectures run weeks 1-7 only; weeks 8-14 are practicals. Two talks most weeks.
   // Week 7 has no date published (it's a video recording), so it stays planned.
