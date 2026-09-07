@@ -2879,12 +2879,50 @@ async function loadStreaks(){
     }
   }catch(e){setError('Streaks: '+e.message);}
 }
+/* Study history only grows — old sessions never change. Refetching all of them
+   meant 5 paginated requests and ~4s every time the Study tab opened. Instead we
+   cache locally and ask Notion only for sessions created since the last sync.
+   A full refetch still runs daily so edits and deletions can't drift forever. */
+const SESS_CACHE_KEY='grind-sessions-v1';
+function readSessionCache(){
+  try{
+    const raw=localStorage.getItem(SESS_CACHE_KEY);
+    if(!raw)return null;
+    const c=JSON.parse(raw);
+    if(!c||!Array.isArray(c.sessions)||!c.newest)return null;
+    // Force a clean rebuild once a day.
+    if(Date.now()-(c.at||0)>86400000)return null;
+    return c;
+  }catch(e){warn('readSessionCache',e);return null;}
+}
+function writeSessionCache(sessions,newest){
+  try{localStorage.setItem(SESS_CACHE_KEY,JSON.stringify({sessions,newest,at:Date.now()}));}
+  catch(e){warn('writeSessionCache',e);} // quota — just run uncached
+}
 async function loadSessions(){
   try{
+    const cache=readSessionCache();
+    if(cache){
+      // Only pages created after the newest one we already hold.
+      const fresh=await nQuery(DB.studied,
+        {timestamp:'created_time',created_time:{after:cache.newest}},
+        [{timestamp:'created_time',direction:'descending'}]);
+      const seen=new Set(cache.sessions.map(s=>s.id));
+      const added=fresh.map(toSession).filter(s=>!seen.has(s.id));
+      state.sessions=[...added,...cache.sessions];
+      if(added.length){
+        const newest=fresh[0]?.created_time||cache.newest;
+        writeSessionCache(state.sessions,newest);
+      }
+      return;
+    }
     const p=await nQuery(DB.studied,null,[{timestamp:'created_time',direction:'descending'}]);
     state.sessions=p.map(toSession);
+    if(p.length)writeSessionCache(state.sessions,p[0].created_time);
   }catch(e){setError('Sessions: '+e.message);}
 }
+// Called after finishing a session so the cache doesn't lag behind this device.
+function invalidateSessionCache(){try{localStorage.removeItem(SESS_CACHE_KEY);}catch(e){}}
 async function loadTasks(){
   try{
     const today=localToday();
