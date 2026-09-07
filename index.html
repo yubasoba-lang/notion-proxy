@@ -785,6 +785,39 @@ body::after { display: none; }
 .wec-inp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:9px;}
 .wec-inp-grp{display:flex;flex-direction:column;gap:3px;}
 .wec-lbl{font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);}
+/* ── Lecture review ── */
+.lec-badge{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:8px;background:var(--gold);color:#000;font-size:8px;font-weight:700;vertical-align:middle;}
+.lec-card{border:1px solid var(--line,#2a2a2a);border-radius:6px;padding:11px 12px;margin-bottom:8px;background:var(--bg-soft,#141414);}
+.lec-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.lec-title{font-size:12px;color:var(--text);line-height:1.3;word-break:break-word;}
+.lec-meta{font-size:9px;color:var(--text-dim);margin-top:3px;}
+.lec-sub{font-size:9px;color:var(--text-dim);line-height:1.45;margin:0 0 9px;opacity:0.75;}
+.lec-box{font-size:8px;font-weight:700;letter-spacing:0.1em;color:var(--text-dim);border:1px solid var(--line,#2a2a2a);border-radius:3px;padding:1px 5px;flex-shrink:0;}
+.lec-btns{display:flex;gap:5px;}
+.lec-btn{flex:1;padding:7px 0;border-radius:4px;border:1px solid var(--line,#2a2a2a);background:transparent;color:var(--text-dim);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;}
+.lec-btn:active{opacity:0.6;}
+.lec-shaky{border-color:#6b3030;color:#c97070;}
+.lec-ok{border-color:#6b5a30;color:#c9a970;}
+.lec-solid{border-color:#356b35;color:#79c979;}
+.lec-course{margin-bottom:16px;}
+.lec-course-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:8px;}
+.lec-course-name{font-size:11px;color:var(--text);}
+.lec-course-meta{font-size:9px;color:var(--text-dim);flex-shrink:0;}
+.lec-bar{height:3px;background:var(--bg-soft,#1a1a1a);border-radius:2px;overflow:hidden;margin-bottom:7px;}
+.lec-bar-fill{height:100%;background:var(--gold);}
+.lec-add-row{display:flex;gap:5px;margin-bottom:6px;}
+.lec-add-inp{flex:1;min-width:0;background:var(--bg-soft,#111);border:1px solid var(--line,#2a2a2a);border-radius:4px;color:var(--text);font-size:11px;padding:6px 8px;font-family:inherit;}
+.lec-add-btn{width:32px;flex-shrink:0;background:transparent;border:1px solid var(--line,#2a2a2a);border-radius:4px;color:var(--text-dim);font-size:14px;cursor:pointer;}
+.lec-list{border-left:1px solid var(--line,#2a2a2a);padding-left:8px;}
+.lec-item{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:10px;color:var(--text-dim);}
+.lec-item.due{color:var(--gold);}
+.lec-item.upcoming{opacity:0.4;}
+.lec-held-btn{border:1px solid var(--line,#2a2a2a);border-radius:3px;padding:1px 6px;font-size:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;color:var(--text-dim);}
+.lec-held-btn:active{opacity:0.6;}
+.lec-item-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lec-item-d{flex-shrink:0;font-size:9px;opacity:0.75;}
+.lec-item-x{flex-shrink:0;cursor:pointer;opacity:0.35;padding:0 2px;}
+.lec-item-x:active{opacity:0.8;}
 .wec-last{font-size:9px;color:var(--text-dim);letter-spacing:0.04em;margin-bottom:4px;}
 .wec-sugg{font-size:9px;color:var(--gold);letter-spacing:0.04em;font-weight:700;margin-bottom:8px;}
 .wec-inp{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 6px;font-size:14px;font-weight:700;color:var(--text);text-align:center;width:100%;box-sizing:border-box;font-family:inherit;}
@@ -1469,7 +1502,7 @@ function buildSilhouette(bodyStats){
 }
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null,wealthLog:[],penalties:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null,wealthLog:[],penalties:[]};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -2800,6 +2833,7 @@ let expandedExercise=null;
 const _topicUI={};
 let expandedWorkoutDays=null; // null = not yet initialized; Set of day abbrs
 let workoutSubTab='workout'; // 'workout' | 'volume'  ('bodymap' pane is commented out)
+let examSubTab='exams'; // 'exams' | 'lectures'
 
 
 let _errorDismissTimer=null;
@@ -3589,6 +3623,235 @@ function getWorkoutStreak(workoutDayMap,dates){
   return streak;
 }
 // ── Topic Progress (App Config) ──
+/* ──────────────────────────────────────────────────────────────────────────
+   LECTURE REVIEW SYSTEM
+
+   Each lecture you attend becomes a card that resurfaces on a spaced schedule.
+   Leitner boxes: a confident review pushes the card further out, a shaky one
+   pulls it back to the start. Intervals are tuned for a semester, so a solid
+   card ends up landing roughly once before exams rather than nagging weekly.
+   ────────────────────────────────────────────────────────────────────────── */
+// Lecture titles are free text rendered into innerHTML, so escape them.
+// Also covers quotes, which would otherwise break the inline onclick attributes.
+function esc(s){
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+const LECTURE_COURSES=[
+  {id:'cpp',  name:'Clinical Pathophysiology', day:'Mon',     short:'Clin Patho'},
+  // One course, three slots a week: Mon 12:00, Wed 8:00, and the Wed 13:45 seminar.
+  {id:'path', name:'Pathology',                day:'Mon/Wed', short:'Pathology'},
+  {id:'ecg',  name:'ECG',                      day:'Fri',     short:'ECG'},
+];
+/* Known timetables. These are merged in on load, so a lecture enters the review
+   rotation by itself the day after it is delivered — nothing to type in.
+   A lecture dated in the future is "upcoming" and never shows as due. */
+const LECTURE_SYLLABUS={
+  cpp:[
+    {d:'2026-09-07',t:'Hypertension',                                                        by:'Benyó'},
+    {d:'2026-09-14',t:'Congestive heart failure',                                            by:'Tornóci'},
+    {d:'2026-09-21',t:'Obesity',                                                             by:'Ruisanchez'},
+    {d:'2026-09-28',t:'Atherosclerosis and disorders of lipid metabolism',                   by:'Margittai'},
+    {d:'2026-10-05',t:'Diabetes I: Pathogenesis of Type 1 and 2 diabetes',                   by:'Gerő'},
+    {d:'2026-10-12',t:'Diabetes II: Complications of diabetes mellitus',                     by:'Gerő'},
+    {d:'2026-10-19',t:'Endocrine diseases I: Introduction. Thyroid gland',                   by:'Margittai'},
+    {d:'2026-10-26',t:'Endocrine diseases II: Adrenal gland',                                by:'Margittai'},
+    {d:'2026-11-02',t:'Endocrine diseases III: Prolactin, growth hormone and reproduction',  by:'Benyó'},
+    {d:'2026-11-09',t:'Disorders of Hemostasis',                                             by:'Benyó'},
+    {d:'2026-11-16',t:'Menopause',                                                           by:'Tímár'},
+    {d:'2026-11-23',t:'Osteoporosis. Disorders of calcium and phosphate homeostasis',        by:'Kökény'},
+    {d:'2026-11-30',t:'Joint disorders and systemic autoimmune diseases',                    by:'Kökény'},
+    {d:'2026-12-07',t:'Disorders due to immobilization. Cachexia. Rehabilitation',           by:'Benyó'},
+  ],
+  path:[
+    {d:'2026-09-07',t:"Introduction. Intracellular storage",by:"Kiss"},
+    {d:'2026-09-09',t:"Cell injury",sub:"Reversible (hydropic swelling, atrophy, hypertrophy, hyperplasia, metaplasia, dysplasia). Irreversible (necrosis, apoptosis, ischemic injury, calcification, hyalinization, aging).",by:"Kiss"},
+    {d:'2026-09-14',t:"Hemodynamic disorders I",sub:"Basics of hemodynamics. Hemorrhage, active and passive hyperemia. Fluid and electrolyte homeostasis. Edema.",by:"Madaras"},
+    {d:'2026-09-16',t:"Hemodynamic disorders II",sub:"Thrombosis, embolism. Infarction. Shock.",by:"Madaras"},
+    {d:'2026-09-21',t:"Inflammation I",sub:"Definition, symptoms, vascular permeability. Mediators and origin. Cellular recruitment. Acute inflammation. Systemic manifestations. Avascular tissues. Wound healing, regeneration, repair. Extracellular matrix.",by:"Kenessey"},
+    {d:'2026-09-23',t:"Inflammation II",sub:"Chronic inflammation. Fibrosis, scar formation. Granulomatous inflammation (tuberculosis, syphilis).",by:"Lotz"},
+    {d:'2026-09-28',t:"Cardiovascular pathology I",sub:"Structure of vessels. Atherosclerosis. Aneurysms. Hypertensive vascular disease. Vasculitis. Microvascular disease. Veins and lymphatics. Vascular tumors.",by:"Glasz"},
+    {d:'2026-09-30',t:"Cardiovascular pathology II",sub:"Endocarditis, myocarditis, pericarditis. Rheumatic heart disease. Ischemic heart disease.",by:"Glasz"},
+    {d:'2026-10-05',t:"Cardiovascular pathology III",sub:"Congenital heart diseases. Cardiomyopathies. Heart failure. Systemic diseases involving the heart. Cardiac tumors.",by:"Glasz"},
+    {d:'2026-10-07',t:"Neoplasia I",sub:"Definition. Benign vs malignant characteristics. Histological classification. Grading.",by:"Kiss"},
+    {d:'2026-10-12',t:"Neoplasia II",sub:"Causes. Epidemiology. Chemical, physical and biological carcinogenesis. Prevention. Screening.",by:"Kenessey"},
+    {d:'2026-10-14',t:"Neoplasia III",sub:"Molecular mechanisms: protooncogenes, oncogenes, tumor suppressor genes, growth factors.",by:"Tímár"},
+    {d:'2026-10-19',t:"Neoplasia IV",sub:"Tumor growth, progression, metastasis. Familial cancer.",by:"Tímár"},
+    {d:'2026-10-21',t:"Neoplasia V",sub:"Prognostic factors. Staging and grading. TNM. Handling of surgical biopsy material.",by:"Kulka"},
+    {d:'2026-10-26',t:"Childhood tumors",by:"Halász"},
+    {d:'2026-10-28',t:"Soft tissue tumors",sub:"Tumors and tumor-like lesions of the soft tissue.",by:"Pencz"},
+    {d:'2026-11-02',t:"Methods of pathology I",sub:"Grossing, HE and special staining, immunohistochemistry. FNAB, core biopsy.",by:"Székely"},
+    {d:'2026-11-04',t:"Methods of pathology II",sub:"Diagnostic parameters and clinical protocols. Molecular diagnostics of tumors. Targeted therapy.",by:"Kiss"},
+    {d:'2026-11-09',t:"Gene pathology I",sub:"Single-gene abnormalities. Autosomal dominant/recessive, sex-linked disorders. Lysosomal storage disease.",by:"Kiss"},
+    {d:'2026-11-11',t:"Gene pathology II",sub:"Chromosomal abnormalities. Morphogenic disorders, malformations, multifactorial inheritance. Prenatal diagnosis.",by:"Kiss"},
+    {d:'2026-11-16',t:"Immunopathology",sub:"Constituents of the immune system. Hypersensitivity reactions. Allergy. Transplantation. Immunodeficiency. AIDS.",by:"Kiss"},
+    {d:'2026-11-18',t:"Autoimmune diseases",sub:"Etiology. Monosystemic (chronic atrophic gastritis, myasthenia gravis, Graves, Hashimoto, Addison, T1DM, MS) and oligo/polysystemic (SLE, Sjogren, RA, scleroderma, dermatomyositis).",by:"Glasz"},
+    {d:'2026-11-23',t:"Hematopathology I",sub:"Hemopoetic system: bone marrow, lymph nodes, spleen. Morphology and immunologic evaluation. Platelet and coagulation disorders. Anemias, polycythemia. Neutrophilia. Mast cell disorders. Monocytosis. Sinus histiocytosis. Benign lymphoid disorders.",by:"Gyöngyösi"},
+    {d:'2026-11-25',t:"Hematopathology II",sub:"Acute myeloproliferative syndromes (acute leukaemias). Chronic myeloproliferative syndromes (CML, myelofibrosis, thrombocythemia). Acute and chronic lymphocytic leukemias. Disorders of the spleen.",by:"Gyöngyösi"},
+    {d:'2026-11-30',t:"Hematopathology III",sub:"Lymphomas (Hodgkin, non-Hodgkin). Metastatic tumors in bone marrow and lymph nodes.",by:"Gyöngyösi"},
+    {d:'2026-12-02',t:"Infectious diseases",sub:"Viral (tick-borne, polio, smallpox, herpes, CMV, EBV, rubella, varicella, mumps, influenza), Rickettsiae, Spirochetes. Bacteria (tularaemia, pertussis, legionella, brucellosis, listeriosis, clostridial, Streptococci). Actinomycosis. Mycobacteria (TB, leprosy). Protozoa (malaria, toxoplasmosis, amebiasis).",by:"Lotz"},
+    {d:'2026-12-07',t:"Environmental and nutritional pathology",sub:"Smoking, alcoholism, drugs. Iatrogenic injuries. Environmental chemical and physical factors. Obesity, protein malnutrition, vitamins.",by:"Kocsmár"},
+    {d:'2026-12-09',t:"Tumours of the bone",by:"Pencz"},
+  ],
+  // Lectures run weeks 1-7 only; weeks 8-14 are practicals. Two talks most weeks.
+  // Week 7 has no date published (it's a video recording), so it stays planned.
+  ecg:[
+    {d:'2026-09-11',t:"Arrhythmias: concept and classification",sub:"Mechanisms of tachyarrhythmias.",by:"Tornóci"},
+    {d:'2026-09-11',t:"Supraventricular tachycardia",sub:"Examination of the patient. Differential diagnosis of narrow QRS tachycardias.",by:"Salló"},
+    {d:'2026-09-18',t:"Conduction disorders",sub:"Classification of conduction disorders, mechanisms of bradyarrhythmias.",by:"Tornóci"},
+    {d:'2026-09-18',t:"Impulse formation and conduction",sub:"Practical significance of impulse formation and conduction disorders.",by:"Osztheimer"},
+    {d:'2026-09-25',t:"Repolarization abnormalities",sub:"Abnormalities of repolarization. Ischemic heart disease.",by:"Tornóci"},
+    {d:'2026-09-25',t:"ECG in chest pain",sub:"Role of ECG in investigating chest pain pathologies and in risk stratification.",by:"László / Kulyassa"},
+    {d:'2026-10-02',t:"Ventricular arrhythmias",sub:"",by:"Tornóci"},
+    {d:'2026-10-02',t:"Wide QRS tachycardias",sub:"Differential diagnosis. Detection of ventricular tachycardias, ECG criteria.",by:"Nagy"},
+    {d:'2026-10-09',t:"Pacemaker systems: basics",sub:"",by:"Tornóci"},
+    {d:'2026-10-09',t:"ECG of a patient with pacemaker",sub:"",by:"Papp"},
+    {d:'2026-10-16',t:"Searching for P waves",sub:"ECG differential diagnostics.",by:"Simon"},
+    {t:"Final lecture (video recording)",sub:"Week 7 — released as a video, no fixed date. Mark held once watched.",by:"Tornóci / Szegedi"},
+  ],
+};
+// Adds syllabus lectures that aren't already tracked. Matched on date+title so
+// re-running is safe and your review history is never overwritten.
+function mergeSyllabus(){
+  let added=0;
+  if(!state.lectures)state.lectures={};
+  Object.entries(LECTURE_SYLLABUS).forEach(([courseId,items])=>{
+    if(!state.lectures[courseId])state.lectures[courseId]=[];
+    // Undated topics are keyed on title alone, so marking one held (which stamps
+    // a date) doesn't make the merge think it's a different lecture and re-add it.
+    const have=new Set(state.lectures[courseId].map(l=>l.t));
+    items.forEach(it=>{
+      if(have.has(it.t))return;
+      const due=it.d?srNextDue(0,it.d):null;
+      state.lectures[courseId].push({t:it.t,sub:it.sub||null,by:it.by||null,d:it.d||null,box:0,due,reviews:0,conf:null,last:null});
+      added++;
+    });
+    // Drop untouched placeholders that the real timetable has superseded. Only
+    // ever removes undated, never-reviewed entries, so real progress is safe.
+    const known=new Set(items.map(i=>i.t));
+    const before=state.lectures[courseId].length;
+    state.lectures[courseId]=state.lectures[courseId]
+      .filter(l=>!(isPlanned(l)&&!(l.reviews>0)&&!known.has(l.t)));
+    added+=before-state.lectures[courseId].length;
+  });
+  return added;
+}
+
+// Days between reviews at each box level. Box 0 = just learned.
+const SR_INTERVALS=[1,3,7,16,35,90];
+const SR_CONF={1:'Shaky',2:'OK',3:'Solid'};
+
+function srNextDue(box,fromDate){
+  const days=SR_INTERVALS[Math.min(box,SR_INTERVALS.length-1)];
+  return localDay(new Date(new Date(fromDate+'T00:00:00').getTime()+days*86400000));
+}
+// Shaky resets to the start, OK repeats the current interval, Solid advances.
+function srApply(lec,conf,today){
+  let box=lec.box??0;
+  if(conf===1)box=0;
+  else if(conf===3)box=Math.min(box+1,SR_INTERVALS.length-1);
+  lec.box=box;
+  lec.conf=conf;
+  lec.last=today;
+  lec.reviews=(lec.reviews||0)+1;
+  lec.due=srNextDue(box,today);
+  return lec;
+}
+function allLectures(){
+  const out=[];
+  Object.entries(state.lectures||{}).forEach(([courseId,arr])=>{
+    (arr||[]).forEach((l,i)=>out.push({...l,courseId,idx:i}));
+  });
+  return out;
+}
+// A lecture that hasn't happened yet is never due — the syllabus is pre-loaded,
+// so without this every future week would show up as overdue on day one.
+// A lecture counts as delivered only once it has a date that has arrived.
+// Undated entries are "planned" — a syllabus topic with no fixed date yet.
+// They sit out of the rotation until you mark them held, so nothing is
+// scheduled off a date the app made up.
+function isDelivered(l,today){return !!l.d&&l.d<=today;}
+function isPlanned(l){return !l.d;}
+function lecturesDue(today){
+  return allLectures()
+    .filter(l=>l.due&&l.due<=today&&isDelivered(l,today))
+    .sort((a,b)=>a.due===b.due?(a.box??0)-(b.box??0):a.due.localeCompare(b.due));
+}
+function courseOf(id){return LECTURE_COURSES.find(c=>c.id===id)||{name:id,short:id};}
+
+async function loadLectures(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'lecture_progress'}});
+    if(pages.length){
+      const raw=pages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join('')||'{}';
+      try{state.lectures=JSON.parse(raw);}catch(e){warn('loadLectures.parse',e);state.lectures={};}
+      state.lecturesPageId=pages[0].id;
+    }else{state.lectures={};state.lecturesPageId=null;}
+    // Pull in any timetable entries not yet tracked, then persist so it's a one-off.
+    if(mergeSyllabus()>0)await saveLectures();
+  }catch(e){warn('loadLectures',e);state.lectures={};}
+}
+async function saveLectures(){
+  try{
+    const json=JSON.stringify(state.lectures||{});
+    const chunks=[];for(let i=0;i<json.length;i+=1990)chunks.push(json.slice(i,i+1990));
+    const richText=chunks.length?chunks.map(c=>({text:{content:c}})):[{text:{content:'{}'}}];
+    if(state.lecturesPageId){
+      await nPatch(state.lecturesPageId,{Value:{rich_text:richText}});
+    }else{
+      const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'lecture_progress'}}]},Value:{rich_text:richText}});
+      state.lecturesPageId=page.id;
+    }
+  }catch(e){warn('saveLectures',e);showToast('Save failed — will retry');}
+}
+
+async function addLecture(courseId){
+  const inp=document.getElementById('lec-add-'+courseId);
+  const title=(inp?.value||'').trim();
+  if(!title){showToast('Enter a lecture title');return;}
+  const today=localToday();
+  if(!state.lectures)state.lectures={};
+  if(!state.lectures[courseId])state.lectures[courseId]=[];
+  // A new lecture is due for its first review tomorrow (box 0 → 1 day).
+  state.lectures[courseId].push({t:title,d:today,box:0,due:srNextDue(0,today),reviews:0,conf:null,last:null});
+  if(inp)inp.value='';
+  renderExams();
+  await saveLectures();
+  showToast('Lecture added');
+}
+
+async function reviewLecture(courseId,idx,conf){
+  const arr=state.lectures?.[courseId];
+  if(!arr||!arr[idx])return;
+  srApply(arr[idx],conf,localToday());
+  renderExams();
+  await saveLectures();
+  const nextIn=SR_INTERVALS[Math.min(arr[idx].box,SR_INTERVALS.length-1)];
+  showToast(`${SR_CONF[conf]} — back in ${nextIn}d`,2500);
+}
+
+// Stamps a planned topic with today's date, starting its review clock.
+async function markHeld(courseId,idx){
+  const arr=state.lectures?.[courseId];
+  if(!arr||!arr[idx])return;
+  const today=localToday();
+  arr[idx].d=today;
+  arr[idx].due=srNextDue(arr[idx].box??0,today);
+  renderExams();
+  await saveLectures();
+  showToast('Marked held — first review tomorrow',2500);
+}
+
+async function deleteLecture(courseId,idx){
+  const arr=state.lectures?.[courseId];
+  if(!arr||!arr[idx])return;
+  arr.splice(idx,1);
+  renderExams();
+  await saveLectures();
+}
+
+function setExamSubTab(v){examSubTab=v;renderExams();}
+
 async function loadTopicProgress(){
   try{
     const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:'topic_progress'}});
@@ -3979,6 +4242,8 @@ async function refresh(force=true){
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
       await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs(),loadLifeStats()]);
       if(isFirst)_setLoad(100);
+      // Needed for the review-due prompt on the home screen.
+      if(!Object.keys(state.lectures||{}).length)await loadLectures();
       await loadPomoStateFromNotion();
       if(!state.activeSession)await restoreSessionFromNotion();
       await loadLatestRecapFromNotion();
@@ -4000,7 +4265,7 @@ async function refresh(force=true){
   if(currentTab==='tasks'&&!skip)await flushWriteQueue();
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()]);if(!skip){await checkAndIssuePenalties();await syncXPBleeds();}_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
-  if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
+  if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
   if(currentTab==='arcs'){if(!skip)await Promise.all([loadArcs(),loadBooks()]);_markTabLoaded('arcs');renderArcs();}
@@ -4310,6 +4575,24 @@ function renderHome(){
   }
   examCard+=`</div>`;
 
+  // Review prompt — the whole point of the spaced schedule is that it comes to you.
+  let reviewCard='';
+  const _due=lecturesDue(localToday());
+  if(_due.length){
+    const byCourse={};
+    _due.forEach(l=>{const n=courseOf(l.courseId).short;byCourse[n]=(byCourse[n]||0)+1;});
+    const breakdown=Object.entries(byCourse).map(([n,c])=>`${n} ${c}`).join(' · ');
+    reviewCard=`<div class="next-exam-card" onclick="examSubTab='lectures';switchTab('exams',document.querySelectorAll('.nav-btn')[3])" style="cursor:pointer">
+      <div class="next-exam-label">Review Due</div>
+      <div class="next-exam-top">
+        <div>
+          <div class="next-exam-name">${_due.length} lecture${_due.length>1?'s':''}</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:5px;letter-spacing:0.04em">${esc(breakdown)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   const streakRow=`<div class="streak-row">
     <div class="streak-item">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
@@ -4362,10 +4645,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${lifeStatsCard}${examCard}${planCard}</div>
+      <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
     </div>`;
   } else {
-    html=streakRow+rivalTeaser+arcCard+lifeStatsCard+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -6021,7 +6304,118 @@ function renderExams(){
   if(!upcoming.length&&!past.length){
     html=`<div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:12px;">No exams</div>`;
   }
-  el.innerHTML=html;
+
+  const todayStr=localToday();
+  const dueCount=lecturesDue(todayStr).length;
+  let dueBadge='';
+  if(dueCount>0)dueBadge=`<span class="lec-badge">${dueCount}</span>`;
+  const switcher=`<div style="display:flex;gap:4px;padding:14px 16px 4px;">
+    <button class="sil-toggle-btn${examSubTab==='exams'?' active':''}" onclick="setExamSubTab('exams')" style="flex:1;text-align:center">Exams</button>
+    <button class="sil-toggle-btn${examSubTab==='lectures'?' active':''}" onclick="setExamSubTab('lectures')" style="flex:1;text-align:center">Lectures${dueBadge}</button>
+  </div>`;
+
+  el.innerHTML=switcher+(examSubTab==='lectures'?renderLecturesPanel(todayStr):html);
+}
+
+function renderLecturesPanel(today){
+  const due=lecturesDue(today);
+  let h='<div style="padding:4px 16px 24px">';
+
+  // ── Due for review ───────────────────────────────────────────────────────
+  if(due.length){
+    h+=`<div class="exam-section-label">Due for review · ${due.length}</div>`;
+    due.forEach(l=>{
+      const c=courseOf(l.courseId);
+      const overdue=Math.round((new Date(today+'T00:00:00')-new Date(l.due+'T00:00:00'))/86400000);
+      let when='today';
+      if(overdue===1)when='1 day late';
+      else if(overdue>1)when=overdue+' days late';
+      const seen=l.reviews?`${l.reviews} review${l.reviews>1?'s':''}`:'never reviewed';
+      // The syllabus detail is what you actually try to recall, so show it here.
+      let subLine='';
+      if(l.sub)subLine=`<div class="lec-sub">${esc(l.sub)}</div>`;
+      h+=`<div class="lec-card">
+        <div class="lec-card-top">
+          <div style="min-width:0">
+            <div class="lec-title">${esc(l.t)}</div>
+            <div class="lec-meta">${esc(c.short)} · ${when} · ${seen}</div>
+          </div>
+          <div class="lec-box">B${l.box??0}</div>
+        </div>
+        ${subLine}
+        <div class="lec-btns">
+          <button class="lec-btn lec-shaky" onclick="reviewLecture('${l.courseId}',${l.idx},1)">Shaky</button>
+          <button class="lec-btn lec-ok"    onclick="reviewLecture('${l.courseId}',${l.idx},2)">OK</button>
+          <button class="lec-btn lec-solid" onclick="reviewLecture('${l.courseId}',${l.idx},3)">Solid</button>
+        </div>
+      </div>`;
+    });
+  }else{
+    h+=`<div style="text-align:center;padding:22px 12px;color:var(--text-dim);font-size:11px">Nothing due for review. ✓</div>`;
+  }
+
+  // ── Per-course progress ──────────────────────────────────────────────────
+  h+=`<div class="exam-section-label" style="margin-top:18px">Courses</div>`;
+  LECTURE_COURSES.forEach(c=>{
+    const arr=(state.lectures?.[c.id])||[];
+    // Progress is measured against lectures that have actually happened — a
+    // pre-loaded syllabus shouldn't read as 0% of 14 on day one.
+    const held=arr.filter(l=>isDelivered(l,today));
+    const planned=arr.filter(isPlanned).length;
+    const upcoming=arr.length-held.length-planned;
+    const total=held.length;
+    // "Solid" = reached box 3+, i.e. survived several spaced reviews.
+    const solid=held.filter(l=>(l.box??0)>=3).length;
+    const dueHere=held.filter(l=>l.due&&l.due<=today).length;
+    const pct=total?Math.round(solid/total*100):0;
+    let dueTag='';
+    if(dueHere>0)dueTag=`<span style="color:var(--gold)">${dueHere} due</span> · `;
+    let upcomingTag='';
+    if(upcoming>0)upcomingTag=` · ${upcoming} upcoming`;
+    if(planned>0)upcomingTag+=` · ${planned} planned`;
+    h+=`<div class="lec-course">
+      <div class="lec-course-top">
+        <span class="lec-course-name">${esc(c.name)}</span>
+        <span class="lec-course-meta">${dueTag}${solid}/${total} solid${upcomingTag}</span>
+      </div>
+      <div class="lec-bar"><div class="lec-bar-fill" style="width:${pct}%"></div></div>
+      <div class="lec-add-row">
+        <input class="lec-add-inp" id="lec-add-${c.id}" placeholder="Add ${esc(c.day)} lecture…" onkeydown="if(event.key==='Enter')addLecture('${c.id}')">
+        <button class="lec-add-btn" onclick="addLecture('${c.id}')">+</button>
+      </div>`;
+    if(arr.length){
+      h+='<div class="lec-list">';
+      // Dated lectures run chronologically; planned topics keep syllabus order below them.
+      arr.map((l,i)=>({...l,i})).sort((a,b)=>{
+        if(isPlanned(a)!==isPlanned(b))return isPlanned(a)?1:-1;
+        if(isPlanned(a))return a.i-b.i;
+        return (a.d||'').localeCompare(b.d||'');
+      }).forEach(l=>{
+        const held=isDelivered(l,today);
+        const plan=isPlanned(l);
+        const isDue=held&&l.due&&l.due<=today;
+        let cls='lec-item';
+        if(isDue)cls+=' due';
+        if(!held)cls+=' upcoming';
+        // Planned rows offer a Held button; dated ones show their date or next review.
+        let right='—';
+        if(plan)right=`<span class="lec-held-btn" onclick="markHeld('${c.id}',${l.i})">Held</span>`;
+        else if(!held)right=(l.d||'').slice(5);
+        else if(l.due)right='→ '+l.due.slice(5);
+        const who=l.by?` · ${esc(l.by)}`:'';
+        h+=`<div class="${cls}">
+          <span class="lec-item-t">${esc(l.t)}${who}</span>
+          <span class="lec-item-d">${right}</span>
+          <span class="lec-item-x" onclick="deleteLecture('${c.id}',${l.i})">✕</span>
+        </div>`;
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+
+  h+='</div>';
+  return h;
 }
 
 // Count-up animation
