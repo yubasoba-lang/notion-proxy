@@ -3871,16 +3871,45 @@ async function syncLectureRows(){
     Object.entries(state.lectures||{}).forEach(([cid,arr])=>{
       (arr||[]).forEach((l,i)=>{if(!l.pid)todo.push([cid,i]);});
     });
+    if(todo.length){
+      // Belt and braces: a row may already exist from an interrupted run whose id
+      // never got saved. Adopt it by title instead of creating a second copy.
+      try{
+        const existing=await nQuery(DB.lectureReview);
+        const byTitle={};
+        existing.forEach(p=>{
+          const t=p.properties?.Name?.title?.[0]?.plain_text;
+          if(t&&!byTitle[t])byTitle[t]=p.id;
+        });
+        let adopted=0;
+        for(let k=todo.length-1;k>=0;k--){
+          const [cid,idx]=todo[k];
+          const hit=byTitle[state.lectures[cid][idx].t];
+          if(hit){state.lectures[cid][idx].pid=hit;todo.splice(k,1);adopted++;}
+        }
+        if(adopted)await saveLectures();
+      }catch(e){warn('syncLectureRows.adopt',e);}
+    }
     if(!todo.length)return 0;
-    for(let i=0;i<todo.length;i+=4){
-      const batch=todo.slice(i,i+4);
+    // Two rules learned the hard way:
+    //  1. Persist page ids after EVERY batch. Saving only at the end meant closing
+    //     the tab mid-sync lost every id, and the next load re-created all 68 rows.
+    //  2. Keep it slow. Notion allows ~3 requests/second; a fast burst here starved
+    //     the other tabs and surfaced as "Load failed" everywhere.
+    for(let i=0;i<todo.length;i+=2){
+      const batch=todo.slice(i,i+2);
       const pages=await Promise.all(batch.map(([cid,idx])=>{
         const l=state.lectures[cid][idx];
-        return nCreate(DB.lectureReview,lectureRowProps(l,cid)).then(p=>({cid,idx,id:p.id})).catch(e=>{warn('syncLectureRows',e);return null;});
+        if(l.pid)return null;                       // re-check: may have been set since
+        return nCreate(DB.lectureReview,lectureRowProps(l,cid))
+          .then(p=>({cid,idx,id:p.id}))
+          .catch(e=>{warn('syncLectureRows',e);return null;});
       }));
-      pages.forEach(r=>{if(r){state.lectures[r.cid][r.idx].pid=r.id;made++;}});
+      let batchMade=0;
+      pages.forEach(r=>{if(r){state.lectures[r.cid][r.idx].pid=r.id;made++;batchMade++;}});
+      if(batchMade)await saveLectures();            // checkpoint, so progress survives
+      await new Promise(r=>setTimeout(r,700));      // stay under the rate limit
     }
-    if(made)await saveLectures();
   }catch(e){warn('syncLectureRows',e);}
   finally{_mirrorRunning=false;}
   return made;
