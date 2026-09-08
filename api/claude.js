@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     // Take the first actual text block rather than assuming index 0.
     const textBlock = (data.content || []).find(b => b.type === "text");
     if (!textBlock) throw new Error("no text block in response");
-    res.status(200).json({ text: textBlock.text });
+    res.status(200).json({ text: textBlock.text, usage: data.usage });
 
   } catch (err) {
     console.error("claude handler error:", err.message);
