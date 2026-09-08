@@ -845,6 +845,8 @@ body::after { display: none; }
 .rival-line-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .rival-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;filter:grayscale(0.35);}
 .rival-portrait{display:block;width:96px;height:96px;border-radius:50%;object-fit:cover;margin:14px auto 6px;filter:grayscale(0.3);border:1px solid var(--line,#2a2a2a);}
+.rival-quote{max-width:520px;margin:14px auto 4px;padding:0 22px;text-align:center;font-size:15px;line-height:1.9;letter-spacing:0.06em;color:var(--text);opacity:0.92;}
+.rival-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#c05050;margin-left:7px;vertical-align:middle;box-shadow:0 0 6px rgba(192,80,80,0.7);}
 .rival-line-text{font-size:14px;color:var(--text);line-height:1.7;letter-spacing:0.03em;}
 .lec-item-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lec-item-d{flex-shrink:0;font-size:9px;opacity:0.75;}
@@ -2260,6 +2262,19 @@ async function generateRivalLine(dateStr){
     await saveRivalLines();
     renderHome();
   }catch(e){warn('generateRivalLine',e);}
+}
+/* She only appears on her own page. The header teaser just carries a dot so you
+   know there's something to go and read — per-device, so it's UI state not data. */
+const RIVAL_SEEN_KEY='grind-rival-seen';
+function hasUnreadRivalLine(){
+  const l=latestRivalLine();
+  if(!l)return false;
+  try{return localStorage.getItem(RIVAL_SEEN_KEY)!==l.date;}catch(e){return false;}
+}
+function markRivalLineSeen(){
+  const l=latestRivalLine();
+  if(!l)return;
+  try{localStorage.setItem(RIVAL_SEEN_KEY,l.date);}catch(e){}
 }
 function latestRivalLine(){
   const l=(state.rivalLines||[]);
@@ -4354,7 +4369,7 @@ function renderRivalTeaser(){
   const gcol=gap>0.05?'#c07070':gap<-0.05?'#6a9a6a':'var(--text-dim)';
   return`<div class="rival-teaser" onclick="openRivalPage()">
     <div class="rival-teaser-left">
-      <span class="rival-teaser-name">影</span>
+      <span class="rival-teaser-name">影</span>${hasUnreadRivalLine()?'<span class="rival-dot"></span>':''}
       <span class="rival-teaser-status" style="color:${scol}">${status}</span>
     </div>
     <div class="rival-teaser-right">
@@ -4592,9 +4607,14 @@ async function openRivalPage(){
     <img class="rival-portrait" src="${RIVAL_IMG}" alt="" onerror="this.style.display='none'">
     <div class="rival-page-name">影</div>
     <div class="rival-page-subtitle">Shadow · Rival</div>
+    ${(()=>{const l=latestRivalLine();return l&&l.text?`<div class="rival-quote">${esc(l.text)}</div>`:'';})()}
     <div id="rivalPageContent">${renderRivalPageContent()}</div>
   </div>`;
   document.body.appendChild(el);
+  // Opening her page is reading it: clear the dot, and refresh Home behind so
+  // the header updates when you go back.
+  markRivalLineSeen();
+  if(currentTab==='home')setTimeout(()=>{try{renderHome();}catch(e){}},0);
   // Ensure workout + rival + break data is loaded
   const loads=[loadBreakPeriods(),loadH2HStart()];
   if(!state.exercises?.length) loads.push(loadExercises());
@@ -4909,8 +4929,9 @@ function renderHome(){
 
   // 影's line, if she had something to say. Deliberately bare — no label,
   // no timestamp, no framing. It should read like she said it, not like a card.
+  // Deliberately unused on Home — she lives on the rival page only.
   let rivalCard='';
-  const _rl=latestRivalLine();
+  const _rl=null&&latestRivalLine();
   if(_rl&&_rl.text){
     rivalCard=`<div class="rival-line-card" onclick="openRivalPage()" style="cursor:pointer">
       <div class="rival-line-head">
@@ -4996,10 +5017,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${rivalCard}${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
+      <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
     </div>`;
   } else {
-    html=streakRow+rivalCard+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
