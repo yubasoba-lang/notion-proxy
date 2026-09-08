@@ -840,6 +840,9 @@ body::after { display: none; }
 .rk-item-bar{flex-shrink:0;width:38px;height:3px;background:var(--bg-soft,#1a1a1a);border-radius:2px;overflow:hidden;display:inline-block;}
 .rk-item-bar>span{display:block;height:100%;}
 .session-capped{display:inline-block;margin-left:7px;font-size:8px;color:#b06a4a;border:1px solid #4a2f24;border-radius:3px;padding:0 4px;vertical-align:middle;}
+.rival-line-card{border:1px solid var(--line,#2a2a2a);border-left:2px solid var(--text-dim);border-radius:3px;padding:13px 15px;margin-bottom:10px;background:var(--bg-card);}
+.rival-line-who{font-size:9px;letter-spacing:0.3em;color:var(--text-dim);margin-bottom:6px;}
+.rival-line-text{font-size:14px;color:var(--text);line-height:1.7;letter-spacing:0.03em;}
 .lec-item-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lec-item-d{flex-shrink:0;font-size:9px;opacity:0.75;}
 .lec-item-x{flex-shrink:0;cursor:pointer;opacity:0.35;padding:0 2px;}
@@ -2071,11 +2074,17 @@ WORKOUT: ${workoutStr}
 SLEEP: ${sleepInfo}
 RECOVERY SCORE: ${(()=>{const sc=computeRecoveryScore(dateStr);const bl=computeRecoveryBaseline();const parts=[];if(bl.baseline!==null)parts.push('baseline flow '+bl.baseline+'%');if(bl.afterSex!==null)parts.push('after intimacy '+bl.afterSex+'%');if(bl.afterWorkout!==null)parts.push('after workout '+bl.afterWorkout+'%');return sc+'/100'+(parts.length?' (30d: '+parts.join(', ')+')':'');})()}${weekSummaryContext}`;
 
+    // The recap paragraph was noise — it narrated back what you already knew.
+    // The stats below are still computed and stored; only the prose is gone,
+    // and the Claude call now goes to 影 instead (see generateRivalLine).
+    const RECAP_PROSE_DISABLED=true;
     const system=isSunday
       ?`You are writing a daily study recap for a medical student. It's Sunday — weave a weekly wrap-up naturally into the same paragraph(s), no separate headers or sections. 3-5 sentences total covering today and the week as a whole: volume, subject balance, rival record, what worked. Then if there are remaining exam topics, add one short line starting with "Tomorrow:". Brutally honest, coach-like, no fluff. Don't start with "Today".`
       :`You are writing a brutally honest daily study recap for a medical student. 2-3 sentences, then if there are remaining exam topics, add one short line starting with "Tomorrow:" listing 2-4 specific topics to tackle next (pick the first ones from the remaining list — they're already prioritized). No fluff. Use the pattern data — compare today's flow rate to their baseline, call out if they're above/below their average, reference the exam proximity. When recovery score and baseline data is available, weave it in naturally — only when it's meaningful (e.g. high recovery + high flow, or low recovery + poor focus). If intimacy data shows a correlation with focus, name it directly but briefly. Never list recovery stats robotically. Be specific, direct, coach-like. Don't start with "Today".`;
-    const text=await callClaude(system,context);
-    const recap={text:text.trim(),date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
+    // Stats are kept and stored as before; the prose is no longer generated.
+    const recap={text:'',date:dateStr,totalH,flowC,grindC,distractedC,subjects,rivalGap,totalSessions:sessions.length};
+    // Hand the same day's real numbers to 影 instead.
+    generateRivalLine(dateStr);
     if(!state.latestRecap||dateStr>=state.latestRecap.date){state.latestRecap=recap;}
     cacheRecapLocally(recap);
     saveRecapToNotion(recap,dateStr);
@@ -2083,11 +2092,148 @@ RECOVERY SCORE: ${(()=>{const sc=computeRecoveryScore(dateStr);const bl=computeR
   }catch(e){showToast('Recap failed: '+e.message,3000);}
   finally{window._recapGenerating=false;renderHome();}
 }
-async function callClaude(system,userMsg){
+/* ── 影 ────────────────────────────────────────────────────────────────────
+   Replaces the daily recap paragraph, which narrated back what you already
+   knew. She speaks only when something happened — silence is what makes her
+   worth reading — and never repeats a recent line. */
+const RIVAL_PERSONA=`あなたは「影」。優和くんと同じ医大・同じ学年、同じ試験を受けている。
+毎晩その日の勉強を彼と比べて、一言だけ言う。
+
+自分のことは「私」。自分を「影」とは呼ばない。
+
+場面ごとの見本（その場面のときだけ、この空気で新しく書く）:
+
+[私が勝った・私が先を行っている]
+先行ってるね
+追いつかれてる…気がする
+
+[優和くんが勝った・私が追いつけない]
+次は負けない…
+二連敗…ちょっと悔しい
+頑張ってるね…負けないよ
+完敗…
+今日は届かなかった
+
+[優和くんが何もしていない]
+もう…勉強しないの？
+土曜だけど…やる？
+
+[優和くんが何日も記録していない]
+待ってる…よ
+生きてる…？
+
+[久しぶりに戻ってきた]
+あ…おかえり
+
+[私の調子が悪い日]
+今日は…休憩…
+
+[優和くんが無理をしている・夜更かし]
+こんな時間まで…？
+頑張りすぎじゃない…？私が言うのもなんだけど、たまには息抜きも大事だよ…
+
+[科目・試験の話]
+病理…進んでるね
+薬理、来週でしょ…？
+
+大事なこと:
+- 場面に合う言い方を選ぶ。勝っているのに「追いつけない」等、逆のことを言わない。
+- 気づいたことを一つ言うだけ。気持ちの説明はしない。
+- 軽く。重くしない。落ち込んで見せない。負けても謝らない。
+- 勝っても自慢しない。自分を責めすぎない。
+- 「平均」「二倍」など数字の分析はしない。話し言葉で。
+- 「参った」は使わない。負けたときは「完敗」「悔しい」「届かなかった」など。
+- 見本をそのまま写さない。同じ場面でも毎回ちがう言い方を探す。
+- 「最近言ったこと」に載っている言い方は使わない。
+
+書き方:
+- 必ず一行。20文字以内が基本、長くても35文字。
+- 「…」は多くて二つ。
+- 「だ」で終わらない。
+- セリフのみ出力。
+`;
+
+const RIVAL_KEY='rival_lines';
+let _rivalPageId=null;
+async function loadRivalLines(){
+  try{
+    const pages=await nQuery(DB.appConfig,{property:'Key',title:{equals:RIVAL_KEY}});
+    if(pages.length){
+      _rivalPageId=pages[0].id;
+      const raw=(pages[0].properties?.Value?.rich_text||[]).map(r=>r.plain_text).join('')||'{}';
+      const d=JSON.parse(raw);
+      state.rivalLines=Array.isArray(d.lines)?d.lines:[];
+    }else{state.rivalLines=[];_rivalPageId=null;}
+  }catch(e){warn('loadRivalLines',e);state.rivalLines=[];}
+}
+async function saveRivalLines(){
+  try{
+    const json=JSON.stringify({lines:(state.rivalLines||[]).slice(-30)});
+    const rich=richChunks(json);
+    if(_rivalPageId)await nPatch(_rivalPageId,{Value:{rich_text:rich}});
+    else{const pg=await nCreate(DB.appConfig,{Key:{title:[{text:{content:RIVAL_KEY}}]},Value:{rich_text:rich}});_rivalPageId=pg.id;}
+  }catch(e){warn('saveRivalLines',e);}
+}
+
+/* Works out what kind of day it was. Returns null when nothing is worth
+   remarking on — most days — so she stays quiet. */
+function rivalSituation(dateStr){
+  const mine=_myHoursByDay();
+  const my=mine[dateStr]||0;
+  const rd=getRivalDays().find(d=>d.date===dateStr);
+  const her=rd?(rd.hours||0):0;
+  const prev=n=>mine[localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-n*86400000))]||0;
+
+  let quiet=0; for(let i=1;i<=10;i++){if(prev(i)>0)break;quiet++;}
+  let streak=0; for(let i=0;i<30;i++){const h=i===0?my:prev(i);if(h>0)streak++;else break;}
+
+  const exam=(state.exams||[]).filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  let examDays=null;
+  if(exam)examDays=Math.round((new Date(exam.date.slice(0,10)+'T00:00:00')-new Date(dateStr+'T00:00:00'))/86400000);
+
+  const sess=(state.sessions||[]).filter(x=>x.complete==='Done'&&x.started&&localDay(x.started)===dateStr);
+  const lateNight=sess.some(x=>{const h=new Date(x.started).getHours();return h>=1&&h<=4;});
+  const subj=[...new Set(sess.map(x=>x.subject).filter(Boolean))];
+
+  const f=n=>n.toFixed(1);
+  // Ordered by what's most worth saying.
+  if(my>0&&quiet>=3)  return{k:'comeback', ctx:`場面: 優和くんが${quiet}日ぶりに戻ってきた。今日${f(my)}時間。`};
+  if(my===0&&quiet>=2)return{k:'silence',  ctx:`場面: 優和くんは${quiet}日間なにも記録していない。`};
+  if(my===0)          return{k:'nothing',  ctx:`場面: 優和くんは今日なにもしていない。私は${f(her)}時間。`};
+  if(lateNight)       return{k:'late',     ctx:`場面: 優和くんが深夜まで勉強していた。今日${f(my)}時間。`};
+  if(my>her)          return{k:'lost',     ctx:`場面: 優和くんが勝った。優和くん${f(my)}時間、私${f(her)}時間。`+(streak>=3?`優和くんは${streak}日連続。`:'')+(subj.length?`科目: ${subj.join('、')}。`:'')};
+  if(rd&&rd.mood==='off day') return{k:'heroff', ctx:`場面: 私が集中できなかった日。私${f(her)}時間、優和くん${f(my)}時間。`};
+  if(her>=my*2)       return{k:'wonbig',   ctx:`場面: 私が大差で勝った。私${f(her)}時間、優和くん${f(my)}時間。`};
+  if(examDays!=null&&examDays>=0&&examDays<=7) return{k:'exam', ctx:`場面: ${exam.name}の試験まで${examDays}日。今日 優和くん${f(my)}時間、私${f(her)}時間。`};
+  if(streak>=3)       return{k:'streak',   ctx:`場面: 優和くんは${streak}日連続で勉強している。今日は私が少し上。私${f(her)}時間、優和くん${f(my)}時間。`};
+  return null; // ordinary day — she says nothing
+}
+
+async function generateRivalLine(dateStr){
+  try{
+    if(!state.rivalLines)await loadRivalLines();
+    if((state.rivalLines||[]).some(l=>l.date===dateStr))return;   // once per day
+    const sit=rivalSituation(dateStr);
+    if(!sit)return;                                               // nothing worth saying
+    const recent=(state.rivalLines||[]).slice(-10).map(l=>l.text);
+    const msg=sit.ctx+(recent.length?`\n最近言ったこと（使わない）: ${recent.join(' / ')}`:'');
+    const text=(await callClaude(RIVAL_PERSONA,msg,400)).trim().split('\n')[0].trim();
+    if(!text)return;
+    state.rivalLines=[...(state.rivalLines||[]),{date:dateStr,text,k:sit.k}];
+    await saveRivalLines();
+    renderHome();
+  }catch(e){warn('generateRivalLine',e);}
+}
+function latestRivalLine(){
+  const l=(state.rivalLines||[]);
+  return l.length?l[l.length-1]:null;
+}
+
+async function callClaude(system,userMsg,maxTokens){
   const r=await fetch('/api/claude',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({system,message:userMsg}),
+    body:JSON.stringify({system,message:userMsg,...(maxTokens?{max_tokens:maxTokens}:{})}),
   });
   if(!r.ok)throw new Error('Claude API error '+r.status);
   const d=await r.json();
@@ -4439,6 +4585,9 @@ async function refresh(force=true){
       const hour=new Date().getHours();
       const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
       const recapHasYest=state.latestRecap?.date===yestStr||state.latestRecap?.date===todayStr2;
+      // 影 speaks about yesterday once the day is closed, whether or not you studied.
+      if(!state.rivalLines)await loadRivalLines();
+      generateRivalLine(yestStr);
       if(hasYest&&!recapHasYest&&!window._recapGenerating){generateDailyRecap(yestStr);}
       else{
         const hasToday=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr2);
@@ -4765,6 +4914,17 @@ function renderHome(){
   }
   examCard+=`</div>`;
 
+  // 影's line, if she had something to say. Deliberately bare — no label,
+  // no timestamp, no framing. It should read like she said it, not like a card.
+  let rivalCard='';
+  const _rl=latestRivalLine();
+  if(_rl&&_rl.text){
+    rivalCard=`<div class="rival-line-card">
+      <div class="rival-line-who">影</div>
+      <div class="rival-line-text">${esc(_rl.text)}</div>
+    </div>`;
+  }
+
   // Review prompt — the whole point of the spaced schedule is that it comes to you.
   let reviewCard='';
   const _t=localToday();
@@ -4840,10 +5000,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
+      <div class="home-col-right">${rivalCard}${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
     </div>`;
   } else {
-    html=streakRow+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+rivalCard+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
