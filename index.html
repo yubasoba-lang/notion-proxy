@@ -844,7 +844,17 @@ body::after { display: none; }
 .rival-line-who{font-size:9px;letter-spacing:0.3em;color:var(--text-dim);margin-bottom:6px;}
 .rival-line-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .rival-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;filter:grayscale(0.35);}
-.rival-portrait{display:block;width:96px;height:96px;border-radius:50%;object-fit:cover;margin:14px auto 6px;filter:grayscale(0.3);border:1px solid var(--line,#2a2a2a);}
+/* She is the header, not a picture in it: the art bleeds to the edges, a gradient
+   carries it into the page, and the name and her line sit over the bottom of it. */
+.rival-hero{position:relative;width:100%;overflow:hidden;margin-bottom:-8px;}
+.rival-portrait{display:block;width:100%;max-width:520px;margin:0 auto;opacity:0.9;
+  -webkit-mask-image:radial-gradient(120% 88% at 50% 24%, #000 55%, transparent 100%);
+  mask-image:radial-gradient(120% 88% at 50% 24%, #000 55%, transparent 100%);}
+.rival-hero-fade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 22%, transparent 45%, var(--bg,#0a0a0c) 92%);}
+.rival-hero-text{position:relative;margin-top:-92px;padding-bottom:6px;}
+.rival-hero.no-img .rival-portrait,.rival-hero.no-img .rival-hero-fade{display:none;}
+.rival-hero.no-img .rival-hero-text{margin-top:14px;}
 .rival-quote{max-width:520px;margin:14px auto 4px;padding:0 22px;text-align:center;font-size:15px;line-height:1.9;letter-spacing:0.06em;color:var(--text);opacity:0.92;}
 .rival-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#c05050;margin-left:7px;vertical-align:middle;box-shadow:0 0 6px rgba(192,80,80,0.7);}
 .rival-line-text{font-size:14px;color:var(--text);line-height:1.7;letter-spacing:0.03em;}
@@ -2181,7 +2191,8 @@ const RIVAL_PERSONA=`あなたは「影」。優和くんと同じ医大・同�
    Kept as a static file rather than embedded base64 so the HTML stays small —
    the body map's 548KB of inlined images is what made the app heavy before.
    If the file isn't there the image hides itself and everything still works. */
-const RIVAL_IMG='/kage.png';
+const RIVAL_IMG='/kage.webp';
+const RIVAL_FACE='/kage-face.webp';
 
 const RIVAL_KEY='rival_lines';
 let _rivalPageId=null;
@@ -4604,10 +4615,15 @@ async function openRivalPage(){
       <button class="rival-back" onclick="closeRivalPage()">← Back</button>
       <button class="rival-break-btn" id="rivalBreakBtn" onclick="toggleBreak()">${isOnBreak()?'End Break':'Take a Break'}</button>
     </div>
-    <img class="rival-portrait" src="${RIVAL_IMG}" alt="" onerror="this.style.display='none'">
-    <div class="rival-page-name">影</div>
-    <div class="rival-page-subtitle">Shadow · Rival</div>
-    ${(()=>{const l=latestRivalLine();return l&&l.text?`<div class="rival-quote">${esc(l.text)}</div>`:'';})()}
+    <div class="rival-hero">
+      <img class="rival-portrait" src="${RIVAL_IMG}" alt="" onerror="this.closest('.rival-hero').classList.add('no-img')">
+      <div class="rival-hero-fade"></div>
+      <div class="rival-hero-text">
+        <div class="rival-page-name">影</div>
+        <div class="rival-page-subtitle">Shadow · Rival</div>
+        ${(()=>{const l=latestRivalLine();return l&&l.text?`<div class="rival-quote">${esc(l.text)}</div>`:'';})()}
+      </div>
+    </div>
     <div id="rivalPageContent">${renderRivalPageContent()}</div>
   </div>`;
   document.body.appendChild(el);
@@ -4935,7 +4951,7 @@ function renderHome(){
   if(_rl&&_rl.text){
     rivalCard=`<div class="rival-line-card" onclick="openRivalPage()" style="cursor:pointer">
       <div class="rival-line-head">
-        <img class="rival-avatar" src="${RIVAL_IMG}" alt="" onerror="this.style.display='none'">
+        <img class="rival-avatar" src="${RIVAL_FACE}" alt="" onerror="this.style.display='none'">
         <span class="rival-line-who">影</span>
       </div>
       <div class="rival-line-text">${esc(_rl.text)}</div>
