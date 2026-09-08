@@ -4823,64 +4823,10 @@ function renderHome(){
     if(diff===0)return'Today';if(diff===-1)return'Yesterday';
     return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
   };
-  let planCard;
-  if(window._recapGenerating){
-    planCard=`<div class="recap-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
-      </div>
-      <div class="plan-generating">
-        <div class="plan-gen-dot"></div><div class="plan-gen-dot"></div><div class="plan-gen-dot"></div>
-        <span style="font-size:11px;color:var(--text-dim)">Claude is writing your recap…</span>
-      </div>
-    </div>`;
-  } else if(latestRecap){
-    const rivalCol=latestRecap.rivalGap>0?'var(--gold)':latestRecap.rivalGap<0?'#8B8B9B':'var(--text-dim)';
-    const rivalSymbol=latestRecap.rivalGap>0?'↑':latestRecap.rivalGap<0?'↓':'=';
-    const isToday=latestRecap.date===todayStr;
-    const dateLabel=fmtRecapDate(latestRecap.date);
-    // Hoisted out of the template literal: keeps the local-day logic in one place and
-    // avoids a ternary containing `}` inside a ${...}, which Safari mis-parses.
-    const yestStr=prevDay(todayStr);
-    const hasYestSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
-    const showYestBtn=isToday&&hasYestSessions;
-    let yestBtn='';
-    if(showYestBtn){
-      yestBtn=`<button class="plan-gen-btn" style="opacity:0.6" onclick="generateDailyRecap('${yestStr}')" title="Generate yesterday's recap">Yest</button>`;
-    }
-    planCard=`<div class="recap-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div>
-          <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
-          <div style="font-size:8px;color:var(--text-dim);margin-top:2px;letter-spacing:0.06em">${dateLabel}${latestRecap.date?` · ${new Date(latestRecap.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}`:''}</div>
-        </div>
-        <div style="display:flex;gap:6px">
-          ${yestBtn}
-          <button class="plan-gen-btn" onclick="generateDailyRecap(${isToday?'':`'${todayStr}'`})" title="${isToday?'Regenerate':'Generate today\'s recap'}">${isToday?'↺':'✦ New'}</button>
-        </div>
-      </div>
-      ${!isToday?`<div style="font-size:8px;color:var(--text-dim);margin-bottom:8px;font-style:italic">Showing ${dateLabel.toLowerCase()}'s recap — generate one for today after your sessions.</div>`:''}
-      <div class="recap-text">${latestRecap.text}</div>
-      <div class="recap-stats">
-        <div class="recap-stat"><div class="recap-stat-num">${fmtHr(latestRecap.totalH)}</div><div class="recap-stat-label">Studied</div></div>
-        <div class="recap-stat-divider"></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:var(--gold)">${latestRecap.flowC}</div><div class="recap-stat-label">Flow</div></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(232,234,240,0.45)">${latestRecap.grindC}</div><div class="recap-stat-label">Grind</div></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:rgba(180,90,70,0.8)">${latestRecap.distractedC}</div><div class="recap-stat-label">Dist.</div></div>
-        <div class="recap-stat-divider"></div>
-        <div class="recap-stat"><div class="recap-stat-num" style="color:${rivalCol}">${rivalSymbol} ${fmtHr(Math.abs(latestRecap.rivalGap||0))}</div><div class="recap-stat-label">vs 影</div></div>
-      </div>
-    </div>`;
-  } else {
-    const hasSessions=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===todayStr);
-    planCard=`<div class="recap-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:7px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Daily Recap</div>
-        ${hasSessions?`<button class="plan-gen-btn" onclick="generateDailyRecap()">✦ Generate</button>`:''}
-      </div>
-      <div style="font-size:11px;color:var(--text-dim);padding:2px 0">${hasSessions?'Tap to generate today\'s recap':'Study something first'}</div>
-    </div>`;
-  }
+  // The recap card is gone — 影 replaced it. Recap stats still compute and save
+  // to Notion; only the paragraph was ever the problem, and old cached recaps
+  // still carried pre-session-cap numbers (36h days), so rendering them misled.
+  const planCard='';
 
   // Next exam widget — built first, placed at top
   const allExams=state.exams;
@@ -4926,7 +4872,7 @@ function renderHome(){
   let rivalCard='';
   const _rl=latestRivalLine();
   if(_rl&&_rl.text){
-    rivalCard=`<div class="rival-line-card">
+    rivalCard=`<div class="rival-line-card" onclick="openRivalPage()" style="cursor:pointer">
       <div class="rival-line-who">影</div>
       <div class="rival-line-text">${esc(_rl.text)}</div>
     </div>`;
