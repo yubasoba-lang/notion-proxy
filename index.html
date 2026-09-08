@@ -2198,7 +2198,11 @@ function rivalSituation(dateStr){
   const f=n=>n.toFixed(1);
   // Ordered by what's most worth saying.
   if(my>0&&quiet>=3)  return{k:'comeback', ctx:`場面: 優和くんが${quiet}日ぶりに戻ってきた。今日${f(my)}時間。`};
-  if(my===0&&quiet>=2)return{k:'silence',  ctx:`場面: 優和くんは${quiet}日間なにも記録していない。`};
+  // A quiet stretch is worth one remark at a few milestones — not one every day.
+  // Otherwise she nags nightly and you stop reading her.
+  if(my===0&&[3,7,14,30].includes(quiet))
+                      return{k:'silence',  ctx:`場面: 優和くんは${quiet}日間なにも記録していない。`};
+  if(my===0&&quiet>=2)return null;
   if(my===0)          return{k:'nothing',  ctx:`場面: 優和くんは今日なにもしていない。私は${f(her)}時間。`};
   if(lateNight)       return{k:'late',     ctx:`場面: 優和くんが深夜まで勉強していた。今日${f(my)}時間。`};
   if(my>her)          return{k:'lost',     ctx:`場面: 優和くんが勝った。優和くん${f(my)}時間、私${f(her)}時間。`+(streak>=3?`優和くんは${streak}日連続。`:'')+(subj.length?`科目: ${subj.join('、')}。`:'')};
@@ -2215,6 +2219,9 @@ async function generateRivalLine(dateStr){
     if((state.rivalLines||[]).some(l=>l.date===dateStr))return;   // once per day
     const sit=rivalSituation(dateStr);
     if(!sit)return;                                               // nothing worth saying
+    // Two nights of the same kind of comment reads as nagging, whatever the wording.
+    const last=(state.rivalLines||[])[ (state.rivalLines||[]).length-1 ];
+    if(last&&last.k===sit.k&&last.date===prevDay(dateStr))return;
     const recent=(state.rivalLines||[]).slice(-10).map(l=>l.text);
     const msg=sit.ctx+(recent.length?`\n最近言ったこと（使わない）: ${recent.join(' / ')}`:'');
     const text=(await callClaude(RIVAL_PERSONA,msg,400)).trim().split('\n')[0].trim();
