@@ -3,7 +3,7 @@
   "builds": [
     { "src": "api/notion.js",  "use": "@vercel/node" },
     { "src": "api/claude.js",  "use": "@vercel/node" },
-    { "src": "**/*.{png,html,json}", "use": "@vercel/static" }
+    { "src": "**/*.{png,webp,jpg,svg,html,json}", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/notion", "dest": "/api/notion.js" },
