@@ -2190,7 +2190,9 @@ function rivalSituation(dateStr){
   const her=rd?(rd.hours||0):0;
   const prev=n=>mine[localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-n*86400000))]||0;
 
-  let quiet=0; for(let i=1;i<=10;i++){if(prev(i)>0)break;quiet++;}
+  // Count back far enough to actually reach the 14 and 30 day milestones —
+  // a 10-day cap silently made those unreachable.
+  let quiet=0; for(let i=1;i<=45;i++){if(prev(i)>0)break;quiet++;}
   let streak=0; for(let i=0;i<30;i++){const h=i===0?my:prev(i);if(h>0)streak++;else break;}
 
   const exam=(state.exams||[]).filter(e=>!e.archive&&e.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
