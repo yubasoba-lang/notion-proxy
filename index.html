@@ -1593,9 +1593,22 @@ function openTzSheet(){
 }
 
 // Convert any Date or ISO string to YYYY-MM-DD in the user's selected timezone
+// toLocaleDateString with a timeZone builds an Intl formatter on every call, which
+// is slow enough to matter when it runs thousands of times (rival generation did).
+// Memoised per timestamp+zone; the map is cleared if the timezone changes.
+const _dayMemo=new Map();
+let _dayMemoTz=null;
 function localDay(v){
   const d=v instanceof Date?v:new Date(v);
-  return d.toLocaleDateString('en-CA',{timeZone:userTimezone});
+  const t=d.getTime();
+  if(!Number.isFinite(t))return '';
+  if(_dayMemoTz!==userTimezone){_dayMemo.clear();_dayMemoTz=userTimezone;}
+  const hit=_dayMemo.get(t);
+  if(hit)return hit;
+  const out=d.toLocaleDateString('en-CA',{timeZone:userTimezone});
+  if(_dayMemo.size>20000)_dayMemo.clear();
+  _dayMemo.set(t,out);
+  return out;
 }
 function localToday(){return localDay(new Date());}
 function prevDay(dateStr){return localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-86400000));}
@@ -3646,7 +3659,9 @@ let _rivalCache=null,_rivalCacheDate=null;
 /* Your study hours per local day, from real sessions (already length-capped).
    Used to pace 影 against you. Past days can't change, so her history stays fixed. */
 function _myHoursByDay(){
-  if(_myHoursCache)return _myHoursCache;
+  const n=(state.sessions||[]).length;
+  if(_myHoursCache&&_myHoursCacheN===n)return _myHoursCache;
+  _myHoursCacheN=n;
   const m={};
   (state.sessions||[]).forEach(s=>{
     if(s.complete!=='Done'||!s.started||!s.done)return;
@@ -3660,37 +3675,37 @@ function _myHoursByDay(){
    real target rather than a treadmill. Deliberately beatable — she is capped
    near your best recent day, and drifts down when you go quiet instead of
    lapping you, so a comeback is always winnable. */
-function rivalTarget(ds){
-  const mine=_myHoursByDay();
-  const look=[];
-  for(let i=1;i<=7;i++){
-    const d=localDay(new Date(new Date(ds+'T00:00:00').getTime()-i*86400000));
-    look.push(mine[d]||0);
-  }
-  const avg=look.reduce((a,b)=>a+b,0)/look.length;
+// Takes the previous 7 days' hours directly. The generation loop already walks days
+// in order, so it hands over a rolling window instead of each day recomputing its own
+// lookback - that was 7 date conversions per day across ~250 days.
+function rivalTarget(look){
+  const avg=look.reduce((a,b)=>a+b,0)/Math.max(1,look.length);
   const best=Math.max(...look);
   // Sit just past your average, but never far beyond your own best recent day.
   let t=avg*RIVAL_CFG.chaseMult;
   t=Math.min(t,best*RIVAL_CFG.ceilingVsBest||t);
   return Math.max(RIVAL_CFG.floorH,Math.min(RIVAL_CFG.ceilingH,t));
 }
-let _myHoursCache=null;
+let _myHoursCache=null,_myHoursCacheN=-1;
 function invalidateRivalCache(){_rivalCache=null;_rivalCacheDate=null;_myHoursCache=null;}
 
 function getRivalDays(){
   const today=localToday();
   if(_rivalCache&&_rivalCacheDate===today)return _rivalCache;
   const days=[];let cur=new Date(RIVAL_CFG.startDate);const end=new Date(today);let prevDark=false;
+  const _mine=_myHoursByDay();
+  let _win=[0,0,0,0,0,0,0];   // your hours for the previous 7 days, rolled forward
   while(cur<=end){
     const ds=localDay(cur);
     const rng=_rivalRng(_rivalHash(ds+'kage'));
+    const _myH=_mine[ds]||0;
     const forceReset=ds>=RIVAL_CFG.streakReset.from&&ds<=RIVAL_CFG.streakReset.to;
     const rc=prevDark?RIVAL_CFG.darkClusterChance:RIVAL_CFG.restChance;
     const isDark=forceReset||rng()<rc;
     if(isDark){days.push({date:ds,dark:true,hours:0,sessions:[],mood:'rest'});prevDark=true;}
     else{
       const isComeback=prevDark;
-      const target=rivalTarget(ds);
+      const target=rivalTarget(_win);
       // Spread around the target so she has good and bad days, not a flat line.
       let h=target*(0.72+rng()*0.56);
       if(isComeback)h*=RIVAL_CFG.comebackMult;
@@ -3713,6 +3728,7 @@ function getRivalDays(){
       days.push({date:ds,dark:false,hours:h,sessions,comeback:isComeback,mood,target});
       prevDark=false;
     }
+    _win.push(_myH); if(_win.length>7)_win.shift();
     cur.setDate(cur.getDate()+1);
   }
   _rivalCache=days;_rivalCacheDate=today;return days;
@@ -3767,9 +3783,11 @@ function getUserStudyHoursWeek(weeksAgo=0){
   return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done&&s.started.split('T')[0]>=mon&&s.started.split('T')[0]<=sun)
     .reduce((sum,s)=>sum+sessionH(s),0);
 }
+// Called once per day inside loops over ~250 rival days. Filtering every session
+// each time meant ~120,000 localDay calls per rival-page render, which crashed
+// mobile Safari. Reads the prebuilt day->hours map instead.
 function getUserHoursOnDay(dateStr){
-  return(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&localDay(s.started)===dateStr&&s.done)
-    .reduce((sum,s)=>sum+sessionH(s),0);
+  return _myHoursByDay()[dateStr]||0;
 }
 function debugH2H(dateStr){
   const sess=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.done);
