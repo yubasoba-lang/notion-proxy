@@ -5102,7 +5102,10 @@ function renderTasks(){
   // Penalty quests
   const activePenalties=(state.penalties||[]).filter(p=>!p.done);
   if(activePenalties.length){
-    html+=`<div class="penalty-section-label">OPEN GATES — ${activePenalties.length}</div>`;
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div class="penalty-section-label">OPEN GATES — ${activePenalties.length}</div>
+      <button onclick="clearAllPenalties()" style="background:transparent;border:1px solid rgba(120,40,40,0.35);color:#7a3838;font-size:7px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;cursor:pointer;margin-bottom:8px;">Clear all</button>
+    </div>`;
     activePenalties.forEach((p,i)=>{
       const now=Date.now();
       const hoursOld=(now-new Date(p.issuedAt).getTime())/3600000;
@@ -5465,27 +5468,46 @@ async function expirePenalties(){
 async function checkAndIssuePenalties(){
   try{
     const today=localToday();
-    const yesterday=prevDay(today);
-    // Only run once per day — skip if already checked today
+    // Judge D-2, not D-1. Yesterday's tasks are still open and completable on the
+    // Tasks page (carryover), so an unticked task at this moment is "not marked yet",
+    // not "missed". Ticking it late keeps its original Due Date, so it still counts.
+    const judged=prevDay(prevDay(today));
+    // Stores the last day that was *judged*, not the day the check ran. Comparing
+    // against the judged day is what stops a day being judged twice (which would
+    // re-issue a penalty the user had already cleared).
     const checkedPages=await appConfigRows('penalty_check_date');
-    const lastChecked=checkedPages.length?checkedPages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join(''):'';
-    if(lastChecked===today)return;
-    // Mark as checked for today
-    if(checkedPages.length){await nPatch(checkedPages[0].id,{Value:{rich_text:[{text:{content:today}}]}});}
-    else{await nCreate(DB.appConfig,{Key:{title:[{text:{content:'penalty_check_date'}}]},Value:{rich_text:[{text:{content:today}}]}});}
-    const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:yesterday}});
+    const lastJudged=checkedPages.length?checkedPages[0].properties?.Value?.rich_text?.map(r=>r.plain_text).join(''):'';
+    if(lastJudged&&lastJudged>=judged)return;
+    if(checkedPages.length){await nPatch(checkedPages[0].id,{Value:{rich_text:[{text:{content:judged}}]}});}
+    else{await nCreate(DB.appConfig,{Key:{title:[{text:{content:'penalty_check_date'}}]},Value:{rich_text:[{text:{content:judged}}]}});}
+    // One query for the whole day — done rows tell us what counts, open rows get swept.
+    const dayTasks=await nQuery(DB.tasks,{property:'Due Date',date:{equals:judged}});
+    const doneNames=new Set();
+    const stale=[];
+    dayTasks.forEach(p=>{
+      const pr=p.properties;
+      if(g.checkbox(pr.Status)){doneNames.add(g.title(pr.Task));return;}
+      if(g.checkbox(pr['Missed check1']))return;
+      // Only recurring dailies. A one-off task due two days ago is still worth
+      // doing; a daily habit from two days ago can't be done retroactively.
+      if(g.select(pr.Difficulty)==='Daily')stale.push(p.id);
+    });
+    if(stale.length){
+      const res=await Promise.allSettled(stale.map(id=>nPatch(id,{'Missed check1':{checkbox:true}})));
+      const failed=res.filter(r=>r.status==='rejected');
+      failed.forEach(r=>warn('autoMissTask',r.reason));
+      const swept=stale.length-failed.length;
+      if(swept)showToast(`${swept} TASK${swept>1?'S':''} MARKED MISSED · ${judged.slice(5)}`,3500);
+      delete _tabLoadedAt['tasks'];
+    }
+    const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:judged}});
     if(!logs.length)return;
     const q=logs[0].properties;
     const getQNum=v=>{const n=g.num(v)??g.formula(v)??g.rollup(v);return n!=null?Number(n):null;};
-    const yesterdayQuestIds=[getQNum(q['Quest 1']),getQNum(q['Quest 2']),getQNum(q['Quest 3'])].filter(n=>n!=null&&n>0);
-    if(!yesterdayQuestIds.length)return;
-    const doneTasks=await nQuery(DB.tasks,{and:[
-      {property:'Status',checkbox:{equals:true}},
-      {property:'Due Date',date:{equals:yesterday}},
-    ]});
-    const doneNames=new Set(doneTasks.map(p=>g.title(p.properties.Task)));
+    const judgedQuestIds=[getQNum(q['Quest 1']),getQNum(q['Quest 2']),getQNum(q['Quest 3'])].filter(n=>n!=null&&n>0);
+    if(!judgedQuestIds.length)return;
     const missedTasks=DAILY_TASKS.filter(t=>
-      t.questId&&t.p1&&yesterdayQuestIds.includes(t.questId)&&!doneNames.has(t.name)
+      t.questId&&t.p1&&judgedQuestIds.includes(t.questId)&&!doneNames.has(t.name)
     );
     if(!missedTasks.length)return;
     const existingTasks=new Set((state.penalties||[]).map(p=>p.task));
@@ -5497,6 +5519,32 @@ async function checkAndIssuePenalties(){
     await savePenalties();
     showToast(`${newPenalties.length} PENALTY QUEST${newPenalties.length>1?'S':''} ISSUED`,4000);
   }catch(e){warn('checkAndIssuePenalties',e);}
+}
+
+async function clearAllPenalties(){
+  const nP=(state.penalties||[]).length;
+  const nD=(state.xpDebts||[]).length;
+  // Every debt row is penalty-derived, and expired penalties leave finalized rows
+  // behind that keep draining XP after the penalty itself is gone. Clear both.
+  const xp=(state.xpDebts||[]).reduce((s,d)=>s+(d.amount||0),0);
+  if(!confirm(`Clear ${nP} penalt${nP===1?'y':'ies'}?\n\nThis also wipes ${nD} XP debt row${nD===1?'':'s'}, restoring ${xp} XP.\n\nCan't be undone.`))return;
+  const prevP=state.penalties||[];
+  const prevD=state.xpDebts||[];
+  state.penalties=[];
+  state.xpDebts=[];
+  try{
+    await savePenalties();
+    await saveXPDebts();
+  }catch(e){
+    // Don't leave the screen claiming a clear that never reached Notion.
+    state.penalties=prevP;state.xpDebts=prevD;
+    warn('clearAllPenalties',e);
+    renderTasks();
+    showToast('Clear failed — nothing changed',4000);
+    return;
+  }
+  renderTasks();
+  showToast(`${nP} PENALT${nP===1?'Y':'IES'} CLEARED · ${xp} XP RESTORED`,4000);
 }
 
 async function completePenalty(idx){
