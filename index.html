@@ -3034,7 +3034,8 @@ async function loadWorkoutDays(){
     state.workoutDaySet=allDays;
     const cutoff7=localDay(new Date(Date.now()-7*86400000));
     state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
-  }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();}
+    state.workoutDaysLoaded=true;
+  }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();state.workoutDaysLoaded=false;}
 }
 // How far back workout days are loaded — also the longest streak that can be counted.
 const WORKOUT_DAYS_WINDOW=90;
@@ -3084,6 +3085,25 @@ function scheduledWorkoutStreak(){
 function todaysSession(){
   const abbr=WEEK_ABBR[new Date().getDay()];
   return WORKOUT_WEEK.find(w=>w.abbr===abbr)||null;
+}
+// A Notion formula can't express "rest days don't count", so the app computes the
+// streak from the workout log and writes it to the Streaks row. Notion always holds the
+// current value — readable there, and the fallback here if the log fails to load.
+// Writes only when the number changed or it hasn't been written today.
+async function syncScheduledStreak(){
+  if(!state.workoutDaysLoaded||!state.streaksPageId||!state.streaks)return;
+  const n=scheduledWorkoutStreak();
+  const today=localToday();
+  if(state.streaks.workoutStored===n&&state.streaks.workoutStoredOn===today)return;
+  try{
+    await nPatch(state.streaksPageId,{'Scheduled Workout Streak':{number:n},'Scheduled Streak Updated':{date:{start:today}}});
+    state.streaks.workoutStored=n;
+    state.streaks.workoutStoredOn=today;
+  }catch(e){warn('syncScheduledStreak',e);}
+}
+function displayedWorkoutStreak(){
+  if(state.workoutDaysLoaded)return scheduledWorkoutStreak();
+  return state.streaks?.workoutStored??0;
 }
 async function loadStats(){
   try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}
@@ -3172,7 +3192,11 @@ async function loadStreaks(){
         mind:parseStreak(q['Mind streak']),
         sleep:parseStreak(q['Sleep streak']),
         quest:parseStreak(q['Quest streak']),
+        // Written back by syncScheduledStreak — the app computes it, Notion holds it.
+        workoutStored:q['Scheduled Workout Streak']?.number??null,
+        workoutStoredOn:q['Scheduled Streak Updated']?.date?.start??null,
       };
+      state.streaksPageId=p[0].id;
     }
   }catch(e){setError('Streaks: '+e.message);}
 }
@@ -4716,6 +4740,7 @@ async function refresh(force=true){
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
       await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs(),loadLifeStats()]);
       if(isFirst)_setLoad(100);
+      syncScheduledStreak();
       // Needed for the review-due prompt on the home screen.
       if(!Object.keys(state.lectures||{}).length)await loadLectures();
       await loadPomoStateFromNotion();
@@ -5056,7 +5081,7 @@ function renderHome(){
         <rect x="10.2" y="4.5" width="2" height="5" rx="0.4"/>
         <rect x="12.2" y="5.5" width="1.8" height="3" rx="0.4"/>
       </svg>
-      <span class="streak-num${s?'':' loading'}">${s?scheduledWorkoutStreak():'—'}</span>
+      <span class="streak-num${s?'':' loading'}">${s?displayedWorkoutStreak():'—'}</span>
     </div>
     <div class="streak-item">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -5798,6 +5823,9 @@ async function _logExercise(exercise, sets, reps, weight){
     showToast('Not logged — no Body Stats row for '+skipped.join(', '),5000);
   }
   await Promise.all(creates);
+  // Today now has a workout — update the streak here and in Notion without a reload.
+  (state.workoutDaySet||(state.workoutDaySet=new Set())).add(today);
+  syncScheduledStreak();
   await loadBodyStats();
   return creates.length;
 }
