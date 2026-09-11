@@ -2834,7 +2834,9 @@ const PR_THRESHOLDS={
   'Latissimus Dorsi':   {exercise:'Lat Pulldown',        minReps:8,  thresholds:[35,40,45,50,55,60,65,70,80,87,95,105,115,125,135,145,155,165,175,185,195,205]},
   'Biceps':             {exercise:'Bicep Curl Machine',  minReps:8,  thresholds:[25,30,35,38,42,46,50,54,58,62,67,72,77,83,89,95,101,108,115,122,130,138]},
   'Forearms':           {exercise:'Dumbbell Wrist Curl', minReps:30, thresholds:[4,5,6,7,8,9,10,11,12,13,15,17,19,21,23,25,27,30,33,36,40,45]},
-  'Posterior Deltoid':  {exercise:'Face Pulls',          minReps:8,  thresholds:[15,18,21,24,27,30,33,36,40,44,48,52,57,62,67,72,78,84,90,97,104,112]},
+  // strict: only this exact exercise sets the PR. Otherwise every Rear Delt exercise pools
+  // into one max, and the machine fly's heavier loads would swamp a single-arm cable ladder.
+  'Posterior Deltoid':  {exercise:'Cable Archer Pull', strict:true, minReps:8, thresholds:[5,6,7,8,10,11,13,14,16,18,20,22,24,27,30,33,36,40,44,48,53,58]},
   'Anterior Deltoid':   {exercise:'Machine Shoulder Press',minReps:8,thresholds:[25,27,30,33,36,40,44,48,52,57,62,68,74,80,87,94,101,109,117,125,134,144]},
   'Lateral Deltoid':    {exercise:'Cable Lateral Raises', minReps:8, thresholds:[4,5,6,7,8,10,11,12,14,15,17,19,21,23,25,27,30,33,36,39,43,47]},
   'Traps':              {exercise:'Face Pulls',           minReps:8, thresholds:[15,18,21,24,27,30,33,36,40,44,48,52,57,62,67,72,78,84,90,97,104,112]},
@@ -2934,6 +2936,7 @@ async function loadPRs(){
       if(!muscle)return;
       const def=PR_THRESHOLDS[muscle];
       if(!def)return;
+      if(def.strict&&baseName!==def.exercise)return;
       const value=def.isReps?reps:weight;
       const qualifies=def.isReps?(reps>=def.thresholds[0]):(reps>=def.minReps);
       if(!qualifies)return;
@@ -5775,7 +5778,7 @@ async function logExerciseFromTab(id){
     // Check PR
     const prMuscle=exercise.primaryMuscle;
     const prDef=PR_THRESHOLDS[prMuscle];
-    if(prDef&&prMuscle){
+    if(prDef&&prMuscle&&!(prDef.strict&&exercise.name!==prDef.exercise)){
       const value=prDef.isReps?reps:weight;
       const minOk=prDef.isReps?(reps>=prDef.thresholds[0]):(reps>=prDef.minReps);
       const prev=state.prs?.[prMuscle]??0;
@@ -5859,7 +5862,8 @@ function renderWorkout(){
         +secondary.map(m=>`<span class="wec-tag wec-secondary">${m} ×0.5</span>`).join('');
       const prMuscle=e.primaryMuscle;
       const prDef=PR_THRESHOLDS[prMuscle];
-      const prVal=prMuscle&&state.prs?.[prMuscle]!=null?state.prs[prMuscle]:null;
+      // A strict PR belongs to one exercise — don't show it as the PB on the muscle's other cards.
+      const prVal=prMuscle&&state.prs?.[prMuscle]!=null&&!(prDef?.strict&&e.name!==prDef.exercise)?state.prs[prMuscle]:null;
       const pbStr=prVal!=null?(prDef?.isReps?`PB  ${prVal} reps`:`PB  ${prVal}kg`):'';
       // Prefill from the last logged session so you never retype what you already did.
       const last=state.lastSets?.[e.name]||null;
