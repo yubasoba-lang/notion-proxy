@@ -1163,7 +1163,13 @@ body::after { display: none; }
     <div class="workout-sheet-title">LOG WORKOUT</div>
     <div id="workoutExerciseList"></div>
     <div id="workoutInputSection" style="display:none">
-      <div class="workout-inputs">
+      <div class="workout-inputs" id="wCardioInputs" style="display:none">
+        <div class="workout-input-group">
+          <div class="workout-input-label">Minutes</div>
+          <input type="number" class="workout-input" id="wMinutes" value="30" min="1" max="600">
+        </div>
+      </div>
+      <div class="workout-inputs" id="wStdInputs">
         <div class="workout-input-group">
           <div class="workout-input-label">Sets</div>
           <input type="number" class="workout-input" id="wSets" value="3" min="1" max="30">
@@ -3022,13 +3028,62 @@ function closeRankup(){document.getElementById('rankupOverlay').classList.remove
     */
 async function loadWorkoutDays(){
   try{
-    const since=localDay(new Date(Date.now()-30*86400000));
+    const since=localDay(new Date(Date.now()-WORKOUT_DAYS_WINDOW*86400000));
     const pages=await nQuery(DB.workoutLog,{property:'Date',date:{on_or_after:since}});
     const allDays=new Set(pages.map(p=>{const s=p.properties?.Date?.date?.start;return s?localDay(new Date(s)):null;}).filter(Boolean));
     state.workoutDaySet=allDays;
     const cutoff7=localDay(new Date(Date.now()-7*86400000));
     state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
   }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();}
+}
+// How far back workout days are loaded — also the longest streak that can be counted.
+const WORKOUT_DAYS_WINDOW=90;
+
+// Minutes → the log's sets/reps/weight. XP is sets × XP per set, so one set per
+// 10 minutes keeps cardio XP proportional to time; the minutes ride along in Reps.
+function cardioToSets(minutes){
+  const m=Math.max(1,Math.round(minutes||0));
+  return{sets:Math.max(1,Math.round(m/10)),reps:m,weight:0};
+}
+
+// The week's shape — shared by the Workout tab headers and the Home streak.
+// kind: 'required' breaks the streak if missed; 'optional' and 'rest' only ever add to it.
+const WORKOUT_WEEK=[
+  {abbr:'Mon',label:'Monday',   sub:'Easy aerobic · 30 min · optional',    kind:'optional'},
+  {abbr:'Tue',label:'Tuesday',  sub:'Swim + Pull · moderate, higher reps', kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Easy incline walk · legs only',       kind:'required'},
+  {abbr:'Thu',label:'Thursday', sub:'Swim + Push · Rotation',              kind:'required'},
+  {abbr:'Fri',label:'Friday',   sub:'Off',                                 kind:'rest'},
+  {abbr:'Sat',label:'Saturday', sub:'Lower + Power · heavy · 20 min row',  kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Upper accessory · Core · 20 min bike',kind:'required'},
+];
+const WEEK_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+// The current split started here. Before it, the old Mon–Sat split had Sunday as its
+// only rest day — judging old weeks by the new split would break the streak retroactively.
+const SPLIT_START='2026-09-11';
+function dayKind(ds){
+  const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
+  if(ds<SPLIT_START)return abbr==='Sun'?'rest':'required';
+  const d=WORKOUT_WEEK.find(w=>w.abbr===abbr);
+  return d?d.kind:'rest';
+}
+// Consecutive scheduled sessions hit. Rest and optional days neither break the streak
+// nor are needed for it, but a workout on one still counts. Today can't break it —
+// it only counts once something is logged.
+function scheduledWorkoutStreak(){
+  const done=state.workoutDaySet||new Set();
+  const today=localToday();
+  let n=0,ds=today;
+  for(let i=0;i<WORKOUT_DAYS_WINDOW;i++){
+    if(done.has(ds))n++;
+    else if(dayKind(ds)==='required'&&ds!==today)break;
+    ds=prevDay(ds);
+  }
+  return n;
+}
+function todaysSession(){
+  const abbr=WEEK_ABBR[new Date().getDay()];
+  return WORKOUT_WEEK.find(w=>w.abbr===abbr)||null;
 }
 async function loadStats(){
   try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}
@@ -4984,6 +5039,14 @@ function renderHome(){
     </div>`;
   }
 
+  // Today's slot in the split, and whether it's been logged yet.
+  const ts=todaysSession();
+  let todayLine='';
+  if(ts){
+    let status='';
+    if((state.workoutDaySet||new Set()).has(localToday()))status=' · <span style="color:var(--gold)">done</span>';
+    todayLine=`<div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin:8px 2px 10px">Today · ${ts.label} — ${ts.sub}${status}</div>`;
+  }
   const streakRow=`<div class="streak-row">
     <div class="streak-item">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
@@ -4993,7 +5056,7 @@ function renderHome(){
         <rect x="10.2" y="4.5" width="2" height="5" rx="0.4"/>
         <rect x="12.2" y="5.5" width="1.8" height="3" rx="0.4"/>
       </svg>
-      <span class="streak-num${s?'':' loading'}">${s?s.workout??0:'—'}</span>
+      <span class="streak-num${s?'':' loading'}">${s?scheduledWorkoutStreak():'—'}</span>
     </div>
     <div class="streak-item">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -5034,7 +5097,7 @@ function renderHome(){
   const lifeStatsCard=renderLifeStats();
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
-      <div class="home-col-full">${streakRow}${rivalTeaser}</div>
+      <div class="home-col-full">${streakRow}${todayLine}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
       <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
     </div>`;
@@ -5680,6 +5743,10 @@ function selectExercise(id){
   document.querySelectorAll('.workout-ex-item').forEach(el=>el.classList.remove('selected'));
   document.getElementById('ex-'+id)?.classList.add('selected');
   document.getElementById('workoutInputSection').style.display='block';
+  // Cardio is logged in minutes, not sets × reps × kg.
+  const cardio=selectedExercise.category==='Cardio';
+  document.getElementById('wCardioInputs').style.display=cardio?'':'none';
+  document.getElementById('wStdInputs').style.display=cardio?'none':'';
   const muscleMap={};state.bodyStats.forEach(s=>{muscleMap[s.name]=s.id;});
   const primary=selectedExercise.primaryMuscle;
   const secondary=selectedExercise.musclesHit.filter(m=>m!==primary);
@@ -5740,9 +5807,14 @@ async function submitWorkout(){
   if(!selectedExercise)return;
   const btn=document.getElementById('workoutSubmitBtn');
   btn.disabled=true;btn.textContent='LOGGING…';
-  const sets=parseInt(document.getElementById('wSets').value)||3;
-  const reps=parseInt(document.getElementById('wReps').value)||10;
-  const weight=parseFloat(document.getElementById('wWeight').value)||0;
+  let sets,reps,weight;
+  if(selectedExercise.category==='Cardio'){
+    ({sets,reps,weight}=cardioToSets(parseInt(document.getElementById('wMinutes').value)||30));
+  }else{
+    sets=parseInt(document.getElementById('wSets').value)||3;
+    reps=parseInt(document.getElementById('wReps').value)||10;
+    weight=parseFloat(document.getElementById('wWeight').value)||0;
+  }
   try{
     const n=await _logExercise(selectedExercise,sets,reps,weight);
     closeWorkoutModal();
@@ -5769,9 +5841,14 @@ async function logExerciseFromTab(id){
   if(!exercise)return;
   const btn=document.getElementById('wec-btn-'+id);
   if(btn){btn.disabled=true;btn.textContent='LOGGING…';}
-  const sets=parseInt(document.getElementById('wec-s-'+id)?.value)||3;
-  const reps=parseInt(document.getElementById('wec-r-'+id)?.value)||10;
-  const weight=parseFloat(document.getElementById('wec-w-'+id)?.value)||0;
+  let sets,reps,weight;
+  if(exercise.category==='Cardio'){
+    ({sets,reps,weight}=cardioToSets(parseInt(document.getElementById('wec-m-'+id)?.value)||30));
+  }else{
+    sets=parseInt(document.getElementById('wec-s-'+id)?.value)||3;
+    reps=parseInt(document.getElementById('wec-r-'+id)?.value)||10;
+    weight=parseFloat(document.getElementById('wec-w-'+id)?.value)||0;
+  }
   try{
     const n=await _logExercise(exercise,sets,reps,weight);
     expandedExercise=null;
@@ -5834,16 +5911,8 @@ function renderWorkout(){
     <!-- <button data-tab="bodymap" class="sil-toggle-btn${workoutSubTab==='bodymap'?' active':''}" onclick="setWorkoutSubTab('bodymap')" style="flex:1;text-align:center">Body Map</button> -->
   </div>`;
 
-  // Day order and labels matching the training protocol
-  const DAY_DEFS=[
-    {abbr:'Mon',label:'Monday',   sub:'Easy aerobic · 30 min · optional'},
-    {abbr:'Tue',label:'Tuesday',  sub:'Swim + Pull · moderate, higher reps'},
-    {abbr:'Wed',label:'Wednesday',sub:'Easy incline walk · legs only'},
-    {abbr:'Thu',label:'Thursday', sub:'Swim + Push · Rotation'},
-    {abbr:'Fri',label:'Friday',   sub:'Off'},
-    {abbr:'Sat',label:'Saturday', sub:'Lower + Power · heavy · 20 min row'},
-    {abbr:'Sun',label:'Sunday',   sub:'Upper accessory · Core · 20 min bike'},
-  ];
+  // Day order and labels — one definition shared with the Home streak.
+  const DAY_DEFS=WORKOUT_WEEK;
   const ABBRS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const todayAbbr=ABBRS[new Date().getDay()];
 
@@ -5871,13 +5940,29 @@ function renderWorkout(){
       const vSets=last?last.sets:3;
       const vReps=last?last.reps:10;
       const vWeight=sugg!=null?sugg:(last?last.weight:0);
+      // Cardio logs as one Minutes field; the minutes are stored in Reps (see cardioToSets).
+      const isCardio=e.category==='Cardio';
+      const vMin=last&&last.reps?last.reps:30;
       let lastLine='';
       if(last){
         const days=Math.round((new Date(localToday()+'T00:00:00')-new Date(last.date+'T00:00:00'))/86400000);
         let ago='today';
         if(days===1)ago='yesterday';
         else if(days>1)ago=days+'d ago';
-        lastLine=`<div class="wec-last">Last: ${last.sets}×${last.reps} @ ${last.weight}kg · ${ago}</div>`;
+        if(isCardio)lastLine=`<div class="wec-last">Last: ${last.reps} min · ${ago}</div>`;
+        else lastLine=`<div class="wec-last">Last: ${last.sets}×${last.reps} @ ${last.weight}kg · ${ago}</div>`;
+      }
+      let inpRow;
+      if(isCardio){
+        inpRow=`<div class="wec-inp-row">
+          <div class="wec-inp-grp"><div class="wec-lbl">Minutes</div><input type="number" class="wec-inp" id="wec-m-${e.id}" value="${vMin}" min="1" max="600"></div>
+        </div>`;
+      }else{
+        inpRow=`<div class="wec-inp-row">
+          <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="${vSets}" min="1" max="30"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="${vReps}" min="1" max="100"></div>
+          <div class="wec-inp-grp"><div class="wec-lbl">kg</div><input type="number" class="wec-inp" id="wec-w-${e.id}" value="${vWeight}" min="0"></div>
+        </div>`;
       }
       let suggLine='';
       if(sugg!=null){
@@ -5887,11 +5972,7 @@ function renderWorkout(){
         ${pbStr?`<div style="font-size:8px;font-weight:700;letter-spacing:0.18em;color:var(--text-dim);margin-bottom:8px">${pbStr}</div>`:''}
         ${lastLine}
         ${suggLine}
-        <div class="wec-inp-row">
-          <div class="wec-inp-grp"><div class="wec-lbl">Sets</div><input type="number" class="wec-inp" id="wec-s-${e.id}" value="${vSets}" min="1" max="30"></div>
-          <div class="wec-inp-grp"><div class="wec-lbl">Reps</div><input type="number" class="wec-inp" id="wec-r-${e.id}" value="${vReps}" min="1" max="100"></div>
-          <div class="wec-inp-grp"><div class="wec-lbl">kg</div><input type="number" class="wec-inp" id="wec-w-${e.id}" value="${vWeight}" min="0"></div>
-        </div>
+        ${inpRow}
         <div class="wec-muscles">${muscleTags}</div>
         <button class="wec-log-btn" id="wec-btn-${e.id}" onclick="event.stopPropagation();logExerciseFromTab('${e.id}')">LOG ${e.name.toUpperCase()}</button>
       </div>`:'';
