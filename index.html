@@ -2241,10 +2241,16 @@ function trainingSituation(dateStr,myStudyH){
   if(names.has('Swimming'))
     return{k:'swim',ctx:`場面: 優和くんが今日、水泳の練習に行った。勉強は${(myStudyH||0).toFixed(1)}時間。`};
   // Only judge a missed session once the day is over — the 9pm line may still have time left.
+  // That means this line is always read the morning after, so it's framed as 昨日.
+  // At most once a week: missed sessions are common, and a nightly reminder is nagging.
   if(!trained&&dateStr<localToday()&&dayKind(dateStr)==='required'){
-    const abbr=WEEK_ABBR[new Date(dateStr+'T12:00:00').getDay()];
-    const w=dateStr>=SPLIT_START?WORKOUT_WEEK.find(x=>x.abbr===abbr):null;
-    return{k:'skipped',ctx:`場面: 優和くんのトレーニングの日だったのに、しなかった。`+(w?`予定: ${w.sub}。`:'')};
+    const weekAgo=localDay(new Date(new Date(dateStr+'T12:00:00').getTime()-7*86400000));
+    const saidRecently=(state.rivalLines||[]).some(l=>l.k==='skipped'&&l.date>=weekAgo);
+    if(!saidRecently){
+      const abbr=WEEK_ABBR[new Date(dateStr+'T12:00:00').getDay()];
+      const w=dateStr>=SPLIT_START?WORKOUT_WEEK.find(x=>x.abbr===abbr):null;
+      return{k:'skipped',ctx:`場面: 昨日は優和くんのトレーニングの日だったのに、しなかった。`+(w?`予定: ${w.sub}。`:'')};
+    }
   }
   if(names.has(CO2_EXERCISE))
     return{k:'co2',ctx:`場面: 優和くんが息止めの練習（CO2テーブル）をした。`};
