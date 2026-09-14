@@ -4823,7 +4823,7 @@ async function refresh(force=true){
   // Loaders and background syncs are individually guarded: one failure used to
   // reject the whole chain and skip renderTasks entirely, leaving a blank tab.
   if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()].map(p=>Promise.resolve(p).catch(e=>warn('tasksLoad',e))));if(!skip){await checkAndIssuePenalties().catch(e=>warn('checkAndIssuePenalties',e));await syncXPBleeds().catch(e=>warn('syncXPBleeds',e));}_markTabLoaded('tasks');renderTasks();}
-  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
+  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
@@ -5902,14 +5902,18 @@ async function submitWorkout(){
     reps=parseInt(document.getElementById('wReps').value)||10;
     weight=parseFloat(document.getElementById('wWeight').value)||0;
   }
+  // closeWorkoutModal() clears selectedExercise, so hold on to it — reading its name
+  // afterwards threw, and every successful log from this sheet reported "Failed".
+  const ex=selectedExercise;
   try{
-    const n=await _logExercise(selectedExercise,sets,reps,weight);
+    const n=await _logExercise(ex,sets,reps,weight);
     closeWorkoutModal();
-    showToast(`Logged ${selectedExercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
+    showToast(`Logged ${ex.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
     if(currentTab==='workout')renderWorkout();
+    if(ex.name==='Swimming')openSwimPractice(reps);
   }catch(e){
     showToast('Failed: '+e.message);
-    btn.disabled=false;btn.textContent=`LOG ${selectedExercise.name.toUpperCase()}`;
+    btn.disabled=false;btn.textContent=`LOG ${ex.name.toUpperCase()}`;
   }
 }
 
@@ -6108,6 +6112,169 @@ function closeCO2(){
   if(currentTab==='workout')renderWorkout();
 }
 
+// ── Swim practices ───────────────────────────────────────────────────────────
+// After a Swimming log, record only the main set — the one part of practice you
+// actually remember. One row per practice in the Swim Practices database.
+const SWIM_PRACTICES_DB='3db63a0b-4e7c-81e5-aee2-e16fc36d7893';
+const SWIM_SCALES=['Full','By 50s','By 25s'];
+let swimDraft=null;
+
+const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes)};};
+async function loadSwimPractices(){
+  try{
+    const p=await nQuery(SWIM_PRACTICES_DB,null,[{property:'Date',direction:'descending'}]);
+    state.swimPractices=p.map(toSwimPractice);
+  }catch(e){warn('loadSwimPractices',e);state.swimPractices=state.swimPractices||[];}
+}
+// "8×100 3/5" → 8
+function swimSetTotal(text){
+  const m=String(text||'').match(/(\d+)\s*[x×]\s*\d+/i);
+  return m?parseInt(m[1]):null;
+}
+// Same set typed slightly differently still groups together.
+function swimSetKey(text){return String(text||'').toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim();}
+function latestRememberedSwim(){return (state.swimPractices||[]).find(p=>p.remembered&&p.set)||null;}
+
+function openSwimPractice(minutes){
+  if(document.getElementById('swimPage'))return;
+  const last=latestRememberedSwim();
+  const set=last?last.set:'';
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:''};
+  const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
+    <div id="swimBody"></div>
+  </div>`;
+  document.body.appendChild(el);
+  renderSwimPractice();
+  // Logged from Home before the Workout tab loaded practices: prefill once they arrive.
+  if(!state.swimPractices){
+    loadSwimPractices().then(()=>{
+      const l=latestRememberedSwim();
+      if(swimDraft&&!swimDraft.set&&l){swimDraft.set=l.set;swimDraft.total=swimSetTotal(l.set)||l.total||swimDraft.total;renderSwimPractice();}
+    });
+  }
+}
+function renderSwimPractice(){
+  const b=document.getElementById('swimBody');
+  if(!b||!swimDraft)return;
+  const d=swimDraft;
+  let chips='';
+  SWIM_SCALES.forEach(s=>{
+    let st='color:var(--text-dim)';
+    if(d.scaled===s)st='background:rgba(232,234,240,0.12);color:var(--text)';
+    chips+=`<button class="sil-toggle-btn" style="flex:1;text-align:center;${st}" onclick="swimSetScaled('${s}')">${s}</button>`;
+  });
+  b.innerHTML=`<div style="font-size:18px;font-weight:800;letter-spacing:0.12em;margin:18px 0 4px">SWIM PRACTICE</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:18px">${d.minutes} min logged · now just the main set</div>
+    <div class="wec-lbl">Main set</div>
+    <input type="text" class="wec-inp" id="swimSet" value="${esc(d.set)}" placeholder="e.g. 8×100 3/5 breathing" oninput="swimSetText(this.value)" style="width:100%;text-align:left;margin:6px 0 16px">
+    <div class="wec-lbl">Reps done</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 16px">
+      <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimStep(-1)">−</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;display:flex;align-items:center;gap:6px"><span id="swimDone">${d.done}</span> / <input type="number" class="wec-inp" id="swimTotal" value="${d.total}" min="1" max="60" oninput="swimSetTotalInput(this.value)" style="width:58px"></div>
+      <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimStep(1)">+</button>
+    </div>
+    <div class="wec-lbl">Scaled?</div>
+    <div style="display:flex;gap:4px;margin:6px 0 16px">${chips}</div>
+    <div class="wec-lbl">Note (optional)</div>
+    <input type="text" class="wec-inp" id="swimNotes" value="${esc(d.notes)}" placeholder="anything that stood out" oninput="swimDraft.notes=this.value" style="width:100%;text-align:left;margin:6px 0 20px">
+    <button class="wec-log-btn" id="swimSaveBtn" onclick="saveSwimPractice(true)">LOG MAIN SET</button>
+    <button class="wec-log-btn" style="opacity:0.6;margin-top:8px" onclick="saveSwimPractice(false)">DON'T REMEMBER — LOG MINUTES ONLY</button>`;
+}
+function swimClampDone(){
+  const d=swimDraft;
+  if(d.done>d.total){d.done=d.total;const s=document.getElementById('swimDone');if(s)s.textContent=d.done;}
+}
+function swimSetText(v){
+  swimDraft.set=v;
+  const t=swimSetTotal(v);
+  if(t){swimDraft.total=t;const el=document.getElementById('swimTotal');if(el)el.value=t;}
+  swimClampDone();
+}
+function swimSetTotalInput(v){
+  const n=parseInt(v)||0;
+  if(n>0)swimDraft.total=n;
+  swimClampDone();
+}
+function swimStep(dir){
+  const d=swimDraft;
+  d.done=Math.max(0,Math.min(d.total,d.done+dir));
+  const s=document.getElementById('swimDone');if(s)s.textContent=d.done;
+}
+function swimSetScaled(s){swimDraft.scaled=s;renderSwimPractice();}
+async function saveSwimPractice(remembered){
+  const d=swimDraft;
+  if(!d)return;
+  if(remembered&&!d.set.trim()){showToast("Type the main set, or tap Don't remember",3000);return;}
+  const btn=document.getElementById('swimSaveBtn');
+  if(btn){btn.disabled=true;btn.textContent='LOGGING…';}
+  const today=localToday();
+  const props={
+    Name:{title:[{text:{content:today+' practice'}}]},
+    Date:{date:{start:today}},
+    Minutes:{number:d.minutes},
+    Remembered:{checkbox:remembered},
+  };
+  if(remembered){
+    props['Main Set']={rich_text:richChunks(d.set.trim())};
+    props['Reps Done']={number:d.done};
+    props['Reps Total']={number:d.total};
+    props.Scaled={select:{name:d.scaled}};
+    if(d.notes.trim())props.Notes={rich_text:richChunks(d.notes.trim())};
+  }
+  try{
+    const page=await nCreate(SWIM_PRACTICES_DB,props);
+    state.swimPractices=[toSwimPractice(page),...(state.swimPractices||[])];
+    showToast(remembered?'Main set logged':'Practice logged',2500);
+    closeSwimPractice();
+  }catch(e){
+    warn('saveSwimPractice',e);
+    showToast('Failed: '+e.message,4000);
+    if(btn){btn.disabled=false;btn.textContent='LOG MAIN SET';}
+  }
+}
+function closeSwimPractice(){
+  swimDraft=null;
+  document.getElementById('swimPage')?.remove();
+  if(currentTab==='workout')renderWorkout();
+}
+function swimCardHTML(){
+  const list=state.swimPractices||[];
+  if(!list.length)return '';
+  const latest=latestRememberedSwim();
+  let head='';
+  if(latest){
+    const key=swimSetKey(latest.set);
+    let best=null;
+    list.forEach(p=>{
+      if(!p.remembered||swimSetKey(p.set)!==key||p.scaled!=='Full'||!p.total)return;
+      if(best===null||(p.done||0)>(best.done||0))best=p;
+    });
+    let bestStr='no full-pattern result yet';
+    if(best)bestStr=`best ${best.done}/${best.total} full`;
+    head=`<div class="wec-meta">${esc(latest.set)} · ${bestStr}</div>`;
+  }
+  let rows='';
+  list.slice(0,6).forEach(p=>{
+    let right='main set: ?';
+    let pct=0;
+    if(p.remembered&&p.total){
+      pct=Math.round(100*(p.done||0)/p.total);
+      right=`${p.done||0}/${p.total}`;
+      if(p.scaled&&p.scaled!=='Full')right+=' · '+p.scaled.toLowerCase();
+    }
+    rows+=`<div style="display:flex;align-items:center;gap:8px;font-size:10px;margin-top:6px">
+      <span style="width:38px;color:var(--text-dim)">${(p.date||'').slice(5)}</span>
+      <span style="flex:1;height:5px;background:rgba(232,234,240,0.08);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:var(--gold)"></span></span>
+      <span style="min-width:74px;text-align:right;color:var(--text-dim)">${right}</span>
+    </div>`;
+  });
+  return `<div class="wec" style="margin:6px 16px;cursor:default">
+    <div style="padding:2px 0"><div class="wec-name">Swim practices</div>${head}${rows}</div>
+  </div>`;
+}
+
 // ── Workout Tab ──────────────────────────────────────────────────────────────
 function toggleWorkoutExercise(id){
   expandedExercise=expandedExercise===id?null:id;
@@ -6148,6 +6315,7 @@ async function logExerciseFromTab(id){
       }else{showToast(`Logged ${exercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);}
     }else{showToast(`Logged ${exercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);}
     renderWorkout();
+    if(exercise.name==='Swimming')openSwimPractice(reps);
   }catch(e){
     showToast('Failed: '+e.message);
     if(btn){btn.disabled=false;btn.textContent='LOG '+exercise.name.toUpperCase();}
@@ -6327,7 +6495,7 @@ function renderWorkout(){
       </div>`;
     }
 
-    workoutPanelHTML=co2CardHTML()+html;
+    workoutPanelHTML=co2CardHTML()+swimCardHTML()+html;
   }
 
   // ── Body Map sub-tab ──
