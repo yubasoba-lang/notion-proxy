@@ -2170,6 +2170,13 @@ const RIVAL_PERSONA=`あなたは「影」。優和くんと同じ医大・同�
 病理…進んでるね
 薬理、来週でしょ…？
 
+[トレーニングの場面]（見本はまだない。上と同じ空気で新しく書く）
+- 水泳の練習に行った日
+- 予定していたトレーニングをしなかった日
+- トレーニングを予定どおり続けている
+- 息止めの練習をした
+トレーニングの話でも、勉強のライバルとしての距離感は同じ。コーチにならない。アドバイスしない。
+
 大事なこと:
 - 場面に合う言い方を選ぶ。勝っているのに「追いつけない」等、逆のことを言わない。
 - 気づいたことを一つ言うだけ。気持ちの説明はしない。
@@ -2222,6 +2229,28 @@ async function saveRivalLines(){
   }catch(e){warn('saveRivalLines',e);}
 }
 
+/* Training side of her day-reading. Needs the workout log loaded — without it a
+   missing workout would look exactly like a skipped one. */
+function trainingSituation(dateStr,myStudyH){
+  if(!state.workoutDaysLoaded)return null;
+  const names=(state.workoutNamesByDay||{})[dateStr]||new Set();
+  const trained=(state.workoutDaySet||new Set()).has(dateStr);
+  const n=trained?scheduledWorkoutStreak(dateStr):0;
+  if(trained&&[5,10,20,30,50].includes(n))
+    return{k:'wkstreak',ctx:`場面: 優和くんがトレーニングを予定どおり${n}回続けている。`};
+  if(names.has('Swimming'))
+    return{k:'swim',ctx:`場面: 優和くんが今日、水泳の練習に行った。勉強は${(myStudyH||0).toFixed(1)}時間。`};
+  // Only judge a missed session once the day is over — the 9pm line may still have time left.
+  if(!trained&&dateStr<localToday()&&dayKind(dateStr)==='required'){
+    const abbr=WEEK_ABBR[new Date(dateStr+'T12:00:00').getDay()];
+    const w=dateStr>=SPLIT_START?WORKOUT_WEEK.find(x=>x.abbr===abbr):null;
+    return{k:'skipped',ctx:`場面: 優和くんのトレーニングの日だったのに、しなかった。`+(w?`予定: ${w.sub}。`:'')};
+  }
+  if(names.has(CO2_EXERCISE))
+    return{k:'co2',ctx:`場面: 優和くんが息止めの練習（CO2テーブル）をした。`};
+  return null;
+}
+
 /* Works out what kind of day it was. Returns null when nothing is worth
    remarking on — most days — so she stays quiet. */
 function rivalSituation(dateStr){
@@ -2245,6 +2274,7 @@ function rivalSituation(dateStr){
   const subj=[...new Set(sess.map(x=>x.subject).filter(Boolean))];
 
   const f=n=>n.toFixed(1);
+  const tr=trainingSituation(dateStr,my);
   // Ordered by what's most worth saying.
   if(my>0&&quiet>=3)  return{k:'comeback', ctx:`場面: 優和くんが${quiet}日ぶりに戻ってきた。今日${f(my)}時間。`};
   // A quiet stretch is worth one remark at a few milestones — not one every day.
@@ -2252,6 +2282,10 @@ function rivalSituation(dateStr){
   if(my===0&&[3,7,14,30].includes(quiet))
                       return{k:'silence',  ctx:`場面: 優和くんは${quiet}日間なにも記録していない。`};
   if(my===0&&quiet>=2)return null;
+  // A training milestone is rare enough to beat any ordinary study remark.
+  if(tr&&tr.k==='wkstreak')return tr;
+  // No study, but they trained — notice the training, not the empty desk.
+  if(my===0&&tr)return tr;
   if(my===0)          return{k:'nothing',  ctx:`場面: 優和くんは今日なにもしていない。私は${f(her)}時間。`};
   if(lateNight)       return{k:'late',     ctx:`場面: 優和くんが深夜まで勉強していた。今日${f(my)}時間。`};
   if(my>her)          return{k:'lost',     ctx:`場面: 優和くんが勝った。優和くん${f(my)}時間、私${f(her)}時間。`+(streak>=3?`優和くんは${streak}日連続。`:'')+(subj.length?`科目: ${subj.join('、')}。`:'')};
@@ -2259,7 +2293,7 @@ function rivalSituation(dateStr){
   if(her>=my*2)       return{k:'wonbig',   ctx:`場面: 私が大差で勝った。私${f(her)}時間、優和くん${f(my)}時間。`};
   if(examDays!=null&&examDays>=0&&examDays<=7) return{k:'exam', ctx:`場面: ${exam.name}の試験まで${examDays}日。今日 優和くん${f(my)}時間、私${f(her)}時間。`};
   if(streak>=3)       return{k:'streak',   ctx:`場面: 優和くんは${streak}日連続で勉強している。今日は私が少し上。私${f(her)}時間、優和くん${f(my)}時間。`};
-  return null; // ordinary day — she says nothing
+  return tr; // ordinary study day — training is all that's left worth saying, if anything
 }
 
 async function generateRivalLine(dateStr){
@@ -3030,8 +3064,20 @@ async function loadWorkoutDays(){
   try{
     const since=localDay(new Date(Date.now()-WORKOUT_DAYS_WINDOW*86400000));
     const pages=await nQuery(DB.workoutLog,{property:'Date',date:{on_or_after:since}});
-    const allDays=new Set(pages.map(p=>{const s=p.properties?.Date?.date?.start;return s?localDay(new Date(s)):null;}).filter(Boolean));
+    // CO2 tables are logged here for the record, but sitting still isn't a training
+    // session — they don't count toward workout days or the streak.
+    const allDays=new Set();
+    const namesByDay={};
+    pages.forEach(p=>{
+      const s=p.properties?.Date?.date?.start;
+      if(!s)return;
+      const d=localDay(new Date(s));
+      const name=(p.properties?.Name?.title?.[0]?.plain_text||'').replace(' (2°)','').trim();
+      (namesByDay[d]=namesByDay[d]||new Set()).add(name);
+      if(name!==CO2_EXERCISE)allDays.add(d);
+    });
     state.workoutDaySet=allDays;
+    state.workoutNamesByDay=namesByDay;
     const cutoff7=localDay(new Date(Date.now()-7*86400000));
     state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
     state.workoutDaysLoaded=true;
@@ -3039,6 +3085,7 @@ async function loadWorkoutDays(){
 }
 // How far back workout days are loaded — also the longest streak that can be counted.
 const WORKOUT_DAYS_WINDOW=90;
+const CO2_EXERCISE='CO2 Table';
 
 // Minutes → the log's sets/reps/weight. XP is sets × XP per set, so one set per
 // 10 minutes keeps cardio XP proportional to time; the minutes ride along in Reps.
@@ -3071,13 +3118,14 @@ function dayKind(ds){
 // Consecutive scheduled sessions hit. Rest and optional days neither break the streak
 // nor are needed for it, but a workout on one still counts. Today can't break it —
 // it only counts once something is logged.
-function scheduledWorkoutStreak(){
+// endDs lets 影 ask what the streak was on a past day; defaults to today.
+function scheduledWorkoutStreak(endDs){
   const done=state.workoutDaySet||new Set();
-  const today=localToday();
-  let n=0,ds=today;
+  const end=endDs||localToday();
+  let n=0,ds=end;
   for(let i=0;i<WORKOUT_DAYS_WINDOW;i++){
     if(done.has(ds))n++;
-    else if(dayKind(ds)==='required'&&ds!==today)break;
+    else if(dayKind(ds)==='required'&&ds!==end)break;
     ds=prevDay(ds);
   }
   return n;
@@ -5738,7 +5786,7 @@ async function addWorkout(){
   const DAY_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const todayAbbr=DAY_ABBR[new Date().getDay()];
   const todayEx=state.exercises.filter(e=>e.day.includes(todayAbbr));
-  const otherEx=state.exercises.filter(e=>!e.day.includes(todayAbbr));
+  const otherEx=state.exercises.filter(e=>!e.day.includes(todayAbbr)&&e.category!=='Breathing');
   let html='';
   if(todayEx.length){
     html+=`<div class="workout-day-label">Today · ${todayAbbr}</div><div class="workout-ex-list">${todayEx.map(exerciseItemHTML).join('')}</div>`;
@@ -5824,8 +5872,13 @@ async function _logExercise(exercise, sets, reps, weight){
   }
   await Promise.all(creates);
   // Today now has a workout — update the streak here and in Notion without a reload.
-  (state.workoutDaySet||(state.workoutDaySet=new Set())).add(today);
-  syncScheduledStreak();
+  // A CO2 table is recorded but isn't a training session, matching loadWorkoutDays.
+  const nb=state.workoutNamesByDay||(state.workoutNamesByDay={});
+  (nb[today]=nb[today]||new Set()).add(exercise.name);
+  if(exercise.name!==CO2_EXERCISE){
+    (state.workoutDaySet||(state.workoutDaySet=new Set())).add(today);
+    syncScheduledStreak();
+  }
   await loadBodyStats();
   return creates.length;
 }
@@ -5852,6 +5905,201 @@ async function submitWorkout(){
     showToast('Failed: '+e.message);
     btn.disabled=false;btn.textContent=`LOG ${selectedExercise.name.toUpperCase()}`;
   }
+}
+
+// ── CO2 table timer ──────────────────────────────────────────────────────────
+// Dry breath-hold training: 8 rounds, hold fixed at half your max, rest shrinking
+// from 2:00 to 0:15. Timing runs off timestamps, so a backgrounded tab or a locked
+// screen doesn't drift. Logged as sets = rounds, reps = hold seconds.
+const CO2_ROUNDS=8;
+const co2Rests=()=>Array.from({length:CO2_ROUNDS},(_,i)=>Math.max(15,120-15*i));
+let co2=null;      // session state while the screen is open
+let co2Tick=null;  // interval id
+let co2Wake=null;  // screen wake lock
+
+function co2Fmt(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function co2LastHold(){
+  const l=state.lastSets?.[CO2_EXERCISE];
+  return l&&l.reps?l.reps:null;
+}
+function co2CardHTML(){
+  const hold=co2LastHold();
+  let sub='Breath-hold training · sitting down, never in water';
+  if(hold)sub=`Last: ${CO2_ROUNDS} rounds × ${hold}s hold · ${state.lastSets[CO2_EXERCISE].date}`;
+  return `<div class="wec" style="margin:14px 16px 6px;cursor:pointer" onclick="openCO2()">
+    <div class="wec-row"><div>
+      <div class="wec-name">CO2 Table</div>
+      <div class="wec-meta">${sub}</div>
+    </div><span class="wec-arrow">›</span></div>
+  </div>`;
+}
+function openCO2(){
+  if(document.getElementById('co2Page'))return;
+  const last=co2LastHold();
+  const el=document.createElement('div');el.id='co2Page';el.className='rival-page';
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeCO2()">← Back</button></div>
+    <div id="co2Body"></div>
+  </div>`;
+  document.body.appendChild(el);
+  co2={phase:'setup',max:last?last*2:40,round:0,holdSec:0,end:0,testStart:0,beeped:0,logMsg:''};
+  renderCO2();
+}
+function renderCO2(){
+  const b=document.getElementById('co2Body');
+  if(!b||!co2)return;
+  const clockStyle="font-family:'JetBrains Mono',monospace;font-size:64px;font-weight:700;margin:20px 0";
+  let html='';
+  if(co2.phase==='setup'){
+    const hold=Math.max(5,Math.round(co2.max/2));
+    html=`<div style="font-size:18px;font-weight:800;letter-spacing:0.12em;margin:18px 0 4px">CO2 TABLE</div>
+      <div id="co2Summary" style="font-size:11px;color:var(--text-dim);margin-bottom:14px">${CO2_ROUNDS} rounds · hold ${hold}s each · rest 2:00 down to 0:15</div>
+      <div style="border:1px solid rgba(160,60,60,0.45);background:rgba(120,40,40,0.1);border-radius:3px;padding:10px 12px;font-size:11px;line-height:1.5;margin-bottom:16px">Sit or lie down. <b>Never in water, standing, or driving</b> — a hold can make you pass out without warning.</div>
+      <div class="wec-lbl">Max comfortable hold (seconds)</div>
+      <div style="display:flex;gap:8px;align-items:center;margin:6px 0 16px">
+        <input type="number" class="wec-inp" id="co2Max" value="${co2.max}" min="10" max="600" oninput="co2SetMax(this.value)" style="flex:1">
+        <button class="wec-log-btn" style="width:auto;margin:0;padding:10px 14px" onclick="co2StartTest()">Test it</button>
+      </div>
+      <button class="wec-log-btn" onclick="co2Start()">START</button>`;
+  }else if(co2.phase==='test'){
+    html=`<div style="text-align:center;margin-top:48px">
+      <div class="wec-lbl">Hold your breath — tap stop when it gets uncomfortable</div>
+      <div id="co2Clock" style="${clockStyle}">0:00</div>
+      <button class="wec-log-btn" onclick="co2StopTest()">STOP</button>
+    </div>`;
+  }else if(co2.phase==='rest'||co2.phase==='hold'){
+    const isHold=co2.phase==='hold';
+    let label='BREATHE';
+    let labelColor='var(--text)';
+    if(isHold){label='HOLD';labelColor='var(--gold)';}
+    let dots='';
+    for(let i=0;i<CO2_ROUNDS;i++){
+      let c='rgba(232,234,240,0.15)';
+      if(i<co2.round)c='var(--gold)';
+      else if(i===co2.round)c='rgba(232,234,240,0.6)';
+      dots+=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 3px;background:${c}"></span>`;
+    }
+    html=`<div style="text-align:center;margin-top:40px">
+      <div class="wec-lbl">Round ${co2.round+1} of ${CO2_ROUNDS}</div>
+      <div style="font-size:14px;font-weight:800;letter-spacing:0.3em;margin-top:18px;color:${labelColor}">${label}</div>
+      <div id="co2Clock" style="${clockStyle}">${co2Fmt((co2.end-Date.now())/1000)}</div>
+      <div style="margin-bottom:28px">${dots}</div>
+      <button class="wec-log-btn" style="opacity:0.7" onclick="co2Stop()">STOP</button>
+    </div>`;
+  }else if(co2.phase==='done'){
+    html=`<div style="text-align:center;margin-top:48px">
+      <div style="font-size:14px;font-weight:800;letter-spacing:0.3em">DONE</div>
+      <div style="font-size:12px;color:var(--text-dim);margin:12px 0 24px">${CO2_ROUNDS} rounds · ${co2.holdSec}s holds</div>
+      <div class="wec-lbl">${co2.logMsg}</div>
+      <button class="wec-log-btn" style="margin-top:20px" onclick="closeCO2()">CLOSE</button>
+    </div>`;
+  }
+  b.innerHTML=html;
+}
+function co2SetMax(v){
+  if(!co2)return;
+  co2.max=parseInt(v)||0;
+  // Update the summary in place — re-rendering would pull focus out of the input.
+  const s=document.getElementById('co2Summary');
+  if(s)s.textContent=`${CO2_ROUNDS} rounds · hold ${Math.max(5,Math.round(co2.max/2))}s each · rest 2:00 down to 0:15`;
+}
+async function co2WakeLock(on){
+  try{
+    if(on&&navigator.wakeLock&&!co2Wake)co2Wake=await navigator.wakeLock.request('screen');
+    if(!on&&co2Wake){await co2Wake.release();co2Wake=null;}
+  }catch(e){}
+}
+function co2StartTest(){
+  co2.phase='test';co2.testStart=Date.now();
+  renderCO2();co2Loop();
+}
+function co2StopTest(){
+  clearInterval(co2Tick);co2Tick=null;
+  const s=Math.round((Date.now()-co2.testStart)/1000);
+  if(s>=10)co2.max=s;
+  co2.phase='setup';renderCO2();
+}
+// from: when the previous phase ended, so back-to-back phases keep exact time.
+function co2Phase(p,from){
+  co2.phase=p;
+  const dur=p==='rest'?co2Rests()[co2.round]:co2.holdSec;
+  co2.end=(from||Date.now())+dur*1000;
+  co2.beeped=0;
+}
+function co2Start(){
+  const inp=document.getElementById('co2Max');
+  if(inp)co2.max=parseInt(inp.value)||co2.max;
+  if(co2.max<10){showToast('Max hold needs to be at least 10s');return;}
+  co2.holdSec=Math.max(5,Math.round(co2.max/2));
+  co2.round=0;
+  co2Phase('rest');
+  renderCO2();
+  co2WakeLock(true);
+  co2Loop();
+}
+function co2Loop(){
+  clearInterval(co2Tick);
+  co2Tick=setInterval(()=>{
+    if(!co2||!document.getElementById('co2Page')){clearInterval(co2Tick);co2Tick=null;return;}
+    const clock=document.getElementById('co2Clock');
+    if(co2.phase==='test'){if(clock)clock.textContent=co2Fmt((Date.now()-co2.testStart)/1000);return;}
+    if(co2.phase!=='rest'&&co2.phase!=='hold')return;
+    // Catch up on every phase that ended while the screen was locked, then cue once.
+    let advanced=false;
+    while((co2.phase==='rest'||co2.phase==='hold')&&co2.end<=Date.now()){
+      advanced=true;
+      const from=co2.end;
+      if(co2.phase==='rest'){co2Phase('hold',from);}
+      else{
+        co2.round++;
+        if(co2.round>=CO2_ROUNDS){co2Finish();return;}
+        co2Phase('rest',from);
+      }
+    }
+    if(advanced){
+      if(co2.phase==='hold')playChime([880],0.12,0.4);
+      else playChime([523,659],0.12,0.5);
+      renderCO2();
+      return;
+    }
+    const left=(co2.end-Date.now())/1000;
+    if(clock)clock.textContent=co2Fmt(left);
+    // 3-2-1 before each hold
+    const sec=Math.ceil(left);
+    if(co2.phase==='rest'&&sec>=1&&sec<=3&&co2.beeped!==sec){co2.beeped=sec;playChime([660],0.08,0.15);}
+  },200);
+}
+async function co2Finish(){
+  clearInterval(co2Tick);co2Tick=null;
+  co2WakeLock(false);
+  playChime([523,659,784],0.12,0.6);
+  co2.phase='done';co2.logMsg='Logging…';renderCO2();
+  try{
+    if(!state.exercises?.length)await loadExercises();
+    if(!state.bodyStats?.length)await loadBodyStats();
+    const ex=state.exercises.find(e=>e.name===CO2_EXERCISE);
+    if(!ex)throw new Error('no "CO2 Table" in the Exercise Library');
+    await _logExercise(ex,CO2_ROUNDS,co2.holdSec,0);
+    state.lastSets=state.lastSets||{};
+    state.lastSets[CO2_EXERCISE]={sets:CO2_ROUNDS,reps:co2.holdSec,weight:0,date:localToday()};
+    if(co2)co2.logMsg='Logged to Notion ✓';
+  }catch(e){
+    warn('co2Finish',e);
+    if(co2)co2.logMsg='Not logged — '+e.message;
+  }
+  if(co2&&co2.phase==='done')renderCO2();
+}
+function co2Stop(){
+  if(!confirm("Stop the CO2 table? This session won't be logged."))return;
+  clearInterval(co2Tick);co2Tick=null;co2WakeLock(false);
+  co2.phase='setup';renderCO2();
+}
+function closeCO2(){
+  if(co2&&(co2.phase==='rest'||co2.phase==='hold')&&!confirm("Stop the CO2 table? This session won't be logged."))return;
+  clearInterval(co2Tick);co2Tick=null;co2WakeLock(false);
+  co2=null;
+  document.getElementById('co2Page')?.remove();
+  if(currentTab==='workout')renderWorkout();
 }
 
 // ── Workout Tab ──────────────────────────────────────────────────────────────
@@ -6052,7 +6300,8 @@ function renderWorkout(){
       </div>`;
     });
 
-    const unscheduled=state.exercises.filter(e=>!e.day||e.day.length===0);
+    // Breathing work has its own timer screen, not a sets/reps card.
+    const unscheduled=state.exercises.filter(e=>(!e.day||e.day.length===0)&&e.category!=='Breathing');
     if(unscheduled.length){
       const isOpen=expandedWorkoutDays.has('__other__');
       const headerCls=`wec-day-header${isOpen?' open':''}`;
@@ -6072,7 +6321,7 @@ function renderWorkout(){
       </div>`;
     }
 
-    workoutPanelHTML=html;
+    workoutPanelHTML=co2CardHTML()+html;
   }
 
   // ── Body Map sub-tab ──
