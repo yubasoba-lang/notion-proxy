@@ -3280,7 +3280,6 @@ const DAY_PLAN={
   ],
 };
 const PLAN_DOT={wake:'rgba(232,234,240,0.35)',meal:'#c8824a',together:'#d98fb0',class:'#8B8B9B',study:'var(--gold)',swim:'#5aa9d6',breath:'#5aa9d6',gym:'#6fbf73',cardio:'#6fbf73',travel:'rgba(232,234,240,0.35)',cook:'#c8824a',sleep:'#6b6b9b'};
-const PLAN_KANJI={Mon:'月曜',Tue:'火曜',Wed:'水曜',Thu:'木曜',Fri:'金曜',Sat:'土曜',Sun:'日曜'};
 let planViewAbbr=null;
 
 function planMin(t){const p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
@@ -3366,8 +3365,6 @@ function renderDayPlan(){
   let ds=today;
   if(!isToday)ds=planDateForAbbr(abbr);
 
-  let title=PLAN_KANJI[abbr];
-  if(isToday)title='今日';
   const session=WORKOUT_WEEK.find(w=>w.abbr===abbr);
   let subtitle='';
   if(session)subtitle=`${session.label} · ${session.sub}`;
@@ -3452,8 +3449,7 @@ function renderDayPlan(){
   let listLabel='Plan';
   if(isToday)listLabel='Today';
 
-  c.innerHTML=`<div class="rival-page-name">${title}</div>
-    <div class="rival-page-subtitle">${esc(subtitle)}</div>
+  c.innerHTML=`<div class="rival-page-subtitle" style="margin-top:16px">${esc(subtitle)}</div>
     <div style="display:flex;gap:3px;margin:0 16px 12px">${chips}</div>
     ${examCard}${nowCard}
     <div class="rival-week-card"><div class="rival-section-label">${listLabel}</div>${rows}</div>`;
