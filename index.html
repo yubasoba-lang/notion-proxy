@@ -3159,6 +3159,282 @@ function displayedWorkoutStreak(){
   if(state.workoutDaysLoaded)return scheduledWorkoutStreak();
   return state.streaks?.workoutStored??0;
 }
+
+// ── Today plan ───────────────────────────────────────────────────────────────
+// The weekly plan — classes, study room, meals together, swim, gym, sleep — as data,
+// shown on a page styled like 影's. Week numbers count from the first teaching Monday;
+// that's what flips Thursday's odd/even lecture and Friday's week-8 layout.
+const SEMESTER_START='2026-09-07';
+// w: 'odd' | 'even' | 'upto7' | 'from8' (omitted = every week). k picks the dot colour.
+const DAY_PLAN={
+  Mon:[
+    {t:'07:00',k:'wake',l:'Wake'},
+    {t:'07:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'08:00',e:'09:45',k:'class',l:'Clinical Pathophysiology lecture'},
+    {t:'10:00',e:'11:30',k:'class',l:'Clinical ECG'},
+    {t:'11:45',e:'12:45',k:'together',l:'Lunch together'},
+    {t:'13:15',e:'15:15',k:'study',l:'Study room'},
+    {t:'15:30',e:'18:00',k:'class',l:'Pharmacology I'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
+    {t:'23:15',k:'sleep',l:'Sleep'},
+  ],
+  Tue:[
+    {t:'08:00',k:'wake',l:'Wake'},
+    {t:'08:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'09:30',e:'11:00',k:'class',l:'Pharmacology lecture'},
+    {t:'11:00',e:'12:00',k:'study',l:'Study room',n:'lecture review'},
+    {t:'12:15',e:'13:45',k:'together',l:'Lunch together'},
+    {t:'14:00',e:'17:45',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:00',e:'18:45',k:'together',l:'Dinner together',n:'moderate portion, swim at 20:00'},
+    {t:'19:45',k:'travel',l:'Leave for the pool'},
+    {t:'20:00',e:'21:30',k:'swim',l:'Swim practice',n:'log the main set after'},
+    {t:'21:40',k:'meal',l:'Snack',n:'banana or a small sandwich'},
+    {t:'22:00',e:'23:00',k:'gym',l:'Gym · Pull',n:'moderate weights'},
+    {t:'23:10',k:'meal',l:'Smoothie'},
+    {t:'24:00',k:'sleep',l:'Sleep'},
+  ],
+  Wed:[
+    {t:'08:00',k:'wake',l:'Wake'},
+    {t:'08:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'09:30',e:'13:00',k:'class',l:'Pathology I practicals',n:'snack at 11:00'},
+    {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
+    {t:'14:15',e:'14:45',k:'cardio',l:'Brisk walk to campus',n:'easy cardio'},
+    {t:'15:00',e:'17:30',k:'study',l:'Study room'},
+    {t:'17:45',e:'18:00',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'18:00',e:'19:00',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'22:15',k:'study',l:'Study room',peak:'22:00'},
+    {t:'23:00',k:'sleep',l:'Sleep',n:'Thursday starts 08:00'},
+  ],
+  Thu:[
+    {t:'07:00',k:'wake',l:'Wake'},
+    {t:'07:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'08:00',e:'10:30',k:'class',l:'Clinical Pathophysiology',w:'odd'},
+    {t:'08:00',e:'10:30',k:'study',l:'Study room',n:'no lecture this week',w:'even'},
+    {t:'10:30',e:'12:00',k:'class',l:'German for Medical Purposes'},
+    {t:'12:15',e:'13:45',k:'together',l:'Lunch together'},
+    {t:'14:00',e:'17:45',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:00',e:'18:45',k:'together',l:'Dinner together',n:'moderate portion, swim at 20:00'},
+    {t:'19:45',k:'travel',l:'Leave for the pool'},
+    {t:'20:00',e:'21:30',k:'swim',l:'Swim practice',n:'log the main set after'},
+    {t:'21:40',k:'meal',l:'Snack',n:'banana or a small sandwich'},
+    {t:'22:00',e:'23:00',k:'gym',l:'Gym · Push + Rotation',n:'moderate weights'},
+    {t:'23:10',k:'meal',l:'Smoothie'},
+    {t:'24:00',k:'sleep',l:'Sleep',n:'Friday starts 08:30'},
+  ],
+  Fri:[
+    {t:'07:30',k:'wake',l:'Wake'},
+    {t:'07:45',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'08:30',e:'09:45',k:'class',l:'Medical Statistics'},
+    {t:'10:00',e:'11:30',k:'class',l:'ECG lecture',w:'upto7'},
+    {t:'10:15',e:'11:30',k:'class',l:'Microbiology practical',w:'from8'},
+    {t:'11:30',k:'meal',l:'Snack',w:'upto7'},
+    {t:'12:00',e:'13:30',k:'class',l:'Microbiology II practical',w:'upto7'},
+    {t:'12:00',e:'13:00',k:'together',l:'Lunch together',w:'from8'},
+    {t:'13:30',e:'17:30',k:'study',l:'Study room',peak:'17:00',w:'from8'},
+    {t:'13:45',e:'14:45',k:'together',l:'Lunch together',w:'upto7'},
+    {t:'15:30',e:'18:00',k:'study',l:'Study room',peak:'17:00',w:'upto7'},
+    {t:'18:00',e:'19:00',k:'together',l:'Dinner together',n:'evening off',w:'from8'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together',n:'evening off',w:'upto7'},
+    {t:'20:30',e:'20:45',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+  ],
+  Sat:[
+    {t:'08:00',k:'meal',l:'Breakfast'},
+    {t:'10:00',e:'11:30',k:'gym',l:'Gym · Lower + Power',n:'then 20 min easy row'},
+    {t:'12:30',e:'13:30',k:'together',l:'Lunch together'},
+    {t:'14:30',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'19:00',e:'20:00',k:'together',l:'Dinner together',n:'evening off, study room in exam weeks'},
+  ],
+  Sun:[
+    {t:'09:00',k:'meal',l:'Breakfast'},
+    {t:'11:00',e:'12:15',k:'gym',l:'Gym · Upper accessory + Core',n:'then 20 min easy bike'},
+    {t:'12:45',e:'13:30',k:'together',l:'Lunch together'},
+    {t:'13:30',e:'15:00',k:'cook',l:'Batch cooking',n:'boil eggs for the week too'},
+    {t:'15:30',e:'18:15',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:45',e:'19:45',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'22:15',k:'study',l:'Study room',peak:'22:00',n:'plan the week first'},
+    {t:'23:00',k:'sleep',l:'Sleep',n:'Monday starts 08:00'},
+  ],
+};
+const PLAN_DOT={wake:'rgba(232,234,240,0.35)',meal:'#c8824a',together:'#d98fb0',class:'#8B8B9B',study:'var(--gold)',swim:'#5aa9d6',breath:'#5aa9d6',gym:'#6fbf73',cardio:'#6fbf73',travel:'rgba(232,234,240,0.35)',cook:'#c8824a',sleep:'#6b6b9b'};
+const PLAN_KANJI={Mon:'月曜',Tue:'火曜',Wed:'水曜',Thu:'木曜',Fri:'金曜',Sat:'土曜',Sun:'日曜'};
+let planViewAbbr=null;
+
+function planMin(t){const p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+function planClock(t){return t.indexOf('24:')===0?'00'+t.slice(2):t;}
+function semesterWeek(ds){
+  const days=Math.round((new Date(ds+'T12:00:00')-new Date(SEMESTER_START+'T12:00:00'))/86400000);
+  return Math.floor(days/7)+1;
+}
+function planForDate(ds){
+  const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
+  const wk=semesterWeek(ds);
+  const odd=wk%2===1;
+  return (DAY_PLAN[abbr]||[]).filter(it=>{
+    if(it.w==='odd')return odd;
+    if(it.w==='even')return !odd;
+    if(it.w==='upto7')return wk<=7;
+    if(it.w==='from8')return wk>=8;
+    return true;
+  }).sort((a,b)=>planMin(a.t)-planMin(b.t));
+}
+function planNowNext(ds){
+  const items=planForDate(ds);
+  const d=new Date();
+  const now=d.getHours()*60+d.getMinutes();
+  let cur=null,next=null;
+  items.forEach(it=>{
+    const s=planMin(it.t);
+    const e=it.e?planMin(it.e):s+15;
+    if(s<=now&&now<e)cur=it;  // the most recently started block wins an overlap
+    if(!next&&s>now)next=it;
+  });
+  return{items,cur,next,now};
+}
+function planInStr(mins){
+  if(mins>=60)return `in ${Math.floor(mins/60)}h ${mins%60}m`;
+  return `in ${mins} min`;
+}
+function planNextLine(){
+  const r=planNowNext(localToday());
+  if(r.cur&&r.cur.e){
+    let s=`Now · ${r.cur.l} until ${planClock(r.cur.e)}`;
+    if(r.next)s+=` · then ${r.next.l}`;
+    return s;
+  }
+  if(r.next)return `Next · ${planClock(r.next.t)} ${r.next.l} · ${planInStr(planMin(r.next.t)-r.now)}`;
+  return 'Nothing left on the plan today';
+}
+// Keep Home's "Next" line current without re-rendering the whole page.
+setInterval(()=>{const el=document.getElementById('homePlanNext');if(el)el.textContent=planNextLine();},60000);
+
+function planDateForAbbr(abbr){
+  const today=localToday();
+  const dow=(new Date(today+'T12:00:00').getDay()+6)%7;   // Mon = 0
+  const target=(WEEK_ABBR.indexOf(abbr)+6)%7;
+  return localDay(new Date(new Date(today+'T12:00:00').getTime()+(target-dow)*86400000));
+}
+function openDayPlan(){
+  if(document.getElementById('planPage'))return;
+  planViewAbbr=null;
+  const el=document.createElement('div');el.id='planPage';el.className='rival-page';
+  el.innerHTML=`<div class="rival-page-inner">
+    <div class="rival-page-header"><button class="rival-back" onclick="closeDayPlan()">← Back</button></div>
+    <div id="planPageContent"></div>
+  </div>`;
+  document.body.appendChild(el);
+  renderDayPlan();
+  clearInterval(window._planInterval);
+  window._planInterval=setInterval(()=>{if(document.getElementById('planPage'))renderDayPlan();else clearInterval(window._planInterval);},30000);
+}
+function closeDayPlan(){
+  document.getElementById('planPage')?.remove();
+  clearInterval(window._planInterval);
+  if(currentTab==='home')renderHome();
+}
+function planShowDay(abbr){planViewAbbr=abbr;renderDayPlan();}
+function renderDayPlan(){
+  const c=document.getElementById('planPageContent');
+  if(!c)return;
+  const today=localToday();
+  const todayAbbr=WEEK_ABBR[new Date(today+'T12:00:00').getDay()];
+  const abbr=planViewAbbr||todayAbbr;
+  const isToday=abbr===todayAbbr;
+  let ds=today;
+  if(!isToday)ds=planDateForAbbr(abbr);
+
+  let title=PLAN_KANJI[abbr];
+  if(isToday)title='今日';
+  const session=WORKOUT_WEEK.find(w=>w.abbr===abbr);
+  let subtitle='';
+  if(session)subtitle=`${session.label} · ${session.sub}`;
+  const wk=semesterWeek(ds);
+  if(wk>=1){
+    let parity='even';
+    if(wk%2===1)parity='odd';
+    subtitle+=` · Week ${wk} ${parity}`;
+  }
+
+  let chips='';
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(a=>{
+    let cls='sil-toggle-btn';
+    if(a===abbr)cls+=' active';
+    let label=a;
+    if(a===todayAbbr)label=a+'•';
+    chips+=`<button class="${cls}" style="flex:1;text-align:center;padding-left:0;padding-right:0" onclick="planShowDay('${a}')">${label}</button>`;
+  });
+
+  let items,cur=null,next=null,now=-1;
+  if(isToday){const r=planNowNext(ds);items=r.items;cur=r.cur;next=r.next;now=r.now;}
+  else items=planForDate(ds);
+
+  // Exams in the next 7 days — only on today's view.
+  let examCard='';
+  if(isToday){
+    let exRows='';
+    (state.exams||[]).filter(e=>!e.archive&&e.date&&e.date.slice(0,10)>=today)
+      .sort((a,b)=>a.date.localeCompare(b.date))
+      .forEach(e=>{
+        const d=Math.round((new Date(e.date.slice(0,10)+'T12:00:00')-new Date(today+'T12:00:00'))/86400000);
+        if(d>7)return;
+        let when=`in ${d} days`;
+        if(d===0)when='today';
+        else if(d===1)when='tomorrow';
+        if(e.date.length>10)when+=' · '+new Date(e.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        exRows+=`<div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-top:6px"><span>${esc(e.name)}</span><span style="color:var(--gold);white-space:nowrap">${when}</span></div>`;
+      });
+    if(exRows)examCard=`<div class="rival-status-card"><div class="rival-section-label">Exams this week</div>${exRows}</div>`;
+  }
+
+  let nowCard='';
+  if(isToday){
+    let nowHtml='<span style="color:var(--text-dim)">Free time</span>';
+    if(cur){
+      let until='';
+      if(cur.e)until=` <span style="color:var(--text-dim)">until ${planClock(cur.e)}</span>`;
+      nowHtml=`${esc(cur.l)}${until}`;
+    }
+    let nextHtml='<span style="color:var(--text-dim)">Nothing left today</span>';
+    if(next)nextHtml=`${planClock(next.t)} · ${esc(next.l)} <span style="color:var(--text-dim)">${planInStr(planMin(next.t)-now)}</span>`;
+    nowCard=`<div class="rival-status-card">
+      <div class="rival-section-label">Now</div>
+      <div style="font-size:15px;margin-bottom:14px">${nowHtml}</div>
+      <div class="rival-section-label">Next</div>
+      <div style="font-size:13px">${nextHtml}</div>
+    </div>`;
+  }
+
+  let rows='';
+  items.forEach(it=>{
+    const s=planMin(it.t);
+    const e=it.e?planMin(it.e):s+15;
+    let op='1';
+    let bar='transparent';
+    if(isToday&&e<=now)op='0.35';
+    if(isToday&&cur===it){bar='var(--gold)';op='1';}
+    let time=planClock(it.t);
+    if(it.e)time+='–'+planClock(it.e);
+    const bits=[];
+    if(it.peak)bits.push(it.peak+' peak');
+    if(it.n)bits.push(it.n);
+    let sub='';
+    if(bits.length)sub=`<div style="font-size:9px;color:var(--text-dim);margin-top:2px">${esc(bits.join(' · '))}</div>`;
+    const dot=PLAN_DOT[it.k]||'var(--text-dim)';
+    rows+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0 8px 8px;border-left:2px solid ${bar};opacity:${op}">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);min-width:80px;padding-top:2px">${time}</span>
+      <span style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:5px;flex-shrink:0"></span>
+      <div style="flex:1;min-width:0"><div style="font-size:12px">${esc(it.l)}</div>${sub}</div>
+    </div>`;
+  });
+  let listLabel='Plan';
+  if(isToday)listLabel='Today';
+
+  c.innerHTML=`<div class="rival-page-name">${title}</div>
+    <div class="rival-page-subtitle">${esc(subtitle)}</div>
+    <div style="display:flex;gap:3px;margin:0 16px 12px">${chips}</div>
+    ${examCard}${nowCard}
+    <div class="rival-week-card"><div class="rival-section-label">${listLabel}</div>${rows}</div>`;
+}
 async function loadStats(){
   try{const p=await nQuery(DB.stats);const ns=p.map(toStat);checkRankUps(ns);state.stats=ns;}
   catch(e){
@@ -5118,13 +5394,17 @@ function renderHome(){
     </div>`;
   }
 
-  // Today's slot in the split, and whether it's been logged yet.
+  // Today's slot in the split, whether it's logged, and what's next on the plan —
+  // tap for the full day.
   const ts=todaysSession();
   let todayLine='';
   if(ts){
     let status='';
     if((state.workoutDaySet||new Set()).has(localToday()))status=' · <span style="color:var(--gold)">done</span>';
-    todayLine=`<div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin:8px 2px 10px">Today · ${ts.label} — ${ts.sub}${status}</div>`;
+    todayLine=`<div onclick="openDayPlan()" style="cursor:pointer;margin:8px 2px 10px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim)">Today · ${ts.label} — ${ts.sub}${status} <span style="opacity:0.6">›</span></div>
+      <div id="homePlanNext" style="font-size:11px;color:var(--text);margin-top:4px">${esc(planNextLine())}</div>
+    </div>`;
   }
   const streakRow=`<div class="streak-row">
     <div class="streak-item">
