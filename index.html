@@ -1667,6 +1667,22 @@ function computeRecoveryBaseline(){
   return{baseline:avg(all),afterSex:avg(afterSex),afterWorkout:avg(afterWorkout),n:all.length};
 }
 
+// A work phase that ended while the app was closed means its session is finished too.
+// Close it in Notion at the moment the phase ended — not now, which would add the time
+// the app sat closed. Left open, it got restored as a running session with no pomodoro
+// behind it, and the timer froze.
+const _closedPomoSessionIds=new Set();
+function closeExpiredPomoSession(d){
+  if(!d||!d.sessionId||!d.phaseEnd)return;
+  _closedPomoSessionIds.add(d.sessionId);
+  const doneTime=new Date(d.phaseEnd).toISOString();
+  nPatch(d.sessionId,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(e=>warn('closeExpiredPomoSession',e));
+  if(!(state.sessions||[]).some(s=>s.id===d.sessionId)){
+    state.sessions.unshift({id:d.sessionId,subject:d.subject||'',started:d.startedAt,done:doneTime,complete:'Done',quality:null,pomoPhase:null,pomoEnd:null,pomoCount:null});
+  }
+  if(state.activeSession&&state.activeSession.id===d.sessionId)state.activeSession=null;
+}
+
 function savePomoPersist(){
   if(pomoMode&&pomoPhaseEnd){
     const data={
@@ -1736,11 +1752,15 @@ async function loadPomoStateFromNotion(){
       }
       localStorage.setItem('grind-pomo',JSON.stringify(d));
       startTimer();renderHome();
-    }else if(d.phase==='work'&&(now-d.savedAt)<3600000){
-      // Work expired while away — auto-advance to break
-      pomoMode=true;pomoCount=(d.count||0)+1;lastSubject=d.subject||'';
-      pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
-      savePomoPersist();startTimer();renderHome();
+    }else if(d.phase==='work'){
+      // Work expired while away — its session is done, whatever else happens.
+      closeExpiredPomoSession(d);
+      if((now-d.savedAt)<3600000){
+        // Recent enough that the break is still relevant — auto-advance to it
+        pomoMode=true;pomoCount=(d.count||0)+1;lastSubject=d.subject||'';
+        pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+        savePomoPersist();startTimer();renderHome();
+      }
     }
   }catch(e){warn('loadPomoStateFromNotion',e);}
 }
@@ -1755,6 +1775,7 @@ function restorePomoPersist(){
       // Phase expired while away — auto-advance
       localStorage.removeItem('grind-pomo');
       if(d.phase==='work'){
+        closeExpiredPomoSession(d);
         pomoMode=d.mode;pomoCount=d.count+1;lastSubject=d.subject;
         pomoPhase='break';pomoPhaseEnd=now+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
         savePomoPersist();startTimer();
@@ -2562,10 +2583,12 @@ async function restoreSessionFromNotion(){
     const open=await nQuery(DB.studied,{and:[
       {property:'Complete',status:{does_not_equal:'Done'}},
     ]},[{timestamp:'created_time',direction:'descending'}]);
-    if(!open.length)return;
+    // A session just closed by an expired pomodoro may not have reached Notion yet.
+    const openNow=open.filter(p=>!_closedPomoSessionIds.has(p.id));
+    if(!openNow.length)return;
     const cutoff=Date.now()-8*3600000; // 8 hours
-    const recent=open.filter(p=>new Date(p.created_time).getTime()>cutoff);
-    const stale=open.filter(p=>new Date(p.created_time).getTime()<=cutoff);
+    const recent=openNow.filter(p=>new Date(p.created_time).getTime()>cutoff);
+    const stale=openNow.filter(p=>new Date(p.created_time).getTime()<=cutoff);
     // Auto-close stale orphans
     if(stale.length){
       const doneTime=new Date().toISOString();
@@ -5232,7 +5255,9 @@ function renderHome(){
   const isBreak=pomoMode&&!state.activeSession&&pomoPhaseEnd;
   let timerWidget;
   if(state.activeSession){
-    const elapsed=formatDuration(pomoMode?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
+    // Count down only while a pomodoro phase is actually running; otherwise count up,
+    // so an open session without a phase can't sit frozen at 0:00.
+    const elapsed=formatDuration(pomoMode&&pomoPhaseEnd?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
     timerWidget=`<div class="study-widget active">
       <div class="study-widget-top"><div class="study-widget-label">${pomoMode?`Pomo ${pomoCount+1}`:'Studying'}${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button></div>
       <div class="study-active">
