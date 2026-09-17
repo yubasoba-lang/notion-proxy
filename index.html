@@ -2508,7 +2508,7 @@ function startTimer(){
     const el=document.getElementById('timer-display');
     if(el){
       if(pomoMode&&pomoPhaseEnd){
-        el.textContent=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+        el.textContent=formatCountdown(pomoPhaseEnd-Date.now());
       }else if(state.activeSession){
         el.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
       }
@@ -2531,7 +2531,7 @@ function startTimer(){
     // so they sat still. Move them every tick (geometry matches renderStudyLog).
     if(logEl&&pomoMode&&pomoPhaseEnd){
       const remMs=Math.max(0,pomoPhaseEnd-Date.now());
-      logEl.textContent=formatDuration(remMs);
+      logEl.textContent=formatCountdown(remMs);
       const totalMs=pomoPhase==='work'?POMO_WORK:(pomoCount%4===0?POMO_LONG:POMO_SHORT);
       const pct=Math.min(1,(totalMs-remMs)/totalMs);
       const ring=document.getElementById('pomo-ring-fill');
@@ -2545,8 +2545,9 @@ function startTimer(){
     }
     // Update sidebar timer
     const sideEl=document.getElementById('sidebar-timer-display');
-    if(sideEl&&state.activeSession){
-      sideEl.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+    if(sideEl){
+      if(pomoMode&&pomoPhaseEnd)sideEl.textContent=formatCountdown(pomoPhaseEnd-Date.now());
+      else if(state.activeSession)sideEl.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
     }
     // Check pomo phase expiry
     if(pomoMode&&pomoPhaseEnd&&Date.now()>=pomoPhaseEnd){
@@ -4238,6 +4239,9 @@ function getRivalStreak(){
   return streak;
 }
 function fmtH(h){const hrs=Math.floor(h),mins=Math.round((h-hrs)*60);if(hrs===0)return mins+'m';if(mins===0)return hrs+'h';return hrs+'h '+mins+'m';}
+// Pomodoro countdowns tick in seconds (19:32). formatDuration is minute-granular, which
+// made a running countdown look frozen for up to a minute at a time.
+function formatCountdown(ms){const s=Math.max(0,Math.ceil((ms||0)/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 function formatDuration(ms){if(!ms||ms<=0)return'0m';const tot=Math.floor(ms/60000);const h=Math.floor(tot/60),m=tot%60;if(h===0)return m+'m';if(m===0)return h+'h';return h+'h '+m+'m';}
 function getUserStudyHoursToday(){
   const t=localToday();
@@ -5269,7 +5273,7 @@ function renderHome(){
   if(state.activeSession){
     // Count down only while a pomodoro phase is actually running; otherwise count up,
     // so an open session without a phase can't sit frozen at 0:00.
-    const elapsed=formatDuration(pomoMode&&pomoPhaseEnd?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
+    const elapsed=pomoMode&&pomoPhaseEnd?formatCountdown(pomoPhaseEnd-Date.now()):formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
     timerWidget=`<div class="study-widget active">
       <div class="study-widget-top"><div class="study-widget-label">${pomoMode?`Pomo ${pomoCount+1}`:'Studying'}${todayCount>0?` <span class="today-count">· ${todayCount} today</span>`:''}</div><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button></div>
       <div class="study-active">
@@ -5282,7 +5286,7 @@ function renderHome(){
       </div>
     </div>`;
   } else if(isBreak){
-    const rem=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+    const rem=formatCountdown(pomoPhaseEnd-Date.now());
     const isLong=pomoCount%4===0;
     timerWidget=`<div class="study-widget">
       <div class="study-widget-top"><div class="study-widget-label">${isLong?'Long break':'Short break'} <span class="today-count">· ${todayCount} today</span></div><button class="sound-toggle${soundEnabled?'':' muted'}" onclick="toggleSound()">♪</button></div>
@@ -7111,7 +7115,7 @@ function renderStudyLog(){
     const phaseLabel=isBreak?(pomoCount%4===0?'Long Break':'Short Break'):'Focus';
     const ringColor=isBreak?'var(--green-text)':'var(--gold)';
     const ringGlow=isBreak?'#1a3a28':'var(--gold-dim)';
-    const countdownTxt=formatDuration(rem);
+    const countdownTxt=formatCountdown(rem);
 
     // Orbital dot initial position
     const ORB_R=114;
@@ -7835,13 +7839,13 @@ function updateSidebarSession(){
   const el=document.getElementById('sidebar-session');
   if(!el||window.innerWidth<900){return;}
   if(state.activeSession){
-    const elapsed=formatDuration(pomoMode&&pomoPhaseEnd?Math.max(0,pomoPhaseEnd-Date.now()):Date.now()-new Date(state.activeSession.startedAt).getTime());
+    const elapsed=pomoMode&&pomoPhaseEnd?formatCountdown(pomoPhaseEnd-Date.now()):formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
     el.style.display='block';
     el.innerHTML='<div class="sidebar-session-label">'+(pomoMode?'Pomodoro':'Live session')+'</div>'
       +'<div class="sidebar-session-timer" id="sidebar-timer-display">'+elapsed+'</div>'
       +'<div class="sidebar-session-subject">'+state.activeSession.subject+'</div>';
   } else if(pomoMode&&pomoPhaseEnd&&Date.now()<pomoPhaseEnd){
-    const rem=formatDuration(Math.max(0,pomoPhaseEnd-Date.now()));
+    const rem=formatCountdown(pomoPhaseEnd-Date.now());
     el.style.display='block';
     el.innerHTML='<div class="sidebar-session-label">Break</div>'
       +'<div class="sidebar-session-timer" id="sidebar-timer-display">'+rem+'</div>'
