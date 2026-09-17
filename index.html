@@ -2527,6 +2527,22 @@ function startTimer(){
       const barFill=document.getElementById('free-timer-bar-fill');
       if(barFill)barFill.style.width=Math.min(100,ms/7200000*100)+'%';
     }
+    // Study tab pomodoro ring: the countdown, arc and orbit dot were only drawn at render,
+    // so they sat still. Move them every tick (geometry matches renderStudyLog).
+    if(logEl&&pomoMode&&pomoPhaseEnd){
+      const remMs=Math.max(0,pomoPhaseEnd-Date.now());
+      logEl.textContent=formatDuration(remMs);
+      const totalMs=pomoPhase==='work'?POMO_WORK:(pomoCount%4===0?POMO_LONG:POMO_SHORT);
+      const pct=Math.min(1,(totalMs-remMs)/totalMs);
+      const ring=document.getElementById('pomo-ring-fill');
+      if(ring)ring.setAttribute('stroke-dashoffset',(2*Math.PI*100*pct).toFixed(2));
+      const ang=-Math.PI/2+pct*2*Math.PI;
+      const ox=(120+114*Math.cos(ang)).toFixed(2),oy=(120+114*Math.sin(ang)).toFixed(2);
+      ['pomo-orbit-dot','pomo-orbit-halo','pomo-orbit-glow'].forEach(id=>{
+        const c=document.getElementById(id);
+        if(c){c.setAttribute('cx',ox);c.setAttribute('cy',oy);}
+      });
+    }
     // Update sidebar timer
     const sideEl=document.getElementById('sidebar-timer-display');
     if(sideEl&&state.activeSession){
