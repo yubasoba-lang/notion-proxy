@@ -2501,6 +2501,80 @@ Be specific — name the subject in each study block. Make the schedule realisti
 }
 const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 
+// ── Pomodoro end cues ────────────────────────────────────────────────────────
+// playBell, showPomoFlash and closePomoFlash were called but no longer defined, so the
+// tick threw right after counting the pomodoro: no break, the session never closed, and
+// the countdown sat at 0:00 while the count kept climbing. The overlay markup and CSS
+// (#pomoFlashOverlay, .pf-*) were still in place; these drive them.
+let _pomoFlashTimer=null;
+function playBell(){playChime([784,988,1319],0.14,1.2);}
+function showPomoFlash(kind){
+  const ov=document.getElementById('pomoFlashOverlay');
+  if(!ov)return;
+  const isBreak=kind==='break';
+  let eyebrow='BREAK OVER';
+  let glyph='GO';
+  let sub='Start your next pomodoro';
+  if(isBreak){
+    eyebrow='POMO COMPLETE';
+    glyph='✓';
+    sub='5 min break';
+    if(pomoCount%4===0)sub='15 min long break';
+  }else{
+    playChime([659,523],0.1,0.6);
+  }
+  document.getElementById('pfEyebrow').textContent=eyebrow;
+  document.getElementById('pfGlyph').textContent=glyph;
+  document.getElementById('pfSub').textContent=sub;
+  let filled=pomoCount%4;
+  if(pomoCount>0&&filled===0)filled=4;
+  let dots='';
+  for(let i=0;i<4;i++){
+    let cls='pf-session-dot';
+    if(i<filled)cls+=' done';
+    dots+=`<div class="${cls}"></div>`;
+  }
+  document.getElementById('pfDotsRow').innerHTML=dots;
+  // Restart the 3s drain bar so it runs again on every flash.
+  const bar=document.getElementById('pfBar');
+  if(bar){bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';}
+  const pc=document.getElementById('pfParticles');
+  if(pc){
+    pc.innerHTML='';
+    for(let i=0;i<24;i++){
+      const d=document.createElement('div');
+      d.className='pf-dot';
+      const sz=3+Math.random()*5;
+      d.style.cssText=`left:${Math.random()*100}%;bottom:0;width:${sz}px;height:${sz}px;background:var(--gold);animation-delay:${(Math.random()*0.5).toFixed(2)}s;`;
+      pc.appendChild(d);
+    }
+  }
+  ov.classList.add('visible');
+  if(isBreak)flashTitle('✓ Pomodoro done — break');
+  else flashTitle('Break over');
+  clearTimeout(_pomoFlashTimer);
+  _pomoFlashTimer=setTimeout(closePomoFlash,3200);
+}
+function closePomoFlash(){
+  clearTimeout(_pomoFlashTimer);_pomoFlashTimer=null;
+  document.getElementById('pomoFlashOverlay')?.classList.remove('visible');
+}
+// Also called from markup but missing: the Study tab ring's stop / skip-break button,
+// and the daily pomodoro goal on Home. stopSession already handles both stop cases.
+async function handlePomoStop(){
+  await stopSession();
+  if(currentTab==='study')renderStudyLog();
+}
+function editPomoGoal(){
+  const v=prompt('Daily pomodoro goal (1–30):',String(pomoGoal));
+  if(v===null)return;
+  const n=parseInt(v);
+  if(!(n>=1&&n<=30)){showToast('Pick a number from 1 to 30');return;}
+  pomoGoal=n;
+  try{localStorage.setItem('pomo-goal',String(n));}catch(e){}
+  renderHome();
+}
+
 function startTimer(){
   if(timerInterval)clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
@@ -2552,27 +2626,30 @@ function startTimer(){
     // Check pomo phase expiry
     if(pomoMode&&pomoPhaseEnd&&Date.now()>=pomoPhaseEnd){
       if(pomoPhase==='work'){
+        // The phase ended at pomoPhaseEnd — a throttled background tab may only notice later.
+        const endedAt=pomoPhaseEnd;
         pomoCount++;
-        if(soundEnabled)playBell();
         pomoPhase='break';pomoPhaseEnd=Date.now()+(pomoCount%4===0?POMO_LONG:POMO_SHORT);
         if(state.activeSession){
           // Save the completed work session
-          const dur=POMO_WORK;
-          const doneTime=new Date().toISOString();
-          nPatch(state.activeSession.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(()=>{});
-          state.sessions.unshift({...state.activeSession,complete:'Done',done:doneTime});
+          const doneTime=new Date(endedAt).toISOString();
+          nPatch(state.activeSession.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(e=>warn('pomoEnd.closeSession',e));
+          state.sessions.unshift({...state.activeSession,started:state.activeSession.startedAt,complete:'Done',done:doneTime});
           state.activeSession=null;
         }
         savePomoPersist();
-        showPomoFlash('break');
         renderHome();
+        if(currentTab==='study')renderStudyLog();
+        // Cues last, and never allowed to block the phase change above.
+        try{if(soundEnabled)playBell();showPomoFlash('break');}catch(e){warn('pomoEnd.cue',e);}
       }else{
         // Break over — clear pomo so user manually starts next
         pomoPhase='work';pomoPhaseEnd=null;
         clearInterval(timerInterval);timerInterval=null;
         savePomoPersist();
-        showPomoFlash('work');
         renderHome();
+        if(currentTab==='study')renderStudyLog();
+        try{showPomoFlash('work');}catch(e){warn('breakEnd.cue',e);}
       }
     }
   },1000);
