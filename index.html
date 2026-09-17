@@ -2703,6 +2703,19 @@ async function restoreSessionFromNotion(){
   }catch(e){warn('restoreSessionFromNotion',e);}
 }
 
+// Which subjects the Subject status property actually accepts. Cached — the list only
+// changes when you edit it by hand in Notion.
+let _subjectStatusOptions=null;
+async function subjectStatusHas(name){
+  try{
+    if(!_subjectStatusOptions){
+      const db=await nFetch(`/databases/${DB.studied}`);
+      _subjectStatusOptions=(db.properties?.Subject?.status?.options||[]).map(o=>o.name);
+    }
+    return _subjectStatusOptions.includes(name);
+  }catch(e){warn('subjectStatusHas',e);return false;}
+}
+
 async function startSession(subject){
   if(!subject){showToast('Pick a subject first');return;}
   lastSubject=subject;
@@ -2710,9 +2723,10 @@ async function startSession(subject){
   try{
     // Close any orphaned open sessions before starting a new one
     await closeOrphanSessions(null);
-    const page=await nCreate(DB.studied,{
-      Name:{title:[{text:{content:subject}}]},
-    });
+    const props={Name:{title:[{text:{content:subject}}]}};
+    // Only set Subject when the status option exists — an unknown one fails the whole create.
+    if(await subjectStatusHas(subject))props.Subject={status:{name:subject}};
+    const page=await nCreate(DB.studied,props);
     const startedAt=page.created_time||new Date().toISOString();
     state.activeSession={id:page.id,subject,startedAt};
     if(pomoMode){
@@ -2760,7 +2774,11 @@ async function changeSessionSubject(){
   if(!sub||sub===state.activeSession.subject)return;
   lastSubject=sub;localStorage.setItem('grind-last-subject',sub);
   state.activeSession.subject=sub;
-  nPatch(state.activeSession.id,{Name:{title:[{text:{content:sub}}]},Subject:{status:{name:sub}}}).catch(()=>{});
+  // Patch the name on its own: bundling an invalid Subject status failed the whole call
+  // and silently lost the rename.
+  const sid=state.activeSession.id;
+  nPatch(sid,{Name:{title:[{text:{content:sub}}]}}).catch(e=>warn('changeSessionSubject',e));
+  subjectStatusHas(sub).then(ok=>{if(ok)nPatch(sid,{Subject:{status:{name:sub}}}).catch(()=>{});});
   renderHome();
 }
 // 2026/27 semester 1. Past sessions keep their old subject strings — charts read
@@ -2980,7 +2998,10 @@ function sessionRawH(s){
 }
 function isRunaway(s){return sessionRawH(s)>SESSION_CAP_H;}
 
-const toSession=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),subject:g.status(q.Subject),started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
+// Subject is a status property, and Notion's API can't add options to one (400), so this
+// semester's subjects aren't valid values and every new session lands on 'Other'. The
+// title holds the real subject — fall back to it when it names a current subject.
+const toSession=p=>{const q=p.properties;const _n=g.title(q.Name);let _s=g.status(q.Subject);if((!_s||_s==='Other')&&SUBJECTS.includes(_n))_s=_n;return{id:p.id,name:_n,subject:_s,started:g.createdTime(q.Started),done:g.date(q.Done),complete:g.status(q.Complete),quality:g.select(q.Quality)??null,pomoPhase:g.select(q['Pomo Phase'])??null,pomoEnd:g.date(q['Pomo End'])??null,pomoCount:g.num(q['Pomo Count'])??null};};
 const toEntry=p=>{const q=p.properties;return{id:p.id,name:g.title(q.Name),date:g.date(q.Date),emotions:(q.Emotions?.multi_select??[]).map(e=>e.name)};};
 
 const toExam=p=>{const q=p.properties;
@@ -3647,7 +3668,9 @@ async function loadStreaks(){
    meant 5 paginated requests and ~4s every time the Study tab opened. Instead we
    cache locally and ask Notion only for sessions created since the last sync.
    A full refetch still runs daily so edits and deletions can't drift forever. */
-const SESS_CACHE_KEY='grind-sessions-v1';
+// v2: cached rows were mapped before the subject fallback, so they still say 'Other'.
+// Bumping the key makes each device rebuild the cache once.
+const SESS_CACHE_KEY='grind-sessions-v2';
 function readSessionCache(){
   try{
     const raw=localStorage.getItem(SESS_CACHE_KEY);
