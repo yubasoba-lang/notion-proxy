@@ -2507,6 +2507,7 @@ const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 // the countdown sat at 0:00 while the count kept climbing. The overlay markup and CSS
 // (#pomoFlashOverlay, .pf-*) were still in place; these drive them.
 let _pomoFlashTimer=null;
+let _pendingQualityId=null;   // session to rate once the pomo-complete flash closes
 function playBell(){playChime([784,988,1319],0.14,1.2);}
 function showPomoFlash(kind){
   const ov=document.getElementById('pomoFlashOverlay');
@@ -2558,6 +2559,38 @@ function showPomoFlash(kind){
 function closePomoFlash(){
   clearTimeout(_pomoFlashTimer);_pomoFlashTimer=null;
   document.getElementById('pomoFlashOverlay')?.classList.remove('visible');
+  // Ask how the pomodoro went once the flash is out of the way.
+  if(_pendingQualityId){const id=_pendingQualityId;_pendingQualityId=null;showQualityPicker(id);}
+}
+
+// ── Session quality (Flow / Grind / Distracted) ──────────────────────────────
+// Restored from the 11 Aug version: the picker was removed in a later rewrite while its
+// CSS stayed, so sessions stopped being rated after 10 Aug. Skip counts as Grind.
+function showQualityPicker(sessionId){
+  if(!sessionId)return;
+  document.getElementById('qualityOverlay')?.remove();
+  const overlay=document.createElement('div');overlay.id='qualityOverlay';overlay.className='quality-overlay';
+  overlay.innerHTML=`<div class="quality-sheet">
+    <div class="quality-title">How was that session?</div>
+    <div class="quality-btns">
+      <button class="quality-btn flow" onclick="pickQuality('${sessionId}','Flow',this)">Flow</button>
+      <button class="quality-btn grind" onclick="pickQuality('${sessionId}','Grind',this)">Grind</button>
+      <button class="quality-btn distracted" onclick="pickQuality('${sessionId}','Distracted',this)">Distracted</button>
+    </div>
+    <span class="quality-skip" onclick="pickQuality('${sessionId}','Grind',null)">Skip</span>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+}
+async function pickQuality(sessionId,quality,btn){
+  if(btn&&btn.classList)btn.classList.add('picked');
+  // Show it in the stats straight away, and rebuild the cache so the rating sticks.
+  const s=(state.sessions||[]).find(x=>x.id===sessionId);
+  if(s)s.quality=quality;
+  invalidateSessionCache();
+  try{await nPatch(sessionId,{Quality:{select:{name:quality}}});}catch(e){warn('pickQuality',e);}
+  setTimeout(()=>{document.getElementById('qualityOverlay')?.remove();},350);
+  if(currentTab==='study')renderStudyLog();
 }
 // Also called from markup but missing: the Study tab ring's stop / skip-break button,
 // and the daily pomodoro goal on Home. stopSession already handles both stop cases.
@@ -2633,6 +2666,7 @@ function startTimer(){
         if(state.activeSession){
           // Save the completed work session
           const doneTime=new Date(endedAt).toISOString();
+          _pendingQualityId=state.activeSession.id;
           nPatch(state.activeSession.id,{Complete:{status:{name:'Done'}},Done:{date:{start:doneTime}}}).catch(e=>warn('pomoEnd.closeSession',e));
           state.sessions.unshift({...state.activeSession,started:state.activeSession.startedAt,complete:'Done',done:doneTime});
           state.activeSession=null;
@@ -2641,7 +2675,12 @@ function startTimer(){
         renderHome();
         if(currentTab==='study')renderStudyLog();
         // Cues last, and never allowed to block the phase change above.
-        try{if(soundEnabled)playBell();showPomoFlash('break');}catch(e){warn('pomoEnd.cue',e);}
+        try{if(soundEnabled)playBell();showPomoFlash('break');}
+        catch(e){
+          warn('pomoEnd.cue',e);
+          // No flash means closePomoFlash never runs — ask for the rating directly.
+          if(_pendingQualityId){const qid=_pendingQualityId;_pendingQualityId=null;showQualityPicker(qid);}
+        }
       }else{
         // Break over — clear pomo so user manually starts next
         pomoPhase='work';pomoPhaseEnd=null;
@@ -2760,6 +2799,7 @@ async function stopSession(){
   state.activeSession=null;
   if(pomoMode){pomoPhase='work';pomoPhaseEnd=null;savePomoPersist();}
   renderHome();
+  showQualityPicker(id);
 }
 
 function setPomoMode(on){
