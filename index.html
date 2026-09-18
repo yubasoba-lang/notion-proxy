@@ -4476,9 +4476,17 @@ const LECTURE_COURSES=[
   {id:'cpp',  name:'Clinical Pathophysiology', day:'Mon',     short:'Clin Patho'},
   // One course, three slots a week: Mon 12:00, Wed 8:00, and the Wed 13:45 seminar.
   {id:'path', name:'Pathology',                day:'Mon/Wed', short:'Pathology'},
-  {id:'pharm',name:'Pharmacology I',            day:'Tue',     short:'Pharm'},
-  {id:'ecg',  name:'ECG',                      day:'Fri',     short:'ECG'},
 ];
+// Courses dropped from lecture review. Their saved progress is deleted on load and
+// they're gone from the syllabus below, so nothing can merge them back in.
+const RETIRED_LECTURE_COURSES=['ecg','pharm'];
+function dropRetiredLectureCourses(){
+  let dropped=false;
+  RETIRED_LECTURE_COURSES.forEach(id=>{
+    if(state.lectures&&state.lectures[id]){delete state.lectures[id];dropped=true;}
+  });
+  return dropped;
+}
 /* Known timetables. These are merged in on load, so a lecture enters the review
    rotation by itself the day after it is delivered — nothing to type in.
    A lecture dated in the future is "upcoming" and never shows as due. */
@@ -4528,39 +4536,6 @@ const LECTURE_SYLLABUS={
     {d:'2026-12-02',t:"Infectious diseases",sub:"Viral (tick-borne, polio, smallpox, herpes, CMV, EBV, rubella, varicella, mumps, influenza), Rickettsiae, Spirochetes. Bacteria (tularaemia, pertussis, legionella, brucellosis, listeriosis, clostridial, Streptococci). Actinomycosis. Mycobacteria (TB, leprosy). Protozoa (malaria, toxoplasmosis, amebiasis).",by:"Lotz"},
     {d:'2026-12-07',t:"Environmental and nutritional pathology",sub:"Smoking, alcoholism, drugs. Iatrogenic injuries. Environmental chemical and physical factors. Obesity, protein malnutrition, vitamins.",by:"Kocsmár"},
     {d:'2026-12-09',t:"Tumours of the bone",by:"Pencz"},
-  ],
-  // Pharmacology I â Tuesdays 9:30-11:00, NET-Green Lecture Hall.
-  pharm:[
-    {d:'2026-09-08',t:"Introduction to Pharmacology",sub:"Development, pharmacogenomics, basics of toxicology, history of the Hungarian pharmaceutical industry.",by:"Ferdinandy"},
-    {d:'2026-09-15',t:"Pharmacodynamics",sub:"Receptor theories, drug-receptor interactions.",by:"Riba"},
-    {d:'2026-09-22',t:"Pharmacokinetics I",by:"Gyires"},
-    {d:'2026-09-29',t:"Pharmacokinetics II",sub:"Habilitation lecture.",by:"Ágg"},
-    {d:'2026-10-06',t:"Cholinergic and adrenergic transmission",sub:"Presynaptic stimulation and inhibition.",by:"Riba"},
-    {d:'2026-10-13',t:"NSAIDs and minor analgesics",sub:"Non-steroidal anti-inflammatory drugs.",by:"Gyires"},
-    {d:'2026-10-20',t:"Local anesthetics",by:"Al-Khrasani"},
-    {d:'2026-10-27',t:"Antipsychotics",by:"Görbe"},
-    {d:'2026-11-03',t:"Extrapyramidal system drugs",sub:"Drugs acting on the extrapyramidal motoric system. Nootropic agents.",by:"Riba"},
-    {d:'2026-11-10',t:"General anesthetics",by:"Görbe"},
-    {d:'2026-11-17',t:"Antiviral drugs",by:"Giricz"},
-    {d:'2026-11-24',t:"Antifungal and antimycobacterial drugs",by:"Varga"},
-    {d:'2026-12-01',t:"Drugs of Abuse",by:"Riba"},
-    {d:'2026-12-08',t:"Biological and orphan drugs",sub:"Advanced Therapy Medicines. Vaccines.",by:"Görbe"},
-  ],
-  // Lectures run weeks 1-7 only; weeks 8-14 are practicals. Two talks most weeks.
-  // Week 7 has no date published (it's a video recording), so it stays planned.
-  ecg:[
-    {d:'2026-09-11',t:"Arrhythmias: concept and classification",sub:"Mechanisms of tachyarrhythmias.",by:"Tornóci"},
-    {d:'2026-09-11',t:"Supraventricular tachycardia",sub:"Examination of the patient. Differential diagnosis of narrow QRS tachycardias.",by:"Salló"},
-    {d:'2026-09-18',t:"Conduction disorders",sub:"Classification of conduction disorders, mechanisms of bradyarrhythmias.",by:"Tornóci"},
-    {d:'2026-09-18',t:"Impulse formation and conduction",sub:"Practical significance of impulse formation and conduction disorders.",by:"Osztheimer"},
-    {d:'2026-09-25',t:"Repolarization abnormalities",sub:"Abnormalities of repolarization. Ischemic heart disease.",by:"Tornóci"},
-    {d:'2026-09-25',t:"ECG in chest pain",sub:"Role of ECG in investigating chest pain pathologies and in risk stratification.",by:"László / Kulyassa"},
-    {d:'2026-10-02',t:"Ventricular arrhythmias",sub:"",by:"Tornóci"},
-    {d:'2026-10-02',t:"Wide QRS tachycardias",sub:"Differential diagnosis. Detection of ventricular tachycardias, ECG criteria.",by:"Nagy"},
-    {d:'2026-10-09',t:"Pacemaker systems: basics",sub:"",by:"Tornóci"},
-    {d:'2026-10-09',t:"ECG of a patient with pacemaker",sub:"",by:"Papp"},
-    {d:'2026-10-16',t:"Searching for P waves",sub:"ECG differential diagnostics.",by:"Simon"},
-    {t:"Final lecture (video recording)",sub:"Week 7 — released as a video, no fixed date. Mark held once watched.",by:"Tornóci / Szegedi"},
   ],
 };
 // Adds syllabus lectures that aren't already tracked. Matched on date+title so
@@ -4654,8 +4629,10 @@ async function loadLectures(){
       try{state.lectures=JSON.parse(raw);}catch(e){warn('loadLectures.parse',e);state.lectures={};}
       state.lecturesPageId=pages[0].id;
     }else{state.lectures={};state.lecturesPageId=null;}
-    // Pull in any timetable entries not yet tracked, then persist so it's a one-off.
-    if(mergeSyllabus()>0)await saveLectures();
+    // Strip retired courses, pull in any timetable entries not yet tracked, then
+    // persist so it's a one-off.
+    const dropped=dropRetiredLectureCourses();
+    if(mergeSyllabus()>0||dropped)await saveLectures();
   }catch(e){warn('loadLectures',e);state.lectures={};}
 }
 async function saveLectures(){
