@@ -5378,11 +5378,9 @@ function renderHome(){
   const upcomingExams=(state.exams||[]).filter(e=>!e.archive&&e.date&&e.date>=todayISO);
   const subjectExamDate={};
   upcomingExams.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
-    (e.subjects||[]).forEach(s=>{
-      // Match exam subject to SUBJECTS list (partial, case-insensitive)
-      const match=[...SUBJECTS].sort((a,b)=>b.length-a.length).find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()));
-      if(match&&!subjectExamDate[match])subjectExamDate[match]=e.date;
-    });
+    // Subject field first, exam name as a fallback — none of the exams have Subject set.
+    const match=subjectForExam(e);
+    if(match&&!subjectExamDate[match])subjectExamDate[match]=e.date;
   });
   const lastStudiedMap={};
   (state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.subject).forEach(s=>{
@@ -5396,11 +5394,19 @@ function renderHome(){
     const aLast=lastStudiedMap[a]||'',bLast=lastStudiedMap[b]||'';
     return bLast.localeCompare(aLast);
   });
+  // Pre-select the suggested subject (falls back to the last one used).
+  const suggestion=suggestStudySubject();
+  let pickDefault=lastSubject;
+  let suggestHint='';
+  if(suggestion){
+    pickDefault=suggestion.subject;
+    suggestHint=`<div class="pomo-hint">Suggested · ${esc(suggestion.reason)}</div>`;
+  }
   const subjectOptions=sortedSubjects.map(sv=>{
     const examDate=subjectExamDate[sv];
     const daysAway=examDate?Math.ceil((new Date(examDate)-new Date())/(1000*60*60*24)):null;
     const label=examDate?`${sv} · ${daysAway}d`:sv;
-    return `<option value="${sv}"${sv===lastSubject?' selected':''}>${label}</option>`;
+    return `<option value="${sv}"${sv===pickDefault?' selected':''}>${label}</option>`;
   }).join('');
   const todayStr=localToday();
   const todayDoneSessions=state.sessions.filter(ss=>ss.started&&localDay(ss.started)===todayStr&&ss.complete==='Done');
@@ -5448,6 +5454,7 @@ function renderHome(){
         <select id="subject-picker" class="subject-picker">${subjectOptions}</select>
         <button class="study-start-btn" onclick="startSession(document.getElementById('subject-picker').value)">▸ Start</button>
       </div>
+      ${suggestHint}
       ${pomoMode?'<div class="pomo-hint">25 work · 5 break · 15 after ×4</div>':''}
     </div>`;
   }
@@ -7216,6 +7223,160 @@ function renderJournal(){
   el.innerHTML=html;
 }
 
+// ── Smart subject picker ─────────────────────────────────────────────────────
+// Exams in Notion have no Subject set, so match them by name as a fallback.
+const LECTURE_SUBJECT={cpp:'Clinical Pathophysiology I',path:'Pathology I'};
+function subjectForExam(e){
+  for(const s of (e.subjects||[])){
+    const m=[...SUBJECTS].sort((a,b)=>b.length-a.length).find(sv=>sv.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(sv.toLowerCase()));
+    if(m)return m;
+  }
+  const n=(e.name||'').toLowerCase();
+  if(/pathophys/.test(n))return 'Clinical Pathophysiology I';
+  if(/patholog/.test(n))return 'Pathology I';
+  if(/pharma/.test(n))return 'Pharmacology I';
+  if(/microbio/.test(n))return 'Medical Microbiology II';
+  if(/ecg/.test(n))return 'Clinical ECG';
+  if(/statist/.test(n))return 'Medical Statistics, Informatics and Telemedicine';
+  if(/genetic/.test(n))return 'Genetics';
+  if(/immun/.test(n))return 'Immunology II';
+  return null;
+}
+// The subject most worth studying now: an exam within 3 weeks (closer = more), lectures
+// waiting to be looked over or reviewed, and — only for subjects that already have one of
+// those reasons — how little it was studied this week. Without that gate, whatever you
+// ignore most (Genetics, say) would always win.
+function suggestStudySubject(){
+  try{
+    const today=localToday();
+    const subs=SUBJECTS.filter(s=>s!=='Other');
+    const score={},why={};
+    subs.forEach(s=>{score[s]=0;why[s]=[];});
+    const nearest={};
+    (state.exams||[]).filter(e=>!e.archive&&e.date&&e.date.slice(0,10)>=today).forEach(e=>{
+      const s=subjectForExam(e);
+      if(!s||score[s]===undefined)return;
+      const d=Math.round((new Date(e.date.slice(0,10)+'T12:00:00')-new Date(today+'T12:00:00'))/86400000);
+      if(nearest[s]==null||d<nearest[s])nearest[s]=d;
+    });
+    Object.entries(nearest).forEach(([s,d])=>{
+      if(d>21)return;
+      score[s]+=1+3*(21-d)/21;
+      let w='exam in '+d+'d';
+      if(d===0)w='exam today';
+      else if(d===1)w='exam tomorrow';
+      why[s].push(w);
+    });
+    const waiting={};
+    [...lecturesToLookOver(today),...lecturesDue(today)].forEach(l=>{
+      const s=LECTURE_SUBJECT[l.courseId];
+      if(s)waiting[s]=(waiting[s]||0)+1;
+    });
+    Object.entries(waiting).forEach(([s,n])=>{
+      if(score[s]===undefined)return;
+      score[s]+=Math.min(2,0.5*n);
+      why[s].push(n+' lecture'+(n>1?'s':'')+' waiting');
+    });
+    const weekAgo=localDay(new Date(Date.now()-7*86400000));
+    const recent={};
+    (state.sessions||[]).forEach(x=>{
+      if(!x.started||localDay(x.started)<weekAgo)return;
+      recent[x.subject]=(recent[x.subject]||0)+sessionH(x);
+    });
+    subs.forEach(s=>{
+      if(score[s]<=0)return;
+      const h=recent[s]||0;
+      score[s]+=Math.max(0,1.5-h/2);
+      if(h<0.5)why[s].push('not studied this week');
+    });
+    const best=subs.slice().sort((a,b)=>score[b]-score[a])[0];
+    if(!best||score[best]<=0)return null;
+    return{subject:best,reason:why[best].join(' · ')};
+  }catch(e){warn('suggestStudySubject',e);return null;}
+}
+
+// ── Study heatmap ────────────────────────────────────────────────────────────
+// One square per day (rows Mon–Sun, columns = weeks), shaded by study hours, with a dot
+// for swim days and one for gym days. Tap a day for its details.
+let heatRange='semester';
+function setHeatRange(r){heatRange=r;renderStudyLog();}
+function heatDay(ds){
+  const el=document.getElementById('heatDetail');
+  const d=(window._heatData||{})[ds];
+  if(!el||!d)return;
+  const parts=[new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})];
+  if(d.h>0)parts.push(formatDuration(d.h*3600000)+' · '+d.subs.join(', '));
+  else parts.push('no study');
+  if(d.swim)parts.push('swim');
+  if(d.gym)parts.push('gym');
+  el.textContent=parts.join(' · ');
+}
+function studyHeatmapHTML(){
+  const today=localToday();
+  let start=SEMESTER_START;
+  if(heatRange==='year')start=localDay(new Date(Date.now()-364*86400000));
+  const sd=new Date(start+'T12:00:00');
+  let cur=localDay(new Date(sd.getTime()-((sd.getDay()+6)%7)*86400000));   // back to Monday
+  const hours={},subs={};
+  (state.sessions||[]).forEach(x=>{
+    if(!x.started||!x.done)return;
+    const d=localDay(x.started);
+    if(d<start||d>today)return;
+    hours[d]=(hours[d]||0)+sessionH(x);
+    (subs[d]=subs[d]||new Set()).add(x.subject||'Other');
+  });
+  const nb=state.workoutNamesByDay||{};
+  const data={};
+  const cellBase='width:11px;height:11px;border-radius:2px;position:relative;flex-shrink:0';
+  let cols='',studyDays=0,total=0,run=0,best=0;
+  while(cur<=today){
+    let col='';
+    for(let i=0;i<7;i++){
+      const ds=cur;
+      if(ds<start||ds>today){
+        col+=`<div style="${cellBase}"></div>`;
+      }else{
+        const h=hours[ds]||0;
+        total+=h;
+        if(h>0){studyDays++;run++;if(run>best)best=run;}else run=0;
+        let a=0.05;
+        if(h>=4)a=0.85;else if(h>=2)a=0.55;else if(h>=1)a=0.34;else if(h>0)a=0.18;
+        const names=nb[ds]||new Set();
+        const swim=names.has('Swimming');
+        const gym=[...names].some(n=>n!=='Swimming'&&n!=='CO2 Table');
+        data[ds]={h,subs:[...(subs[ds]||[])],swim,gym};
+        let dots='';
+        if(swim)dots+='<span style="position:absolute;left:1px;bottom:1px;width:3px;height:3px;border-radius:50%;background:#5aa9d6"></span>';
+        if(gym)dots+='<span style="position:absolute;right:1px;bottom:1px;width:3px;height:3px;border-radius:50%;background:#6fbf73"></span>';
+        let ring='';
+        if(ds===today)ring=';outline:1px solid rgba(232,234,240,0.5)';
+        col+=`<div onclick="heatDay('${ds}')" style="${cellBase};cursor:pointer;background:rgba(232,234,240,${a})${ring}">${dots}</div>`;
+      }
+      cur=localDay(new Date(new Date(cur+'T12:00:00').getTime()+86400000));
+    }
+    cols+=`<div style="display:flex;flex-direction:column;gap:2px">${col}</div>`;
+  }
+  window._heatData=data;
+  let semCls='sil-toggle-btn',yrCls='sil-toggle-btn',label='SEMESTER';
+  if(heatRange==='year'){yrCls+=' active';label='LAST 12 MONTHS';}else semCls+=' active';
+  const lbl='font-size:7px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim)';
+  return `<div style="padding:16px 0 18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="${lbl}">STUDY · ${label}</div>
+      <div style="display:flex;gap:3px"><button class="${semCls}" style="padding:2px 8px;font-size:8px" onclick="setHeatRange('semester')">Semester</button><button class="${yrCls}" style="padding:2px 8px;font-size:8px" onclick="setHeatRange('year')">12 mo</button></div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <div style="display:flex;flex-direction:column;gap:2px;font-size:7px;color:var(--text-faint);line-height:11px"><span>M</span><span></span><span>W</span><span></span><span>F</span><span></span><span>S</span></div>
+      <div style="display:flex;gap:2px;overflow-x:auto;padding-bottom:4px">${cols}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:9px;color:var(--text-dim)">
+      <span>${studyDays} study days · ${Math.round(total)}h · best run ${best}d</span>
+      <span><span style="color:#5aa9d6">●</span> swim <span style="color:#6fbf73;margin-left:6px">●</span> gym</span>
+    </div>
+    <div id="heatDetail" style="font-size:10px;color:var(--text-dim);margin-top:6px;min-height:14px">Tap a day</div>
+  </div>`;
+}
+
 function renderStudyLog(){
   const el=document.getElementById('tab-study');
 
@@ -7444,6 +7605,7 @@ function renderStudyLog(){
       const fmt=h=>h<12?`${h}am`:h===12?'12pm':`${h-12}pm`;
       if(worst>0)avoidStr=`Avoid ${fmt(worstH)}–${fmt(worstH+2)}`;
     }
+    html+=studyHeatmapHTML();
     html+=`<div style="padding:16px 0 20px;">
       <div style="font-size:7px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">FOCUS PATTERN</div>
       <div style="position:relative;height:14px;background:rgba(255,255,255,0.04);border-radius:2px;margin-bottom:6px;">${ticks}</div>
