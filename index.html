@@ -5234,6 +5234,9 @@ function closeRivalPage(){
 async function refresh(force=true){
   setSyncBusy(true);
   const skip=!force&&_tabFresh(currentTab);
+  // Draw the tab from what's already here (this session or the device copy) before
+  // waiting on Notion; the loads below then redraw it with fresh data.
+  if(!skip&&currentTab!=='home')paintTabNow(currentTab);
   if(currentTab==='home'){
     if(!skip){
       const isFirst=!_hasLoaded;
@@ -5278,6 +5281,7 @@ async function refresh(force=true){
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
   if(currentTab==='arcs'){if(!skip)await Promise.all([loadArcs(),loadBooks()]);_markTabLoaded('arcs');renderArcs();}
+  if(!skip&&currentTab!=='home')saveTabSnapshot(currentTab);   // next launch opens this tab instantly
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
@@ -7982,6 +7986,72 @@ function startFromSnapshot(){
   }catch(e){warn('startFromSnapshot',e);state._fromSnapshot=false;return false;}
 }
 startFromSnapshot();
+
+// ── Instant tabs ─────────────────────────────────────────────────────────────
+// Same idea for every other tab. A tab's first visit after launch used to wait on
+// Notion (Workout showed "Loading exercises…"). Each tab's data is kept per tab after
+// a good load, restored at launch, and drawn the moment you open the tab; the normal
+// load then replaces it. Restoring only fills what's still empty, so it never beats
+// fresher data Home already loaded, and an empty result is never saved over a good one.
+const TAB_SNAP_KEY='grind-tab-snap-v1';
+const TAB_SNAP_FIELDS={
+  tasks:['tasks','templates','todayQuests','penalties','lockdowns','xpDebts','ztd'],
+  workout:['exercises','bodyStats','swimPractices','prs','lastSets','volume'],
+  exams:['exams','topicProgress','topicProgressPageId','lectures','lecturesPageId'],
+  journal:['journals','entries'],
+  arcs:['arcs','books','lifeStatCounts','lifeStats','wealthLog'],
+};
+// Sets (e.g. volume[stat].days) don't survive JSON on their own.
+const _snapReplacer=(k,v)=>v instanceof Set?{__set:[...v]}:v;
+const _snapReviver=(k,v)=>(v&&typeof v==='object'&&Array.isArray(v.__set))?new Set(v.__set):v;
+function _snapEmpty(v){
+  if(v==null)return true;
+  if(Array.isArray(v))return !v.length;
+  if(v instanceof Set)return !v.size;
+  if(typeof v==='object')return !Object.keys(v).length;
+  return false;
+}
+function tabHasData(tab){
+  if(tab==='tasks')return (state.tasks||[]).length>0;
+  if(tab==='workout')return (state.exercises||[]).length>0;
+  if(tab==='exams')return (state.exams||[]).length>0;
+  if(tab==='study')return (state.sessions||[]).length>0;
+  if(tab==='journal')return (state.journals||[]).length>0;
+  if(tab==='arcs')return (state.arcs||[]).length>0;
+  return false;
+}
+function paintTabNow(tab){
+  if(!tabHasData(tab))return;
+  try{
+    if(tab==='tasks')renderTasks();
+    else if(tab==='workout')renderWorkout();
+    else if(tab==='exams')renderExams();
+    else if(tab==='study')renderStudyLog();
+    else if(tab==='journal')renderJournal();
+    else if(tab==='arcs')renderArcs();
+  }catch(e){warn('paintTabNow',e);}
+}
+function saveTabSnapshot(tab){
+  const fields=TAB_SNAP_FIELDS[tab];
+  if(!fields||!tabHasData(tab))return;
+  try{
+    const part={at:Date.now()};
+    fields.forEach(k=>{if(state[k]!==undefined)part[k]=state[k];});
+    localStorage.setItem(TAB_SNAP_KEY+':'+tab,JSON.stringify(part,_snapReplacer));
+  }catch(e){warn('saveTabSnapshot',e);}
+}
+function restoreTabSnapshots(){
+  Object.keys(TAB_SNAP_FIELDS).forEach(tab=>{
+    try{
+      const raw=localStorage.getItem(TAB_SNAP_KEY+':'+tab);
+      if(!raw)return;
+      const part=JSON.parse(raw,_snapReviver);
+      if(!part||Date.now()-(part.at||0)>14*86400000)return;
+      TAB_SNAP_FIELDS[tab].forEach(k=>{if(part[k]!==undefined&&_snapEmpty(state[k]))state[k]=part[k];});
+    }catch(e){warn('restoreTabSnapshots',e);}
+  });
+}
+restoreTabSnapshots();
 
 renderTzBtn();
 refresh().catch(e=>{
