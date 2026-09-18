@@ -5243,7 +5243,7 @@ async function refresh(force=true){
       if(isFirst)_setLoad(100);
       syncScheduledStreak();
       // Needed for the review-due prompt on the home screen.
-      if(!Object.keys(state.lectures||{}).length)await loadLectures();
+      if(state._fromSnapshot||!Object.keys(state.lectures||{}).length)await loadLectures();
       await loadPomoStateFromNotion();
       if(!state.activeSession)await restoreSessionFromNotion();
       await loadLatestRecapFromNotion();
@@ -5253,7 +5253,9 @@ async function refresh(force=true){
       const hasYest=(state.sessions||[]).some(s=>s.complete==='Done'&&s.started&&localDay(s.started)===yestStr);
       const recapHasYest=state.latestRecap?.date===yestStr||state.latestRecap?.date===todayStr2;
       // 影 speaks about yesterday once the day is closed, whether or not you studied.
-      if(!state.rivalLines)await loadRivalLines();
+      // A stale snapshot copy could make 影 say yesterday's line twice — always reload.
+      if(state._fromSnapshot||!state.rivalLines)await loadRivalLines();
+      state._fromSnapshot=false;
       generateRivalLine(yestStr);
       if(hasYest&&!recapHasYest&&!window._recapGenerating){generateDailyRecap(yestStr);}
       else{
@@ -5263,6 +5265,7 @@ async function refresh(force=true){
       }
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
+    if(!skip)saveHomeSnapshot();   // next launch starts from this
   }
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
@@ -7936,6 +7939,49 @@ document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='
     document.body.appendChild(o);
   });
 })();
+
+// ── Instant start ────────────────────────────────────────────────────────────
+// Home used to wait behind the loading screen for five Notion loads (10s+ on a slow
+// connection). The last good Home data is now kept on this device: on launch Home is
+// drawn from it at once, and the normal refresh runs in the background and redraws
+// with fresh data. No snapshot, or any failure drawing it, falls back to the old path.
+const HOME_SNAP_KEY='grind-home-snap-v1';
+const HOME_SNAP_FIELDS=['streaks','streaksPageId','stats','rivals','exams','tasks','todayQuests','penalties','lifeTasksDone','lifeStats','lifeStatCounts','arcs','workoutDays7','workoutDaysLoaded','lectures','lecturesPageId','topicProgress','latestRecap','rivalLines','h2hStartDate','breakPeriods'];
+function saveHomeSnapshot(){
+  try{
+    const snap={at:Date.now()};
+    HOME_SNAP_FIELDS.forEach(k=>{if(state[k]!==undefined)snap[k]=state[k];});
+    // Sets don't survive JSON — store them as arrays.
+    snap.workoutDaySet=[...(state.workoutDaySet||[])];
+    const nb={};
+    Object.entries(state.workoutNamesByDay||{}).forEach(([d,s])=>{nb[d]=[...s];});
+    snap.workoutNamesByDay=nb;
+    localStorage.setItem(HOME_SNAP_KEY,JSON.stringify(snap));
+  }catch(e){warn('saveHomeSnapshot',e);}
+}
+function startFromSnapshot(){
+  try{
+    const raw=localStorage.getItem(HOME_SNAP_KEY);
+    if(!raw)return false;
+    const snap=JSON.parse(raw);
+    if(!snap||Date.now()-(snap.at||0)>14*86400000)return false;   // too old to be worth showing
+    HOME_SNAP_FIELDS.forEach(k=>{if(snap[k]!==undefined)state[k]=snap[k];});
+    state.workoutDaySet=new Set(snap.workoutDaySet||[]);
+    const nb={};
+    Object.entries(snap.workoutNamesByDay||{}).forEach(([d,a])=>{nb[d]=new Set(a);});
+    state.workoutNamesByDay=nb;
+    // Sessions keep their own cache. For a first paint any age will do — the
+    // background refresh replaces them within seconds.
+    try{const c=JSON.parse(localStorage.getItem(SESS_CACHE_KEY)||'null');if(c&&Array.isArray(c.sessions))state.sessions=c.sessions;}catch(_){}
+    // Home only loads lectures and 影's lines when they're missing; from a snapshot they
+    // look present, so tell refresh() to reload them anyway.
+    state._fromSnapshot=true;
+    renderHome();
+    _setLoad(100);   // dismiss the loading screen; refresh() carries on in the background
+    return true;
+  }catch(e){warn('startFromSnapshot',e);state._fromSnapshot=false;return false;}
+}
+startFromSnapshot();
 
 renderTzBtn();
 refresh().catch(e=>{
