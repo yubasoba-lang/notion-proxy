@@ -3552,13 +3552,28 @@ function renderDayPlan(){
     const bits=[];
     if(it.peak)bits.push(it.peak+' peak');
     if(it.n)bits.push(it.n);
+    // CO2 table: done once a session is logged that day; on today's view, tap to start it.
+    let doneMark='';
+    let tapAttr='';
+    let cursor='default';
+    if(it.k==='breath'){
+      const names=(state.workoutNamesByDay||{})[ds];
+      if(names&&names.has(CO2_EXERCISE)){
+        doneMark=' <span style="color:var(--gold);font-size:10px;letter-spacing:0.06em">✓ done</span>';
+        op='1';
+      }else if(isToday){
+        tapAttr=' onclick="openCO2()"';
+        cursor='pointer';
+        bits.push('tap to start');
+      }
+    }
     let sub='';
     if(bits.length)sub=`<div style="font-size:9px;color:var(--text-dim);margin-top:2px">${esc(bits.join(' · '))}</div>`;
     const dot=PLAN_DOT[it.k]||'var(--text-dim)';
-    rows+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0 8px 8px;border-left:2px solid ${bar};opacity:${op}">
+    rows+=`<div${tapAttr} style="display:flex;gap:10px;align-items:flex-start;padding:8px 0 8px 8px;border-left:2px solid ${bar};opacity:${op};cursor:${cursor}">
       <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);min-width:80px;padding-top:2px">${time}</span>
       <span style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:5px;flex-shrink:0"></span>
-      <div style="flex:1;min-width:0"><div style="font-size:12px">${esc(it.l)}</div>${sub}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px">${esc(it.l)}${doneMark}</div>${sub}</div>
     </div>`;
   });
   let listLabel='Plan';
@@ -6531,6 +6546,8 @@ function closeCO2(){
   co2=null;
   document.getElementById('co2Page')?.remove();
   if(currentTab==='workout')renderWorkout();
+  // Opened from the Today page: show the ✓ straight away.
+  if(document.getElementById('planPage'))renderDayPlan();
 }
 
 // ── Swim practices ───────────────────────────────────────────────────────────
