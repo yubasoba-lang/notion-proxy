@@ -3125,6 +3125,7 @@ async function loadPRs(){
     //   volume   — per-muscle tonnage (sets×reps×kg) bucketed by ISO week, for the volume view
     const lastSets={};
     const volume={};
+    const co2Hist=[];   // CO2 tables: hold seconds live in Reps, rounds in Sets
     const cutoff28=localDay(new Date(Date.now()-28*86400000));
     pages.forEach(p=>{
       const props=p.properties;
@@ -3141,6 +3142,7 @@ async function loadPRs(){
       if(!isSecondary&&date&&baseName){
         const prev=lastSets[baseName];
         if(!prev||date>prev.date)lastSets[baseName]={sets,reps,weight,date};
+        if(baseName===CO2_EXERCISE)co2Hist.push({date,hold:reps,rounds:sets});
       }
 
       // ── rolling 28-day volume, per muscle stat this row is attributed to
@@ -3169,6 +3171,7 @@ async function loadPRs(){
     state.prs=prs;
     state.lastSets=lastSets;
     state.volume=volume;
+    state.co2Sessions=co2Hist.sort((a,b)=>a.date.localeCompare(b.date));
   }catch(e){warn('loadPRs',e);state.prs={};state.lastSets={};state.volume={};}
 }
 
@@ -3607,6 +3610,7 @@ function renderDayPlan(){
         bits.push('tap to start');
       }
     }
+    if(it.k==='swim')bits.push('Focus · '+swimFocusFor(ds));
     let sub='';
     if(bits.length)sub=`<div style="font-size:9px;color:var(--text-dim);margin-top:2px">${esc(bits.join(' · '))}</div>`;
     const dot=PLAN_DOT[it.k]||'var(--text-dim)';
@@ -6510,11 +6514,27 @@ function co2CardHTML(){
   const hold=co2LastHold();
   let sub='Breath-hold training · sitting down, never in water';
   if(hold)sub=`Last: ${CO2_ROUNDS} rounds × ${hold}s hold · ${state.lastSets[CO2_EXERCISE].date}`;
+  // Hold times across sessions — the point of the CO2 work is that this number climbs.
+  let trend='';
+  const hist=(state.co2Sessions||[]).slice(-14);
+  if(hist.length){
+    const max=Math.max(1,...hist.map(s=>s.hold||0));
+    let bars='';
+    hist.forEach(s=>{
+      const px=Math.max(3,Math.round(26*(s.hold||0)/max));
+      bars+=`<span title="${s.date} · ${s.hold}s" style="display:inline-block;width:8px;height:${px}px;background:var(--gold);opacity:0.75;border-radius:1px;margin-right:3px"></span>`;
+    });
+    trend=`<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:10px">
+      <span style="display:flex;align-items:flex-end;height:26px">${bars}</span>
+      <span style="font-size:9px;color:var(--text-dim);white-space:nowrap">best ${max}s hold</span>
+    </div>`;
+  }
   return `<div class="wec" style="margin:14px 16px 6px;cursor:pointer" onclick="openCO2()">
     <div class="wec-row"><div>
       <div class="wec-name">CO2 Table</div>
       <div class="wec-meta">${sub}</div>
     </div><span class="wec-arrow">›</span></div>
+    ${trend}
   </div>`;
 }
 function openCO2(){
@@ -6692,6 +6712,23 @@ function closeCO2(){
 // After a Swimming log, record only the main set — the one part of practice you
 // actually remember. One row per practice in the Swim Practices database.
 const SWIM_PRACTICES_DB='3db63a0b-4e7c-81e5-aee2-e16fc36d7893';
+// ── Swim focus of the week ───────────────────────────────────────────────────
+// One technique cue at a time, rotating weekly. Worked out from the week number, so
+// there's nothing to store and every device shows the same cue.
+const SWIM_CUES=[
+  'Exhale underwater — steady bubbles, never hold',
+  'Head still, eyes down — stop looking forward',
+  'Hips up — keep the body line flat',
+  'High elbow catch — forearm facing back',
+  'Finish each stroke past the hip',
+  'Breathe with one goggle still in the water',
+  'Quiet kick — small and steady, from the hip',
+  'Rotate onto your side instead of swimming flat',
+];
+function swimFocusFor(ds){
+  const wk=semesterWeek(ds||localToday());
+  return SWIM_CUES[((wk-1)%SWIM_CUES.length+SWIM_CUES.length)%SWIM_CUES.length];
+}
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
@@ -6715,7 +6752,7 @@ function openSwimPractice(minutes){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
   const set=last?last.set:'';
-  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:''};
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()),focusDone:false};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
@@ -6753,6 +6790,11 @@ function renderSwimPractice(){
     </div>
     <div class="wec-lbl">Scaled?</div>
     <div style="display:flex;gap:4px;margin:6px 0 16px">${chips}</div>
+    <div class="wec-lbl">This week's focus</div>
+    <div onclick="swimToggleFocus()" style="display:flex;align-items:center;gap:10px;margin:6px 0 16px;cursor:pointer">
+      <span style="width:18px;height:18px;border-radius:3px;border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${d.focusDone?'✓':''}</span>
+      <span style="font-size:11px;color:var(--text)">${esc(d.focus||'')}</span>
+    </div>
     <div class="wec-lbl">Note (optional)</div>
     <input type="text" class="wec-inp" id="swimNotes" value="${esc(d.notes)}" placeholder="anything that stood out" oninput="swimDraft.notes=this.value" style="width:100%;text-align:left;margin:6px 0 20px">
     <button class="wec-log-btn" id="swimSaveBtn" onclick="saveSwimPractice(true)">LOG MAIN SET</button>
@@ -6779,6 +6821,7 @@ function swimStep(dir){
   const s=document.getElementById('swimDone');if(s)s.textContent=d.done;
 }
 function swimSetScaled(s){swimDraft.scaled=s;renderSwimPractice();}
+function swimToggleFocus(){swimDraft.focusDone=!swimDraft.focusDone;renderSwimPractice();}
 async function saveSwimPractice(remembered){
   const d=swimDraft;
   if(!d)return;
@@ -6791,7 +6834,9 @@ async function saveSwimPractice(remembered){
     Date:{date:{start:today}},
     Minutes:{number:d.minutes},
     Remembered:{checkbox:remembered},
+    'Focus Done':{checkbox:!!d.focusDone},
   };
+  if(d.focus)props.Focus={rich_text:richChunks(d.focus)};
   if(remembered){
     props['Main Set']={rich_text:richChunks(d.set.trim())};
     props['Reps Done']={number:d.done};
