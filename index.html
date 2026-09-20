@@ -3610,7 +3610,11 @@ function renderDayPlan(){
         bits.push('tap to start');
       }
     }
-    if(it.k==='swim')bits.push('Focus · '+swimFocusFor(ds));
+    if(it.k==='swim'){
+      bits.push('Focus · '+swimFocusFor(ds).t);
+      tapAttr=' onclick="openSwimFocus()"';
+      cursor='pointer';
+    }
     let sub='';
     if(bits.length)sub=`<div style="font-size:9px;color:var(--text-dim);margin-top:2px">${esc(bits.join(' · '))}</div>`;
     const dot=PLAN_DOT[it.k]||'var(--text-dim)';
@@ -6715,20 +6719,78 @@ const SWIM_PRACTICES_DB='3db63a0b-4e7c-81e5-aee2-e16fc36d7893';
 // ── Swim focus of the week ───────────────────────────────────────────────────
 // One technique cue at a time, rotating weekly. Worked out from the week number, so
 // there's nothing to store and every device shows the same cue.
+// t: the cue · d: what it means · how: how to work on it in the water.
 const SWIM_CUES=[
-  'Exhale underwater — steady bubbles, never hold',
-  'Head still, eyes down — stop looking forward',
-  'Hips up — keep the body line flat',
-  'High elbow catch — forearm facing back',
-  'Finish each stroke past the hip',
-  'Breathe with one goggle still in the water',
-  'Quiet kick — small and steady, from the hip',
-  'Rotate onto your side instead of swimming flat',
+  {t:'Exhale underwater',d:'Never hold your breath. Air goes out in a steady stream the whole time your face is down, so the turn to the side is only for breathing in.',
+   how:['Bobs in the shallow end before practice: sink, hum the air out, come up, breathe in.','Hum on every stroke so you can hear it.','Every 2 strokes on hard sets until it feels automatic.']},
+  {t:'Head still, eyes down',d:'Look at the bottom, not forwards. Lifting your head to see ahead drops your hips and adds drag.',
+   how:['Waterline at your hairline, crown leading.','Keep your head still while the body rolls around it.','On easy lengths, pick one tile and watch it go by.']},
+  {t:'Hips up, flat line',d:'Sinking legs are the biggest source of drag. Lean on your chest a little and hold your middle firm so your body sits level.',
+   how:['Press your chest very slightly down; the hips come up.','Keep your middle engaged instead of bending at the waist.','Kick from the hip, not the knee.']},
+  {t:'Breathe with one goggle in',d:'Turn your head with your body roll instead of lifting it. One goggle stays under, the other comes clear.',
+   how:['Breathe in the trough your head makes, not above the surface.','Turn to breathe, then straight back down.','Keep the lower arm extended while you breathe.']},
+  {t:'High elbow catch',d:'Point your fingertips down early and keep the elbow high, so your forearm faces backwards and pushes water back instead of down.',
+   how:['Fingertips down as soon as your hand is in.','Think forearm as a paddle from wrist to elbow.','Slow and exaggerate it on warm-up lengths.']},
+  {t:'Finish past the hip',d:'Most people quit the stroke early. Accelerate the hand all the way past the hip before the arm leaves the water.',
+   how:['Brush your thigh with your thumb on every stroke.','Fastest part of the stroke is the last part.','Count a clean finish on every stroke of an easy 50.']},
+  {t:'Rotate onto your side',d:'Swimming flat wastes the strongest muscles. Shoulders and hips roll together, about halfway onto your side each stroke.',
+   how:['Roll shoulders and hips as one unit.','Feel the down-side shoulder dip as the other arm recovers.','Side-kick drill: one arm forward, on your side, kicking.']},
+  {t:'Quiet kick from the hip',d:'Small, steady and from the hip, with loose ankles. A big knee-bent kick brakes you and burns the energy you need for the pull.',
+   how:['Heels just break the surface; no splashing.','Loose ankles — point the toes.','Steady rhythm rather than bursts.']},
+  {t:'Long in front',d:'Enter fingertips first and extend forwards under the water before you start pulling. Length per stroke beats extra strokes.',
+   how:['Fingertips in first, then reach forward.','Reach without pausing — glide is not stopping.','Feel the stretch through the armpit.']},
+  {t:'Count your strokes',d:'Strokes per length is your efficiency reading. Same pace with fewer strokes means better technique.',
+   how:['Count strokes on an easy 50 and note it.','Try to hold that count as the set goes on.','Compare the same 50 week to week.']},
+  {t:'Hold the count, add pace',d:'Now go slightly faster while keeping the same stroke count. This is where efficiency turns into speed.',
+   how:['Swim a 50 at your usual count, then a 50 faster with the same count.','If the count jumps, you pushed too hard — back off.','Alternate easy and faster 50s.']},
+  {t:'Streamline off every wall',d:'Free speed. Arms squeezed behind your ears, hands stacked, body tight, then a few kicks before your first stroke.',
+   how:['Squeeze your arms against your ears; no gap.','3–5 kicks underwater before surfacing.','Every wall, every length, including warm-up.']},
+  {t:'Fast feet on the turn',d:'Get your feet to the wall and off it quickly. Time is lost hanging at the wall, not in the push-off.',
+   how:['Tight tuck, feet planted fast.','Push off on your side, then rotate.','Leave the wall in streamline, not mid-stroke.']},
+  {t:'Bilateral breathing',d:'Breathing every 3 on easy swims evens out your stroke and keeps both sides working the same way.',
+   how:['Every 3 on warm-up and cool-down.','Back to every 2 for hard sets.','Notice which side feels awkward — that side needs work.']},
+  {t:'Negative split',d:'Swim the second half of a distance faster than the first. It teaches pacing, which is what falls apart when you tire.',
+   how:['On a 200, make the second 100 faster.','Start slower than feels right.','Check your times per 50 if the clock is visible.']},
+  {t:'Relax what you can',d:'Tension costs energy. Face, hands and recovery arm stay loose; only the pulling muscles work hard.',
+   how:['Unclench your jaw and face.','Let the recovery arm hang loose from the elbow.','Loose hands — no rigid fingers.']},
 ];
 function swimFocusFor(ds){
   const wk=semesterWeek(ds||localToday());
   return SWIM_CUES[((wk-1)%SWIM_CUES.length+SWIM_CUES.length)%SWIM_CUES.length];
 }
+// The cue with its detail — tapped from the swim row on the Today page.
+function openSwimFocus(){
+  if(document.getElementById('swimFocusPage'))return;
+  const el=document.createElement('div');el.id='swimFocusPage';el.className='rival-page';
+  const today=localToday();
+  const wk=semesterWeek(today);
+  const cur=swimFocusFor(today);
+  let rest='';
+  SWIM_CUES.forEach((c,i)=>{
+    const curIdx=((wk-1)%SWIM_CUES.length+SWIM_CUES.length)%SWIM_CUES.length;
+    if(i===curIdx)return;
+    let when='later';
+    const ahead=(i-curIdx+SWIM_CUES.length)%SWIM_CUES.length;
+    if(ahead===1)when='next week';
+    else if(ahead<=4)when='in '+ahead+' weeks';
+    rest+=`<div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;padding:7px 0;border-top:1px solid rgba(232,234,240,0.06)">
+      <span>${esc(c.t)}</span><span style="color:var(--text-faint);white-space:nowrap">${when}</span></div>`;
+  });
+  let howList='';
+  cur.how.forEach(x=>{howList+=`<div style="font-size:11px;line-height:1.7;color:var(--text-dim)">· ${esc(x)}</div>`;});
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimFocus()">← Back</button></div>
+    <div class="rival-page-subtitle" style="margin-top:12px">Week ${wk} · swim focus</div>
+    <div style="font-size:20px;font-weight:700;letter-spacing:0.02em;margin:0 0 10px">${esc(cur.t)}</div>
+    <div style="font-size:12px;line-height:1.75;color:var(--text);margin-bottom:16px">${esc(cur.d)}</div>
+    <div class="rival-section-label">In the water</div>
+    ${howList}
+    <div class="rival-section-label" style="margin-top:22px">The rest</div>
+    ${rest}
+  </div>`;
+  document.body.appendChild(el);
+}
+function closeSwimFocus(){document.getElementById('swimFocusPage')?.remove();}
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
@@ -6752,7 +6814,7 @@ function openSwimPractice(minutes){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
   const set=last?last.set:'';
-  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()),focusDone:false};
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
