@@ -5370,6 +5370,109 @@ function renderExamCountdownDisplay(){
   }
   if(awakeEl){awakeEl.innerHTML='';}
 }
+// ── Lecture backlog pace ─────────────────────────────────────────────────────
+// Lectures waiting is only half the picture — this is how many a week it takes to
+// clear them before that subject's exam.
+function lecturePace(courseId,today){
+  const n=[...lecturesToLookOver(today),...lecturesDue(today)].filter(l=>l.courseId===courseId).length;
+  if(!n)return null;
+  const subject=LECTURE_SUBJECT[courseId];
+  let target=null;
+  if(subject){
+    (state.exams||[]).filter(e=>!e.archive&&e.date&&e.date.slice(0,10)>=today).forEach(e=>{
+      if(subjectForExam(e)!==subject)return;
+      const d=e.date.slice(0,10);
+      if(!target||d<target)target=d;
+    });
+  }
+  if(!target)return{n,perWeek:null,by:null,days:null};
+  const days=Math.max(1,Math.round((new Date(target+'T12:00:00')-new Date(today+'T12:00:00'))/86400000));
+  return{n,perWeek:Math.ceil(n/Math.max(1,days/7)),by:target,days};
+}
+function lecturePaceText(courseId,today){
+  const p=lecturePace(courseId,today);
+  if(!p)return '';
+  if(!p.by)return p.n+' waiting';
+  const by=new Date(p.by+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  return p.n+' waiting · '+p.perWeek+'/wk to clear by '+by;
+}
+// The most urgent course with a backlog and an exam ahead of it.
+function topLecturePace(today){
+  let best=null;
+  LECTURE_COURSES.forEach(c=>{
+    const p=lecturePace(c.id,today);
+    if(!p||!p.by)return;
+    if(!best||p.days<best.days)best={...p,short:courseOf(c.id).short};
+  });
+  return best;
+}
+
+// ── Morning catch-up ─────────────────────────────────────────────────────────
+// A swim or gym day that passed with nothing logged is usually a forgotten log, not a
+// skipped session. Ask once, the morning after, rather than letting the data drift.
+const CATCHUP_KEY='grind-catchup-dismissed';
+function catchupDismissed(){try{return JSON.parse(localStorage.getItem(CATCHUP_KEY)||'[]');}catch(e){return [];}}
+function dismissCatchup(ds,render){
+  try{
+    const a=catchupDismissed();
+    if(!a.includes(ds))a.push(ds);
+    localStorage.setItem(CATCHUP_KEY,JSON.stringify(a.slice(-30)));
+  }catch(e){warn('dismissCatchup',e);}
+  if(render!==false)renderHome();
+}
+function catchupDay(){
+  if(!state.workoutDaysLoaded)return null;   // without the log, everything looks missed
+  const dismissed=catchupDismissed();
+  const today=localToday();
+  for(let i=1;i<=2;i++){
+    const ds=localDay(new Date(new Date(today+'T12:00:00').getTime()-i*86400000));
+    if(dismissed.includes(ds))continue;
+    if((state.workoutDaySet||new Set()).has(ds))continue;
+    if(dayKind(ds)!=='required')continue;
+    const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
+    const swim=(DAY_PLAN[abbr]||[]).some(it=>it.k==='swim');
+    return{ds,abbr,swim};
+  }
+  return null;
+}
+async function catchupYes(ds){
+  dismissCatchup(ds,false);
+  const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
+  const isSwim=(DAY_PLAN[abbr]||[]).some(it=>it.k==='swim');
+  if(!isSwim){
+    // Only you know the weights — open the Workout tab to log it properly.
+    renderHome();
+    switchTab('workout',document.querySelectorAll('.nav-btn')[2]);
+    return;
+  }
+  try{
+    if(!state.exercises?.length)await loadExercises();
+    if(!state.bodyStats?.length)await loadBodyStats();
+    const ex=(state.exercises||[]).find(e=>e.name==='Swimming');
+    if(!ex)throw new Error('no Swimming exercise in the library');
+    const last=state.lastSets?.['Swimming'];
+    const mins=last&&last.reps?last.reps:90;
+    const c=cardioToSets(mins);
+    await _logExercise(ex,c.sets,c.reps,c.weight,ds);
+    showToast('Logged swim · '+mins+' min',2500);
+  }catch(e){warn('catchupYes',e);showToast('Failed: '+e.message,4000);}
+  renderHome();
+}
+function catchupCardHTML(){
+  const cu=catchupDay();
+  if(!cu)return '';
+  const dayName=new Date(cu.ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'});
+  let q='Train on '+dayName+'?';
+  if(cu.swim)q='Swim on '+dayName+'?';
+  return `<div class="streak-row" style="justify-content:space-between;gap:10px;margin:8px 0 10px">
+    <span style="font-size:10px;letter-spacing:0.06em;color:var(--text-dim)">${q}</span>
+    <span style="display:flex;gap:6px">
+      <button class="sil-toggle-btn" style="padding:3px 12px" onclick="catchupYes('${cu.ds}')">Yes</button>
+      <button class="sil-toggle-btn" style="padding:3px 12px" onclick="dismissCatchup('${cu.ds}')">No</button>
+    </span>
+  </div>`;
+}
+
 function renderHome(){
   renderTitle();
   const s=state.streaks;
@@ -5569,7 +5672,10 @@ function renderHome(){
     const headline=bits.join(' · ');
     const byCourse={};
     [..._look,..._due].forEach(l=>{const n=courseOf(l.courseId).short;byCourse[n]=(byCourse[n]||0)+1;});
-    const breakdown=Object.entries(byCourse).map(([n,c])=>`${n} ${c}`).join(' · ');
+    let breakdown=Object.entries(byCourse).map(([n,c])=>`${n} ${c}`).join(' · ');
+    // Turn the backlog into a pace: how many a week clears it before that exam.
+    const pace=topLecturePace(_t);
+    if(pace)breakdown+=` — ${pace.short} ${pace.perWeek}/wk to clear by ${new Date(pace.by+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;
     reviewCard=`<div class="next-exam-card" onclick="examSubTab='lectures';switchTab('exams',document.querySelectorAll('.nav-btn')[3])" style="cursor:pointer">
       <div class="next-exam-label">Lectures</div>
       <div class="next-exam-top">
@@ -5643,12 +5749,12 @@ function renderHome(){
   const lifeStatsCard=renderLifeStats();
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
-      <div class="home-col-full">${streakRow}${todayLine}${rivalTeaser}</div>
+      <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
       <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
     </div>`;
   } else {
-    html=streakRow+todayLine+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -6310,8 +6416,9 @@ function closeWorkoutModal(){
 }
 
 // ── Shared exercise logging core ────────────────────────────────────────────
-async function _logExercise(exercise, sets, reps, weight){
-  const today=localToday();
+// dateStr lets the morning catch-up prompt log a session for the day it was missed.
+async function _logExercise(exercise, sets, reps, weight, dateStr){
+  const today=dateStr||localToday();
   const muscleMap={};state.bodyStats.forEach(s=>{muscleMap[s.name]=s.id;});
   const primary=exercise.primaryMuscle;
   const secondary=exercise.musclesHit.filter(m=>m!==primary);
@@ -7953,6 +8060,15 @@ function renderLecturesPanel(today){
   const look=lecturesToLookOver(today);
   const due=lecturesDue(today);
   let h='<div style="padding:4px 16px 24px">';
+
+  // Pace per course: what clearing the backlog before that exam takes.
+  let paceRows='';
+  LECTURE_COURSES.forEach(c=>{
+    const p=lecturePace(c.id,today);
+    if(!p||!p.by)return;
+    paceRows+=`<div style="display:flex;justify-content:space-between;gap:10px;font-size:10px;margin-top:4px"><span>${esc(courseOf(c.id).short)}</span><span style="color:var(--text-dim)">${p.n} waiting · <span style="color:var(--gold)">${p.perWeek}/wk</span> to clear by ${new Date(p.by+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span></div>`;
+  });
+  if(paceRows)h+=`<div class="rival-status-card" style="margin:0 0 14px"><div class="rival-section-label">Pace</div>${paceRows}</div>`;
 
   // ── 1. First pass: happened, never studied ───────────────────────────────
   if(look.length){
