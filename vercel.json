@@ -3,11 +3,13 @@
   "builds": [
     { "src": "api/notion.js",  "use": "@vercel/node" },
     { "src": "api/claude.js",  "use": "@vercel/node" },
+    { "src": "api/calendar.js","use": "@vercel/node" },
     { "src": "**/*.{png,webp,jpg,svg,html,json}", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/notion", "dest": "/api/notion.js" },
     { "src": "/api/claude", "dest": "/api/claude.js" },
+    { "src": "/api/calendar(\\.ics)?", "dest": "/api/calendar.js" },
     { "src": "/(.*)",       "dest": "/$1" }
   ]
 }
