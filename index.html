@@ -6794,7 +6794,7 @@ function closeSwimFocus(){document.getElementById('swimFocusPage')?.remove();}
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
-const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds'])};};
+const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds']),strokes:g.num(q.Strokes)};};
 async function loadSwimPractices(){
   try{
     const p=await nQuery(SWIM_PRACTICES_DB,null,[{property:'Date',direction:'descending'}]);
@@ -6848,7 +6848,7 @@ function openSwimPractice(minutes){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
   const set=last?last.set:'';
-  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:''};
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:'',strokes:0};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
@@ -6892,6 +6892,12 @@ function renderSwimPractice(){
     </div>
     <div class="wec-lbl">Scaled?</div>
     <div style="display:flex;gap:4px;margin:6px 0 16px">${chips}</div>
+    <div class="wec-lbl">Strokes per length (warm-up 50, easy pace)</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 16px">
+      <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimStrokeStep(-1)">−</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;min-width:54px;text-align:center"><span id="swimStrokes">${d.strokes||'—'}</span></div>
+      <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimStrokeStep(1)">+</button>
+    </div>
     <div class="wec-lbl">Timed swim (optional)</div>
     <div style="display:flex;gap:4px;margin:6px 0 8px">${distChips}</div>
     <input type="text" class="wec-inp" id="swimTime" value="${esc(d.timedRaw)}" placeholder="29.2 or 1:45.3" oninput="swimDraft.timedRaw=this.value" style="width:100%;text-align:left;margin-bottom:16px">
@@ -6927,6 +6933,13 @@ function swimStep(dir){
 }
 function swimSetScaled(s){swimDraft.scaled=s;renderSwimPractice();}
 function swimToggleFocus(){swimDraft.focusDone=!swimDraft.focusDone;renderSwimPractice();}
+function swimStrokeStep(dir){
+  const d=swimDraft;
+  if(!d)return;
+  d.strokes=Math.max(0,Math.min(60,(d.strokes||0)+dir));
+  const el=document.getElementById('swimStrokes');
+  if(el)el.textContent=d.strokes||'—';
+}
 function swimSetDist(m){
   const inp=document.getElementById('swimTime');
   if(inp)swimDraft.timedRaw=inp.value;          // keep what's typed through the re-render
@@ -6948,6 +6961,7 @@ async function saveSwimPractice(remembered){
     'Focus Done':{checkbox:!!d.focusDone},
   };
   if(d.focus)props.Focus={rich_text:richChunks(d.focus)};
+  if(d.strokes>0)props.Strokes={number:d.strokes};
   const secs=parseSwimTime(d.timedRaw);
   if(d.timedDist&&secs!=null){
     props['Timed Distance']={number:d.timedDist};
@@ -6999,6 +7013,21 @@ function swimCardHTML(){
     let pbs='';
     bKeys.forEach(d2=>{pbs+=`<span style="margin-right:10px">${d2}m <span style="color:var(--gold)">${fmtSwimTime(bests[d2].sec)}</span></span>`;});
     head+=`<div style="font-size:10px;color:var(--text-dim);margin-top:4px">PB ${pbs}</div>`;
+  }
+  // Strokes per length: fewer at the same easy pace = better technique.
+  const strokeHist=list.filter(p=>p.strokes>0).slice(0,10).reverse();
+  if(strokeHist.length){
+    const vals=strokeHist.map(p=>p.strokes);
+    const max=Math.max(...vals),min=Math.min(...vals);
+    let bars='';
+    strokeHist.forEach(p=>{
+      const px=Math.max(3,Math.round(22*p.strokes/max));
+      bars+=`<span title="${p.date} · ${p.strokes}/length" style="display:inline-block;width:8px;height:${px}px;background:#5aa9d6;opacity:0.75;border-radius:1px;margin-right:3px"></span>`;
+    });
+    head+=`<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:8px">
+      <span style="display:flex;align-items:flex-end;height:22px">${bars}</span>
+      <span style="font-size:9px;color:var(--text-dim);white-space:nowrap">${vals[vals.length-1]}/length · best ${min}</span>
+    </div>`;
   }
   let rows='';
   list.slice(0,6).forEach(p=>{
