@@ -8553,6 +8553,38 @@ function startFromSnapshot(){
 }
 startFromSnapshot();
 
+// ── Open to now ──────────────────────────────────────────────────────────────
+// At 18:25 on a Tuesday the thing you want is the pool card, not Home. On launch,
+// look at what the day plan says is happening (or starts within 20 minutes) and go
+// straight there. Home is always one tap away on the nav bar, and each block only
+// does this once a day, so dismissing it sticks.
+const OPEN_NOW_KEY='grind-opennow-v1';
+const OPEN_NOW_LEAD=20;      // minutes before a block starts that it counts as "now"
+const OPEN_NOW_DEST={swim:'pool',gym:'workout',cardio:'workout',breath:'workout',study:'study'};
+function openNowBlock(){
+  try{
+    const r=planNowNext(localToday());
+    if(r.cur&&OPEN_NOW_DEST[r.cur.k])return r.cur;
+    if(r.next&&OPEN_NOW_DEST[r.next.k]&&planMin(r.next.t)-r.now<=OPEN_NOW_LEAD)return r.next;
+    return null;
+  }catch(e){warn('openNowBlock',e);return null;}
+}
+function openToNow(){
+  const it=openNowBlock();
+  if(!it)return;
+  const today=localToday();
+  const key=today+'|'+it.t+'|'+it.l;
+  try{
+    if(localStorage.getItem(OPEN_NOW_KEY)===key)return;   // already opened for this block
+    localStorage.setItem(OPEN_NOW_KEY,key);
+  }catch(_){}
+  const dest=OPEN_NOW_DEST[it.k];
+  if(dest==='pool'){openPoolCard();return;}
+  const btn=document.querySelector('.nav-btn[onclick*="\''+dest+'\'"]');
+  switchTab(dest,btn);
+}
+setTimeout(()=>{try{openToNow();}catch(e){warn('openToNow',e);}},0);
+
 // ── Instant tabs ─────────────────────────────────────────────────────────────
 // Same idea for every other tab. A tab's first visit after launch used to wait on
 // Notion (Workout showed "Loading exercises…"). Each tab's data is kept per tab after
