@@ -25,7 +25,7 @@ const PLAN = {
     {t:"11:45",e:"12:45",l:"Lunch together",alarm:10},
     {t:"13:15",e:"15:00",l:"Study room",alarm:10},
     {t:"15:15",e:"17:45",l:"Pharmacology I",alarm:15,n:"Two blocks, 15 min gap at 16:45"},
-    {t:"18:30",e:"19:30",l:"Dinner together"},
+    {t:"18:30",e:"19:30",l:"Dinner together",alarm:10},
     {t:"20:00",e:"22:30",l:"Study room",n:"22:00 peak",alarm:10},
   ],
   Tue:[
@@ -35,7 +35,7 @@ const PLAN = {
     {t:"14:00",e:"18:00",l:"Study room",n:"17:00 peak · snack at 16:45",alarm:10},
     {t:"18:30",e:"20:00",l:"Swim practice",alarm:20,n:"Leave at 18:15 · log the main set after"},
     {t:"20:30",e:"21:30",l:"Gym · Pull",n:"Moderate weights",alarm:15},
-    {t:"21:45",e:"22:30",l:"Dinner together",n:"Recovery meal"},
+    {t:"21:45",e:"22:30",l:"Dinner together",alarm:10,n:"Recovery meal"},
   ],
   Wed:[
     {t:"09:30",e:"12:45",l:"Pathology I",alarm:15,n:"Two blocks — snack in the 11:00 gap"},
@@ -43,7 +43,7 @@ const PLAN = {
     {t:"14:15",e:"14:45",l:"Brisk walk to campus"},
     {t:"15:00",e:"17:30",l:"Study room",alarm:10},
     {t:"17:45",e:"18:00",l:"CO2 table",n:"Sitting down, at home",alarm:10},
-    {t:"18:00",e:"19:00",l:"Dinner together"},
+    {t:"18:00",e:"19:00",l:"Dinner together",alarm:10},
     {t:"20:00",e:"22:15",l:"Study room",n:"22:00 peak",alarm:10},
   ],
   Thu:[
@@ -53,7 +53,7 @@ const PLAN = {
     {t:"14:00",e:"18:00",l:"Study room",n:"17:00 peak · snack at 16:45",alarm:10},
     {t:"18:30",e:"20:00",l:"Swim practice",alarm:20,n:"Leave at 18:15 · log the main set after"},
     {t:"20:30",e:"21:30",l:"Gym · Push + Rotation",n:"Moderate weights",alarm:15},
-    {t:"21:45",e:"22:30",l:"Dinner together",n:"Recovery meal"},
+    {t:"21:45",e:"22:30",l:"Dinner together",alarm:10,n:"Recovery meal"},
   ],
   Fri:[
     {t:"08:30",e:"09:45",l:"Medical Statistics",alarm:15},
@@ -63,14 +63,14 @@ const PLAN = {
     {t:"10:00",e:"11:30",l:"Gym · Lower + Power",n:"Then 20 min easy row",alarm:15},
     {t:"12:30",e:"13:30",l:"Lunch together",alarm:10},
     {t:"14:30",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
-    {t:"19:00",e:"20:00",l:"Dinner together"},
+    {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
   ],
   Sun:[
     {t:"11:00",e:"12:15",l:"Gym · Upper accessory + Core",n:"Then 20 min easy bike",alarm:15},
     {t:"12:45",e:"13:30",l:"Lunch together",alarm:10},
     {t:"13:30",e:"15:00",l:"Batch cooking"},
     {t:"15:30",e:"18:15",l:"Study room",n:"17:00 peak",alarm:10},
-    {t:"18:45",e:"19:45",l:"Dinner together"},
+    {t:"18:45",e:"19:45",l:"Dinner together",alarm:10},
     {t:"20:00",e:"22:15",l:"Study room",n:"Plan the week first · 22:00 peak",alarm:10},
   ],
 };
@@ -85,12 +85,12 @@ const ALTERNATING = [
   {day:"Fri",start:"20260911",t:"12:00",e:"13:30",l:"Microbiology II practical",alarm:15,until:"20261023T220000Z"},
   {day:"Fri",start:"20260911",t:"13:45",e:"14:45",l:"Lunch together",until:"20261023T220000Z",alarm:10},
   {day:"Fri",start:"20260911",t:"15:30",e:"18:00",l:"Study room",n:"17:00 peak",until:"20261023T220000Z",alarm:10},
-  {day:"Fri",start:"20260911",t:"18:30",e:"19:30",l:"Dinner together",n:"Evening off",until:"20261023T220000Z"},
+  {day:"Fri",start:"20260911",t:"18:30",e:"19:30",l:"Dinner together",alarm:10,n:"Evening off",until:"20261023T220000Z"},
   // Friday from week 8 (30 Oct): Microbiology moves earlier, ECG lectures are over.
   {day:"Fri",start:"20261030",t:"10:15",e:"11:30",l:"Microbiology practical",alarm:15},
   {day:"Fri",start:"20261030",t:"12:00",e:"13:00",l:"Lunch together",alarm:10},
   {day:"Fri",start:"20261030",t:"13:30",e:"17:30",l:"Study room",n:"17:00 peak",alarm:10},
-  {day:"Fri",start:"20261030",t:"18:00",e:"19:00",l:"Dinner together",n:"Evening off"},
+  {day:"Fri",start:"20261030",t:"18:00",e:"19:00",l:"Dinner together",alarm:10,n:"Evening off"},
 ];
 
 const BYDAY = { Mon:"MO", Tue:"TU", Wed:"WE", Thu:"TH", Fri:"FR", Sat:"SA", Sun:"SU" };
