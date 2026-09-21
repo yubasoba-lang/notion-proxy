@@ -40,7 +40,7 @@ const PLAN = {
   Wed:[
     {t:"09:30",e:"12:45",l:"Pathology I",alarm:15,n:"Two blocks — snack in the 11:00 gap"},
     {t:"13:15",e:"14:15",l:"Lunch together",alarm:10},
-    {t:"14:15",e:"14:45",l:"Brisk walk to campus"},
+    {t:"14:15",e:"14:45",l:"Brisk walk to campus",alarm:10},
     {t:"15:00",e:"17:30",l:"Study room",alarm:10},
     {t:"17:45",e:"18:00",l:"CO2 table",n:"Sitting down, at home",alarm:10},
     {t:"18:00",e:"19:00",l:"Dinner together",alarm:10},
@@ -68,7 +68,7 @@ const PLAN = {
   Sun:[
     {t:"11:00",e:"12:15",l:"Gym · Upper accessory + Core",n:"Then 20 min easy bike",alarm:15},
     {t:"12:45",e:"13:30",l:"Lunch together",alarm:10},
-    {t:"13:30",e:"15:00",l:"Batch cooking"},
+    {t:"13:30",e:"15:00",l:"Batch cooking",alarm:10},
     {t:"15:30",e:"18:15",l:"Study room",n:"17:00 peak",alarm:10},
     {t:"18:45",e:"19:45",l:"Dinner together",alarm:10},
     {t:"20:00",e:"22:15",l:"Study room",n:"Plan the week first · 22:00 peak",alarm:10},
