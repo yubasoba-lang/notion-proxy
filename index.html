@@ -6794,7 +6794,7 @@ function closeSwimFocus(){document.getElementById('swimFocusPage')?.remove();}
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
-const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes)};};
+const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds'])};};
 async function loadSwimPractices(){
   try{
     const p=await nQuery(SWIM_PRACTICES_DB,null,[{property:'Date',direction:'descending'}]);
@@ -6809,12 +6809,46 @@ function swimSetTotal(text){
 // Same set typed slightly differently still groups together.
 function swimSetKey(text){return String(text||'').toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim();}
 function latestRememberedSwim(){return (state.swimPractices||[]).find(p=>p.remembered&&p.set)||null;}
+// Times: "29.2" or "1:45.3" → seconds. Blank/unparseable → null.
+const SWIM_DISTANCES=[50,100,200,400];
+function parseSwimTime(str){
+  const s=String(str||'').trim();
+  if(!s)return null;
+  let sec=null;
+  if(s.indexOf(':')>-1){
+    const p=s.split(':');
+    const m=parseFloat(p[0]),r=parseFloat(p[1]);
+    if(isFinite(m)&&isFinite(r))sec=m*60+r;
+  }else{
+    const v=parseFloat(s);
+    if(isFinite(v))sec=v;
+  }
+  if(sec==null||!(sec>0)||sec>3600)return null;
+  return Math.round(sec*10)/10;
+}
+function fmtSwimTime(sec){
+  if(sec==null)return '';
+  if(sec<60)return sec.toFixed(1)+'s';
+  const m=Math.floor(sec/60);
+  const r=sec-m*60;
+  return m+':'+(r<10?'0':'')+r.toFixed(1);
+}
+// Best time per distance, from logged practices.
+function swimBests(){
+  const best={};
+  (state.swimPractices||[]).forEach(p=>{
+    if(!p.timedDistance||!p.timedSeconds)return;
+    const d=p.timedDistance;
+    if(!best[d]||p.timedSeconds<best[d].sec)best[d]={sec:p.timedSeconds,date:p.date};
+  });
+  return best;
+}
 
 function openSwimPractice(minutes){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
   const set=last?last.set:'';
-  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false};
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:''};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
@@ -6834,6 +6868,12 @@ function renderSwimPractice(){
   const b=document.getElementById('swimBody');
   if(!b||!swimDraft)return;
   const d=swimDraft;
+  let distChips='';
+  SWIM_DISTANCES.forEach(m=>{
+    let st='color:var(--text-dim)';
+    if(d.timedDist===m)st='background:rgba(232,234,240,0.12);color:var(--text)';
+    distChips+=`<button class="sil-toggle-btn" style="flex:1;text-align:center;${st}" onclick="swimSetDist(${m})">${m}m</button>`;
+  });
   let chips='';
   SWIM_SCALES.forEach(s=>{
     let st='color:var(--text-dim)';
@@ -6852,6 +6892,9 @@ function renderSwimPractice(){
     </div>
     <div class="wec-lbl">Scaled?</div>
     <div style="display:flex;gap:4px;margin:6px 0 16px">${chips}</div>
+    <div class="wec-lbl">Timed swim (optional)</div>
+    <div style="display:flex;gap:4px;margin:6px 0 8px">${distChips}</div>
+    <input type="text" class="wec-inp" id="swimTime" value="${esc(d.timedRaw)}" placeholder="29.2 or 1:45.3" oninput="swimDraft.timedRaw=this.value" style="width:100%;text-align:left;margin-bottom:16px">
     <div class="wec-lbl">This week's focus</div>
     <div onclick="swimToggleFocus()" style="display:flex;align-items:center;gap:10px;margin:6px 0 16px;cursor:pointer">
       <span style="width:18px;height:18px;border-radius:3px;border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${d.focusDone?'✓':''}</span>
@@ -6884,6 +6927,12 @@ function swimStep(dir){
 }
 function swimSetScaled(s){swimDraft.scaled=s;renderSwimPractice();}
 function swimToggleFocus(){swimDraft.focusDone=!swimDraft.focusDone;renderSwimPractice();}
+function swimSetDist(m){
+  const inp=document.getElementById('swimTime');
+  if(inp)swimDraft.timedRaw=inp.value;          // keep what's typed through the re-render
+  swimDraft.timedDist=swimDraft.timedDist===m?null:m;
+  renderSwimPractice();
+}
 async function saveSwimPractice(remembered){
   const d=swimDraft;
   if(!d)return;
@@ -6899,6 +6948,11 @@ async function saveSwimPractice(remembered){
     'Focus Done':{checkbox:!!d.focusDone},
   };
   if(d.focus)props.Focus={rich_text:richChunks(d.focus)};
+  const secs=parseSwimTime(d.timedRaw);
+  if(d.timedDist&&secs!=null){
+    props['Timed Distance']={number:d.timedDist};
+    props['Timed Seconds']={number:secs};
+  }
   if(remembered){
     props['Main Set']={rich_text:richChunks(d.set.trim())};
     props['Reps Done']={number:d.done};
@@ -6937,6 +6991,14 @@ function swimCardHTML(){
     let bestStr='no full-pattern result yet';
     if(best)bestStr=`best ${best.done}/${best.total} full`;
     head=`<div class="wec-meta">${esc(latest.set)} · ${bestStr}</div>`;
+  }
+  // Personal bests per distance — the endurance gap shows up over 100s and 200s.
+  const bests=swimBests();
+  const bKeys=Object.keys(bests).map(Number).sort((a,b)=>a-b);
+  if(bKeys.length){
+    let pbs='';
+    bKeys.forEach(d2=>{pbs+=`<span style="margin-right:10px">${d2}m <span style="color:var(--gold)">${fmtSwimTime(bests[d2].sec)}</span></span>`;});
+    head+=`<div style="font-size:10px;color:var(--text-dim);margin-top:4px">PB ${pbs}</div>`;
   }
   let rows='';
   list.slice(0,6).forEach(p=>{
