@@ -8560,20 +8560,35 @@ startFromSnapshot();
 // does this once a day, so dismissing it sticks.
 const OPEN_NOW_KEY='grind-opennow-v1';
 const OPEN_NOW_LEAD=20;      // minutes before a block starts that it counts as "now"
+// Minutes after a block ends that it still counts. Swim practice runs to 20:00 and the
+// logging happens on the way out of the pool, so the card has to survive the end of it.
+const OPEN_NOW_TRAIL={swim:15};
 const OPEN_NOW_DEST={swim:'pool',gym:'workout',cardio:'workout',breath:'workout',study:'study'};
 function openNowBlock(){
   try{
     const r=planNowNext(localToday());
-    if(r.cur&&OPEN_NOW_DEST[r.cur.k])return r.cur;
-    if(r.next&&OPEN_NOW_DEST[r.next.k]&&planMin(r.next.t)-r.now<=OPEN_NOW_LEAD)return r.next;
+    if(r.cur&&OPEN_NOW_DEST[r.cur.k])return {it:r.cur,phase:'now'};
+    if(r.next&&OPEN_NOW_DEST[r.next.k]&&planMin(r.next.t)-r.now<=OPEN_NOW_LEAD)return {it:r.next,phase:'now'};
+    // Just finished: the block is over but its trailing window hasn't closed.
+    let done=null;
+    r.items.forEach(it=>{
+      const tr=OPEN_NOW_TRAIL[it.k];
+      if(!tr||!it.e||!OPEN_NOW_DEST[it.k])return;
+      const e=planMin(it.e);
+      if(e<=r.now&&r.now<e+tr)done=it;
+    });
+    if(done)return {it:done,phase:'after'};
     return null;
   }catch(e){warn('openNowBlock',e);return null;}
 }
 function openToNow(){
-  const it=openNowBlock();
-  if(!it)return;
+  const b=openNowBlock();
+  if(!b)return;
+  const it=b.it;
   const today=localToday();
-  const key=today+'|'+it.t+'|'+it.l;
+  // The trailing window is its own key, so leaving the card to log the swim during
+  // practice doesn't stop it coming back when you reopen the app afterwards.
+  const key=today+'|'+it.t+'|'+it.l+'|'+b.phase;
   try{
     if(localStorage.getItem(OPEN_NOW_KEY)===key)return;   // already opened for this block
     localStorage.setItem(OPEN_NOW_KEY,key);
