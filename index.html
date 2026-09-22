@@ -8568,8 +8568,8 @@ function openNowBlock(){
   try{
     const r=planNowNext(localToday());
     if(r.cur&&OPEN_NOW_DEST[r.cur.k])return {it:r.cur,phase:'now'};
-    if(r.next&&OPEN_NOW_DEST[r.next.k]&&planMin(r.next.t)-r.now<=OPEN_NOW_LEAD)return {it:r.next,phase:'now'};
-    // Just finished: the block is over but its trailing window hasn't closed.
+    // Just finished: the block is over but its trailing window hasn't closed. Checked
+    // before the next block's lead-in, so logging the swim beats warming up for the gym.
     let done=null;
     r.items.forEach(it=>{
       const tr=OPEN_NOW_TRAIL[it.k];
@@ -8578,6 +8578,7 @@ function openNowBlock(){
       if(e<=r.now&&r.now<e+tr)done=it;
     });
     if(done)return {it:done,phase:'after'};
+    if(r.next&&OPEN_NOW_DEST[r.next.k]&&planMin(r.next.t)-r.now<=OPEN_NOW_LEAD)return {it:r.next,phase:'now'};
     return null;
   }catch(e){warn('openNowBlock',e);return null;}
 }
