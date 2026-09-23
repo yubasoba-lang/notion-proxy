@@ -34,8 +34,8 @@ const PLAN = {
     {t:"12:15",e:"13:45",l:"Lunch together",alarm:10},
     {t:"14:00",e:"18:00",l:"Study room",n:"17:00 peak · snack at 16:45",alarm:10},
     {t:"18:30",e:"19:30",l:"Swim practice",alarm:20,n:"Leave at 18:15 · log the main set after"},
-    {t:"20:00",e:"21:00",l:"Gym · Pull",n:"Moderate weights",alarm:15},
-    {t:"21:15",e:"22:00",l:"Dinner together",alarm:10,n:"Recovery meal"},
+    {t:"19:45",e:"20:30",l:"Dinner together",alarm:10,n:"Recovery meal"},
+    {t:"21:00",e:"22:00",l:"Gym · Pull",n:"Moderate weights",alarm:15},
   ],
   Wed:[
     {t:"09:30",e:"12:45",l:"Pathology I",alarm:15,n:"Two blocks — snack in the 11:00 gap"},
@@ -52,8 +52,8 @@ const PLAN = {
     {t:"12:15",e:"13:45",l:"Lunch together",alarm:10},
     {t:"14:00",e:"18:00",l:"Study room",n:"17:00 peak · snack at 16:45",alarm:10},
     {t:"18:30",e:"19:30",l:"Swim practice",alarm:20,n:"Leave at 18:15 · log the main set after"},
-    {t:"20:00",e:"21:00",l:"Gym · Push + Rotation",n:"Moderate weights",alarm:15},
-    {t:"21:15",e:"22:00",l:"Dinner together",alarm:10,n:"Recovery meal"},
+    {t:"19:45",e:"20:30",l:"Dinner together",alarm:10,n:"Recovery meal"},
+    {t:"21:00",e:"22:00",l:"Gym · Push + Rotation",n:"Moderate weights",alarm:15},
   ],
   Fri:[
     {t:"08:30",e:"09:45",l:"Medical Statistics",alarm:15},
