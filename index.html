@@ -5756,10 +5756,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}</div>
+      <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}${recapRowHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard;
+    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard+recapRowHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -6879,6 +6879,153 @@ function openPoolCard(){
   document.body.appendChild(el);
 }
 function closePoolCard(){document.getElementById('poolCardPage')?.remove();}
+// ── Day recap ────────────────────────────────────────────────────────────────
+// What the day actually contained, assembled from what's already logged. No prose,
+// no model call — every number here is read straight out of state, so it opens
+// instantly, works offline and reads the same every time.
+function dayRecapData(ds){
+  const sess=(state.sessions||[]).filter(x=>x.complete==='Done'&&x.started&&localDay(x.started)===ds&&x.done);
+  const hours=sess.reduce((a,x)=>a+sessionH(x),0);
+  const bySub={};
+  sess.forEach(x=>{const n=x.subject||x.name||'Other';bySub[n]=(bySub[n]||0)+sessionH(x);});
+  const subjects=Object.entries(bySub).sort((a,b)=>b[1]-a[1]);
+  const swim=(state.swimPractices||[]).find(x=>x.date===ds)||null;
+  const lifts=[...((state.workoutNamesByDay||{})[ds]||[])].filter(n=>n!==CO2_EXERCISE);
+  const co2=((state.workoutNamesByDay||{})[ds]||new Set()).has(CO2_EXERCISE);
+  return {
+    hours,sessions:sess.length,
+    flow:sess.filter(x=>x.quality==='Flow').length,
+    grind:sess.filter(x=>x.quality==='Grind').length,
+    distracted:sess.filter(x=>x.quality==='Distracted').length,
+    subjects,swim,lifts,co2,
+    empty:!sess.length&&!swim&&!lifts.length&&!co2
+  };
+}
+function recapHours(h){
+  const hr=Math.floor(h),mn=Math.round((h-hr)*60);
+  if(hr>0)return {n:mn>0?hr+'.'+Math.round(mn/6):String(hr),u:'hours'};
+  return {n:String(mn),u:'minutes'};
+}
+// A number in the house style: condensed numeral, tiny caps label under it.
+function recapStat(n,label,big){
+  const size=big?54:26;
+  return `<div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1">
+    <span style="font-family:'Bebas Neue',sans-serif;font-size:${size}px;color:var(--text-hi);letter-spacing:0.02em">${n}</span>
+    <span style="font-size:8px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(label)}</span>
+  </div>`;
+}
+function recapSection(label,body){
+  return `<div style="border-top:1px solid var(--border);padding:16px 0 4px;margin-top:8px">
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px">${esc(label)}</div>
+    ${body}</div>`;
+}
+let _recapDay=null;
+function openDayRecap(ds){
+  _recapDay=ds||localToday();
+  if(document.getElementById('dayRecapPage')){renderDayRecap();return;}
+  const el=document.createElement('div');el.id='dayRecapPage';el.className='rival-page';
+  el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="recapBody"></div></div>';
+  document.body.appendChild(el);
+  renderDayRecap();
+}
+function recapShiftDay(dir){
+  const d=new Date(_recapDay+'T12:00:00');
+  d.setDate(d.getDate()+dir);
+  const ds=localDay(d);
+  if(ds>localToday())return;
+  _recapDay=ds;renderDayRecap();
+}
+function renderDayRecap(){
+  const b=document.getElementById('recapBody');
+  if(!b)return;
+  const ds=_recapDay;
+  const r=dayRecapData(ds);
+  const d=new Date(ds+'T12:00:00');
+  const isToday=ds===localToday();
+  const title=isToday?'Today':d.toLocaleDateString('en-GB',{weekday:'long'});
+  const sub=d.toLocaleDateString('en-GB',{day:'numeric',month:'long'});
+  const h=recapHours(r.hours);
+  let body='';
+  if(r.empty){
+    body=`<div style="font-size:13px;color:var(--text-dim);padding:28px 0 8px">Nothing logged.</div>`;
+  } else {
+    body+=`<div style="display:flex;align-items:flex-end;gap:26px;margin:6px 0 4px">
+      ${recapStat(h.n,h.u,true)}
+      ${r.sessions?recapStat(r.sessions,r.sessions===1?'session':'sessions'):''}
+      ${r.flow?recapStat(r.flow,'flow'):''}
+      ${r.distracted?recapStat(r.distracted,'distracted'):''}
+    </div>`;
+    if(r.subjects.length){
+      const max=r.subjects[0][1]||1;
+      let rows='';
+      r.subjects.forEach(([n,v])=>{
+        const pct=Math.max(4,Math.round(100*v/max));
+        const hh=recapHours(v);
+        rows+=`<div style="margin-bottom:11px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px">
+            <span style="font-size:12px;color:var(--text)">${esc(n)}</span>
+            <span style="font-size:10px;color:var(--text-dim);font-variant-numeric:tabular-nums;white-space:nowrap">${hh.n}${hh.u==='hours'?'h':'m'}</span>
+          </div>
+          <div style="height:2px;background:var(--border)"><div style="height:100%;width:${pct}%;background:var(--text)"></div></div>
+        </div>`;
+      });
+      body+=recapSection('Studied',rows);
+    }
+    let train='';
+    if(r.swim){
+      let line=esc(r.swim.set||'set not noted');
+      if(r.swim.remembered&&r.swim.total)line+=` · ${r.swim.done||0}/${r.swim.total}`;
+      train+=`<div style="font-size:13px;color:var(--text-hi);margin-bottom:4px">Swim practice</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-bottom:14px">${line}${r.swim.strokes?' · '+r.swim.strokes+' strokes per length':''}${r.swim.focusDone?' · focus hit':''}</div>`;
+    }
+    if(r.lifts.length){
+      train+=`<div style="font-size:13px;color:var(--text-hi);margin-bottom:4px">Gym</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-bottom:14px">${r.lifts.map(esc).join(' · ')}</div>`;
+    }
+    if(r.co2)train+=`<div style="font-size:13px;color:var(--text-hi);margin-bottom:4px">CO2 table</div>`;
+    if(train)body+=recapSection('Trained',train);
+  }
+  const nextDim=ds===localToday()?'opacity:0.25;':'';
+  b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeDayRecap()">← Back</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1">${esc(title.toUpperCase())}</div>
+        <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(sub)}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="sil-toggle-btn" onclick="recapShiftDay(-1)">←</button>
+        <button class="sil-toggle-btn" style="${nextDim}" onclick="recapShiftDay(1)">→</button>
+      </div>
+    </div>
+    <div style="margin-top:22px">${body}</div>`;
+}
+function closeDayRecap(){document.getElementById('dayRecapPage')?.remove();}
+// The Home row. Shows yesterday once the day is closed, because that's the one you
+// look back at; before anything is logged today it's the only thing worth showing.
+function recapPrevDay(){const d=new Date();d.setDate(d.getDate()-1);return localDay(d);}
+function recapRowHTML(){
+  const yest=recapPrevDay();
+  const today=localToday();
+  const rT=dayRecapData(today);
+  const ds=rT.empty?yest:today;
+  const r=rT.empty?dayRecapData(yest):rT;
+  if(r.empty)return '';
+  const h=recapHours(r.hours);
+  const bits=[];
+  if(r.sessions)bits.push(h.n+(h.u==='hours'?'h':'m')+' studied');
+  if(r.swim)bits.push('swim');
+  if(r.lifts.length)bits.push('gym');
+  if(r.co2)bits.push('CO2');
+  return `<div class="flat-sec" style="cursor:pointer" onclick="openDayRecap('${ds}')">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">${ds===today?'Today so far':'Yesterday'}</div>
+        <div style="font-size:15px;color:var(--text-hi)">${esc(bits.join(' · '))}</div>
+      </div>
+      <span style="font-size:13px;color:var(--text-dim)">›</span>
+    </div>
+  </div>`;
+}
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
