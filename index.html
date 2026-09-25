@@ -91,12 +91,13 @@ body::after { display: none; }
 
 /* ── Nav ── */
 .nav {
-  display: grid; grid-template-columns: repeat(7, 1fr);
+  display: flex;
   background: rgba(6,6,12,0.99);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .nav-btn {
+  flex: 1 1 0; min-width: 0;
   display: flex; align-items: center; justify-content: center;
   padding: 12px 4px; background: none; border: none; cursor: pointer;
   color: var(--text-dim); transition: all 0.2s; position: relative;
@@ -6889,16 +6890,19 @@ function dayRecapData(ds){
   const bySub={};
   sess.forEach(x=>{const n=x.subject||x.name||'Other';bySub[n]=(bySub[n]||0)+sessionH(x);});
   const subjects=Object.entries(bySub).sort((a,b)=>b[1]-a[1]);
+  const names=(state.workoutNamesByDay||{})[ds]||new Set();
   const swim=(state.swimPractices||[]).find(x=>x.date===ds)||null;
-  const lifts=[...((state.workoutNamesByDay||{})[ds]||[])].filter(n=>n!==CO2_EXERCISE&&n!=='Swimming');
-  const co2=((state.workoutNamesByDay||{})[ds]||new Set()).has(CO2_EXERCISE);
+  // Practices aren't loaded on Home; the logged 'Swimming' row still proves it happened.
+  const swamProof=swim||names.has('Swimming');
+  const lifts=[...names].filter(n=>n!==CO2_EXERCISE&&n!=='Swimming');
+  const co2=names.has(CO2_EXERCISE);
   return {
     hours,sessions:sess.length,
     flow:sess.filter(x=>x.quality==='Flow').length,
     grind:sess.filter(x=>x.quality==='Grind').length,
     distracted:sess.filter(x=>x.quality==='Distracted').length,
-    subjects,swim,lifts,co2,
-    empty:!sess.length&&!swim&&!lifts.length&&!co2
+    subjects,swim,swamProof,lifts,co2,
+    empty:!sess.length&&!swamProof&&!lifts.length&&!co2
   };
 }
 function recapHours(h){
@@ -6974,6 +6978,10 @@ function renderDayRecap(){
       body+=recapSection('Studied',rows);
     }
     let train='';
+    if(!r.swim&&r.swamProof){
+      train+=`<div style="font-size:13px;color:var(--text-hi);margin-bottom:4px">Swim practice</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-bottom:14px">loading the set…</div>`;
+    }
     if(r.swim){
       let line=esc(r.swim.set||'set not noted');
       if(r.swim.remembered&&r.swim.total)line+=` · ${r.swim.done||0}/${r.swim.total}`;
@@ -7015,7 +7023,7 @@ function recapRowHTML(){
   const h=recapHours(r.hours);
   const bits=[];
   if(r.sessions)bits.push(h.n+(h.u==='hours'?'h':'m')+' studied');
-  if(r.swim)bits.push('swim');
+  if(r.swamProof)bits.push('swim');
   if(r.lifts.length)bits.push('gym');
   if(r.co2)bits.push('CO2');
   return `<div class="flat-sec" style="cursor:pointer" onclick="openDayRecap('${ds}')">
