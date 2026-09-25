@@ -1136,11 +1136,9 @@ body::after { display: none; }
   </div>
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span><span class="nav-label">Home</span></button>
-    <button class="nav-btn" onclick="switchTab('tasks',this)"><span class="nav-icon">☰</span><span class="nav-label">Tasks</span></button>
     <button class="nav-btn" onclick="switchTab('workout',this)"><span class="nav-icon">⊕</span><span class="nav-label">Workout</span></button>
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span><span class="nav-label">Exams</span></button>
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span><span class="nav-label">Study</span></button>
-    <button class="nav-btn" onclick="switchTab('journal',this)"><span class="nav-icon">✎</span><span class="nav-label">Journal</span></button>
     <button class="nav-btn" onclick="switchTab('arcs',this)"><span class="nav-icon">◉</span><span class="nav-label">Arcs</span></button>
   </div>
   <div id="sidebar-session" class="sidebar-session" style="display:none" onclick="switchTab('home',document.querySelector('.nav-btn'))"></div>
@@ -1149,11 +1147,9 @@ body::after { display: none; }
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
     <div id="tab-home" class="tab-panel active"></div>
-    <div id="tab-tasks" class="tab-panel" style="display:none"></div>
     <div id="tab-workout" class="tab-panel" style="display:none"></div>
     <div id="tab-exams" class="tab-panel" style="display:none"></div>
     <div id="tab-study" class="tab-panel" style="display:none"></div>
-    <div id="tab-journal" class="tab-panel" style="display:none"></div>
     <div id="tab-arcs" class="tab-panel" style="display:none"></div>
   </div>
 </div>
@@ -5278,14 +5274,11 @@ async function refresh(force=true){
   }
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
-  if(currentTab==='tasks'&&!skip)await flushWriteQueue().catch(e=>warn('flushWriteQueue',e));
   // Loaders and background syncs are individually guarded: one failure used to
   // reject the whole chain and skip renderTasks entirely, leaving a blank tab.
-  if(currentTab==='tasks'){if(!skip)await Promise.all([loadTasks(),loadTemplates(),loadTodayQuests(),loadPenalties(),loadXPDebts(),loadZeroToleranceDay()].map(p=>Promise.resolve(p).catch(e=>warn('tasksLoad',e))));if(!skip){await checkAndIssuePenalties().catch(e=>warn('checkAndIssuePenalties',e));await syncXPBleeds().catch(e=>warn('syncXPBleeds',e));}_markTabLoaded('tasks');renderTasks();}
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
-  if(currentTab==='journal'){if(!skip)await Promise.all([loadJournals(),loadEntries()]);_markTabLoaded('journal');renderJournal();}
   if(currentTab==='arcs'){if(!skip)await Promise.all([loadArcs(),loadBooks()]);_markTabLoaded('arcs');renderArcs();}
   if(!skip&&currentTab!=='home')saveTabSnapshot(currentTab);   // next launch opens this tab instantly
   setSyncBusy(false);
@@ -5783,6 +5776,7 @@ const CAT_COLOR={Body:'#6a2020',Mind:'#1a3060',Life:'#1a4a28',German:'#5a4010'};
 const CAT_TEXT={Body:'#c04040',Mind:'#4a80d8',Life:'#3ab36a',German:'#c09030'};
 
 function renderTasks(){
+  if(!document.getElementById('tab-tasks'))return;   // Tasks tab removed
   const today=new Date();today.setHours(0,0,0,0);
   const tGroups={};
   state.templates.forEach(t=>{const c=t.cat??'Other';if(!tGroups[c])tGroups[c]=[];tGroups[c].push(t);});
@@ -7537,6 +7531,7 @@ async function saveJournalEntry(){
 }
 
 function renderJournal(){
+  if(!document.getElementById('tab-journal'))return;   // Journal tab removed
   const el=document.getElementById('tab-journal');
   const today=localToday();
   const allEmos=Object.keys(EMO_COLOR);
@@ -8734,14 +8729,13 @@ document.addEventListener('keydown',function(e){
 });
 
 // ── Command palette ──
+function navBtnFor(tab){return document.querySelector(`.nav-btn[onclick*="'${tab}'"]`);}
 const CMD_ACTIONS=[
   {icon:'⌂',label:'Go to Home',hint:'H',action:()=>{const b=document.querySelector('.nav-btn');switchTab('home',b);}},
-  {icon:'☰',label:'Go to Tasks',hint:'T',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][1];switchTab('tasks',b);}},
-  {icon:'⊕',label:'Go to Workout',hint:'W',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][2];switchTab('workout',b);}},
-  {icon:'✦',label:'Go to Exams',hint:'E',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][3];switchTab('exams',b);}},
-  {icon:'◈',label:'Go to Study',hint:'S',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][4];switchTab('study',b);}},
-  {icon:'✎',label:'Go to Journal',hint:'J',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][5];switchTab('journal',b);}},
-  {icon:'◉',label:'Go to Arcs',hint:'',action:()=>{const b=[...document.querySelectorAll('.nav-btn')][6];switchTab('arcs',b);}},
+  {icon:'⊕',label:'Go to Workout',hint:'W',action:()=>{const b=navBtnFor('workout');switchTab('workout',b);}},
+  {icon:'✦',label:'Go to Exams',hint:'E',action:()=>{const b=navBtnFor('exams');switchTab('exams',b);}},
+  {icon:'◈',label:'Go to Study',hint:'S',action:()=>{const b=navBtnFor('study');switchTab('study',b);}},
+  {icon:'◉',label:'Go to Arcs',hint:'',action:()=>{const b=navBtnFor('arcs');switchTab('arcs',b);}},
   {icon:'▸',label:'Start Study Session',hint:'',action:()=>{const b=document.querySelector('.nav-btn');switchTab('home',b);setTimeout(()=>{const btn=document.querySelector('.study-start-btn');if(btn)btn.click();},200);}},
   {icon:'■',label:'Stop Session',hint:'',action:()=>{if(state.activeSession)stopSession();}},
   {icon:'↺',label:'Sync',hint:'',action:()=>refresh(true)},
