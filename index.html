@@ -18,6 +18,7 @@
   --border:    #1e1e1e;
   --border-hi: #2a2a2a;
   --border-glow: #333333;
+  --text-hi:   #ededed;
   --text:      #a8a8a8;
   --text-dim:  #505050;
   --text-faint:#202020;
@@ -250,11 +251,11 @@ body::after { display: none; }
 .badge-wrap svg { display: block; }
 
 /* ── HOME — Streaks compact row ── */
-.streak-row { display: flex; align-items: center; padding: 9px 14px; background: rgba(232,234,240,0.025); border: 1px solid rgba(232,234,240,0.07); border-radius: 3px; margin-bottom: 10px; }
+.streak-row { display: flex; align-items: center; padding: 14px 6px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 4px; }
 .streak-item { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
-.streak-item+.streak-item { border-left: 1px solid rgba(232,234,240,0.06); }
+.streak-item+.streak-item { border-left: none; }
 .streak-svg { flex-shrink: 0; color: var(--gold); opacity: 0.5; }
-.streak-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; line-height: 1; color: var(--gold); letter-spacing: 0.03em; }
+.streak-num { font-family: 'Bebas Neue', sans-serif; font-size: 22px; line-height: 1; color: var(--text); letter-spacing: 0.03em; }
 .streak-num.loading { opacity: 0.2; }
 
 /* ── Loading Screen ── */
@@ -667,10 +668,12 @@ body::after { display: none; }
 .next-exam-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
 .next-exam-label { font-size: 7px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
 .next-exam-name { font-size: 13px; font-weight: 500; color: var(--text); }
+/* The lectures card has no countdown, so its headline is that card's one bright thing. */
+.flat-sec .next-exam-name { font-size: 15px; color: var(--text-hi); }
 .next-exam-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
 .countdown-wrap { display: flex; gap: 6px; align-items: flex-end; }
 .cd-block { display: flex; flex-direction: column; align-items: center; line-height: 1; }
-.cd-num { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.cd-num { font-family: 'Bebas Neue', sans-serif; font-size: 38px; font-weight: 400; color: var(--text-hi); letter-spacing: 0.02em; }
 .cd-lbl { font-size: 7px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-top: 3px; }
 .countdown-col { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; margin-left: 12px; }
 .countdown-unit { display: flex; flex-direction: column; align-items: center; }
@@ -1046,10 +1049,13 @@ body::after { display: none; }
 .exam-past-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:3px;}
 .next-exam-hours{font-size:9px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:4px;}
 /* ARC STYLES */
+/* A section with no frame: hairline rule above, content straight on the page. Used
+   for everything that isn't one of the two cards that earn a border. */
+.flat-sec{background:transparent;border:none;border-top:1px solid var(--border);border-radius:0;padding:16px 2px 4px;margin-bottom:10px;}
 .arc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:3px;padding:16px;position:relative;overflow:hidden;}
 .arc-card-active{border-color:var(--border-glow);}
 .arc-card::before{display:none;}
-.arc-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.08em;color:var(--gold);line-height:1;}
+.arc-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:0.08em;color:var(--text-hi);line-height:1;}
 .arc-type{font-size:8px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-top:2px;}
 .arc-goal{font-size:11px;color:var(--text);margin:10px 0 12px;line-height:1.5;opacity:0.85;}
 .arc-progress-bar{height:3px;background:var(--bg-hi);border-radius:2px;overflow:hidden;margin-bottom:6px;}
@@ -3880,7 +3886,7 @@ function renderLifeStats(){
       :'';
     return '<div class="life-stat-row" onclick="showLifeStatDetail(\''+m.key+'\')" style="cursor:pointer"><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
   }).join('');
-  return '<div class="arc-card" style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:10px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
+  return '<div class="flat-sec"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:12px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
 }
 
 function showLifeStatDetail(key){
@@ -5441,7 +5447,7 @@ async function catchupYes(ds){
   if(!isSwim){
     // Only you know the weights — open the Workout tab to log it properly.
     renderHome();
-    switchTab('workout',document.querySelectorAll('.nav-btn')[2]);
+    switchTab('workout',navBtnFor('workout'));
     return;
   }
   try{
@@ -5675,7 +5681,7 @@ function renderHome(){
     // Turn the backlog into a pace: how many a week clears it before that exam.
     const pace=topLecturePace(_t);
     if(pace)breakdown+=` — ${pace.short} ${pace.perWeek}/wk to clear by ${new Date(pace.by+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;
-    reviewCard=`<div class="next-exam-card" onclick="examSubTab='lectures';switchTab('exams',document.querySelectorAll('.nav-btn')[3])" style="cursor:pointer">
+    reviewCard=`<div class="next-exam-card flat-sec" onclick="examSubTab='lectures';switchTab('exams',navBtnFor('exams'))" style="cursor:pointer">
       <div class="next-exam-label">Lectures</div>
       <div class="next-exam-top">
         <div>
