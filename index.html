@@ -6890,7 +6890,7 @@ function dayRecapData(ds){
   sess.forEach(x=>{const n=x.subject||x.name||'Other';bySub[n]=(bySub[n]||0)+sessionH(x);});
   const subjects=Object.entries(bySub).sort((a,b)=>b[1]-a[1]);
   const swim=(state.swimPractices||[]).find(x=>x.date===ds)||null;
-  const lifts=[...((state.workoutNamesByDay||{})[ds]||[])].filter(n=>n!==CO2_EXERCISE);
+  const lifts=[...((state.workoutNamesByDay||{})[ds]||[])].filter(n=>n!==CO2_EXERCISE&&n!=='Swimming');
   const co2=((state.workoutNamesByDay||{})[ds]||new Set()).has(CO2_EXERCISE);
   return {
     hours,sessions:sess.length,
@@ -6927,6 +6927,8 @@ function openDayRecap(ds){
   el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="recapBody"></div></div>';
   document.body.appendChild(el);
   renderDayRecap();
+  // Home never loads practices; fetch once and redraw so the swim shows up.
+  if(!state.swimPractices)loadSwimPractices().then(()=>renderDayRecap()).catch(e=>warn('recapSwim',e));
 }
 function recapShiftDay(dir){
   const d=new Date(_recapDay+'T12:00:00');
@@ -6950,7 +6952,7 @@ function renderDayRecap(){
     body=`<div style="font-size:13px;color:var(--text-dim);padding:28px 0 8px">Nothing logged.</div>`;
   } else {
     body+=`<div style="display:flex;align-items:flex-end;gap:26px;margin:6px 0 4px">
-      ${recapStat(h.n,h.u,true)}
+      ${r.sessions?recapStat(h.n,h.u,true):''}
       ${r.sessions?recapStat(r.sessions,r.sessions===1?'session':'sessions'):''}
       ${r.flow?recapStat(r.flow,'flow'):''}
       ${r.distracted?recapStat(r.distracted,'distracted'):''}
