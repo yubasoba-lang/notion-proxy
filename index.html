@@ -3258,20 +3258,26 @@ async function loadWorkoutDays(){
     // session — they don't count toward workout days or the streak.
     const allDays=new Set();
     const namesByDay={};
+    const setsByDay={};
     pages.forEach(p=>{
       const s=p.properties?.Date?.date?.start;
       if(!s)return;
       const d=localDay(new Date(s));
       const name=(p.properties?.Name?.title?.[0]?.plain_text||'').replace(' (2°)','').trim();
       (namesByDay[d]=namesByDay[d]||new Set()).add(name);
+      // One exercise writes a row per muscle it hits, all carrying the same numbers,
+      // so the first row for a name is the whole story — later ones are duplicates.
+      const byName=(setsByDay[d]=setsByDay[d]||{});
+      if(!byName[name])byName[name]={sets:p.properties?.Sets?.number||0,reps:p.properties?.Reps?.number||0,weight:p.properties?.['Weight (kg)']?.number||0};
       if(name!==CO2_EXERCISE)allDays.add(d);
     });
     state.workoutDaySet=allDays;
     state.workoutNamesByDay=namesByDay;
+    state.workoutSetsByDay=setsByDay;
     const cutoff7=localDay(new Date(Date.now()-7*86400000));
     state.workoutDays7=[...allDays].filter(d=>d>=cutoff7).length;
     state.workoutDaysLoaded=true;
-  }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();state.workoutDaysLoaded=false;}
+  }catch(e){state.workoutDays7=0;state.workoutDaySet=new Set();state.workoutSetsByDay={};state.workoutDaysLoaded=false;}
 }
 // How far back workout days are loaded — also the longest streak that can be counted.
 const WORKOUT_DAYS_WINDOW=90;
@@ -6894,15 +6900,22 @@ function dayRecapData(ds){
   const swim=(state.swimPractices||[]).find(x=>x.date===ds)||null;
   // Practices aren't loaded on Home; the logged 'Swimming' row still proves it happened.
   const swamProof=swim||names.has('Swimming');
-  const lifts=[...names].filter(n=>n!==CO2_EXERCISE&&n!=='Swimming');
+  const setMap=(state.workoutSetsByDay||{})[ds]||{};
+  const lifts=[...names].filter(n=>n!==CO2_EXERCISE&&n!=='Swimming')
+    .map(n=>({name:n,...(setMap[n]||{})}));
+  // A lecture stamps its review date, so the ones stamped today are the ones cleared.
+  const lectures=[];
+  Object.entries(state.lectures||{}).forEach(([cid,items])=>{
+    (items||[]).forEach(l=>{if(l.last===ds)lectures.push({course:courseOf(cid).short,t:l.t});});
+  });
   const co2=names.has(CO2_EXERCISE);
   return {
     hours,sessions:sess.length,
     flow:sess.filter(x=>x.quality==='Flow').length,
     grind:sess.filter(x=>x.quality==='Grind').length,
     distracted:sess.filter(x=>x.quality==='Distracted').length,
-    subjects,swim,swamProof,lifts,co2,
-    empty:!sess.length&&!swamProof&&!lifts.length&&!co2
+    subjects,swim,swamProof,lifts,co2,lectures,
+    empty:!sess.length&&!swamProof&&!lifts.length&&!co2&&!lectures.length
   };
 }
 function recapHours(h){
@@ -6989,11 +7002,28 @@ function renderDayRecap(){
         <div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-bottom:14px">${line}${r.swim.strokes?' · '+r.swim.strokes+' strokes per length':''}${r.swim.focusDone?' · focus hit':''}</div>`;
     }
     if(r.lifts.length){
-      train+=`<div style="font-size:13px;color:var(--text-hi);margin-bottom:4px">Gym</div>
-        <div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-bottom:14px">${r.lifts.map(esc).join(' · ')}</div>`;
+      let rows='';
+      r.lifts.forEach(l=>{
+        let right='';
+        if(l.sets&&l.reps)right=l.sets+'×'+l.reps;
+        if(l.weight)right+=(right?' · ':'')+l.weight+'kg';
+        rows+=`<div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;line-height:1.9;color:var(--text-dim)">
+          <span style="color:var(--text)">${esc(l.name)}</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">${right}</span></div>`;
+      });
+      train+=`<div style="font-size:13px;color:var(--text-hi);margin:0 0 6px">Gym</div>
+        <div style="margin-bottom:14px">${rows}</div>`;
     }
     if(r.co2)train+=`<div style="font-size:13px;color:var(--text-hi);margin-bottom:4px">CO2 table</div>`;
     if(train)body+=recapSection('Trained',train);
+    if(r.lectures.length){
+      let rows='';
+      r.lectures.forEach(l=>{
+        rows+=`<div style="display:flex;gap:10px;font-size:11px;line-height:1.9">
+          <span style="color:var(--text-dim);width:64px;flex:none">${esc(l.course)}</span>
+          <span style="color:var(--text);flex:1">${esc(l.t)}</span></div>`;
+      });
+      body+=recapSection(r.lectures.length+(r.lectures.length===1?' lecture cleared':' lectures cleared'),rows);
+    }
   }
   const nextDim=ds===localToday()?'opacity:0.25;':'';
   b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeDayRecap()">← Back</button></div>
@@ -7026,6 +7056,7 @@ function recapRowHTML(){
   if(r.swamProof)bits.push('swim');
   if(r.lifts.length)bits.push('gym');
   if(r.co2)bits.push('CO2');
+  if(r.lectures.length)bits.push(r.lectures.length+(r.lectures.length===1?' lecture':' lectures'));
   return `<div class="flat-sec" style="cursor:pointer" onclick="openDayRecap('${ds}')">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
       <div>
