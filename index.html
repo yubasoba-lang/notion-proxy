@@ -5738,14 +5738,13 @@ function renderHome(){
       </svg>
       <span class="streak-num${s?'':' loading'}">${s?s.sleep??0:'—'}</span>
     </div>
-    <div class="streak-item">
-      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
-        <path d="M7,1 L8,4 L8,9.5 L6,9.5 L6,4 Z"/>
-        <rect x="4" y="9.5" width="6" height="1.2" rx="0.4"/>
-        <rect x="6.2" y="10.7" width="1.6" height="1.5" rx="0.3"/>
-        <rect x="5.3" y="12.2" width="3.4" height="1.2" rx="0.5"/>
+    <div class="streak-item" title="Swims in the last 7 days">
+      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+        <path d="M1,4.5 C2.5,3.2 4,3.2 5.5,4.5 C7,5.8 8.5,5.8 10,4.5 C11.5,3.2 12.5,3.4 13,4"/>
+        <path d="M1,7.5 C2.5,6.2 4,6.2 5.5,7.5 C7,8.8 8.5,8.8 10,7.5 C11.5,6.2 12.5,6.4 13,7"/>
+        <path d="M1,10.5 C2.5,9.2 4,9.2 5.5,10.5 C7,11.8 8.5,11.8 10,10.5 C11.5,9.2 12.5,9.4 13,10"/>
       </svg>
-      <span class="streak-num${s?'':' loading'}">${s?s.quest??0:'—'}</span>
+      <span class="streak-num">${swimsLast7()}</span>
     </div>
     <div class="streak-item" title="Recovery score">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
@@ -5772,7 +5771,7 @@ function renderHome(){
   const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
   if(_scroll)_scroll.scrollTop=_scrollTop;
-  const _newStreakSig=s?`${s.workout}|${s.mind}|${s.sleep}|${s.quest}`:'';
+  const _newStreakSig=s?`${s.workout}|${s.mind}|${s.sleep}|${swimsLast7()}`:'';
   if(_newStreakSig!==renderHome._lastStreakSig){
     renderHome._lastStreakSig=_newStreakSig;
     document.querySelectorAll('.streak-num:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
@@ -6943,6 +6942,7 @@ function openDayRecap(ds){
   const el=document.createElement('div');el.id='dayRecapPage';el.className='rival-page';
   el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="recapBody"></div></div>';
   document.body.appendChild(el);
+  recapBindSwipe(el);
   renderDayRecap();
   // Home never loads practices; fetch once and redraw so the swim shows up.
   if(!state.swimPractices)loadSwimPractices().then(()=>renderDayRecap()).catch(e=>warn('recapSwim',e));
@@ -6953,6 +6953,17 @@ function recapShiftDay(dir){
   const ds=localDay(d);
   if(ds>localToday())return;
   _recapDay=ds;renderDayRecap();
+  const b=document.getElementById('recapBody');
+  if(b){
+    b.style.transition='none';
+    b.style.transform='translateX('+(dir>0?18:-18)+'px)';
+    b.style.opacity='0';
+    requestAnimationFrame(()=>{
+      b.style.transition='transform .18s ease, opacity .18s ease';
+      b.style.transform='translateX(0)';
+      b.style.opacity='1';
+    });
+  }
 }
 function renderDayRecap(){
   const b=document.getElementById('recapBody');
@@ -7037,9 +7048,39 @@ function renderDayRecap(){
         <button class="sil-toggle-btn" style="${nextDim}" onclick="recapShiftDay(1)">→</button>
       </div>
     </div>
-    <div style="margin-top:22px">${body}</div>`;
+    <div style="margin-top:22px">${body}</div>
+    <div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-faint);margin-top:28px">Swipe for another day</div>`;
 }
 function closeDayRecap(){document.getElementById('dayRecapPage')?.remove();}
+// Swims logged in the last 7 days. Two is the week's target, so this reads as
+// progress rather than a streak that a rest day would break.
+function swimsLast7(){
+  const by=state.workoutNamesByDay||{};
+  let n=0;
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const set=by[localDay(d)];
+    if(set&&set.has('Swimming'))n++;
+  }
+  return n;
+}
+// Swipe between days. Horizontal only, and only past a threshold, so scrolling the
+// page vertically never trips it.
+function recapBindSwipe(el){
+  let x0=null,y0=null;
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){x0=null;return;}
+    x0=e.touches[0].clientX;y0=e.touches[0].clientY;
+  },{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(x0===null)return;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-x0,dy=t.clientY-y0;
+    x0=null;
+    if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    recapShiftDay(dx<0?1:-1);   // drag left = forward a day, like turning a page
+  },{passive:true});
+}
 // The Home row. Shows yesterday once the day is closed, because that's the one you
 // look back at; before anything is logged today it's the only thing worth showing.
 function recapPrevDay(){const d=new Date();d.setDate(d.getDate()-1);return localDay(d);}
