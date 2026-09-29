@@ -1636,39 +1636,6 @@ function localDay(v){
 }
 function localToday(){return localDay(new Date());}
 function prevDay(dateStr){return localDay(new Date(new Date(dateStr+'T00:00:00').getTime()-86400000));}
-function computeRecoveryScore(dateStr){
-  const doneTasks=state.lifeTasksDone||[];
-  let score=0;
-  // Sleep (0-40 pts) — parse from Life sleep task name
-  const sleepTask=doneTasks.find(t=>t.dueDate===dateStr&&t.name&&t.name.toLowerCase().includes('sleep'));
-  if(sleepTask){const n=sleepTask.name.toLowerCase();score+=n.includes('8+')?40:n.includes('6-7')?25:n.includes('<5')?10:15;}
-  // Workout (0-30 pts)
-  if((state.workoutDaySet||new Set()).has(dateStr))score+=30;
-  // Intimacy (0-30 pts) — today or yesterday
-  const prev=prevDay(dateStr);
-  const sexLogged=doneTasks.some(t=>t.name&&t.name.toLowerCase()==='sex'&&(t.dueDate===dateStr||t.dueDate===prev));
-  if(sexLogged)score+=30;
-  return score;
-}
-function computeRecoveryBaseline(){
-  const sessions=(state.sessions||[]).filter(s=>s.complete==='Done'&&s.started&&s.quality);
-  const cutoff=new Date(Date.now()-30*86400000);
-  const dayGrouped={};
-  sessions.forEach(s=>{if(new Date(s.started)<cutoff)return;const d=localDay(s.started);if(!dayGrouped[d])dayGrouped[d]=[];dayGrouped[d].push(s);});
-  const dayFlowMap={};
-  Object.entries(dayGrouped).forEach(([d,ss])=>{dayFlowMap[d]=ss.filter(s=>s.quality==='Flow').length/ss.length;});
-  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&t.dueDate).map(t=>t.dueDate));
-  const workoutDates=state.workoutDaySet||new Set();
-  const all=[],afterSex=[],afterWorkout=[];
-  Object.entries(dayFlowMap).forEach(([date,fr])=>{
-    all.push(fr);
-    const pd=prevDay(date);
-    if(sexDates.has(pd))afterSex.push(fr);
-    if(workoutDates.has(pd))afterWorkout.push(fr);
-  });
-  const avg=arr=>arr.length>=3?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*100):null;
-  return{baseline:avg(all),afterSex:avg(afterSex),afterWorkout:avg(afterWorkout),n:all.length};
-}
 
 // A work phase that ended while the app was closed means its session is finished too.
 // Close it in Notion at the moment the phase ended — not now, which would add the time
@@ -2066,15 +2033,6 @@ async function generateDailyRecap(targetDate){
     }
 
     // ── Sleep & daily log ──
-    let sleepInfo='not logged';
-    try{
-      const logs=await nQuery(DB.dailyLog,{property:'Date',date:{equals:dateStr}});
-      if(logs.length){
-        const sleepTasks=await nQuery(DB.tasks,{and:[{property:'Cat',select:{equals:'Life'}},{property:'Status',checkbox:{equals:true}}]});
-        const match=sleepTasks.find(p=>(g.title(p.properties.Task)||'').toLowerCase().includes('sleep')&&(p.created_time||'').startsWith(dateStr));
-        sleepInfo=match?(g.title(match.properties.Task)||'logged'):'logged';
-      }
-    }catch(e){warn('generateDailyRecap',e);}
 
     // ── Workout scheduled? ──
     const dayOfWeek=new Date(dateStr+'T12:00:00').getDay();
@@ -2129,8 +2087,7 @@ H2H LAST 7 DAYS: ${h2hW}W ${h2hL}L
 ${nextExam?`NEXT EXAM: ${nextExam.name} in ${daysToExam} day${daysToExam===1?'':'s'}${examTimeStr?' (starts at '+examTimeStr+', so the last full study day is the day before)':''}${examPrep?` (${fmtH(examPrep.total)} prepped, ${fmtH(examPrep.recent)} this week)`:''}${examTopicInfo?`\nTOPIC PROGRESS: ${examTopicInfo.done}/${examTopicInfo.total} covered (${examTopicInfo.pct}%)\nREMAINING TOPICS (${examTopicInfo.unchecked.length}): ${examTopicInfo.unchecked.map(x=>`${x.n}. ${x.t}`).join(', ')}`:''}`:''}
 TASKS COMPLETED TODAY: ${(state.tasks||[]).filter(t=>t.status&&t.dueDate===dateStr&&!t.isStudySession).map(t=>t.name).join(', ')||'none'}
 WORKOUT: ${workoutStr}
-SLEEP: ${sleepInfo}
-RECOVERY SCORE: ${(()=>{const sc=computeRecoveryScore(dateStr);const bl=computeRecoveryBaseline();const parts=[];if(bl.baseline!==null)parts.push('baseline flow '+bl.baseline+'%');if(bl.afterSex!==null)parts.push('after intimacy '+bl.afterSex+'%');if(bl.afterWorkout!==null)parts.push('after workout '+bl.afterWorkout+'%');return sc+'/100'+(parts.length?' (30d: '+parts.join(', ')+')':'');})()}${weekSummaryContext}`;
+${weekSummaryContext}`;
 
     // The recap paragraph was noise — it narrated back what you already knew.
     // The stats below are still computed and stored; only the prose is gone,
