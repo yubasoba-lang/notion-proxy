@@ -5730,14 +5730,6 @@ function renderHome(){
       </svg>
       <span class="streak-num${s?'':' loading'}">${s?s.mind??0:'—'}</span>
     </div>
-    <div class="streak-item">
-      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
-        <rect x="1" y="4" width="2" height="8.5" rx="0.5"/>
-        <rect x="3" y="7.5" width="10" height="4" rx="0.5"/>
-        <rect x="3.5" y="5.5" width="3.5" height="2.2" rx="0.8"/>
-      </svg>
-      <span class="streak-num${s?'':' loading'}">${s?s.sleep??0:'—'}</span>
-    </div>
     <div class="streak-item" title="Swims in the last 7 days">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
         <path d="M1,4.5 C2.5,3.2 4,3.2 5.5,4.5 C7,5.8 8.5,5.8 10,4.5 C11.5,3.2 12.5,3.4 13,4"/>
@@ -5745,12 +5737,6 @@ function renderHome(){
         <path d="M1,10.5 C2.5,9.2 4,9.2 5.5,10.5 C7,11.8 8.5,11.8 10,10.5 C11.5,9.2 12.5,9.4 13,10"/>
       </svg>
       <span class="streak-num">${swimsLast7()}</span>
-    </div>
-    <div class="streak-item" title="Recovery score">
-      <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="currentColor">
-        <path d="M7 12 C7 12 1.5 8 1.5 4.5 C1.5 2.8 2.8 1.5 4.5 1.5 C5.5 1.5 6.4 2 7 2.8 C7.6 2 8.5 1.5 9.5 1.5 C11.2 1.5 12.5 2.8 12.5 4.5 C12.5 8 7 12 7 12Z"/>
-      </svg>
-      <span class="streak-num" style="${(()=>{const sc=computeRecoveryScore(localToday());return sc>=70?'color:var(--gold)':sc>=40?'color:#c8824a':'color:var(--text-dim)';})()}">${computeRecoveryScore(localToday())}</span>
     </div>
   </div>`;
 
@@ -5771,7 +5757,7 @@ function renderHome(){
   const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
   if(_scroll)_scroll.scrollTop=_scrollTop;
-  const _newStreakSig=s?`${s.workout}|${s.mind}|${s.sleep}|${swimsLast7()}`:'';
+  const _newStreakSig=s?`${s.workout}|${s.mind}|${swimsLast7()}`:'';
   if(_newStreakSig!==renderHome._lastStreakSig){
     renderHome._lastStreakSig=_newStreakSig;
     document.querySelectorAll('.streak-num:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
