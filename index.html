@@ -3342,12 +3342,11 @@ const DAY_PLAN={
     {t:'08:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
     {t:'09:30',e:'12:45',k:'class',l:'Pathology I',n:'two blocks — snack in the 11:00 gap'},
     {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
-    {t:'14:15',e:'14:45',k:'cardio',l:'Brisk walk to campus',n:'easy cardio'},
-    {t:'15:00',e:'17:30',k:'study',l:'Study room'},
-    {t:'17:45',e:'18:00',k:'breath',l:'CO2 table',n:'sitting down, at home'},
-    {t:'18:00',e:'19:00',k:'together',l:'Dinner together'},
-    {t:'19:15',e:'20:45',k:'gym',l:'Gym · Lower + Cuff',n:'nothing overhead'},
-    {t:'21:00',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
+    {t:'14:45',e:'16:15',k:'gym',l:'Gym · Lower + Cuff',n:'be through the door before 15:00'},
+    {t:'16:30',e:'18:00',k:'study',l:'Study room'},
+    {t:'18:15',e:'18:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'18:45',e:'19:45',k:'together',l:'Dinner together'},
+    {t:'20:15',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
     {t:'23:00',k:'sleep',l:'Sleep',n:'Thursday starts 08:00'},
   ],
   Thu:[
@@ -3374,13 +3373,12 @@ const DAY_PLAN={
     {t:'11:45',k:'meal',l:'Snack',w:'upto7'},
     {t:'12:00',e:'13:30',k:'class',l:'Microbiology II practical',w:'upto7'},
     {t:'12:00',e:'13:00',k:'together',l:'Lunch together',w:'from8'},
-    {t:'13:30',e:'17:30',k:'study',l:'Study room',peak:'17:00',w:'from8'},
+    {t:'13:15',e:'14:45',k:'study',l:'Study room',w:'from8'},
     {t:'13:45',e:'14:45',k:'together',l:'Lunch together',w:'upto7'},
-    {t:'15:30',e:'18:00',k:'study',l:'Study room',peak:'17:00',w:'upto7'},
-    {t:'18:00',e:'19:00',k:'together',l:'Dinner together',n:'evening off',w:'from8'},
-    {t:'18:30',e:'19:30',k:'together',l:'Dinner together',n:'evening off',w:'upto7'},
-    {t:'19:45',e:'21:00',k:'gym',l:'Gym · Lower + Power',n:'jump work — volleyball'},
-    {t:'21:15',e:'21:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'15:00',e:'16:30',k:'gym',l:'Gym · Lower + Power',n:'jump work — volleyball · quiet hour'},
+    {t:'16:45',e:'18:30',k:'study',l:'Study room',peak:'17:00'},
+    {t:'19:00',e:'20:00',k:'together',l:'Dinner together',n:'evening off'},
+    {t:'20:30',e:'20:45',k:'breath',l:'CO2 table',n:'sitting down, at home'},
   ],
   Sat:[
     {t:'08:00',k:'meal',l:'Breakfast'},
@@ -6824,7 +6822,7 @@ function closeDayRecap(){document.getElementById('dayRecapPage')?.remove();}
 // first thing to drop on a bad day. Names match the exercise library so what you
 // read here is what you log.
 const SESSION_PLAN={
-  Wed:{title:'Lower + Cuff',note:'Nothing overhead — the day after a swim',blocks:[
+  Wed:{title:'Lower + Cuff',note:'Nothing overhead — be through the door before 15:00',blocks:[
     {h:'Main',x:[['Leg Press','4 × 10'],['Hamstring Curl Machine','3 × 10'],['Hip Abduction','3 × 15'],['Hip Adduction','3 × 12'],['Calf Raise Machine','3 × 20']]},
     {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each, light'],['Face Pulls','3 × 15']]},
     {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Suitcase Carries','3 × 40m']]},
