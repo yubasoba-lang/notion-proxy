@@ -6140,8 +6140,8 @@ async function addWorkout(){
   selectedExercise=null;
   const DAY_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const todayAbbr=DAY_ABBR[new Date().getDay()];
-  const todayEx=state.exercises.filter(e=>e.day.includes(todayAbbr));
-  const otherEx=state.exercises.filter(e=>!e.day.includes(todayAbbr)&&e.category!=='Breathing');
+  const todayEx=state.exercises.filter(e=>sessionDaysFor(e.name).includes(todayAbbr));
+  const otherEx=state.exercises.filter(e=>!sessionDaysFor(e.name).includes(todayAbbr)&&e.category!=='Breathing');
   let html='';
   if(todayEx.length){
     html+=`<div class="workout-day-label">Today · ${todayAbbr}</div><div class="workout-ex-list">${todayEx.map(exerciseItemHTML).join('')}</div>`;
@@ -6260,6 +6260,7 @@ async function submitWorkout(){
     closeWorkoutModal();
     showToast(`Logged ${ex.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
     if(currentTab==='workout')renderWorkout();
+    if(document.getElementById('sessionPlanPage'))renderSessionPlan();
     if(ex.name==='Swimming')openSwimPractice(reps);
   }catch(e){
     showToast('Failed: '+e.message);
@@ -6933,11 +6934,14 @@ function renderSessionPlan(){
   if(!p){
     body=`<div style="font-size:13px;color:var(--text-dim);padding:28px 0">${esc(wk?wk.sub:'Nothing scheduled')}</div>`;
   } else {
+    const doneToday=(state.workoutNamesByDay||{})[localToday()]||new Set();
+    const isToday=abbr===WEEK_ABBR[new Date().getDay()];
     p.blocks.forEach(bl=>{
       let rows='';
       bl.x.forEach(pair=>{
-        rows+=`<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;line-height:2">
-          <span style="color:var(--text)">${esc(pair[0])}</span>
+        const done=isToday&&doneToday.has(pair[0]);
+        rows+=`<div onclick="logFromPlan('${esc(pair[0]).replace(/'/g,"\\'")}')" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12px;line-height:2;cursor:pointer;padding:2px 0">
+          <span style="color:${done?'var(--text-dim)':'var(--text)'}">${done?'✓ ':''}${esc(pair[0])}</span>
           <span style="color:var(--text-dim);font-variant-numeric:tabular-nums;white-space:nowrap">${esc(pair[1])}</span></div>`;
       });
       body+=`<div style="border-top:1px solid var(--border);padding:14px 0 6px;margin-top:6px">
@@ -6959,6 +6963,36 @@ function renderSessionPlan(){
     </div>
     ${p&&p.note?`<div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-top:14px">${esc(p.note)}</div>`:''}
     <div style="margin-top:10px">${body}</div>`;
+}
+// Tap a line in the session to log it: opens the usual sheet with the exercise
+// already picked and the prescribed sets and reps filled in, so the only thing left
+// to type is the weight. Falls back to the plain sheet if the name isn't in the library.
+function planPrescription(text){
+  const m=/^(\d+)\s*×\s*(\d+)/.exec(text||'');
+  if(m)return{sets:parseInt(m[1]),reps:parseInt(m[2])};
+  const mins=/^(\d+)\s*min/.exec(text||'');
+  if(mins)return{minutes:parseInt(mins[1])};
+  const only=/^(\d+)\s*×/.exec(text||'');
+  if(only)return{sets:parseInt(only[1])};
+  return null;
+}
+async function logFromPlan(name){
+  await addWorkout();
+  const ex=(state.exercises||[]).find(e=>e.name===name);
+  if(!ex){showToast(name+' is not in the exercise library',3000);return;}
+  selectExercise(ex.id);
+  document.getElementById('ex-'+ex.id)?.scrollIntoView({block:'center'});
+  const pres=planPrescription(sessionSetsFor(name,_planDayAbbr));
+  const last=state.lastSets?.[name]||null;
+  if(ex.category==='Cardio'){
+    const el=document.getElementById('wMinutes');
+    if(el&&pres&&pres.minutes)el.value=pres.minutes;
+  }else{
+    const sEl=document.getElementById('wSets'),rEl=document.getElementById('wReps'),wEl=document.getElementById('wWeight');
+    if(sEl&&pres&&pres.sets)sEl.value=pres.sets;
+    if(rEl&&pres&&pres.reps)rEl.value=pres.reps;
+    if(wEl&&last)wEl.value=last.weight;
+  }
 }
 function closeSessionPlan(){document.getElementById('sessionPlanPage')?.remove();}
 // The card at the top of the Workout tab: today's session, tap for the full list.
