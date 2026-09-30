@@ -1430,18 +1430,14 @@ function computeTitle(){
   const flowPct=rated.length?rated.filter(s=>s.quality==='Flow').length/rated.length:0;
   const disPct=rated.length?rated.filter(s=>s.quality==='Distracted').length/rated.length:0;
   const weekAgoStr=new Date(weekAgo).toISOString().slice(0,10);
-  const weekTasks=(state.tasks||[]).filter(t=>t.dueDate&&t.dueDate>=weekAgoStr);
-  const taskRate=weekTasks.length?weekTasks.filter(t=>t.status).length/weekTasks.length:0;
-  const lifeTasksDone=(state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.dueDate&&t.dueDate>=weekAgoStr).length;
   const workoutDays=state.workoutDays7||0;
-  const sexDates=new Set((state.tasks||[]).filter(t=>t.cat==='Life'&&t.status&&t.name&&t.name.toLowerCase()==='sex'&&t.dueDate&&t.dueDate>=weekAgoStr).map(t=>t.dueDate));
-  let _sexStreak=0,_maxSexStreak=0;
-  for(let i=6;i>=0;i--){const ds=localDay(new Date(Date.now()-i*86400000));if(sexDates.has(ds)){_sexStreak++;_maxSexStreak=Math.max(_maxSexStreak,_sexStreak);}else{_sexStreak=0;}}
-  const sexDone=_maxSexStreak>=3;
+  // Swims stand in for what task completion used to measure: turning up to the thing
+  // that's scheduled whether or not you feel like it.
+  const swims=swimsLast7();
   // Noun — driven purely by hours, consistency, quality, workouts. No exam data.
   let noun='Wanderer';
-  if(studyDays>=6&&workoutDays>=4&&taskRate>=0.7&&studyH>=8)noun='Machine';
-  else if(studyH>=6&&workoutDays>=3&&taskRate>=0.6)noun='Monk';
+  if(studyDays>=6&&workoutDays>=4&&studyH>=8)noun='Machine';
+  else if(studyH>=6&&workoutDays>=3)noun='Monk';
   else if(workoutDays>=4&&studyH<4)noun='Ox';
   else if(studyH>=10&&flowPct>=0.6)noun='Blade';
   else if(studyH>=10)noun='Hammer';
@@ -1453,8 +1449,7 @@ function computeTitle(){
   if(flowPct>=0.7&&studyH<10){adj='Sharp';}
   else if(flowPct>=0.65){adj='Focused';}
   else if(studyDays>=6&&studyH>=10){adj='Relentless';}
-  else if(sexDone&&studyDays>=3){adj='Hard';}
-  else if(workoutDays>=3&&lifeTasksDone>=2&&studyDays>=3){adj='Alive';}
+  else if(swims>=2&&workoutDays>=3&&studyDays>=3){adj='Alive';}
   else if(workoutDays>=3&&studyDays>=4){adj='Iron';}
   else if(studyDays>=5){adj='Steady';}
   else if(disPct>=0.4){adj='Scattered';}
@@ -1464,7 +1459,7 @@ function computeTitle(){
   else if(studyH<1){adj=studyH<0.5?'Dormant':'Silent';}
   return{adj,noun};
 }
-const TITLE_VER=3; // bump to force reset when noun/adj lists change
+const TITLE_VER=4; // bump to force reset when noun/adj lists change
 function getOrUpdateTitle(){
   const{adj,noun}=computeTitle();
   const raw=localStorage.getItem('grind-title');
@@ -5218,7 +5213,7 @@ async function refresh(force=true){
       const isFirst=!_hasLoaded;
       if(isFirst)_setLoad(2);
       let _done=0;const _tick=()=>{_done++;if(isFirst)_setLoad(Math.round(_done/5*98));};
-      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadTasks(),loadLifeTasksDone(),loadArcs(),loadLifeStats()]);
+      await Promise.all([loadStreaks().then(_tick),loadStats().then(_tick),loadRivals().then(_tick),loadExams().then(_tick),loadSessions().then(_tick),loadWorkoutDays(),loadArcs()]);
       if(isFirst)_setLoad(100);
       syncScheduledStreak();
       // Needed for the review-due prompt on the home screen.
@@ -5704,7 +5699,7 @@ function renderHome(){
   const rivalTeaser=renderRivalTeaser();
   let html;
   const arcCard=renderActiveArc();
-  const lifeStatsCard=renderLifeStats();
+  const lifeStatsCard='';   // card removed — half its bars were fed by the deleted Tasks tab
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
