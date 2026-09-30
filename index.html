@@ -6999,6 +6999,120 @@ function renderDayRecap(){
     <div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-faint);margin-top:28px">Swipe for another day</div>`;
 }
 function closeDayRecap(){document.getElementById('dayRecapPage')?.remove();}
+// ── Session plan ─────────────────────────────────────────────────────────────
+// The lifting sessions themselves, so the split lives in the app rather than in a
+// chat log. Blocks run in order; core and forearms are last on purpose, and are the
+// first thing to drop on a bad day. Names match the exercise library so what you
+// read here is what you log.
+const SESSION_PLAN={
+  Wed:{title:'Lower + Cuff',note:'Nothing overhead — the day after a swim',blocks:[
+    {h:'Main',x:[['Leg Press','4 × 10'],['Hamstring Curl Machine','3 × 10'],['Hip Abduction','3 × 15'],['Hip Adduction','3 × 12'],['Calf Raise Machine','3 × 20']]},
+    {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each, light'],['Face Pulls','3 × 15']]},
+    {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Suitcase Carries','3 × 40m']]},
+    {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 20 light'],['Reverse Curls','3 × 12']]},
+  ]},
+  Fri:{title:'Lower + Power',note:'Jumps first, while fresh · 90s rest between plyo sets',blocks:[
+    {h:'Power',x:[['Jump Squats','4 × 5'],['Broad Jumps','4 × 4'],['Skater Jumps','3 × 6 each'],['Pogo hops','3 × 15']]},
+    {h:'Strength',x:[['Bulgarian Split Squat','3 × 8 each'],['Dumbbell Romanian Deadlift','3 × 10'],['Hip Thrust','3 × 12']]},
+    {h:'Core',x:[['Ab roller','3 × 8 — at home'],['Dead Bug','3 × 10 each']]},
+    {h:'Forearms',x:[['Dead Hangs','3 × max, active hang']]},
+  ]},
+  Sat:{title:'Pull + Rear delt',note:'Then 20 min easy row',blocks:[
+    {h:'Main',x:[['Lat Pulldown','4 × 10 neutral grip'],['Cable Seated Row','4 × 10'],['Single-Arm Dumbbell Row','3 × 10'],['Cable Archer Pull','3 × 12']]},
+    {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each']]},
+    {h:'Arms',x:[['Bicep Curl (Machine)','3 × 10']]},
+    {h:'Core',x:[['DB Russian Twists','3 × 20'],['Hip Thrust','3 × 12']]},
+    {h:'Forearms',x:[['Heavy Farmer Carries','3 × 40m'],['Hammer Curls','3 × 10']]},
+    {h:'Finisher',x:[['Rowing','20 min easy']]},
+  ]},
+  Sun:{title:'Press + Legs',note:'The only pressing day · then 20 min easy bike',blocks:[
+    {h:'Main',x:[['Flat Dumbbell Bench Press','4 × 10'],['Incline Dumbbell Press','3 × 10'],['Pectoral Fly','3 × 12']]},
+    {h:'Arms',x:[['Overhead DB Tricep Extension','3 × 12'],['Cable Lateral Raises','3 × 15 light, to shoulder height']]},
+    {h:'Legs',x:[['Leg Extension','3 × 12']]},
+    {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Plank Hip Dips','3 × 30s each']]},
+    {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 15 light'],['Wrist extensions','3 × 15']]},
+    {h:'Finisher',x:[['Stationary Bike','20 min easy']]},
+  ]},
+  Mon:{title:'Optional easy',note:'Row, bike or a walk — conversational pace',blocks:[
+    {h:'Aerobic',x:[['Rowing','30 min easy'],['Stationary Bike','30 min easy'],['Incline Walk','30 min easy']]},
+  ]},
+};
+function sessionPlanFor(ds){
+  const abbr=WEEK_ABBR[new Date((ds||localToday())+'T12:00:00').getDay()];
+  return SESSION_PLAN[abbr]||null;
+}
+let _planDayAbbr=null;
+function openSessionPlan(abbr){
+  _planDayAbbr=abbr||WEEK_ABBR[new Date().getDay()];
+  if(document.getElementById('sessionPlanPage')){renderSessionPlan();return;}
+  const el=document.createElement('div');el.id='sessionPlanPage';el.className='rival-page';
+  el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="sessionPlanBody"></div></div>';
+  document.body.appendChild(el);
+  renderSessionPlan();
+}
+function sessionPlanStep(dir){
+  const order=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let i=order.indexOf(_planDayAbbr);
+  for(let g=0;g<7;g++){
+    i=(i+dir+7)%7;
+    if(SESSION_PLAN[order[i]]){_planDayAbbr=order[i];renderSessionPlan();return;}
+  }
+}
+function renderSessionPlan(){
+  const b=document.getElementById('sessionPlanBody');
+  if(!b)return;
+  const abbr=_planDayAbbr;
+  const p=SESSION_PLAN[abbr];
+  const wk=WORKOUT_WEEK.find(w=>w.abbr===abbr);
+  let body='';
+  if(!p){
+    body=`<div style="font-size:13px;color:var(--text-dim);padding:28px 0">${esc(wk?wk.sub:'Nothing scheduled')}</div>`;
+  } else {
+    p.blocks.forEach(bl=>{
+      let rows='';
+      bl.x.forEach(pair=>{
+        rows+=`<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;line-height:2">
+          <span style="color:var(--text)">${esc(pair[0])}</span>
+          <span style="color:var(--text-dim);font-variant-numeric:tabular-nums;white-space:nowrap">${esc(pair[1])}</span></div>`;
+      });
+      body+=`<div style="border-top:1px solid var(--border);padding:14px 0 6px;margin-top:6px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">${esc(bl.h)}</div>
+        ${rows}</div>`;
+    });
+  }
+  const label=(WORKOUT_WEEK.find(w=>w.abbr===abbr)||{}).label||abbr;
+  b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSessionPlan()">← Back</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1">${esc((p?p.title:label).toUpperCase())}</div>
+        <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(label)}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="sil-toggle-btn" onclick="sessionPlanStep(-1)">←</button>
+        <button class="sil-toggle-btn" onclick="sessionPlanStep(1)">→</button>
+      </div>
+    </div>
+    ${p&&p.note?`<div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-top:14px">${esc(p.note)}</div>`:''}
+    <div style="margin-top:10px">${body}</div>`;
+}
+function closeSessionPlan(){document.getElementById('sessionPlanPage')?.remove();}
+// The card at the top of the Workout tab: today's session, tap for the full list.
+function sessionPlanCardHTML(){
+  const abbr=WEEK_ABBR[new Date().getDay()];
+  const p=SESSION_PLAN[abbr];
+  const wk=WORKOUT_WEEK.find(w=>w.abbr===abbr);
+  if(!p)return `<div class="wec" style="margin:6px 16px;cursor:pointer" onclick="openSessionPlan('${abbr}')">
+    <div style="padding:2px 0"><div class="wec-name">Today · ${esc(wk?wk.label:abbr)}</div>
+    <div class="wec-meta">${esc(wk?wk.sub:'')}</div></div></div>`;
+  const first=p.blocks[0].x.slice(0,3).map(x=>x[0]).join(' · ');
+  return `<div class="wec" style="margin:6px 16px;cursor:pointer" onclick="openSessionPlan('${abbr}')">
+    <div style="padding:2px 0">
+      <div class="wec-name">Today · ${esc(p.title)}</div>
+      <div class="wec-meta">${esc(first)}…</div>
+      <div style="font-size:10px;color:var(--text-faint);margin-top:6px">Tap for the full session ›</div>
+    </div>
+  </div>`;
+}
 // Swims logged in the last 7 days. Two is the week's target, so this reads as
 // progress rather than a streak that a rest day would break.
 function swimsLast7(){
@@ -7534,7 +7648,7 @@ function renderWorkout(){
       </div>`;
     }
 
-    workoutPanelHTML=co2CardHTML()+swimCardHTML()+html;
+    workoutPanelHTML=sessionPlanCardHTML()+co2CardHTML()+swimCardHTML()+html;
   }
 
   // ── Body Map sub-tab ──
