@@ -6617,6 +6617,30 @@ function openPoolCard(){
   let pbLine='';
   bKeys.forEach(d=>{pbLine+=`<span style="margin-right:12px">${d}m <span style="color:var(--gold)">${fmtSwimTime(bests[d].sec)}</span></span>`;});
   if(!pbLine)pbLine='<span style="color:var(--text-faint)">no timed swims yet</span>';
+  const comp30=swimCompletion(30);
+  const comp90=swimCompletion(90);
+  const recent=swimRecent(5);
+  let compBlock='<div style="font-size:12px;color:var(--text-faint)">no main sets logged yet</div>';
+  if(comp30){
+    let trend='';
+    if(comp90&&comp90.sessions>comp30.sessions){
+      const diff=comp30.pct-comp90.pct;
+      if(diff>2)trend=' · up '+diff+' on the 90-day rate';
+      else if(diff<-2)trend=' · down '+Math.abs(diff)+' on the 90-day rate';
+      else trend=' · flat against the 90-day rate';
+    }
+    let strip='';
+    recent.forEach(p=>{
+      const scaled=p.scaled&&p.scaled!=='Full'?' '+p.scaled.toLowerCase():'';
+      const full=p.total&&(p.done||0)>=p.total&&p.scaled==='Full';
+      strip+=`<span style="margin-right:12px;color:${full?'var(--text-hi)':'var(--text-dim)'}">${p.done||0}/${p.total}${esc(scaled)}</span>`;
+    });
+    compBlock=`<div style="display:flex;align-items:flex-end;gap:10px">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--text-hi);line-height:1">${comp30.pct}%</span>
+        <span style="font-size:10px;color:var(--text-dim);padding-bottom:6px">of prescribed work, 30 days${esc(trend)}</span>
+      </div>
+      <div style="font-size:11px;margin-top:10px;line-height:1.8">${strip}</div>`;
+  }
   const co2=state.lastSets&&state.lastSets[CO2_EXERCISE];
   let co2Line='never done';
   if(co2)co2Line=`${co2.reps}s hold · ${co2.date}`;
@@ -6638,6 +6662,8 @@ function openPoolCard(){
     <div style="margin:4px 0 20px">${cueList}</div>
     <div class="rival-section-label">Stroke count</div>
     <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 18px">${esc(strokeLine)}</div>
+    <div class="rival-section-label">Completing the set</div>
+    <div style="margin:6px 0 20px">${compBlock}</div>
     <div class="rival-section-label">Personal bests</div>
     <div style="font-size:12px;line-height:1.8;margin:4px 0 18px">${pbLine}</div>
     <div class="rival-section-label">CO2 table</div>
@@ -7027,6 +7053,30 @@ function fmtSwimTime(sec){
   const m=Math.floor(sec/60);
   const r=sec-m*60;
   return m+':'+(r<10?'0':'')+r.toFixed(1);
+}
+// How much of the prescribed main set you actually finished. This is the number the
+// coach is really judging — not a PB. A scaled session counts what it was worth: half
+// for 50s, a quarter for 25s, because finishing a halved set isn't finishing the set.
+const SWIM_SCALE_WEIGHT={'Full':1,'By 50s':0.5,'By 25s':0.25};
+function swimCompletion(days){
+  const cutoff=localDay(new Date(Date.now()-(days||30)*86400000));
+  let done=0,total=0,n=0;
+  (state.swimPractices||[]).forEach(p=>{
+    if(!p.remembered||!p.total||!p.date||p.date<cutoff)return;
+    const w=SWIM_SCALE_WEIGHT[p.scaled]??1;
+    done+=(p.done||0)*w;
+    total+=p.total;
+    n++;
+  });
+  if(!n)return null;
+  return{pct:Math.round(100*done/total),sessions:n};
+}
+// The last few practices, newest last, for the strip on the pool card.
+function swimRecent(n){
+  return (state.swimPractices||[])
+    .filter(p=>p.remembered&&p.total)
+    .slice(0,n||5)
+    .reverse();
 }
 // Best time per distance, from logged practices.
 function swimBests(){
