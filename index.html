@@ -3251,12 +3251,12 @@ function cardioToSets(minutes){
 // kind: 'required' breaks the streak if missed; 'optional' and 'rest' only ever add to it.
 const WORKOUT_WEEK=[
   {abbr:'Mon',label:'Monday',   sub:'Easy aerobic · 30 min · optional',    kind:'optional'},
-  {abbr:'Tue',label:'Tuesday',  sub:'Swim + Pull · moderate, higher reps', kind:'required'},
-  {abbr:'Wed',label:'Wednesday',sub:'Easy incline walk · legs only',       kind:'required'},
-  {abbr:'Thu',label:'Thursday', sub:'Swim + Push · Rotation',              kind:'required'},
+  {abbr:'Tue',label:'Tuesday',  sub:'Swim only · no lifting',             kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Lower + cuff · nothing overhead',     kind:'required'},
+  {abbr:'Thu',label:'Thursday', sub:'Swim only · no lifting',              kind:'required'},
   {abbr:'Fri',label:'Friday',   sub:'Off',                                 kind:'rest'},
-  {abbr:'Sat',label:'Saturday', sub:'Lower + Power · heavy · 20 min row',  kind:'required'},
-  {abbr:'Sun',label:'Sunday',   sub:'Upper accessory · Core · 20 min bike',kind:'required'},
+  {abbr:'Sat',label:'Saturday', sub:'Pull + rear delt · 20 min row',       kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Press + legs · 20 min bike',          kind:'required'},
 ];
 const WEEK_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // The current split started here. Before it, the old Mon–Sat split had Sunday as its
@@ -3337,7 +3337,7 @@ const DAY_PLAN={
     {t:'18:15',k:'travel',l:'Leave for the pool'},
     {t:'18:30',e:'19:30',k:'swim',l:'Swim practice',n:'log the main set after'},
     {t:'19:45',e:'20:30',k:'together',l:'Dinner together',n:'recovery meal — carbs and protein'},
-    {t:'21:00',e:'22:00',k:'gym',l:'Gym · Pull',n:'moderate weights — quieter now'},
+    {t:'21:00',e:'22:30',k:'study',l:'Study room',n:'shoulders rest after swimming'},
     {t:'23:00',k:'sleep',l:'Sleep'},
   ],
   Wed:[
@@ -3349,7 +3349,8 @@ const DAY_PLAN={
     {t:'15:00',e:'17:30',k:'study',l:'Study room'},
     {t:'17:45',e:'18:00',k:'breath',l:'CO2 table',n:'sitting down, at home'},
     {t:'18:00',e:'19:00',k:'together',l:'Dinner together'},
-    {t:'20:00',e:'22:15',k:'study',l:'Study room',peak:'22:00'},
+    {t:'19:15',e:'20:45',k:'gym',l:'Gym · Lower + Cuff',n:'nothing overhead'},
+    {t:'21:00',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
     {t:'23:00',k:'sleep',l:'Sleep',n:'Thursday starts 08:00'},
   ],
   Thu:[
@@ -3364,7 +3365,7 @@ const DAY_PLAN={
     {t:'18:15',k:'travel',l:'Leave for the pool'},
     {t:'18:30',e:'19:30',k:'swim',l:'Swim practice',n:'log the main set after'},
     {t:'19:45',e:'20:30',k:'together',l:'Dinner together',n:'recovery meal — carbs and protein'},
-    {t:'21:00',e:'22:00',k:'gym',l:'Gym · Push + Rotation',n:'moderate weights — quieter now'},
+    {t:'21:00',e:'22:30',k:'study',l:'Study room',n:'shoulders rest after swimming'},
     {t:'23:00',k:'sleep',l:'Sleep',n:'Friday starts 08:30'},
   ],
   Fri:[
@@ -3385,14 +3386,14 @@ const DAY_PLAN={
   ],
   Sat:[
     {t:'08:00',k:'meal',l:'Breakfast'},
-    {t:'10:00',e:'11:30',k:'gym',l:'Gym · Lower + Power',n:'then 20 min easy row'},
+    {t:'10:00',e:'11:30',k:'gym',l:'Gym · Pull + Rear delt',n:'then 20 min easy row'},
     {t:'12:30',e:'13:30',k:'together',l:'Lunch together'},
     {t:'14:30',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
     {t:'19:00',e:'20:00',k:'together',l:'Dinner together',n:'evening off, study room in exam weeks'},
   ],
   Sun:[
     {t:'09:00',k:'meal',l:'Breakfast'},
-    {t:'11:00',e:'12:15',k:'gym',l:'Gym · Upper accessory + Core',n:'then 20 min easy bike'},
+    {t:'11:00',e:'12:30',k:'gym',l:'Gym · Press + Legs',n:'then 20 min easy bike'},
     {t:'12:45',e:'13:30',k:'together',l:'Lunch together'},
     {t:'13:30',e:'15:00',k:'cook',l:'Batch cooking',n:'boil eggs for the week too'},
     {t:'15:30',e:'18:15',k:'study',l:'Study room',peak:'17:00'},
