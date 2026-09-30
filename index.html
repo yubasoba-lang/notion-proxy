@@ -3254,7 +3254,7 @@ const WORKOUT_WEEK=[
   {abbr:'Tue',label:'Tuesday',  sub:'Swim only · no lifting',             kind:'required'},
   {abbr:'Wed',label:'Wednesday',sub:'Lower + cuff · nothing overhead',     kind:'required'},
   {abbr:'Thu',label:'Thursday', sub:'Swim only · no lifting',              kind:'required'},
-  {abbr:'Fri',label:'Friday',   sub:'Off',                                 kind:'rest'},
+  {abbr:'Fri',label:'Friday',   sub:'Lower + power · jump work',           kind:'required'},
   {abbr:'Sat',label:'Saturday', sub:'Pull + rear delt · 20 min row',       kind:'required'},
   {abbr:'Sun',label:'Sunday',   sub:'Press + legs · 20 min bike',          kind:'required'},
 ];
@@ -3262,9 +3262,11 @@ const WEEK_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // The current split started here. Before it, the old Mon–Sat split had Sunday as its
 // only rest day — judging old weeks by the new split would break the streak retroactively.
 const SPLIT_START='2026-09-11';
+const FRI_TRAINING_START='2026-10-02';   // Friday was a rest day before this
 function dayKind(ds){
   const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
   if(ds<SPLIT_START)return abbr==='Sun'?'rest':'required';
+  if(abbr==='Fri'&&ds<FRI_TRAINING_START)return 'rest';
   const d=WORKOUT_WEEK.find(w=>w.abbr===abbr);
   return d?d.kind:'rest';
 }
@@ -3382,7 +3384,8 @@ const DAY_PLAN={
     {t:'15:30',e:'18:00',k:'study',l:'Study room',peak:'17:00',w:'upto7'},
     {t:'18:00',e:'19:00',k:'together',l:'Dinner together',n:'evening off',w:'from8'},
     {t:'18:30',e:'19:30',k:'together',l:'Dinner together',n:'evening off',w:'upto7'},
-    {t:'20:30',e:'20:45',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'19:45',e:'21:00',k:'gym',l:'Gym · Lower + Power',n:'jump work — volleyball'},
+    {t:'21:15',e:'21:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
   ],
   Sat:[
     {t:'08:00',k:'meal',l:'Breakfast'},
