@@ -6880,6 +6880,28 @@ const SESSION_PLAN={
     {h:'Aerobic',x:[['Rowing','30 min easy'],['Stationary Bike','30 min easy'],['Incline Walk','30 min easy']]},
   ]},
 };
+// Which days an exercise belongs to, read off the split rather than the Day property
+// in Notion. That property was set for the old Push/Pull/Legs days and is empty on most
+// rows, so the Workout tab's day sections had drifted away from the actual plan.
+let _sessionDayMap=null;
+function sessionDayMap(){
+  if(_sessionDayMap)return _sessionDayMap;
+  const m={};
+  Object.entries(SESSION_PLAN).forEach(([abbr,p])=>{
+    p.blocks.forEach(b=>b.x.forEach(x=>{
+      (m[x[0]]=m[x[0]]||[]).push(abbr);
+    }));
+  });
+  _sessionDayMap=m;
+  return m;
+}
+function sessionDaysFor(name){return sessionDayMap()[name]||[];}
+function sessionSetsFor(name,abbr){
+  const p=SESSION_PLAN[abbr];
+  if(!p)return null;
+  for(const b of p.blocks){for(const x of b.x){if(x[0]===name)return x[1];}}
+  return null;
+}
 function sessionPlanFor(ds){
   const abbr=WEEK_ABBR[new Date((ds||localToday())+'T12:00:00').getDay()];
   return SESSION_PLAN[abbr]||null;
@@ -7457,7 +7479,7 @@ function renderWorkout(){
 
     let html='';
     DAY_DEFS.forEach(({abbr,label,sub})=>{
-      const dayEx=state.exercises.filter(e=>e.day.includes(abbr));
+      const dayEx=state.exercises.filter(e=>sessionDaysFor(e.name).includes(abbr));
       if(!dayEx.length)return;
       const isToday=abbr===todayAbbr;
       const isOpen=expandedWorkoutDays.has(abbr);
@@ -7467,7 +7489,7 @@ function renderWorkout(){
           <div class="wec-day-header-left">
             <div class="wec-day-dot"></div>
             <div class="wec-day-title">${label}${isToday?' <span style="font-size:8px;opacity:0.7;letter-spacing:0.05em;text-transform:none;font-weight:400">· today</span>':''}</div>
-            <span class="wec-day-label-sub">${sub}</span>
+            <span class="wec-day-label-sub">${(SESSION_PLAN[abbr]||{}).title||sub}</span>
           </div>
           <div class="wec-day-right">
             <span class="wec-day-count">${dayEx.length}</span>
