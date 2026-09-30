@@ -1400,7 +1400,7 @@ function getRivalFor(stat){
    CSS and step-by-step restore instructions. Nothing was thrown away. */
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],lifeStats:null,wealthLog:[],penalties:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[]};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -3775,154 +3775,6 @@ async function loadLifeTasksDone(){
 async function loadArcs(){try{const p=await nQuery(DB.arcs);state.arcs=p.map(toArc);}catch(e){setError('Arcs: '+e.message);}}
 async function loadBooks(){try{const p=await nQuery(DB.books);state.books=p.map(toBook);}catch(e){setError('Books: '+e.message);}}
 
-// ── LIFE STATS ────────────────────────────────────────────────────────────────
-const LIFE_STATS_META=[
-  {key:'intelligence',label:'Intelligence',icon:'📚'},
-  {key:'vitality',    label:'Vitality',    icon:'💪'},
-  {key:'discipline',  label:'Discipline',  icon:'⚡'},
-  {key:'creativity',  label:'Creativity',  icon:'🎵'},
-  {key:'wisdom',      label:'Wisdom',      icon:'🔮'},
-  {key:'wealth',      label:'Wealth',      icon:'💰'},
-];
-const LIFE_XP_THRESH=[0,100,300,600,1000,1500,2200,3000,4000,5500];
-const LIFE_ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
-let _wealthPageId=null;
-
-function lifeStatLevel(xp){for(let i=LIFE_XP_THRESH.length-1;i>=0;i--){if(xp>=LIFE_XP_THRESH[i])return i+1;}return 1;}
-function lifeStatProgress(xp){const lv=lifeStatLevel(xp);if(lv>=10)return 1;return(xp-LIFE_XP_THRESH[lv-1])/(LIFE_XP_THRESH[lv]-LIFE_XP_THRESH[lv-1]);}
-
-// nQuery paginates now, so this is just an alias kept for the call sites below.
-const nQueryAll=(dbId,filter)=>nQuery(dbId,filter);
-
-async function loadLifeStats(){
-  try{
-    const[sessions,workoutPages,dailyDone,musicDone,entries,wealthCfg]=await Promise.all([
-      nQueryAll(DB.studied),
-      nQueryAll(DB.workoutLog),
-      nQueryAll(DB.tasks,{and:[{property:'Difficulty',select:{equals:'Daily'}},{property:'Status',checkbox:{equals:true}}]}),
-      nQueryAll(DB.tasks,{and:[{property:'Task',title:{equals:'Practice Music'}},{property:'Status',checkbox:{equals:true}}]}),
-      nQueryAll(DB.entries),
-      appConfigRows('wealth_log'),
-    ]);
-    const uniqueWorkoutDays=new Set(workoutPages.map(p=>g.date(p.properties.Date)||p.created_time?.slice(0,10))).size;
-    const intelligence=sessions.length*1;
-    const vitality=uniqueWorkoutDays*10;
-    const discipline=dailyDone.filter(p=>g.title(p.properties.Task)!=='Practice Music').length*5;
-    const creativity=musicDone.length*10;
-    const wisdom=entries.length*5;
-    let wealth=0;
-    if(wealthCfg.length){
-      _wealthPageId=wealthCfg[0].id;
-      try{state.wealthLog=JSON.parse(g.text(wealthCfg[0].properties.Value));}catch(e){state.wealthLog=[];}
-      wealth=computeWealthXP(state.wealthLog);
-    }else{state.wealthLog=[];}
-    state.lifeStats={intelligence,vitality,discipline,creativity,wisdom,wealth};
-    state.lifeStatCounts={
-      intelligence:{count:sessions.length,unit:'study session',rate:1},
-      vitality:{count:uniqueWorkoutDays,unit:'workout day',rate:10},
-      discipline:{count:dailyDone.filter(p=>g.title(p.properties.Task)!=='Practice Music').length,unit:'daily task',rate:5},
-      creativity:{count:musicDone.length,unit:'music session',rate:10},
-      wisdom:{count:entries.length,unit:'journal entry',rate:5},
-      wealth:{count:null,unit:null,rate:null},
-    };
-  }catch(e){state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};state.lifeStatCounts={};}
-}
-
-async function addWealthXP(amount){
-  if(!state.lifeStats)state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
-  state.lifeStats.wealth=(state.lifeStats.wealth||0)+amount;
-  const rich=[{text:{content:String(state.lifeStats.wealth)}}];
-  if(_wealthPageId){await nPatch(_wealthPageId,{Value:{rich_text:rich}});}
-  else{appConfigInvalidate();const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'wealth_xp'}}]},Value:{rich_text:rich}});_wealthPageId=p.id;}
-}
-
-function renderLifeStats(){
-  const ls=state.lifeStats||{};
-  const lastBal=state.wealthLog&&state.wealthLog.length?state.wealthLog[state.wealthLog.length-1].balance:null;
-  const rows=LIFE_STATS_META.map(m=>{
-    const xp=getEffectiveLifeXP(m.key);
-    const lv=lifeStatLevel(xp);
-    const pct=Math.round(lifeStatProgress(xp)*100);
-    const roman=LIFE_ROMAN[lv-1];
-    const extra=m.key==='wealth'
-      ?'<button onclick="event.stopPropagation();openWealthLog()" style="font-size:8px;font-weight:700;letter-spacing:0.1em;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:3px;padding:2px 6px;cursor:pointer;margin-left:4px">'+(lastBal!=null?'UPDATE':'LOG')+'</button>'
-      :'';
-    return '<div class="life-stat-row" onclick="showLifeStatDetail(\''+m.key+'\')" style="cursor:pointer"><div class="life-stat-mid"><div class="life-stat-name">'+m.label+(m.key==='wealth'&&lastBal!=null?' · $'+lastBal.toLocaleString():'')+'</div><div class="life-stat-bar"><div class="life-stat-fill" style="width:'+pct+'%"></div></div></div>'+extra+'<span class="life-stat-level">'+roman+'</span></div>';
-  }).join('');
-  return '<div class="flat-sec"><div style="font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:12px">LIFE STATS</div><div class="life-stats-grid">'+rows+'</div></div>';
-}
-
-function showLifeStatDetail(key){
-  const meta=LIFE_STATS_META.find(m=>m.key===key);
-  const xp=getEffectiveLifeXP(key);
-  const lv=lifeStatLevel(xp);
-  const roman=LIFE_ROMAN[lv-1];
-  const pct=Math.round(lifeStatProgress(xp)*100);
-  const nextThresh=lv<10?LIFE_XP_THRESH[lv]:null;
-  const toNext=nextThresh!=null?nextThresh-xp:null;
-  const c=(state.lifeStatCounts||{})[key]||{};
-  let sourceLine='';
-  if(key==='wealth'){
-    const log=state.wealthLog||[];
-    sourceLine=log.length<2?'No balance entries yet':'Positive balance gains: '+xp+' XP';
-  }else{
-    sourceLine=(c.count||0)+' '+c.unit+(c.count!==1?'s':'')+(c.rate?'  ×  '+c.rate+' XP  =  '+xp+' XP':'');
-  }
-  const nextLine=toNext!=null?toNext+' XP to Level '+LIFE_ROMAN[lv]:'Max level reached';
-  const existing=document.getElementById('life-stat-modal');if(existing)existing.remove();
-  const el=document.createElement('div');
-  el.id='life-stat-modal';
-  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;';
-  el.innerHTML='<div style="background:var(--bg-card);border:1px solid var(--border-glow);border-radius:3px;padding:28px 24px;max-width:320px;width:100%;text-align:center;">'
-    +'<div style="font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">'+meta.label+'</div>'
-    +'<div style="font-size:40px;font-weight:700;color:var(--gold);letter-spacing:0.04em;line-height:1">'+roman+'</div>'
-    +'<div style="margin:16px 0 8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--gold);border-radius:2px"></div></div>'
-    +'<div style="font-size:10px;color:var(--text-dim);margin-bottom:20px">'+pct+'% through level</div>'
-    +'<div style="font-size:12px;color:var(--text);margin-bottom:6px">'+sourceLine+'</div>'
-    +'<div style="font-size:10px;color:var(--gold);opacity:0.7">'+nextLine+'</div>'
-    +'<button onclick="document.getElementById(\'life-stat-modal\').remove()" style="margin-top:20px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border-radius:6px;padding:8px 20px;cursor:pointer">CLOSE</button>'
-    +'</div>';
-  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
-  document.body.appendChild(el);
-}
-
-function openWealthLog(){
-  const last=state.wealthLog&&state.wealthLog.length?state.wealthLog[state.wealthLog.length-1].balance:null;
-  const hint=last!=null?'Last logged: $'+last.toLocaleString():'Log your current bank balance';
-  const val=prompt(hint+'\n\nEnter current balance ($):');
-  if(val===null)return;
-  const balance=parseFloat(val.replace(/[^0-9.]/g,''));
-  if(isNaN(balance)||balance<0){alert('Invalid amount');return;}
-  saveWealthLog(balance);
-}
-
-async function saveWealthLog(balance){
-  const date=localToday();
-  if(!state.wealthLog)state.wealthLog=[];
-  state.wealthLog.push({date,balance});
-  const xp=computeWealthXP(state.wealthLog);
-  if(!state.lifeStats)state.lifeStats={intelligence:0,vitality:0,discipline:0,creativity:0,wisdom:0,wealth:0};
-  state.lifeStats.wealth=xp;
-  const json=JSON.stringify(state.wealthLog);
-  const rich=richChunks(json);
-  try{
-    if(_wealthPageId){await nPatch(_wealthPageId,{Value:{rich_text:rich}});}
-    else{appConfigInvalidate();const p=await nCreate(DB.appConfig,{Key:{title:[{text:{content:'wealth_log'}}]},Value:{rich_text:rich}});_wealthPageId=p.id;}
-    showToast('Balance logged · '+xp+' Wealth XP',3000);
-    renderHome();
-  }catch(e){showToast('Failed: '+e.message);}
-}
-
-function computeWealthXP(log){
-  if(!log||log.length<2)return 0;
-  let xp=0;
-  for(let i=1;i<log.length;i++){
-    const delta=log[i].balance-log[i-1].balance;
-    if(delta>0)xp+=Math.floor(delta/100);
-  }
-  return xp;
-}
-// ─────────────────────────────────────────────────────────────────────────────
 
 async function loadExams(){
   try{
@@ -4134,7 +3986,6 @@ async function bookSaveAdd(){
     const props={Name:{title:[{text:{content:title}}]},Status:{select:{name:status}}};
     if(status==='Finished')props['Finished Date']={date:{start:today}};
     await nCreate(DB.books,props);
-    if(status==='Finished'&&state.lifeStats){state.lifeStats.wisdom=(state.lifeStats.wisdom||0)+10;showToast('📖 Book finished! +10 Wisdom XP',3000);}
     document.getElementById('book-add-modal').remove();
     await loadBooks();renderArcs();
   }catch(e){showToast('Failed: '+e.message);}
@@ -4145,11 +3996,6 @@ async function bookMarkFinished(id){
   try{
     await nPatch(id,{Status:{select:{name:'Finished'}},'Finished Date':{date:{start:today}}});
     state.books=(state.books||[]).map(function(b){return b.id===id?Object.assign({},b,{status:'Finished',finishedDate:today}):b;});
-    if(state.lifeStats){
-      const oldWisdom=state.lifeStats.wisdom||0;
-      state.lifeStats.wisdom=oldWisdom+10;
-      showToast('📖 Book finished! +10 Wisdom XP',3000);
-    }
     renderArcs();
   }catch(e){showToast('Failed: '+e.message);}
 }
@@ -5699,15 +5545,14 @@ function renderHome(){
   const rivalTeaser=renderRivalTeaser();
   let html;
   const arcCard=renderActiveArc();
-  const lifeStatsCard='';   // card removed — half its bars were fed by the deleted Tasks tab
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${lifeStatsCard}${reviewCard}${examCard}${planCard}${recapRowHTML()}</div>
+      <div class="home-col-right">${arcCard}${reviewCard}${examCard}${planCard}${recapRowHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+lifeStatsCard+reviewCard+examCard+timerWidget+focusCard+planCard+recapRowHTML();
+    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+reviewCard+examCard+timerWidget+focusCard+planCard+recapRowHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -6021,29 +5866,9 @@ function getTotalDebt(stat){
 }
 
 function getEffectiveLifeXP(key){
-  const raw=(state.lifeStats||{})[key]||0;
-  return Math.max(0, raw - getTotalDebt(key));
+  return 0;   // Life Stats removed
 }
 
-async function finalizeDebtOnExpiry(p){
-  const stat=PENALTY_STAT_MAP[p.task];
-  if(!stat)return;
-  const debt=state.xpDebts.find(d=>d.penaltyId===p.issuedAt&&!d.finalized);
-  const finalAmount=PENALTY_EXPIRY_HOURS; // full 168h bled
-  if(debt){debt.amount=finalAmount;debt.finalized=true;}
-  else state.xpDebts.push({penaltyId:p.issuedAt,task:p.task,stat,amount:finalAmount,finalized:true});
-  // Trigger rank drop overlay
-  const rawXP=(state.lifeStats||{})[stat]||0;
-  const beforeXP=Math.max(0,rawXP-getTotalDebt(stat)+finalAmount); // before this debt finalized
-  const afterXP=Math.max(0,rawXP-getTotalDebt(stat));
-  const before=lifeStatLevel(beforeXP);
-  const after=lifeStatLevel(afterXP);
-  await saveXPDebts();
-  if(after<before){
-    const statMeta=LIFE_STATS_META.find(m=>m.key===stat);
-    triggerRankDrop(statMeta?.label||stat, LIFE_ROMAN[before-1], LIFE_ROMAN[after-1]);
-  }
-}
 
 function triggerRankDrop(statName, fromRoman, toRoman){
   const overlay=document.getElementById('rankupOverlay');
@@ -6126,7 +5951,6 @@ async function expirePenalties(){
   if(!expired.length)return;
   for(const p of expired){
     showToast(`GATE BROKEN — ${p.task.toUpperCase()} — STAT DEGRADED`,5000);
-    await finalizeDebtOnExpiry(p);
     p.scarred=true;
     p.scarredAt=new Date().toISOString();
   }
@@ -8802,7 +8626,7 @@ document.querySelectorAll('.tab-panel').forEach((p,i)=>{if(i>0)p.style.display='
 // drawn from it at once, and the normal refresh runs in the background and redraws
 // with fresh data. No snapshot, or any failure drawing it, falls back to the old path.
 const HOME_SNAP_KEY='grind-home-snap-v1';
-const HOME_SNAP_FIELDS=['streaks','streaksPageId','stats','rivals','exams','tasks','todayQuests','penalties','lifeTasksDone','lifeStats','lifeStatCounts','arcs','workoutDays7','workoutDaysLoaded','lectures','lecturesPageId','topicProgress','latestRecap','rivalLines','h2hStartDate','breakPeriods'];
+const HOME_SNAP_FIELDS=['streaks','streaksPageId','stats','rivals','exams','tasks','todayQuests','penalties','lifeTasksDone','arcs','workoutDays7','workoutDaysLoaded','lectures','lecturesPageId','topicProgress','latestRecap','rivalLines','h2hStartDate','breakPeriods'];
 function saveHomeSnapshot(){
   try{
     const snap={at:Date.now()};
@@ -8899,7 +8723,7 @@ const TAB_SNAP_FIELDS={
   workout:['exercises','bodyStats','swimPractices','prs','lastSets','volume'],
   exams:['exams','topicProgress','topicProgressPageId','lectures','lecturesPageId'],
   journal:['journals','entries'],
-  arcs:['arcs','books','lifeStatCounts','lifeStats','wealthLog'],
+  arcs:['arcs','books'],
 };
 // Sets (e.g. volume[stat].days) don't survive JSON on their own.
 const _snapReplacer=(k,v)=>v instanceof Set?{__set:[...v]}:v;
