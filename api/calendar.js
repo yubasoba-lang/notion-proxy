@@ -35,7 +35,7 @@ const PLAN = {
     {t:"14:00",e:"18:00",l:"Study room",n:"17:00 peak · snack at 16:45",alarm:10},
     {t:"18:30",e:"19:30",l:"Swim practice",alarm:20,n:"Leave at 18:15 · log the main set after"},
     {t:"19:45",e:"20:30",l:"Dinner together",alarm:10,n:"Recovery meal"},
-    {t:"21:00",e:"22:00",l:"Gym · Pull",n:"Moderate weights",alarm:15},
+    {t:"21:00",e:"22:30",l:"Study room",n:"Shoulders rest after swimming",alarm:10},
   ],
   Wed:[
     {t:"09:30",e:"12:45",l:"Pathology I",alarm:15,n:"Two blocks — snack in the 11:00 gap"},
@@ -44,7 +44,8 @@ const PLAN = {
     {t:"15:00",e:"17:30",l:"Study room",alarm:10},
     {t:"17:45",e:"18:00",l:"CO2 table",n:"Sitting down, at home",alarm:10},
     {t:"18:00",e:"19:00",l:"Dinner together",alarm:10},
-    {t:"20:00",e:"22:15",l:"Study room",n:"22:00 peak",alarm:10},
+    {t:"19:15",e:"20:45",l:"Gym · Lower + Cuff",n:"Nothing overhead",alarm:15},
+    {t:"21:00",e:"22:30",l:"Study room",n:"22:00 peak",alarm:10},
   ],
   Thu:[
     // 08:00 slot alternates — see ALTERNATING below.
@@ -53,20 +54,20 @@ const PLAN = {
     {t:"14:00",e:"18:00",l:"Study room",n:"17:00 peak · snack at 16:45",alarm:10},
     {t:"18:30",e:"19:30",l:"Swim practice",alarm:20,n:"Leave at 18:15 · log the main set after"},
     {t:"19:45",e:"20:30",l:"Dinner together",alarm:10,n:"Recovery meal"},
-    {t:"21:00",e:"22:00",l:"Gym · Push + Rotation",n:"Moderate weights",alarm:15},
+    {t:"21:00",e:"22:30",l:"Study room",n:"Shoulders rest after swimming",alarm:10},
   ],
   Fri:[
     {t:"08:30",e:"09:45",l:"Medical Statistics",alarm:15},
     {t:"20:30",e:"20:45",l:"CO2 table",n:"Sitting down, at home",alarm:10},
   ],
   Sat:[
-    {t:"10:00",e:"11:30",l:"Gym · Lower + Power",n:"Then 20 min easy row",alarm:15},
+    {t:"10:00",e:"11:30",l:"Gym · Pull + Rear delt",n:"Then 20 min easy row",alarm:15},
     {t:"12:30",e:"13:30",l:"Lunch together",alarm:10},
     {t:"14:30",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
     {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
   ],
   Sun:[
-    {t:"11:00",e:"12:15",l:"Gym · Upper accessory + Core",n:"Then 20 min easy bike",alarm:15},
+    {t:"11:00",e:"12:30",l:"Gym · Press + Legs",n:"Then 20 min easy bike",alarm:15},
     {t:"12:45",e:"13:30",l:"Lunch together",alarm:10},
     {t:"13:30",e:"15:00",l:"Batch cooking",alarm:10},
     {t:"15:30",e:"18:15",l:"Study room",n:"17:00 peak",alarm:10},
