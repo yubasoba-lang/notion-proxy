@@ -6976,22 +6976,81 @@ function planPrescription(text){
   if(only)return{sets:parseInt(only[1])};
   return null;
 }
+async function ensureWorkoutData(){
+  if(!state.exercises.length){
+    try{const p=await nQuery(DB.exerciseLibrary);state.exercises=p.map(toExercise);}
+    catch(e){showToast('Failed to load exercises: '+e.message);return false;}
+  }
+  if(!state.bodyStats.length){
+    try{const p=await nQuery(DB.bodyStats);state.bodyStats=p.map(toBodyStat);}
+    catch(e){showToast('Failed to load body stats: '+e.message);return false;}
+  }
+  return true;
+}
+// A small sheet over the session page. The full picker modal opened underneath it and
+// put the inputs below a list of 60 exercises — this shows one exercise and its fields.
+let _planLogEx=null;
 async function logFromPlan(name){
-  await addWorkout();
+  if(document.getElementById('planLogSheet'))return;
+  if(!await ensureWorkoutData())return;
   const ex=(state.exercises||[]).find(e=>e.name===name);
   if(!ex){showToast(name+' is not in the exercise library',3000);return;}
-  selectExercise(ex.id);
-  document.getElementById('ex-'+ex.id)?.scrollIntoView({block:'center'});
-  const pres=planPrescription(sessionSetsFor(name,_planDayAbbr));
+  _planLogEx=ex;
+  const pres=planPrescription(sessionSetsFor(name,_planDayAbbr))||{};
   const last=state.lastSets?.[name]||null;
+  const cardio=ex.category==='Cardio';
+  let lastLine='first time logging this';
+  if(last){
+    lastLine=cardio?`Last: ${last.reps} min · ${last.date}`:`Last: ${last.sets}×${last.reps} @ ${last.weight}kg · ${last.date}`;
+  }
+  let fields;
+  if(cardio){
+    fields=`<div class="workout-input-group"><div class="workout-input-label">min</div>
+      <input type="number" class="workout-input" id="plMin" value="${pres.minutes||(last&&last.reps)||20}" min="1" max="600"></div>`;
+  } else {
+    fields=`<div class="workout-input-group"><div class="workout-input-label">sets</div>
+        <input type="number" class="workout-input" id="plSets" value="${pres.sets||(last&&last.sets)||3}" min="1" max="30"></div>
+      <div class="workout-input-group"><div class="workout-input-label">reps</div>
+        <input type="number" class="workout-input" id="plReps" value="${pres.reps||(last&&last.reps)||10}" min="1" max="100"></div>
+      <div class="workout-input-group"><div class="workout-input-label">kg</div>
+        <input type="number" class="workout-input" id="plWeight" value="${last?last.weight:0}" min="0" max="999" step="0.5"></div>`;
+  }
+  const el=document.createElement('div');
+  el.id='planLogSheet';
+  el.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.72);display:flex;align-items:flex-end;justify-content:center';
+  el.onclick=e=>{if(e.target===el)closePlanLog();};
+  el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg-card);border-top:1px solid var(--border-hi);border-radius:6px 6px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))">
+    <div style="font-size:16px;color:var(--text-hi);margin-bottom:3px">${esc(ex.name)}</div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:16px">${esc(sessionSetsFor(name,_planDayAbbr)||'')} · ${esc(lastLine)}</div>
+    <div style="display:flex;gap:10px;margin-bottom:18px">${fields}</div>
+    <button class="wec-log-btn" id="plLogBtn" style="width:100%" onclick="submitPlanLog()">LOG</button>
+    <button class="wec-log-btn" style="width:100%;margin-top:8px;opacity:0.6" onclick="closePlanLog()">Cancel</button>
+  </div>`;
+  document.body.appendChild(el);
+}
+function closePlanLog(){document.getElementById('planLogSheet')?.remove();_planLogEx=null;}
+async function submitPlanLog(){
+  const ex=_planLogEx;
+  if(!ex)return;
+  const btn=document.getElementById('plLogBtn');
+  if(btn){btn.disabled=true;btn.textContent='LOGGING…';}
+  let sets,reps,weight;
   if(ex.category==='Cardio'){
-    const el=document.getElementById('wMinutes');
-    if(el&&pres&&pres.minutes)el.value=pres.minutes;
+    ({sets,reps,weight}=cardioToSets(parseInt(document.getElementById('plMin').value)||20));
   }else{
-    const sEl=document.getElementById('wSets'),rEl=document.getElementById('wReps'),wEl=document.getElementById('wWeight');
-    if(sEl&&pres&&pres.sets)sEl.value=pres.sets;
-    if(rEl&&pres&&pres.reps)rEl.value=pres.reps;
-    if(wEl&&last)wEl.value=last.weight;
+    sets=parseInt(document.getElementById('plSets').value)||3;
+    reps=parseInt(document.getElementById('plReps').value)||10;
+    weight=parseFloat(document.getElementById('plWeight').value)||0;
+  }
+  try{
+    await _logExercise(ex,sets,reps,weight);
+    closePlanLog();
+    showToast('Logged '+ex.name,2000);
+    if(document.getElementById('sessionPlanPage'))renderSessionPlan();
+    if(currentTab==='workout')renderWorkout();
+  }catch(e){
+    showToast('Failed: '+e.message,3000);
+    if(btn){btn.disabled=false;btn.textContent='LOG';}
   }
 }
 function closeSessionPlan(){document.getElementById('sessionPlanPage')?.remove();}
