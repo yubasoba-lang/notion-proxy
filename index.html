@@ -6877,6 +6877,12 @@ const SESSION_PLAN={
     {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 15 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
     {h:'Finisher',x:[['Stationary Bike','20 min easy']]},
   ]},
+  Tue:{title:'Swim practice',note:'No lifting — log the main set after',blocks:[
+    {h:'Pool',x:[['Swimming','60 min']]},
+  ]},
+  Thu:{title:'Swim practice',note:'No lifting — log the main set after',blocks:[
+    {h:'Pool',x:[['Swimming','60 min']]},
+  ]},
   Mon:{title:'Optional easy',note:'Row, bike or a walk — conversational pace',blocks:[
     {h:'Aerobic',x:[['Rowing','30 min easy'],['Stationary Bike','30 min easy'],['Incline Walk','30 min easy']]},
   ]},
@@ -6897,6 +6903,7 @@ function sessionDayMap(){
   return m;
 }
 function sessionDaysFor(name){return sessionDayMap()[name]||[];}
+// Swimming appears on the swim days, so the log sheet's "Today" group has it there too.
 function sessionSetsFor(name,abbr){
   const p=SESSION_PLAN[abbr];
   if(!p)return null;
@@ -7048,6 +7055,7 @@ async function submitPlanLog(){
     showToast('Logged '+ex.name,2000);
     if(document.getElementById('sessionPlanPage'))renderSessionPlan();
     if(currentTab==='workout')renderWorkout();
+    if(ex.name==='Swimming')openSwimPractice(reps);
   }catch(e){
     showToast('Failed: '+e.message,3000);
     if(btn){btn.disabled=false;btn.textContent='LOG';}
