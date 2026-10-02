@@ -66,7 +66,7 @@ const PLAN = {
     {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
   ],
   Sun:[
-    {t:"11:00",e:"12:30",l:"Gym · Press + Legs",n:"Then 20 min easy bike",alarm:15},
+    {t:"11:00",e:"12:30",l:"Gym · Press + Arms",n:"Then 20 min easy bike",alarm:15},
     {t:"12:45",e:"13:30",l:"Lunch together",alarm:10},
     {t:"13:30",e:"15:00",l:"Batch cooking",alarm:10},
     {t:"15:30",e:"18:15",l:"Study room",n:"17:00 peak",alarm:10},
