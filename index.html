@@ -3247,7 +3247,7 @@ function cardioToSets(minutes){
 const WORKOUT_WEEK=[
   {abbr:'Mon',label:'Monday',   sub:'Easy aerobic · 30 min · optional',    kind:'optional'},
   {abbr:'Tue',label:'Tuesday',  sub:'Swim only · no lifting',             kind:'required'},
-  {abbr:'Wed',label:'Wednesday',sub:'Lower + cuff · nothing overhead',     kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Lower + upper back · nothing overhead',kind:'required'},
   {abbr:'Thu',label:'Thursday', sub:'Swim only · no lifting',              kind:'required'},
   {abbr:'Fri',label:'Friday',   sub:'Lower + power · jump work',           kind:'required'},
   {abbr:'Sat',label:'Saturday', sub:'Pull + rear delt · 20 min row',       kind:'required'},
@@ -3342,7 +3342,7 @@ const DAY_PLAN={
     {t:'08:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
     {t:'09:30',e:'12:45',k:'class',l:'Pathology I',n:'two blocks — snack in the 11:00 gap'},
     {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
-    {t:'14:45',e:'16:15',k:'gym',l:'Gym · Lower + Cuff',n:'be through the door before 15:00'},
+    {t:'14:45',e:'16:15',k:'gym',l:'Gym · Lower + Upper back',n:'be through the door before 15:00'},
     {t:'16:30',e:'18:00',k:'study',l:'Study room'},
     {t:'18:15',e:'18:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
     {t:'18:45',e:'19:45',k:'together',l:'Dinner together'},
@@ -6849,9 +6849,10 @@ function closeDayRecap(){document.getElementById('dayRecapPage')?.remove();}
 // first thing to drop on a bad day. Names match the exercise library so what you
 // read here is what you log.
 const SESSION_PLAN={
-  Wed:{title:'Lower + Cuff',note:'Nothing overhead — be through the door before 15:00',blocks:[
+  Wed:{title:'Lower + Upper back',note:'Nothing overhead, no lat work — the day after a swim',blocks:[
     {h:'Main',x:[['Leg Press','4 × 10'],['Hamstring Curl Machine','3 × 10'],['Hip Abduction','3 × 15'],['Hip Adduction','3 × 12'],['Calf Raise Machine','3 × 20']]},
-    {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each, light'],['Face Pulls','3 × 15']]},
+    {h:'Upper back',x:[['Chest-Supported Dumbbell Row','4 × 10'],['Machine Rear Delt Fly','3 × 15'],['Face Pulls','3 × 15']]},
+    {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each, light']]},
     {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Suitcase Carries','3 × 40m']]},
     {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 20 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
   ]},
