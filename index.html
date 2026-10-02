@@ -3251,7 +3251,7 @@ const WORKOUT_WEEK=[
   {abbr:'Thu',label:'Thursday', sub:'Swim only · no lifting',              kind:'required'},
   {abbr:'Fri',label:'Friday',   sub:'Lower + power · jump work',           kind:'required'},
   {abbr:'Sat',label:'Saturday', sub:'Pull + rear delt · 20 min row',       kind:'required'},
-  {abbr:'Sun',label:'Sunday',   sub:'Press + legs · 20 min bike',          kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Press + arms · 20 min bike',          kind:'required'},
 ];
 const WEEK_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // The current split started here. Before it, the old Mon–Sat split had Sunday as its
@@ -3389,7 +3389,7 @@ const DAY_PLAN={
   ],
   Sun:[
     {t:'09:00',k:'meal',l:'Breakfast'},
-    {t:'11:00',e:'12:30',k:'gym',l:'Gym · Press + Legs',n:'then 20 min easy bike'},
+    {t:'11:00',e:'12:30',k:'gym',l:'Gym · Press + Arms',n:'then 20 min easy bike'},
     {t:'12:45',e:'13:30',k:'together',l:'Lunch together'},
     {t:'13:30',e:'15:00',k:'cook',l:'Batch cooking',n:'boil eggs for the week too'},
     {t:'15:30',e:'18:15',k:'study',l:'Study room',peak:'17:00'},
@@ -6865,14 +6865,14 @@ const SESSION_PLAN={
     {h:'Main',x:[['Lat Pulldown','4 × 10 neutral grip'],['Cable Seated Row','4 × 10'],['Single-Arm Dumbbell Row','3 × 10'],['Cable Archer Pull','3 × 12']]},
     {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each']]},
     {h:'Arms',x:[['Bicep Curl (Machine)','3 × 10']]},
-    {h:'Core',x:[['DB Russian Twists','3 × 20'],['Hip Thrust','3 × 12']]},
+    {h:'Core',x:[['DB Russian Twists','3 × 20'],['Hollow Body Hold','3 × 30s']]},
     {h:'Forearms',x:[['Heavy Farmer Carries','3 × 40m'],['Hammer Curls','3 × 10'],['Reverse Curls','3 × 12']]},
     {h:'Finisher',x:[['Rowing','20 min easy']]},
   ]},
-  Sun:{title:'Press + Legs',note:'The only pressing day · then 20 min easy bike',blocks:[
+  Sun:{title:'Press + Arms',note:'The only pressing day · then 20 min easy bike',blocks:[
     {h:'Main',x:[['Flat Dumbbell Bench Press','4 × 10'],['Incline Dumbbell Press','3 × 10'],['Pectoral Fly','3 × 12']]},
     {h:'Arms',x:[['Overhead DB Tricep Extension','3 × 12'],['Cable Lateral Raises','3 × 15 light, to shoulder height']]},
-    {h:'Legs',x:[['Leg Extension','3 × 12']]},
+    {h:'Arms',x:[['Tricep Pushdown (Machine)','3 × 12'],['Hammer Curls','3 × 10']]},
     {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Plank Hip Dips','3 × 30s each']]},
     {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 15 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
     {h:'Finisher',x:[['Stationary Bike','20 min easy']]},
