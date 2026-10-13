@@ -64,6 +64,7 @@ const PLAN = {
     {t:"12:30",e:"13:30",l:"Lunch together",alarm:10},
     {t:"14:30",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
     {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
+    {t:"20:00",e:"22:00",l:"Study room",alarm:10},
   ],
   Sun:[
     {t:"11:00",e:"12:30",l:"Gym · Press + Arms",n:"Then 20 min easy bike",alarm:15},
@@ -86,16 +87,18 @@ const ALTERNATING = [
   {day:"Fri",start:"20260911",t:"13:45",e:"14:45",l:"Lunch together",until:"20261023T220000Z",alarm:10},
   {day:"Fri",start:"20260911",t:"15:00",e:"16:30",l:"Gym · Lower + Power",n:"Jump work — volleyball",until:"20261023T220000Z",alarm:15},
   {day:"Fri",start:"20260911",t:"16:45",e:"18:30",l:"Study room",n:"17:00 peak",until:"20261023T220000Z",alarm:10},
-  {day:"Fri",start:"20260911",t:"19:00",e:"20:00",l:"Dinner together",alarm:10,n:"Evening off",until:"20261023T220000Z"},
-  {day:"Fri",start:"20260911",t:"20:30",e:"20:45",l:"CO2 table",n:"Sitting down, at home",until:"20261023T220000Z",alarm:10},
+  {day:"Fri",start:"20260911",t:"19:00",e:"20:00",l:"Dinner together",alarm:10,until:"20261023T220000Z"},
+  {day:"Fri",start:"20260911",t:"20:15",e:"20:30",l:"CO2 table",n:"Sitting down, at home",until:"20261023T220000Z",alarm:10},
+  {day:"Fri",start:"20260911",t:"20:30",e:"22:30",l:"Study room",n:"22:00 peak",until:"20261023T220000Z",alarm:10},
   // Friday from week 8 (30 Oct): Microbiology moves earlier, ECG lectures are over.
   {day:"Fri",start:"20261030",t:"10:15",e:"11:30",l:"Microbiology practical",alarm:15},
   {day:"Fri",start:"20261030",t:"12:00",e:"13:00",l:"Lunch together",alarm:10},
   {day:"Fri",start:"20261030",t:"13:15",e:"14:45",l:"Study room",alarm:10},
   {day:"Fri",start:"20261030",t:"15:00",e:"16:30",l:"Gym · Lower + Power",n:"Jump work — volleyball",alarm:15},
   {day:"Fri",start:"20261030",t:"16:45",e:"18:30",l:"Study room",n:"17:00 peak",alarm:10},
-  {day:"Fri",start:"20261030",t:"19:00",e:"20:00",l:"Dinner together",alarm:10,n:"Evening off"},
-  {day:"Fri",start:"20261030",t:"20:30",e:"20:45",l:"CO2 table",n:"Sitting down, at home",alarm:10},
+  {day:"Fri",start:"20261030",t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
+  {day:"Fri",start:"20261030",t:"20:15",e:"20:30",l:"CO2 table",n:"Sitting down, at home",alarm:10},
+  {day:"Fri",start:"20261030",t:"20:30",e:"22:30",l:"Study room",n:"22:00 peak",alarm:10},
 ];
 
 const BYDAY = { Mon:"MO", Tue:"TU", Wed:"WE", Thu:"TH", Fri:"FR", Sat:"SA", Sun:"SU" };
