@@ -2587,6 +2587,15 @@ function lsTimerSync(){
   if(!live)document.body.classList.remove('ls-off');
 }
 function lsTimerOff(){document.body.classList.add('ls-off');}
+// H:MM:SS, or M:SS under an hour. formatDuration() stops at minutes, which looks
+// frozen on a clock you're staring at.
+function lsClock(ms){
+  const t=Math.max(0,Math.floor(ms/1000));
+  const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),sec=t%60;
+  const ss=String(sec).padStart(2,'0');
+  if(h>0)return h+':'+String(m).padStart(2,'0')+':'+ss;
+  return m+':'+ss;
+}
 function lsTimerPaint(){
   const num=document.getElementById('lsTimerNum');
   if(!num||!document.body.classList.contains('session-live'))return;
@@ -2597,7 +2606,7 @@ function lsTimerPaint(){
     if(pomoPhase!=='work')label=(pomoCount%4===0)?'Long break':'Short break';
     if(sub)sub.textContent=label+' · '+(state.activeSession&&state.activeSession.subject?state.activeSession.subject:'');
   }else if(state.activeSession){
-    num.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+    num.textContent=lsClock(Date.now()-new Date(state.activeSession.startedAt).getTime());
     if(sub)sub.textContent=state.activeSession.subject||'Studying';
   }
 }
