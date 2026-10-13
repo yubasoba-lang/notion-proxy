@@ -6671,11 +6671,87 @@ function openPoolCard(){
     <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 18px">${esc(co2Line)}</div>
     <div class="rival-section-label">Last practice</div>
     <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 22px">${lastLine}</div>
-    <button class="wec-log-btn" style="width:100%" onclick="closePoolCard();openSwimFocus()">All 16 focuses</button>
+    <button class="wec-log-btn" style="width:100%" onclick="openSoloSets()">Solo sessions</button>
+    <button class="wec-log-btn" style="width:100%;margin-top:8px" onclick="closePoolCard();openSwimFocus()">All 16 focuses</button>
   </div>`;
   document.body.appendChild(el);
 }
 function closePoolCard(){document.getElementById('poolCardPage')?.remove();}
+// ── Solo sessions ────────────────────────────────────────────────────────────
+// Sets for swimming on your own, when there's no coach giving you work. Each one has
+// a single job, so a morning in the pool isn't an hour of random drills. Written for
+// roughly 90 minutes including rest; cut from the bottom if you're short on time.
+const SOLO_SETS=[
+  {t:'Aerobic base',focus:'Holding a pace you can repeat',total:2100,
+   why:'The one that fixes your actual gap. Nothing here is fast — the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
+   lines:['300 easy free, breathe every 3','4 × 100 free, 20s rest, same pace every one','8 × 50 free, 15s rest, no faster than the 100s','300 free with a pull buoy, long and relaxed','4 × 50 kick on your front, 20s rest','100 easy']},
+  {t:'Breath control',focus:'Being comfortable short of air',total:1700,
+   why:'Trains the thing that makes you stop mid-set. Breathing patterns only — no breath-hold swimming on your own.',
+   lines:['300 easy free','6 × 50 free: breathe every 3, then every 5, alternating','4 × 100 free breathing every 3 the whole way, 20s rest','8 × 25 free breathing twice per length, 15s rest','200 easy free every 3','100 easy']},
+  {t:'Economy',focus:'Fewer strokes at the same speed',total:1500,
+   why:'Technique work with a number attached. Count on every length and write the count in the log afterwards.',
+   lines:['200 easy free','4 × 25 catch-up drill','4 × 25 fist swimming','4 × 50 free counting strokes — note the count','6 × 50 free holding that count, 20s rest','4 × 50 free slightly faster, count must not rise','100 easy']},
+  {t:'Pace',focus:'Second half faster than the first',total:1800,
+   why:'Pacing is what collapses when you tire. Start slower than feels right — every rep should finish faster than it started.',
+   lines:['300 easy free','5 × 100 free negative split, 30s rest','4 × 50 free descending 1 to 4, 20s rest','200 free, second 100 faster','4 × 25 fast, full rest','100 easy']},
+  {t:'Second stroke',focus:'Learning back or breast',total:1600,
+   why:'Build the new stroke on a freestyle base. Keep the new-stroke swimming easy — you are learning a shape, not training.',
+   lines:['300 easy free','8 × 25 new-stroke drill, full rest','6 × 50 new stroke easy, 20s rest','4 × 50 free to flush it out','200 alternating 50 new stroke / 50 free','100 easy']},
+  {t:'Turns and walls',focus:'The free speed you keep leaving behind',total:1500,
+   why:'Nobody practises this alone and it is worth seconds a race. Every wall, every length, no exceptions.',
+   lines:['300 easy free with 5 kicks off every wall','8 × 25 free into a turn — tight tuck, feet planted fast','6 × 50 free, the turn is the fastest part, 20s rest','4 × 50 streamline kick off every wall','200 easy free, still streamlining','100 easy']},
+];
+let _soloIdx=null;
+function openSoloSets(i){
+  _soloIdx=(i==null?null:i);
+  if(document.getElementById('soloSetsPage')){renderSoloSets();return;}
+  const el=document.createElement('div');el.id='soloSetsPage';el.className='rival-page';
+  el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="soloBody"></div></div>';
+  document.body.appendChild(el);
+  renderSoloSets();
+}
+function renderSoloSets(){
+  const b=document.getElementById('soloBody');
+  if(!b)return;
+  let body='';
+  if(_soloIdx==null){
+    SOLO_SETS.forEach((x,i)=>{
+      body+=`<div onclick="openSoloSets(${i})" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+          <span style="font-size:15px;color:var(--text-hi)">${esc(x.t)}</span>
+          <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${x.total}m</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${esc(x.focus)}</div>
+      </div>`;
+    });
+    b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSoloSets()">← Back</button></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1;margin-top:12px">SOLO SESSIONS</div>
+      <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">Swimming on your own · ~90 min</div>
+      <div style="margin-top:18px">${body}</div>`;
+    return;
+  }
+  const x=SOLO_SETS[_soloIdx];
+  let lines='';
+  let run=0;
+  x.lines.forEach((l,i)=>{
+    lines+=`<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:${i?'1px solid rgba(232,234,240,0.06)':'none'}">
+      <span style="color:var(--text-dim);font-size:11px;width:14px;flex:none">${i+1}</span>
+      <span style="flex:1;font-size:13px;line-height:1.7;color:var(--text)">${esc(l)}</span></div>`;
+  });
+  b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="openSoloSets()">← All sessions</button></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">${esc(x.t.toUpperCase())}</div>
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${x.total}m · ${esc(x.focus)}</div>
+    <div style="font-size:12px;line-height:1.75;color:var(--text-dim);margin:16px 0 4px">${esc(x.why)}</div>
+    <div style="margin-top:14px">${lines}</div>
+    <button class="wec-log-btn" style="width:100%;margin-top:22px" onclick="logSoloSet(${_soloIdx})">LOG THIS SESSION</button>`;
+}
+function closeSoloSets(){document.getElementById('soloSetsPage')?.remove();_soloIdx=null;}
+function logSoloSet(i){
+  const x=SOLO_SETS[i];
+  closeSoloSets();
+  closePoolCard();
+  openSwimPractice(90,'Solo · '+x.t);
+}
 // ── Day recap ────────────────────────────────────────────────────────────────
 // What the day actually contained, assembled from what's already logged. No prose,
 // no model call — every number here is read straight out of state, so it opens
@@ -7212,10 +7288,10 @@ function swimBests(){
   return best;
 }
 
-function openSwimPractice(minutes){
+function openSwimPractice(minutes,presetSet){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
-  const set=last?last.set:'';
+  const set=presetSet||(last?last.set:'');
   swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:'',strokes:0};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
