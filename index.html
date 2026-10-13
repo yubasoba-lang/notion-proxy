@@ -1143,6 +1143,7 @@ body::after { display: none; }
   </div>
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('home',this)"><span class="nav-icon">⌂</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" onclick="switchTab('plan',this)"><span class="nav-icon">✓</span><span class="nav-label">Plan</span></button>
     <button class="nav-btn" onclick="switchTab('workout',this)"><span class="nav-icon">⊕</span><span class="nav-label">Workout</span></button>
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span><span class="nav-label">Exams</span></button>
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span><span class="nav-label">Study</span></button>
@@ -1154,6 +1155,7 @@ body::after { display: none; }
   <div class="scroll">
     <div id="error-bar" class="error-bar" style="display:none"></div>
     <div id="tab-home" class="tab-panel active"></div>
+    <div id="tab-plan" class="tab-panel" style="display:none"></div>
     <div id="tab-workout" class="tab-panel" style="display:none"></div>
     <div id="tab-exams" class="tab-panel" style="display:none"></div>
     <div id="tab-study" class="tab-panel" style="display:none"></div>
@@ -1400,7 +1402,7 @@ function getRivalFor(stat){
    CSS and step-by-step restore instructions. Nothing was thrown away. */
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[]};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[],studyPlan:null,planDone:{},planStatePageId:null};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -5091,6 +5093,13 @@ async function refresh(force=true){
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
   // Loaders and background syncs are individually guarded: one failure used to
   // reject the whole chain and skip renderTasks entirely, leaving a blank tab.
+  if(currentTab==='plan'){
+    if(!state.studyPlan){try{const c=localStorage.getItem(PLAN_CACHE_KEY);if(c)state.studyPlan=JSON.parse(c);}catch(_){}}
+    if(!Object.keys(state.planDone||{}).length){try{const c=localStorage.getItem(PLAN_DONE_KEY);if(c)state.planDone=JSON.parse(c);}catch(_){}}
+    renderPlan();
+    if(!skip)await Promise.all([loadStudyPlan(),loadPlanState()].map(x=>Promise.resolve(x).catch(e=>warn('planLoad',e))));
+    _markTabLoaded('plan');renderPlan();
+  }
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
@@ -6748,6 +6757,310 @@ function renderSoloSets(){
     <button class="wec-log-btn" style="width:100%;margin-top:22px" onclick="logSoloSet(${_soloIdx})">LOG THIS SESSION</button>`;
 }
 function closeSoloSets(){document.getElementById('soloSetsPage')?.remove();_soloIdx=null;}
+// ── Study plan ───────────────────────────────────────────────────────────────
+// The catch-up plan lives in study_plan.json at the repo root, fetched at runtime so
+// regenerating the file needs no code change. Completion state is a separate thing and
+// is ours: it syncs through an AppConfig row, the same key/value pattern the lecture
+// progress uses, and mirrors to localStorage so the tab paints before the network.
+const PLAN_CACHE_KEY='grind-study-plan-v1';
+const PLAN_DONE_KEY='grind-plan-done-v1';
+const PLAN_STATE_CFG='study_plan_state';
+const PLAN_SUBJECT_ORDER=['anki','ecg','micro','pharm','pathophys','patho','rest'];
+async function loadStudyPlan(){
+  try{
+    const r=await fetch('/study_plan.json?v='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    state.studyPlan=j;
+    try{localStorage.setItem(PLAN_CACHE_KEY,JSON.stringify(j));}catch(_){}
+  }catch(e){
+    warn('loadStudyPlan',e);
+    if(!state.studyPlan){
+      try{const c=localStorage.getItem(PLAN_CACHE_KEY);if(c)state.studyPlan=JSON.parse(c);}catch(_){}
+    }
+  }
+}
+async function loadPlanState(){
+  try{
+    const rows=await appConfigRows(PLAN_STATE_CFG);
+    if(rows.length){
+      state.planStatePageId=rows[0].id;
+      try{state.planDone=JSON.parse(g.text(rows[0].properties.Value))||{};}catch(_){state.planDone={};}
+    }else{
+      state.planStatePageId=null;
+      try{const c=localStorage.getItem(PLAN_DONE_KEY);state.planDone=c?JSON.parse(c):{};}catch(_){state.planDone={};}
+    }
+    try{localStorage.setItem(PLAN_DONE_KEY,JSON.stringify(state.planDone));}catch(_){}
+  }catch(e){
+    warn('loadPlanState',e);
+    try{const c=localStorage.getItem(PLAN_DONE_KEY);if(c&&!Object.keys(state.planDone||{}).length)state.planDone=JSON.parse(c);}catch(_){}
+  }
+}
+let _planSaveTimer=null;
+function savePlanState(){
+  try{localStorage.setItem(PLAN_DONE_KEY,JSON.stringify(state.planDone||{}));}catch(_){}
+  clearTimeout(_planSaveTimer);
+  _planSaveTimer=setTimeout(async()=>{
+    try{
+      const json=JSON.stringify(state.planDone||{});
+      const rich=richChunks(json);
+      if(state.planStatePageId){
+        await nPatch(state.planStatePageId,{Value:{rich_text:rich}});
+      }else{
+        appConfigInvalidate();
+        const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:PLAN_STATE_CFG}}]},Value:{rich_text:rich}});
+        state.planStatePageId=page.id;
+      }
+    }catch(e){warn('savePlanState',e);showToast('Plan save failed — will retry');}
+  },900);
+}
+// A pushed task belongs to the day it was pushed to, not the day it was written for.
+function planMovedTo(id){const r=(state.planDone||{})[id];return r&&r.movedTo?r.movedTo:null;}
+function planIsDone(id){const r=(state.planDone||{})[id];return !!(r&&r.done);}
+function planAllTasks(){
+  const out=[];
+  ((state.studyPlan||{}).days||[]).forEach(d=>d.tasks.forEach(t=>out.push({...t,planDate:d.date,day:d})));
+  return out;
+}
+function planTasksOn(ds){
+  return planAllTasks().filter(t=>(planMovedTo(t.id)||t.planDate)===ds);
+}
+function planOverdue(){
+  const today=localToday();
+  return planAllTasks()
+    .filter(t=>t.kind==='study'&&!planIsDone(t.id)&&(planMovedTo(t.id)||t.planDate)<today)
+    .sort((a,b)=>((planMovedTo(a.id)||a.planDate)).localeCompare(planMovedTo(b.id)||b.planDate));
+}
+function planMinutesLeft(ds){
+  return planTasksOn(ds).reduce((a,t)=>a+((t.kind==='study'&&!planIsDone(t.id))?(t.est_minutes||0):0),0);
+}
+function planDayMeta(ds){return ((state.studyPlan||{}).days||[]).find(d=>d.date===ds)||null;}
+function planNextExam(){
+  const today=localToday();
+  return (((state.studyPlan||{}).exams)||[]).filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0]||null;
+}
+function planDaysUntil(ds){
+  return Math.round((new Date(ds+'T12:00:00')-new Date(localToday()+'T12:00:00'))/86400000);
+}
+// Progress toward one exam: study tasks in that subject, from the plan's first day up to
+// the exam. Counts the work the exam is made of, not every task in the window.
+function planExamProgress(ex){
+  const tasks=planAllTasks().filter(t=>t.kind==='study'&&t.subject===ex.subject&&t.planDate<=ex.date);
+  const done=tasks.filter(t=>planIsDone(t.id)).length;
+  return {done,total:tasks.length,pct:tasks.length?Math.round(100*done/tasks.length):0};
+}
+function planToggle(id){
+  if(!state.planDone)state.planDone={};
+  const cur=state.planDone[id]||{};
+  if(cur.done){state.planDone[id]={...cur,done:false,doneAt:null};}
+  else{state.planDone[id]={...cur,done:true,doneAt:new Date().toISOString()};}
+  savePlanState();
+  renderPlan();
+}
+function planPush(id){
+  if(!state.planDone)state.planDone={};
+  const t=planAllTasks().find(x=>x.id===id);
+  if(!t)return;
+  const from=planMovedTo(id)||t.planDate;
+  const next=localDay(new Date(new Date(from+'T12:00:00').getTime()+86400000));
+  state.planDone[id]={...(state.planDone[id]||{}),movedTo:next};
+  savePlanState();
+  showToast('Pushed to '+next,2000);
+  renderPlan();
+}
+let planSubTab='today';
+function setPlanSubTab(v){planSubTab=v;renderPlan();}
+function planCheckboxHTML(t){
+  const done=planIsDone(t.id);
+  const mins=t.est_minutes?`<span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${t.est_minutes}m</span>`:'';
+  const pushBtn=(t.kind==='study')?`<button class="sil-toggle-btn" style="padding:3px 7px;font-size:8px" onclick="event.stopPropagation();planPush('${t.id}')">→ TMRW</button>`:'';
+  if(t.kind==='exam'){
+    return `<div style="border-left:2px solid var(--text-hi);padding:8px 0 8px 10px;margin:8px 0">
+      <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim)">Exam</div>
+      <div style="font-size:14px;color:var(--text-hi);margin-top:3px">${esc(t.title)}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${esc(t.detail||'')}</div></div>`;
+  }
+  if(t.kind==='rest'){
+    return `<div style="padding:10px 0"><div style="font-size:14px;color:var(--text-hi)">${esc(t.title)}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${esc(t.detail||'')}</div></div>`;
+  }
+  const titleCol=done?'var(--text-dim)':'var(--text)';
+  const strike=done?'text-decoration:line-through':'';
+  let detailHTML='';
+  if(t.detail)detailHTML='<span style="display:block;font-size:10px;line-height:1.6;color:var(--text-dim);margin-top:2px">'+esc(t.detail)+'</span>';
+  return `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">
+    <span onclick="planToggle('${t.id}')" style="width:18px;height:18px;flex:none;margin-top:1px;border-radius:3px;border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-hi);cursor:pointer">${done?'✓':''}</span>
+    <span style="flex:1;min-width:0" onclick="planToggle('${t.id}')">
+      <span style="display:block;font-size:13px;line-height:1.5;color:${titleCol};${strike}">${esc(t.title)}</span>
+      ${detailHTML}
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;flex:none">${mins}${pushBtn}</span>
+  </div>`;
+}
+function planSection(label,inner,extra){
+  return `<div style="border-top:1px solid var(--border);padding:14px 0 6px;margin-top:8px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">${esc(label)}</div>
+      ${extra||''}
+    </div>
+    <div style="margin-top:6px">${inner}</div></div>`;
+}
+function renderPlanToday(){
+  const today=localToday();
+  const meta=planDayMeta(today);
+  const plan=state.studyPlan||{};
+  const subs=plan.subjects||{};
+  let html='';
+  const ex=planNextExam();
+  if(ex){
+    const dleft=planDaysUntil(ex.date);
+    html+=`<div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--border);padding:12px 0">
+      <div>
+        <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim)">Next exam</div>
+        <div style="font-size:14px;color:var(--text-hi);margin-top:3px">${esc(ex.title)}</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${esc(ex.target||'')}</div>
+      </div>
+      <div style="text-align:right;line-height:1">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--text-hi)">${dleft}</span>
+        <div style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">${dleft===1?'day':'days'}</div>
+      </div></div>`;
+  }
+  const od=planOverdue();
+  if(od.length){
+    let rows='';
+    od.forEach(t=>{
+      rows+=`<div style="opacity:0.95">${planCheckboxHTML(t)}
+        <div style="font-size:9px;color:var(--text-faint);margin:-4px 0 4px 28px">was ${esc(planMovedTo(t.id)||t.planDate)}</div></div>`;
+    });
+    html+=planSection('Overdue · '+od.length,rows);
+  }
+  if(!meta){
+    html+=planSection('Today','<div style="font-size:12px;color:var(--text-dim)">No plan for today — the plan runs 13 Oct to 25 Nov.</div>');
+    return html;
+  }
+  const tasks=planTasksOn(today);
+  const left=planMinutesLeft(today);
+  const doneN=tasks.filter(t=>t.kind==='study'&&planIsDone(t.id)).length;
+  const totalN=tasks.filter(t=>t.kind==='study').length;
+  const groups={};
+  tasks.forEach(t=>{(groups[t.subject]=groups[t.subject]||[]).push(t);});
+  let body='';
+  PLAN_SUBJECT_ORDER.forEach(k=>{
+    if(!groups[k])return;
+    let rows='';
+    groups[k].forEach(t=>{rows+=planCheckboxHTML(t);});
+    body+=`<div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim)">${esc(subs[k]||k)}</div>
+      ${rows}</div>`;
+  });
+  Object.keys(groups).filter(k=>!PLAN_SUBJECT_ORDER.includes(k)).forEach(k=>{
+    let rows='';groups[k].forEach(t=>{rows+=planCheckboxHTML(t);});
+    body+=`<div style="margin-bottom:14px"><div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim)">${esc(k)}</div>${rows}</div>`;
+  });
+  const swim=(meta.tags||[]).includes('swim')?' · 🏊':'';
+  const hol=(meta.tags||[]).includes('holiday')?' · holiday':'';
+  const d=new Date(today+'T12:00:00');
+  html=`<div style="padding-top:4px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.05em;color:var(--text-hi);line-height:1">${esc(d.toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase())}</div>
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(d.toLocaleDateString('en-GB',{day:'numeric',month:'long'}))} · week ${meta.semester_week}${swim}${hol}</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:8px">${doneN}/${totalN} done · ${left?Math.floor(left/60)+'h '+(left%60)+'m left':'nothing left'}</div>
+  </div>`+html+planSection('Today',body);
+  return html;
+}
+function renderPlanWeek(){
+  const plan=state.studyPlan||{};
+  const today=localToday();
+  const byWeek={};
+  (plan.days||[]).forEach(d=>{(byWeek[d.semester_week]=byWeek[d.semester_week]||[]).push(d);});
+  let html='';
+  Object.keys(byWeek).sort((a,b)=>a-b).forEach(w=>{
+    let rows='';
+    byWeek[w].forEach(d=>{
+      const st=d.tasks.filter(t=>t.kind==='study');
+      const done=st.filter(t=>planIsDone(t.id)).length;
+      const isExam=(d.tags||[]).includes('exam');
+      const isRest=d.tasks.some(t=>t.kind==='rest');
+      const isToday=d.date===today;
+      const dd=new Date(d.date+'T12:00:00');
+      let right=st.length?`${done}/${st.length}`:'—';
+      if(isRest)right='off';
+      rows+=`<div onclick="planOpenDay('${d.date}')" style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid rgba(232,234,240,0.06);cursor:pointer">
+        <span style="width:52px;flex:none;font-size:10px;color:${isToday?'var(--text-hi)':'var(--text-dim)'}">${esc(dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric'}))}</span>
+        <span style="flex:1;min-width:0;font-size:12px;color:${isExam?'var(--text-hi)':(isRest?'var(--text-dim)':'var(--text)')}">${isExam?esc(d.tasks.find(t=>t.kind==='exam').title):(isRest?'Day off':esc(st.slice(0,2).map(t=>t.title).join(' · ')))}</span>
+        <span style="flex:none;font-size:10px;color:var(--text-dim);font-variant-numeric:tabular-nums">${right}</span>
+      </div>`;
+    });
+    html+=planSection('Week '+w,rows);
+  });
+  return html;
+}
+function planOpenDay(ds){
+  const meta=planDayMeta(ds);
+  if(!meta)return;
+  if(document.getElementById('planDayPage'))document.getElementById('planDayPage').remove();
+  const el=document.createElement('div');el.id='planDayPage';el.className='rival-page';
+  const subs=(state.studyPlan||{}).subjects||{};
+  let rows='';
+  meta.tasks.forEach(t=>{rows+=planCheckboxHTML(t);});
+  const d=new Date(ds+'T12:00:00');
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="document.getElementById('planDayPage').remove()">← Back</button></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">${esc(d.toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase())}</div>
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(d.toLocaleDateString('en-GB',{day:'numeric',month:'long'}))} · week ${meta.semester_week}${(meta.tags||[]).includes('swim')?' · 🏊':''}</div>
+    <div style="margin-top:16px">${rows}</div></div>`;
+  document.body.appendChild(el);
+}
+function renderPlanExams(){
+  const plan=state.studyPlan||{};
+  let html='';
+  (plan.exams||[]).forEach(ex=>{
+    const pr=planExamProgress(ex);
+    const dl=planDaysUntil(ex.date);
+    const past=dl<0;
+    html+=`<div style="border-top:1px solid var(--border);padding:13px 0;opacity:${past?'0.45':'1'}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <span style="font-size:13px;color:var(--text-hi)">${esc(ex.title)}</span>
+        <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${past?'done':dl+'d'}</span>
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);margin:3px 0 7px">${esc(ex.target||'')} · ${pr.done}/${pr.total} tasks</div>
+      <div style="height:3px;background:var(--border)"><div style="height:100%;width:${pr.pct}%;background:var(--text)"></div></div>
+    </div>`;
+  });
+  return html;
+}
+function planOpenRules(){
+  const rules=((state.studyPlan||{}).rules)||[];
+  if(document.getElementById('planRulesPage'))return;
+  const el=document.createElement('div');el.id='planRulesPage';el.className='rival-page';
+  let rows='';
+  rules.forEach(r=>{rows+=`<div style="font-size:12px;line-height:1.8;color:var(--text);padding:8px 0;border-top:1px solid rgba(232,234,240,0.06)">· ${esc(r)}</div>`;});
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="document.getElementById('planRulesPage').remove()">← Back</button></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">RULES</div>
+    <div style="margin-top:14px">${rows}</div></div>`;
+  document.body.appendChild(el);
+}
+function renderPlan(){
+  const el=document.getElementById('tab-plan');
+  if(!el)return;
+  if(!state.studyPlan){
+    el.innerHTML='<div style="padding:28px 16px;font-size:12px;color:var(--text-dim)">Loading the plan…</div>';
+    return;
+  }
+  const tabs=[['today','Today'],['week','Plan'],['exams','Exams']]
+    .map(([k,l])=>`<button class="sil-toggle-btn${planSubTab===k?' active':''}" onclick="setPlanSubTab('${k}')" style="flex:1;text-align:center">${l}</button>`).join('');
+  let body='';
+  if(planSubTab==='today')body=renderPlanToday();
+  else if(planSubTab==='week')body=renderPlanWeek();
+  else body=renderPlanExams();
+  el.innerHTML=`<div style="padding:10px 16px 40px">
+    <div style="display:flex;gap:4px;margin-bottom:12px">${tabs}</div>
+    ${body}
+    <div style="margin-top:26px;text-align:center">
+      <button class="sil-toggle-btn" onclick="planOpenRules()">Rules</button>
+    </div>
+  </div>`;
+}
 function logSoloSet(i){
   const x=SOLO_SETS[i];
   closeSoloSets();
@@ -8971,6 +9284,7 @@ const TAB_SNAP_FIELDS={
   tasks:['tasks','templates','todayQuests','penalties','lockdowns','xpDebts','ztd'],
   workout:['exercises','bodyStats','swimPractices','prs','lastSets','volume'],
   exams:['exams','topicProgress','topicProgressPageId','lectures','lecturesPageId'],
+  plan:['studyPlan','planDone','planStatePageId'],
   journal:['journals','entries'],
   arcs:['arcs','books'],
 };
@@ -8989,6 +9303,7 @@ function tabHasData(tab){
   if(tab==='workout')return (state.exercises||[]).length>0;
   if(tab==='exams')return (state.exams||[]).length>0;
   if(tab==='study')return (state.sessions||[]).length>0;
+  if(tab==='plan')return !!state.studyPlan;
   if(tab==='journal')return (state.journals||[]).length>0;
   if(tab==='arcs')return (state.arcs||[]).length>0;
   return false;
