@@ -89,6 +89,20 @@ body::after { display: none; }
 .sync-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
 .sync-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
+/* Landscape timer — the phone propped against a charger, read from across the room.
+   Opaque overlay rather than restyling the app, so nothing else has to cope with
+   landscape. Only appears while a session is running, and only on a short viewport. */
+#lsTimer { display: none; position: fixed; inset: 0; z-index: 8000; background: var(--bg);
+  flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+@media (orientation: landscape) and (max-height: 540px) {
+  body.session-live:not(.ls-off) #lsTimer { display: flex; }
+}
+#lsTimer .ls-num { font-family: 'Bebas Neue', sans-serif; font-size: 26vh; line-height: 0.85;
+  color: var(--text-hi); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+#lsTimer .ls-sub { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); }
+#lsTimer .ls-hint { position: absolute; bottom: 14px; font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--text-faint); }
+
 /* ── Nav ── */
 .nav {
   display: flex;
@@ -2565,9 +2579,34 @@ function editPomoGoal(){
   renderHome();
 }
 
+// The landscape timer shows only while something is running; dismissing it lasts
+// until the next session so one tap doesn't disable it for good.
+function lsTimerSync(){
+  const live=!!state.activeSession;
+  document.body.classList.toggle('session-live',live);
+  if(!live)document.body.classList.remove('ls-off');
+}
+function lsTimerOff(){document.body.classList.add('ls-off');}
+function lsTimerPaint(){
+  const num=document.getElementById('lsTimerNum');
+  if(!num||!document.body.classList.contains('session-live'))return;
+  const sub=document.getElementById('lsTimerSub');
+  if(pomoMode&&pomoPhaseEnd){
+    num.textContent=formatCountdown(pomoPhaseEnd-Date.now());
+    let label='Focus';
+    if(pomoPhase!=='work')label=(pomoCount%4===0)?'Long break':'Short break';
+    if(sub)sub.textContent=label+' · '+(state.activeSession&&state.activeSession.subject?state.activeSession.subject:'');
+  }else if(state.activeSession){
+    num.textContent=formatDuration(Date.now()-new Date(state.activeSession.startedAt).getTime());
+    if(sub)sub.textContent=state.activeSession.subject||'Studying';
+  }
+}
 function startTimer(){
   if(timerInterval)clearInterval(timerInterval);
+  lsTimerSync();
   timerInterval=setInterval(()=>{
+    lsTimerSync();
+    lsTimerPaint();
     // Update home tab inline timer
     const el=document.getElementById('timer-display');
     if(el){
@@ -9468,5 +9507,10 @@ function closeCmdPalette(){
   </div>
 </div>
 <div id="tz-sheet" style="display:none;position:fixed;inset:0;z-index:9999"></div>
+<div id="lsTimer" onclick="lsTimerOff()">
+  <div class="ls-num" id="lsTimerNum">0:00</div>
+  <div class="ls-sub" id="lsTimerSub"></div>
+  <div class="ls-hint">tap to leave landscape timer</div>
+</div>
 </body>
 </html>
