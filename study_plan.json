@@ -2,7 +2,7 @@
  "schema_version": 1,
  "title": "Catch-up plan — 13 Oct to 25 Nov 2026",
  "timezone": "Europe/Budapest",
- "generated": "2026-10-13T17:03:07",
+ "generated": "2026-10-13T17:54:36",
  "subjects": {
   "anki": "Anki",
   "ecg": "ECG",
@@ -49,6 +49,7 @@
   "On a bad day drop pathophysiology first, then pharmacology. Never drop the next exam’s subject.",
   "Nothing new after swim training — Tuesday and Thursday evenings are review only.",
   "Anki first thing, every day.",
+  "ECG comes from the LITFL ECG Library (litfl.com/ecg-library/basics) — reading and strips, no video.",
   "Wednesday and Friday have the least slack. Move work to Saturday, not into them."
  ],
  "days": [
@@ -88,8 +89,8 @@
      "id": "2026-10-13-04",
      "subject": "ecg",
      "kind": "study",
-     "title": "ECG: Systematic approach + narrow QRS tachycardias",
-     "detail": "~30 min YouTube + ~45 min LITFL strips",
+     "title": "ECG: Basics + narrow QRS tachycardias",
+     "detail": "LITFL ECG Library → Basics: Rate, Rhythm, Axis (Rule of Fours), ECG Exam Template. Then A–Z: AVNRT, AF, atrial flutter",
      "est_minutes": 75
     }
    ]
@@ -128,8 +129,8 @@
      "id": "2026-10-14-04",
      "subject": "ecg",
      "kind": "study",
-     "title": "ECG: BBB, fascicular and SA blocks, VT / wide QRS",
-     "detail": "~30 min YouTube + ~45 min LITFL strips",
+     "title": "ECG: Conduction block + wide QRS",
+     "detail": "LITFL → Clinical Interpretation: Conduction Block (BBB, fascicular, AV blocks), then the VT versus SVT page",
      "est_minutes": 75
     },
     {
@@ -178,8 +179,8 @@
      "id": "2026-10-15-04",
      "subject": "ecg",
      "kind": "study",
-     "title": "ECG: Ischaemia: STEMI localisation and staging",
-     "detail": "~30 min YouTube + ~45 min LITFL strips",
+     "title": "ECG: Ischaemia and MI localisation",
+     "detail": "LITFL → MI Localisation, plus the OMI and Aslanger pattern pages in A–Z",
      "est_minutes": 75
     }
    ]
@@ -219,7 +220,7 @@
      "subject": "ecg",
      "kind": "study",
      "title": "ECG: Electrolytes, hypertrophy, strain",
-     "detail": "~30 min YouTube + ~45 min LITFL strips",
+     "detail": "LITFL → Waves and Intervals (Osborne/J wave, QT, ST) and ECG anatomy: atrial enlargement, hypertrophy",
      "est_minutes": 75
     },
     {
@@ -266,8 +267,8 @@
      "id": "2026-10-17-04",
      "subject": "ecg",
      "kind": "study",
-     "title": "ECG: Pacemakers + mixed strips",
-     "detail": "~30 min YouTube + ~45 min LITFL strips",
+     "title": "ECG: Killer rhythms + pacemakers",
+     "detail": "LITFL → Killer ECG Rhythms and the pacemaker pages, then the first half of the 150 ECG Quiz",
      "est_minutes": 75
     }
    ]
@@ -290,8 +291,8 @@
      "id": "2026-10-18-02",
      "subject": "ecg",
      "kind": "study",
-     "title": "ECG: Timed mock, then review mistakes",
-     "detail": "~30 min YouTube + ~45 min LITFL strips",
+     "title": "ECG: Timed quiz, then review mistakes",
+     "detail": "LITFL → 150 ECG Quiz under time, then work back through every one you got wrong",
      "est_minutes": 75
     },
     {
