@@ -94,14 +94,23 @@ body::after { display: none; }
    landscape. Only appears while a session is running, and only on a short viewport. */
 #lsTimer { display: none; position: fixed; inset: 0; z-index: 8000; background: var(--bg);
   flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+body.ls-on #lsTimer { display: flex; }
 @media (orientation: landscape) and (max-height: 540px) {
   body.session-live:not(.ls-off) #lsTimer { display: flex; }
 }
-#lsTimer .ls-num { font-family: 'Bebas Neue', sans-serif; font-size: 26vh; line-height: 0.85;
-  color: var(--text-hi); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+/* Rotating the content rather than the device, so it still works with rotation lock on. */
+#lsTimer .ls-stage { display: flex; flex-direction: column; align-items: center; gap: 8px;
+  transition: transform 0.25s ease; }
+body.ls-rot #lsTimer .ls-stage { transform: rotate(90deg); }
+#lsTimer .ls-num { font-family: 'Bebas Neue', sans-serif; font-size: 24vmin; line-height: 0.85;
+  color: var(--text-hi); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; cursor: pointer; }
 #lsTimer .ls-sub { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); }
 #lsTimer .ls-hint { position: absolute; bottom: 14px; font-size: 9px; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--text-faint); }
+#lsTimer .ls-close { position: absolute; top: 14px; right: 16px; background: transparent;
+  border: 1px solid var(--border-hi); color: var(--text-dim); border-radius: 3px;
+  font-size: 9px; letter-spacing: 0.14em; padding: 6px 11px; cursor: pointer;
+  font-family: 'Inter', sans-serif; text-transform: uppercase; }
 
 /* ── Nav ── */
 .nav {
@@ -2587,6 +2596,18 @@ function lsTimerSync(){
   if(!live)document.body.classList.remove('ls-off');
 }
 function lsTimerOff(){document.body.classList.add('ls-off');}
+// Opened by tapping the timer digits. Independent of the device's orientation, because
+// a phone with rotation lock on never reports landscape.
+function lsTimerOpen(){
+  document.body.classList.add('ls-on');
+  document.body.classList.remove('ls-off');
+  lsTimerPaint();
+}
+function lsTimerClose(){
+  document.body.classList.remove('ls-on','ls-rot');
+  document.body.classList.add('ls-off');
+}
+function lsTimerRotate(){document.body.classList.toggle('ls-rot');}
 // H:MM:SS, or M:SS under an hour. formatDuration() stops at minutes, which looks
 // frozen on a clock you're staring at.
 function lsClock(ms){
@@ -2598,7 +2619,8 @@ function lsClock(ms){
 }
 function lsTimerPaint(){
   const num=document.getElementById('lsTimerNum');
-  if(!num||!document.body.classList.contains('session-live'))return;
+  if(!num)return;
+  if(!document.body.classList.contains('session-live')&&!document.body.classList.contains('ls-on'))return;
   const sub=document.getElementById('lsTimerSub');
   if(pomoMode&&pomoPhaseEnd){
     num.textContent=formatCountdown(pomoPhaseEnd-Date.now());
@@ -2608,8 +2630,12 @@ function lsTimerPaint(){
   }else if(state.activeSession){
     num.textContent=lsClock(Date.now()-new Date(state.activeSession.startedAt).getTime());
     if(sub)sub.textContent=state.activeSession.subject||'Studying';
+  }else{
+    num.textContent='0:00';
+    if(sub)sub.textContent='No session running';
   }
 }
+setInterval(()=>{if(document.body.classList.contains('ls-on'))lsTimerPaint();},1000);
 function startTimer(){
   if(timerInterval)clearInterval(timerInterval);
   lsTimerSync();
@@ -5398,7 +5424,7 @@ function renderHome(){
       <div class="study-active">
         <div class="study-active-info">
           <div class="study-active-subject" onclick="changeSessionSubject()" title="Tap to change subject" style="cursor:pointer">${state.activeSession.subject} <span style="font-size:8px;opacity:0.4">✎</span></div>
-          <div id="timer-display" class="study-timer${pomoMode?' pomo-work':''}">${elapsed}</div>
+          <div id="timer-display" class="study-timer${pomoMode?' pomo-work':''}" onclick="lsTimerOpen()" style="cursor:pointer">${elapsed}</div>
           ${pomoMode?`<div class="pomo-dots">${pomoDots}</div>`:''}
         </div>
         <button class="study-stop-btn" onclick="stopSession()">■ Stop</button>
@@ -5412,7 +5438,7 @@ function renderHome(){
       <div class="study-active">
         <div class="study-active-info">
           <div class="study-active-subject" style="color:var(--green-text)">Rest up</div>
-          <div id="timer-display" class="study-timer pomo-break">${rem}</div>
+          <div id="timer-display" class="study-timer pomo-break" onclick="lsTimerOpen()" style="cursor:pointer">${rem}</div>
           <div class="pomo-dots">${pomoDots}</div>
         </div>
         <button class="study-stop-btn" onclick="stopSession()">■ Skip</button>
@@ -8585,7 +8611,7 @@ function renderStudyLog(){
           <circle id="pomo-orbit-dot" cx="${orbX}" cy="${orbY}" r="3" fill="#ffffff" opacity="0.95"/>
         </svg>
         <div class="pomo-ring-time">
-          <div id="timer-display-log" class="pomo-ring-countdown">${countdownTxt}</div>
+          <div id="timer-display-log" class="pomo-ring-countdown" onclick="lsTimerOpen()" style="cursor:pointer">${countdownTxt}</div>
           <div class="pomo-ring-label">${isBreak?'rest':'remaining'}</div>
         </div>
       </div>
@@ -8605,7 +8631,7 @@ function renderStudyLog(){
     html+=`<div class="pomo-free-active">
       <div class="free-timer-subject">${state.activeSession.subject}</div>
       <div class="free-timer-wrap">
-        <div id="timer-display-log" class="free-timer-digits">${hhStr}${mmStr}<span class="free-timer-sep"> </span>${ssStr}</div>
+        <div id="timer-display-log" class="free-timer-digits" onclick="lsTimerOpen()" style="cursor:pointer">${hhStr}${mmStr}<span class="free-timer-sep"> </span>${ssStr}</div>
         <div class="free-timer-bar"><div class="free-timer-bar-fill" id="free-timer-bar-fill"></div></div>
       </div>
       <button class="free-timer-stop" onclick="stopSession()">end</button>
@@ -9516,10 +9542,13 @@ function closeCmdPalette(){
   </div>
 </div>
 <div id="tz-sheet" style="display:none;position:fixed;inset:0;z-index:9999"></div>
-<div id="lsTimer" onclick="lsTimerOff()">
-  <div class="ls-num" id="lsTimerNum">0:00</div>
-  <div class="ls-sub" id="lsTimerSub"></div>
-  <div class="ls-hint">tap to leave landscape timer</div>
+<div id="lsTimer">
+  <button class="ls-close" onclick="lsTimerClose()">Close</button>
+  <div class="ls-stage" onclick="lsTimerRotate()">
+    <div class="ls-num" id="lsTimerNum">0:00</div>
+    <div class="ls-sub" id="lsTimerSub"></div>
+  </div>
+  <div class="ls-hint">tap the clock to rotate it</div>
 </div>
 </body>
 </html>
