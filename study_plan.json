@@ -2,7 +2,7 @@
  "schema_version": 1,
  "title": "Catch-up plan — 13 Oct to 25 Nov 2026",
  "timezone": "Europe/Budapest",
- "generated": "2026-10-13T21:17:56",
+ "generated": "2026-10-13T21:48:40",
  "subjects": {
   "anki": "Anki",
   "ecg": "ECG",
@@ -50,7 +50,8 @@
   "Nothing new after swim training — Tuesday and Thursday evenings are review only.",
   "Anki first thing, every day.",
   "ECG comes from the LITFL ECG Library (litfl.com/ecg-library/basics) — reading and strips, no video.",
-  "Wednesday and Friday have the least slack. Move work to Saturday, not into them."
+  "Wednesday and Friday have the least slack. Move work to Saturday, not into them.",
+  "Cascaded one slot on 13 Oct 2026 — pharm and micro run a day later than first planned."
  ],
  "days": [
   {
@@ -95,27 +96,27 @@
     },
     {
      "id": "2026-10-14-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A2",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-14-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 5–8",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-14-04",
      "subject": "ecg",
      "kind": "study",
      "title": "ECG: Conduction block + wide QRS",
      "detail": "LITFL → Clinical Interpretation: Conduction Block (BBB, fascicular, AV blocks), then the VT versus SVT page",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-10-14-03",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 1–4",
+     "detail": "General mycology — likely not in Sketchy, use notes",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-14-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A1",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     },
     {
      "id": "2026-10-14-05",
@@ -145,27 +146,27 @@
     },
     {
      "id": "2026-10-15-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A3",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-15-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 9–11",
-     "detail": "Finishes fungi",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-15-04",
      "subject": "ecg",
      "kind": "study",
      "title": "ECG: Ischaemia and MI localisation",
      "detail": "LITFL → MI Localisation, plus the OMI and Aslanger pattern pages in A–Z",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-10-15-03",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 5–8",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-15-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A2",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -185,27 +186,27 @@
     },
     {
      "id": "2026-10-16-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A4",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-16-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 12–15",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-16-04",
      "subject": "ecg",
      "kind": "study",
      "title": "ECG: Electrolytes, hypertrophy, strain",
      "detail": "LITFL → Waves and Intervals (Osborne/J wave, QT, ST) and ECG anatomy: atrial enlargement, hypertrophy",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-10-16-03",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 9–11",
+     "detail": "Finishes fungi",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-16-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A3",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     },
     {
      "id": "2026-10-16-05",
@@ -233,27 +234,27 @@
     },
     {
      "id": "2026-10-17-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A5",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-17-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 16–19",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-17-04",
      "subject": "ecg",
      "kind": "study",
      "title": "ECG: Killer rhythms + pacemakers",
      "detail": "LITFL → Killer ECG Rhythms and the pacemaker pages, then the first half of the 150 ECG Quiz",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-10-17-03",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 12–15",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-17-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A4",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -281,19 +282,19 @@
     },
     {
      "id": "2026-10-18-03",
-     "subject": "pharm",
+     "subject": "micro",
      "kind": "study",
-     "title": "Pharm A1",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
+     "title": "Micro IV 16–19",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
     },
     {
      "id": "2026-10-18-04",
-     "subject": "micro",
+     "subject": "pharm",
      "kind": "study",
-     "title": "Micro IV 1–4",
-     "detail": "General mycology — likely not in Sketchy, use notes. Moved from Tue 13",
-     "est_minutes": 75
+     "title": "Pharm A5",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     },
     {
      "id": "2026-10-18-05",
@@ -328,14 +329,6 @@
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
-    },
-    {
-     "id": "2026-10-19-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 20–21",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
     }
    ]
   },
@@ -359,17 +352,17 @@
      "id": "2026-10-20-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 22–25",
-     "detail": "Finishes protozoa",
+     "title": "Micro IV 20–21",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
      "id": "2026-10-20-03",
-     "subject": "pharm",
+     "subject": "micro",
      "kind": "study",
-     "title": "Pharm A6",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
+     "title": "Micro blurt only",
+     "detail": "5-min blurt of each topic so far",
+     "est_minutes": 75
     }
    ]
   },
@@ -391,15 +384,15 @@
      "id": "2026-10-21-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 26–29",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "title": "Micro IV 22–25",
+     "detail": "Finishes protozoa",
      "est_minutes": 75
     },
     {
      "id": "2026-10-21-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A7",
+     "title": "Pharm A6",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -433,7 +426,7 @@
      "id": "2026-10-22-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 30–33",
+     "title": "Micro IV 26–29",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -441,7 +434,7 @@
      "id": "2026-10-22-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A8",
+     "title": "Pharm A7",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -475,15 +468,15 @@
      "id": "2026-10-23-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 34–37",
-     "detail": "Finishes helminths",
+     "title": "Micro IV 30–33",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
      "id": "2026-10-23-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A9",
+     "title": "Pharm A8",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -515,28 +508,20 @@
      "id": "2026-10-24-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro blurt everything once",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "title": "Micro IV 34–37",
+     "detail": "Finishes helminths",
      "est_minutes": 75
     },
     {
      "id": "2026-10-24-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A10",
+     "title": "Pharm A9",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
      "id": "2026-10-24-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A11",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-24-05",
      "subject": "pathophys",
      "kind": "study",
      "title": "Pathophysiology L2",
@@ -579,7 +564,7 @@
      "id": "2026-10-26-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro written practice: mycology",
+     "title": "Micro blurt everything once",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -587,12 +572,20 @@
      "id": "2026-10-26-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A12",
+     "title": "Pharm A11",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
      "id": "2026-10-26-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A10",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-10-26-05",
      "subject": "pathophys",
      "kind": "study",
      "title": "Pathophysiology L3",
@@ -621,7 +614,7 @@
      "id": "2026-10-27-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro written practice: protozoa",
+     "title": "Micro written practice: mycology",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -629,7 +622,7 @@
      "id": "2026-10-27-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A13",
+     "title": "Pharm A12",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     }
@@ -653,7 +646,7 @@
      "id": "2026-10-28-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro written practice: helminths + life cycles",
+     "title": "Micro written practice: protozoa",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -661,7 +654,7 @@
      "id": "2026-10-28-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A14",
+     "title": "Pharm A13",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -695,12 +688,28 @@
      "id": "2026-10-29-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro light review, sleep early",
+     "title": "Micro written practice: helminths + life cycles",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
      "id": "2026-10-29-03",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro light review, sleep early",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-29-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A14",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-10-29-05",
      "subject": "pathophys",
      "kind": "study",
      "title": "Pathophysiology L4",
@@ -751,14 +760,6 @@
     },
     {
      "id": "2026-10-31-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.1–4",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-31-03",
      "subject": "pathophys",
      "kind": "study",
      "title": "Pathophysiology L5",
@@ -785,20 +786,12 @@
      "id": "2026-11-01-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III.5–7",
+     "title": "Micro III.1–4",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
      "id": "2026-11-01-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A15",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-01-04",
      "subject": "pathophys",
      "kind": "study",
      "title": "Pathophysiology L6",
@@ -806,7 +799,7 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-11-01-05",
+     "id": "2026-11-01-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -833,7 +826,7 @@
      "id": "2026-11-02-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III.8–10",
+     "title": "Micro III.5–7",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -841,7 +834,7 @@
      "id": "2026-11-02-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A16",
+     "title": "Pharm A15",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -875,9 +868,17 @@
      "id": "2026-11-03-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III.11–15",
-     "detail": "Adenovirus + herpes",
+     "title": "Micro III.8–10",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-11-03-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A16",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -899,20 +900,12 @@
      "id": "2026-11-04-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III.16–19",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "title": "Micro III.11–15",
+     "detail": "Adenovirus + herpes",
      "est_minutes": 75
     },
     {
      "id": "2026-11-04-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A17",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-04-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -941,9 +934,25 @@
      "id": "2026-11-05-02",
      "subject": "micro",
      "kind": "study",
+     "title": "Micro III.16–19",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-11-05-03",
+     "subject": "micro",
+     "kind": "study",
      "title": "Micro written practice + weak spots",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-11-05-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A17",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -989,14 +998,6 @@
     },
     {
      "id": "2026-11-07-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A18",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-07-03",
      "subject": "patho",
      "kind": "study",
      "title": "Patho: organ description + slides",
@@ -1023,7 +1024,7 @@
      "id": "2026-11-08-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A19",
+     "title": "Pharm A18",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1055,7 +1056,7 @@
      "id": "2026-11-09-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A20",
+     "title": "Pharm A19",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1089,7 +1090,7 @@
      "id": "2026-11-10-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A21",
+     "title": "Pharm A20",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     }
@@ -1113,7 +1114,7 @@
      "id": "2026-11-11-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A22",
+     "title": "Pharm A21",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1147,7 +1148,7 @@
      "id": "2026-11-12-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm recall A11 + A12",
+     "title": "Pharm A22",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1179,7 +1180,7 @@
      "id": "2026-11-13-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm recall A18 + A19",
+     "title": "Pharm recall A11 + A12",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1211,7 +1212,7 @@
      "id": "2026-11-14-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm recall A20 + A21",
+     "title": "Pharm recall A18 + A19",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1243,12 +1244,20 @@
      "id": "2026-11-15-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm practice questions",
+     "title": "Pharm recall A20 + A21",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
      "id": "2026-11-15-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm practice questions",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-15-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho definitions",
