@@ -6769,24 +6769,27 @@ function closePoolCard(){document.getElementById('poolCardPage')?.remove();}
 // a single job, so a morning in the pool isn't an hour of random drills. Written for
 // roughly 90 minutes including rest; cut from the bottom if you're short on time.
 const SOLO_SETS=[
-  {t:'Aerobic base',focus:'Holding a pace you can repeat',total:2100,
-   why:'The one that fixes your actual gap. Nothing here is fast — the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
-   lines:['300 easy free, breathe every 3','4 × 100 free, 20s rest, same pace every one','8 × 50 free, 15s rest, no faster than the 100s','300 free with a pull buoy, long and relaxed','4 × 50 kick on your front, 20s rest','100 easy']},
-  {t:'Breath control',focus:'Being comfortable short of air',total:1700,
-   why:'Trains the thing that makes you stop mid-set. Breathing patterns only — no breath-hold swimming on your own.',
-   lines:['300 easy free','6 × 50 free: breathe every 3, then every 5, alternating','4 × 100 free breathing every 3 the whole way, 20s rest','8 × 25 free breathing twice per length, 15s rest','200 easy free every 3','100 easy']},
+  {t:'Aerobic base',focus:'Holding a pace you can repeat',total:1800,
+   why:'The one that fixes your actual gap. Nothing here is fast \u2014 the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
+   lines:['200 easy free, breathe every 3','4 \u00d7 100 free, 20s rest, same pace every one','8 \u00d7 66 free, 15s rest, no faster than the 100s','300 free with a pull buoy, long and relaxed','4 \u00d7 66 kick on your front, 20s rest','100 easy']},
+  {t:'Breath control',focus:'Being comfortable short of air',total:1550,
+   why:'Trains the thing that makes you stop mid-set. Breathing patterns only \u2014 no breath-hold swimming on your own.',
+   lines:['200 easy free','6 \u00d7 66 free: breathe every 3, then every 5, alternating','4 \u00d7 100 free breathing every 3 the whole way, 20s rest','8 \u00d7 33 free, two breaths per length, 15s rest','200 easy free every 3','100 easy']},
   {t:'Economy',focus:'Fewer strokes at the same speed',total:1500,
-   why:'Technique work with a number attached. Count on every length and write the count in the log afterwards.',
-   lines:['200 easy free','4 × 25 catch-up drill','4 × 25 fist swimming','4 × 50 free counting strokes — note the count','6 × 50 free holding that count, 20s rest','4 × 50 free slightly faster, count must not rise','100 easy']},
-  {t:'Pace',focus:'Second half faster than the first',total:1800,
-   why:'Pacing is what collapses when you tire. Start slower than feels right — every rep should finish faster than it started.',
-   lines:['300 easy free','5 × 100 free negative split, 30s rest','4 × 50 free descending 1 to 4, 20s rest','200 free, second 100 faster','4 × 25 fast, full rest','100 easy']},
-  {t:'Butterfly',focus:'Building fly from the kick up',total:1500,
-   why:'Fly dies the moment you tire, and tired fly is what wrecks shoulders. Everything here is 25s with full rest, and no more than 200m of actual fly. Stop the fly the moment the shoulder pinches — the freestyle still counts.',
-   lines:['300 easy free','6 × 25 fly kick on your front, arms in streamline, full rest','4 × 25 single-arm fly, alternate arms, full rest','6 × 25 fly drill: 3 kicks per pull, full rest','4 × 25 full fly easy, full rest — stop if the shoulder complains','4 × 50 free easy to flush it out','200 easy free']},
+   why:'Technique work with a number attached. Count on every length and put the count in the log afterwards. Expect a higher count than a 25m pool \u2014 it is a longer length.',
+   lines:['200 easy free','4 \u00d7 33 catch-up drill','4 \u00d7 33 fist swimming','4 \u00d7 66 free counting strokes \u2014 note the count per length','6 \u00d7 66 free holding that count, 20s rest','4 \u00d7 66 free slightly faster, count must not rise','100 easy']},
+  {t:'Pace',focus:'Second half faster than the first',total:1400,
+   why:'Pacing is what collapses when you tire. Start slower than feels right \u2014 every rep should finish faster than it started.',
+   lines:['200 easy free','5 \u00d7 100 free negative split, 30s rest','4 \u00d7 66 free descending 1 to 4, 20s rest','200 free, second 100 faster','4 \u00d7 33 fast, full rest','100 easy']},
+  {t:'Butterfly \u00b7 build',focus:'Fly from the chest and hips',total:1400,
+   why:'Fly comes from the sternum, not the arms. Stop every rep when the technique breaks, not when you get tired \u2014 ugly fly only grooves ugly fly, and it is what wrecks shoulders.',
+   lines:['200 easy free','6 \u00d7 33 body dolphin, arms at your sides, 30s rest','6 \u00d7 33 dolphin kick on your side, switch sides each length, 20s rest','8 \u00d7 33 single-arm fly, switch arms each length, 20s rest','6 \u00d7 33 as half fly then easy free to the wall, 30s rest','4 \u00d7 66 easy free','100 easy']},
+  {t:'Butterfly \u00b7 speed',focus:'Power, once the fly looks like fly',total:1200,
+   why:'Only once the build session holds together. Full recovery between reps \u2014 if you are gasping it has stopped being a speed set.',
+   lines:['300 easy free','6 \u00d7 15m max fly from a push, easy back to the wall, 60s+ rest','6 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','4 \u00d7 66 easy free between efforts','200 easy, some of it backstroke']},
   {t:'Turns and walls',focus:'The free speed you keep leaving behind',total:1500,
-   why:'Nobody practises this alone and it is worth seconds a race. Every wall, every length, no exceptions.',
-   lines:['300 easy free with 5 kicks off every wall','8 × 25 free into a turn — tight tuck, feet planted fast','6 × 50 free, the turn is the fastest part, 20s rest','4 × 50 streamline kick off every wall','200 easy free, still streamlining','100 easy']},
+   why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
+   lines:['200 easy free with 5 kicks off every wall','8 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','6 \u00d7 66 free, the turn is the fastest part, 20s rest','4 \u00d7 33 streamline kick off every wall','100 easy']},
 ];
 let _soloIdx=null;
 function openSoloSets(i){
@@ -6813,7 +6816,7 @@ function renderSoloSets(){
     });
     b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSoloSets()">← Back</button></div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1;margin-top:12px">SOLO SESSIONS</div>
-      <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">Swimming on your own · ~90 min</div>
+      <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">Swimming on your own · 33m pool · ~90 min</div>
       <div style="margin-top:18px">${body}</div>`;
     return;
   }
