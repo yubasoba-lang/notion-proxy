@@ -20,7 +20,8 @@ const ANCHOR = { Mon:"20260907", Tue:"20260908", Wed:"20260909", Thu:"20260910",
 // alarm: minutes before the start; 0 or absent = no notification.
 const PLAN = {
   Mon:[
-    {t:"07:00",e:"08:30",l:"Swim practice",n:"Solo · log the main set after",alarm:20},
+    {t:"06:45",e:"08:15",l:"Swim practice",n:"Solo · out of the water by 08:00",alarm:20},
+    {t:"08:15",e:"08:55",l:"Pool to campus",n:"40 min",alarm:0},
     {t:"10:00",e:"11:30",l:"Clinical ECG",alarm:15},
     {t:"11:45",e:"12:45",l:"Lunch together",alarm:10},
     {t:"13:15",e:"15:00",l:"Study room",alarm:10},
