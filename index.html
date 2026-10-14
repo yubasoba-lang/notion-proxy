@@ -3323,14 +3323,15 @@ function cardioToSets(minutes){
 // The week's shape — shared by the Workout tab headers and the Home streak.
 // kind: 'required' breaks the streak if missed; 'optional' and 'rest' only ever add to it.
 const WORKOUT_WEEK=[
-  {abbr:'Mon',label:'Monday',   sub:'Easy aerobic · 30 min · optional',    kind:'optional'},
-  {abbr:'Tue',label:'Tuesday',  sub:'Swim only · no lifting',             kind:'required'},
-  {abbr:'Wed',label:'Wednesday',sub:'Lower + upper back · nothing overhead',kind:'required'},
-  {abbr:'Thu',label:'Thursday', sub:'Swim only · no lifting',              kind:'required'},
-  {abbr:'Fri',label:'Friday',   sub:'Lower + power · jump work',           kind:'required'},
-  {abbr:'Sat',label:'Saturday', sub:'Pull + rear delt · 20 min row',       kind:'required'},
-  {abbr:'Sun',label:'Sunday',   sub:'Press + arms · 20 min bike',          kind:'required'},
+  {abbr:'Mon',label:'Monday',   sub:'Swim · morning, solo',   kind:'required'},
+  {abbr:'Tue',label:'Tuesday',  sub:'Swim · club',            kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Gym · Pull',             kind:'required'},
+  {abbr:'Thu',label:'Thursday', sub:'Swim · club',            kind:'required'},
+  {abbr:'Fri',label:'Friday',   sub:'Gym · Legs · jump work', kind:'required'},
+  {abbr:'Sat',label:'Saturday', sub:'Swim, then Gym · Push',  kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Swim, then Gym · Upper', kind:'required'},
 ];
+
 const WEEK_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // The current split started here. Before it, the old Mon–Sat split had Sunday as its
 // only rest day — judging old weeks by the new split would break the streak retroactively.
@@ -3390,9 +3391,9 @@ const SEMESTER_START='2026-09-07';
 // w: 'odd' | 'even' | 'upto7' | 'from8' (omitted = every week). k picks the dot colour.
 const DAY_PLAN={
   Mon:[
-    {t:'07:00',k:'wake',l:'Wake'},
-    {t:'07:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
-    {t:'08:00',e:'09:45',k:'class',l:'Clinical Pathophysiology lecture',n:'two blocks, 15 min gap at 08:45'},
+    {t:'06:15',k:'wake',l:'Wake'},
+    {t:'07:00',e:'08:30',k:'swim',l:'Swim practice',n:'solo · log the main set after'},
+    {t:'08:45',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
     {t:'10:00',e:'11:30',k:'class',l:'Clinical ECG'},
     {t:'11:45',e:'12:45',k:'together',l:'Lunch together'},
     {t:'13:15',e:'15:00',k:'study',l:'Study room'},
@@ -3420,7 +3421,7 @@ const DAY_PLAN={
     {t:'08:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
     {t:'09:30',e:'12:45',k:'class',l:'Pathology I',n:'two blocks — snack in the 11:00 gap'},
     {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
-    {t:'14:45',e:'16:15',k:'gym',l:'Gym · Lower + Upper back',n:'be through the door before 15:00'},
+    {t:'14:45',e:'16:15',k:'gym',l:'Gym · Pull',n:'be through the door before 15:00'},
     {t:'16:30',e:'18:00',k:'study',l:'Study room'},
     {t:'18:15',e:'18:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
     {t:'18:45',e:'19:45',k:'together',l:'Dinner together'},
@@ -3453,23 +3454,27 @@ const DAY_PLAN={
     {t:'12:00',e:'13:00',k:'together',l:'Lunch together',w:'from8'},
     {t:'13:15',e:'14:45',k:'study',l:'Study room',w:'from8'},
     {t:'13:45',e:'14:45',k:'together',l:'Lunch together',w:'upto7'},
-    {t:'15:00',e:'16:30',k:'gym',l:'Gym · Lower + Power',n:'jump work — volleyball · quiet hour'},
+    {t:'15:00',e:'16:30',k:'gym',l:'Gym · Legs',n:'jump work — volleyball · quiet hour'},
     {t:'16:45',e:'18:30',k:'study',l:'Study room',peak:'17:00'},
     {t:'19:00',e:'20:00',k:'together',l:'Dinner together'},
     {t:'20:15',e:'20:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
     {t:'20:30',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
   ],
   Sat:[
-    {t:'08:00',k:'meal',l:'Breakfast'},
-    {t:'10:00',e:'11:30',k:'gym',l:'Gym · Pull + Rear delt',n:'then 20 min easy row'},
+    {t:'06:45',k:'wake',l:'Wake'},
+    {t:'08:00',e:'09:30',k:'swim',l:'Swim practice',n:'solo · log the main set after'},
+    {t:'09:45',k:'meal',l:'Breakfast'},
+    {t:'10:30',e:'12:00',k:'gym',l:'Gym · Push'},
     {t:'12:30',e:'13:30',k:'together',l:'Lunch together'},
     {t:'14:30',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
     {t:'19:00',e:'20:00',k:'together',l:'Dinner together'},
     {t:'20:00',e:'22:00',k:'study',l:'Study room'},
   ],
   Sun:[
-    {t:'09:00',k:'meal',l:'Breakfast'},
-    {t:'11:00',e:'12:30',k:'gym',l:'Gym · Press + Arms',n:'then 20 min easy bike'},
+    {t:'06:45',k:'wake',l:'Wake'},
+    {t:'08:00',e:'09:30',k:'swim',l:'Swim practice',n:'solo · log the main set after'},
+    {t:'09:45',k:'meal',l:'Breakfast'},
+    {t:'10:30',e:'12:00',k:'gym',l:'Gym · Upper',n:'light accessory day'},
     {t:'12:45',e:'13:30',k:'together',l:'Lunch together'},
     {t:'13:30',e:'15:00',k:'cook',l:'Batch cooking',n:'boil eggs for the week too'},
     {t:'15:30',e:'18:15',k:'study',l:'Study room',peak:'17:00'},
@@ -7752,44 +7757,44 @@ function closeDayRecap(){document.getElementById('dayRecapPage')?.remove();}
 // first thing to drop on a bad day. Names match the exercise library so what you
 // read here is what you log.
 const SESSION_PLAN={
-  Wed:{title:'Lower + Upper back',note:'Nothing overhead, no lat work — the day after a swim',blocks:[
-    {h:'Main',x:[['Leg Press','4 × 10'],['Hamstring Curl Machine','3 × 10'],['Hip Abduction','3 × 15'],['Hip Adduction','3 × 12'],['Calf Raise Machine','3 × 20']]},
-    {h:'Upper back',x:[['Chest-Supported Dumbbell Row','4 × 10'],['Machine Rear Delt Fly','3 × 15'],['Face Pulls','3 × 15']]},
-    {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each, light']]},
-    {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Suitcase Carries','3 × 40m']]},
-    {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 20 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
+  Mon:{title:'Swim · solo',note:'Morning session — pick one from Solo sessions',blocks:[
+    {h:'Pool',x:[['Swimming','90 min']]},
   ]},
-  Fri:{title:'Lower + Power',note:'Jumps first, while fresh · 90s rest between plyo sets',blocks:[
-    {h:'Power',x:[['Jump Squats','4 × 5'],['Broad Jumps','4 × 4'],['Skater Jumps','3 × 6 each'],['Pogo hops','3 × 15']]},
-    {h:'Strength',x:[['Bulgarian Split Squat','3 × 8 each'],['Dumbbell Romanian Deadlift','3 × 10'],['Hip Thrust','3 × 12']]},
-    {h:'Core',x:[['Ab roller','3 × 8 — at home'],['Dead Bug','3 × 10 each']]},
-    {h:'Forearms',x:[['Dead Hangs','3 × max, active hang']]},
+  Tue:{title:'Swim · club',note:'No lifting — log the main set after',blocks:[
+    {h:'Pool',x:[['Swimming','60 min']]},
   ]},
-  Sat:{title:'Pull + Rear delt',note:'Then 20 min easy row',blocks:[
-    {h:'Main',x:[['Lat Pulldown','4 × 10 neutral grip'],['Cable Seated Row','4 × 10'],['Single-Arm Dumbbell Row','3 × 10'],['Cable Archer Pull','3 × 12']]},
-    {h:'Shoulder',x:[['Cable External Rotation','3 × 15 each']]},
+  Wed:{title:'Pull',note:'The day after a club swim — pulling and upper back, nothing overhead',blocks:[
+    {h:'Main',x:[['Pull-ups','3 × max'],['Lat Pulldown','3 × 10 neutral grip'],['Cable Seated Row','4 × 10'],['Chest-Supported Dumbbell Row','3 × 10']]},
+    {h:'Shoulder',x:[['Cable Archer Pull','3 × 12'],['Cable External Rotation','3 × 15 each, light']]},
     {h:'Arms',x:[['Bicep Curl (Machine)','3 × 10']]},
-    {h:'Core',x:[['DB Russian Twists','3 × 20'],['Hollow Body Hold','3 × 30s']]},
-    {h:'Forearms',x:[['Heavy Farmer Carries','3 × 40m'],['Hammer Curls','3 × 10'],['Reverse Curls','3 × 12']]},
+    {h:'Core',x:[['Hanging Leg Raises','3 × 12'],['Suitcase Carries','3 × 40m']]},
+    {h:'Forearms',x:[['Heavy Farmer Carries','3 × 40m']]},
     {h:'Finisher',x:[['Rowing','20 min easy']]},
   ]},
-  Sun:{title:'Press + Arms',note:'Furthest day from a swim · stop the shoulder press if it pinches',blocks:[
-    {h:'Press',x:[['Pectoral Fly','4 × 12'],['Incline Dumbbell Press','3 × 10'],['Machine Shoulder Press','3 × 10 light']]},
-    {h:'Arms',x:[['Cable Overhead Tricep Extension','3 × 12'],['Tricep Pushdown (Machine)','3 × 12'],['Hammer Curls','3 × 10']]},
+  Thu:{title:'Swim · club',note:'No lifting — log the main set after',blocks:[
+    {h:'Pool',x:[['Swimming','60 min']]},
+  ]},
+  Fri:{title:'Legs',note:'Jumps first, while fresh · 90s rest between plyo sets · the one day out of the water',blocks:[
+    {h:'Power',x:[['Jump Squats','4 × 5'],['Broad Jumps','4 × 4'],['Skater Jumps','3 × 6 each']]},
+    {h:'Strength',x:[['Leg Press','4 × 10'],['Bulgarian Split Squat','3 × 8 each'],['Dumbbell Romanian Deadlift','3 × 10'],['Hip Thrust','3 × 12'],['Calf Raise Machine','3 × 20']]},
+    {h:'Core',x:[['Ab roller','3 × 8'],['Dead Bug','3 × 10 each']]},
+  ]},
+  Sat:{title:'Push',note:'After the morning swim · the pressing day, furthest from a club session',blocks:[
+    {h:'Press',x:[['Incline Dumbbell Press','4 × 10'],['Pectoral Fly','3 × 12'],['Machine Shoulder Press','3 × 10 light']]},
+    {h:'Arms',x:[['Cable Overhead Tricep Extension','3 × 12'],['Tricep Pushdown (Machine)','3 × 12'],['Cable Lateral Raises','3 × 15 light']]},
     {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Plank Hip Dips','3 × 30s each']]},
-    {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 15 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
     {h:'Finisher',x:[['Stationary Bike','20 min easy']]},
   ]},
-  Tue:{title:'Swim practice',note:'No lifting — log the main set after',blocks:[
-    {h:'Pool',x:[['Swimming','60 min']]},
-  ]},
-  Thu:{title:'Swim practice',note:'No lifting — log the main set after',blocks:[
-    {h:'Pool',x:[['Swimming','60 min']]},
-  ]},
-  Mon:{title:'Optional easy',note:'Row, bike or a walk — conversational pace',blocks:[
-    {h:'Aerobic',x:[['Rowing','30 min easy'],['Stationary Bike','30 min easy'],['Incline Walk','30 min easy']]},
+  Sun:{title:'Upper · light',note:'Accessory only — rear delts, cuff, arms, core. Nothing heavy before Monday\'s swim',blocks:[
+    {h:'Shoulder',x:[['Face Pulls','3 × 15'],['Machine Rear Delt Fly','3 × 15'],['Cable 90/90 External Rotation','3 × 12 light']]},
+    {h:'Back',x:[['Single-Arm Dumbbell Row','3 × 10 moderate'],['Dead Hangs','3 × max, active hang']]},
+    {h:'Arms',x:[['Hammer Curls','3 × 10'],['Reverse Curls','3 × 12']]},
+    {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 20 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
+    {h:'Core',x:[['Hollow Body Hold','3 × 30s'],['DB Russian Twists','3 × 20']]},
+    {h:'Finisher',x:[['Incline Walk','20 min easy']]},
   ]},
 };
+
 // Which days an exercise belongs to, read off the split rather than the Day property
 // in Notion. That property was set for the old Push/Pull/Legs days and is empty on most
 // rows, so the Workout tab's day sections had drifted away from the actual plan.
