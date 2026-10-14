@@ -6950,10 +6950,12 @@ async function saveFlyStage(){
 }
 // Clean fly sessions at the current stage: logged, full scale, every rep done.
 function flyCleanSessions(){
-  const st=flyStage();
   const since=(state.flyStage&&state.flyStage.since)||'';
+  // Only the fly build session itself advances the ladder — each stage is a specific set,
+  // so finishing a different one says nothing about whether the next stage will hold.
+  // Coach's fly counts as fly practice, but it isn't evidence for the next stage.
   return (state.swimPractices||[]).filter(p=>{
-    if(!p.set||p.set.indexOf('Butterfly')<0)return false;
+    if(p.set!=='Solo · Butterfly · build')return false;
     if(since&&p.date<since)return false;
     return p.remembered&&p.total&&(p.done||0)>=p.total&&p.scaled==='Full';
   }).length;
