@@ -6769,51 +6769,88 @@ function closePoolCard(){document.getElementById('poolCardPage')?.remove();}
 // a single job, so a morning in the pool isn't an hour of random drills. Written for
 // roughly 90 minutes including rest; cut from the bottom if you're short on time.
 const SOLO_SETS=[
-  {t:'Aerobic base',tag:'aerobic',focus:'Holding a pace you can repeat',total:1800,kit:'Pull buoy · fins optional',
+  {t:'Aerobic base',tag:'aerobic',scales:true,focus:'Holding a pace you can repeat',total:1800,kit:'Pull buoy · fins optional',
    why:'The one that fixes your actual gap. Nothing here is fast \u2014 the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
-   levels:[['4 \u00d7 100 free, 20s rest, same pace every one','8 \u00d7 66 free, 15s rest, no faster than the 100s'],
-           ['5 \u00d7 100 free, 20s rest, same pace every one','8 \u00d7 66 free, 15s rest, no faster than the 100s'],
-           ['6 \u00d7 100 free, 15s rest, same pace every one','10 \u00d7 66 free, 15s rest, no faster than the 100s']],
+   
    lines:['200 easy free, breathe every 3','__MAIN__','300 pull buoy, long and relaxed','4 \u00d7 66 kick on your front, fins optional, 20s rest','100 easy']},
-  {t:'Breath control',tag:'breath',focus:'Being comfortable short of air',total:1550,kit:'Pull buoy',
+  {t:'Breath control',tag:'breath',scales:true,focus:'Being comfortable short of air',total:1550,kit:'Pull buoy',
    why:'Trains the thing that makes you stop mid-set. Breathing patterns only \u2014 no breath-hold swimming on your own.',
-   levels:[['6 \u00d7 66 free: breathe every 3, then every 5, alternating','4 \u00d7 100 pull buoy, breathe every 3 the whole way, 20s rest'],
-           ['6 \u00d7 66 free: every 3, 5, then 7, rotating','5 \u00d7 100 pull buoy, breathe every 3 the whole way, 20s rest'],
-           ['8 \u00d7 66 free: every 5 throughout','5 \u00d7 100 pull buoy, breathe every 5, 20s rest']],
+   
    lines:['200 easy free','__MAIN__','8 \u00d7 33 free, two breaths per length, 15s rest','200 easy free every 3','100 easy']},
-  {t:'Economy',tag:'economy',focus:'Fewer strokes at the same speed',total:1500,kit:'Pull buoy',
+  {t:'Economy',tag:'economy',scales:true,focus:'Fewer strokes at the same speed',total:1500,kit:'Pull buoy',
    why:'Technique work with a number attached. Count on every length and put the count in the log afterwards. Expect a higher count than a 25m pool \u2014 it is a longer length.',
-   levels:[['6 \u00d7 66 free holding that count, 20s rest'],
-           ['8 \u00d7 66 free holding that count, 20s rest'],
-           ['8 \u00d7 100 free holding that count, 20s rest']],
+   
    lines:['200 easy free','4 \u00d7 33 catch-up drill','4 \u00d7 33 fist swimming','4 \u00d7 66 pull buoy counting strokes \u2014 the buoy kills the kick so you feel the catch','4 \u00d7 66 free, same count without the buoy','__MAIN__','100 easy']},
-  {t:'Pace',tag:'pace',focus:'Second half faster than the first',total:1400,kit:'None \u2014 on purpose',
+  {t:'Pace',tag:'pace',scales:true,focus:'Second half faster than the first',total:1400,kit:'None \u2014 on purpose',
    why:'Pacing is what collapses when you tire. Start slower than feels right \u2014 every rep should finish faster than it started. No fins and no buoy: both change your speed, so a split done with kit tells you nothing about pacing yourself.',
-   levels:[['5 \u00d7 100 free negative split, 30s rest','4 \u00d7 66 free descending 1 to 4, 20s rest'],
-           ['6 \u00d7 100 free negative split, 30s rest','4 \u00d7 66 free descending 1 to 4, 20s rest'],
-           ['4 \u00d7 200 free negative split, 30s rest','4 \u00d7 66 free descending 1 to 4, 20s rest']],
+   
    lines:['200 easy free','__MAIN__','200 free, second 100 faster','4 \u00d7 33 fast, full rest','100 easy']},
   {t:'Butterfly \u00b7 build',tag:'flybuild',focus:'Fly from the chest and hips',total:1400,kit:'Fins for the drills, off for the fly',stage:true,
    why:'Fly comes from the sternum, not the arms. Fins let the timing click without you dying, then come off so you are not learning a stroke you can only do in fins. Stop every rep when the technique breaks, not when you get tired. This one follows the butterfly ladder, not a level.',
    lines:['200 easy free','__STAGE__','4 \u00d7 66 easy free','100 easy']},
-  {t:'Butterfly \u00b7 speed',tag:'flyspeed',focus:'Power, once the fly looks like fly',total:1200,kit:'Fins for the underwaters',
+  {t:'Butterfly \u00b7 speed',tag:'flyspeed',scales:true,focus:'Power, once the fly looks like fly',total:1200,kit:'Fins for the underwaters',
    why:'Only once the build session holds together. Full recovery between reps \u2014 if you are gasping it has stopped being a speed set. Rest never shortens on this one.',
-   levels:[['6 \u00d7 15m max fly from a push, no fins, easy back to the wall, 60s+ rest'],
-           ['8 \u00d7 15m max fly from a push, no fins, easy back to the wall, 60s+ rest'],
-           ['8 \u00d7 15m max fly from a push, 60s+ rest','4 \u00d7 33 fast fly, full rest']],
+   
    lines:['300 easy free','__MAIN__','FINS ON \u00b7 6 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','4 \u00d7 66 easy free between efforts','200 easy, some of it backstroke']},
-  {t:'Turns and walls',tag:'turns',focus:'The free speed you keep leaving behind',total:1500,kit:'Fins for the kick block',
+  {t:'Turns and walls',tag:'turns',scales:true,focus:'The free speed you keep leaving behind',total:1500,kit:'Fins for the kick block',
    why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
-   levels:[['6 \u00d7 66 free, the turn is the fastest part, 20s rest'],
-           ['8 \u00d7 66 free, the turn is the fastest part, 20s rest'],
-           ['8 \u00d7 100 free, the turn is the fastest part, 20s rest']],
+   
    lines:['200 easy free with 5 kicks off every wall','8 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','__MAIN__','FINS ON \u00b7 4 \u00d7 33 streamline kick off every wall','100 easy']},
 ];
 // Per-session levels. Aerobic capacity and turn skill improve at different rates, so a
 // single global level would always be wrong for one of them. Two clean completions of a
 // session move that session up; reps come first, rest only tightens at the top level.
 const SOLO_LEVEL_CFG='swim_solo_levels';
-const SOLO_LEVEL_MAX=3;
+const SOLO_LEVEL_MAX=10;
+// Ten levels, named so the top of the ladder is honest about what it is. Reps rise
+// first and rest only tightens every third level, because shortening rest is the harder
+// progression and the one that most often breaks a set.
+const SOLO_TIERS=[[1,'Base'],[3,'Club'],[5,'Regional'],[7,'National'],[9,'Elite']];
+function soloTierName(lv){
+  let n='Base';
+  SOLO_TIERS.forEach(([at,name])=>{if(lv>=at)n=name;});
+  return n;
+}
+// Main block per level, generated rather than written out, so the ladder has no ceiling
+// short of what fits in 90 minutes.
+function soloMainFor(tag,lv){
+  const step=lv-1;
+  const rest=(base,floorV)=>Math.max(floorV,base-5*Math.floor(step/3));
+  if(tag==='aerobic'){
+    const reps=4+step, r=rest(20,10);
+    const second=8+step;
+    return [reps+' × 100 free, '+r+'s rest, same pace every one',
+            second+' × 66 free, 15s rest, no faster than the 100s'];
+  }
+  if(tag==='breath'){
+    const pat=step<2?'every 3, then every 5, alternating':(step<5?'every 3, 5, then 7, rotating':'every 5 throughout');
+    const reps=6+step, pull=4+Math.floor(step/2);
+    return [reps+' × 66 free: breathe '+pat,
+            pull+' × 100 pull buoy, breathe every '+(step<5?'3':'5')+' the whole way, '+rest(20,10)+'s rest'];
+  }
+  if(tag==='economy'){
+    const dist=step<4?66:100;
+    const reps=6+step-(dist===100?2:0);
+    return [reps+' × '+dist+' free holding that count, '+rest(20,10)+'s rest'];
+  }
+  if(tag==='pace'){
+    const dist=step<4?100:200;
+    const reps=dist===100?(5+step):(3+Math.floor(step/2));
+    return [reps+' × '+dist+' free negative split, '+rest(30,15)+'s rest',
+            (4+Math.floor(step/2))+' × 66 free descending, 20s rest'];
+  }
+  if(tag==='turns'){
+    const dist=step<4?66:100;
+    const reps=6+step-(dist===100?2:0);
+    return [reps+' × '+dist+' free, the turn is the fastest part, '+rest(20,10)+'s rest'];
+  }
+  if(tag==='flyspeed'){
+    const reps=6+step;
+    const extra=step>=3?[(2+Math.floor(step/3))+' × 33 fast fly, full rest']:[];
+    return [reps+' × 15m max fly from a push, no fins, easy back to the wall, 60s+ rest'].concat(extra);
+  }
+  return [];
+}
 function soloLevel(tag){
   const v=((state.soloLevels&&state.soloLevels.lv)||{})[tag];
   return Math.min(SOLO_LEVEL_MAX,Math.max(1,v||1));
@@ -6857,7 +6894,7 @@ function soloCleanCount(x){
   }).length;
 }
 function soloReadyToLevel(x){
-  if(x.stage||!x.levels)return false;
+  if(x.stage||!x.scales)return false;
   return soloLevel(x.tag)<SOLO_LEVEL_MAX&&soloCleanCount(x)>=2;
 }
 function soloLevelUp(tag){
@@ -7148,8 +7185,7 @@ function soloLines(x){
   x.lines.forEach(l=>{
     if(l==='__STAGE__'){flyStage().lines.forEach(y=>out.push(y));return;}
     if(l==='__MAIN__'){
-      const lv=x.levels?x.levels[Math.min(x.levels.length,soloLevel(x.tag))-1]:[];
-      (lv||[]).forEach(y=>out.push(y));
+      soloMainFor(x.tag,soloLevel(x.tag)).forEach(y=>out.push(y));
       return;
     }
     out.push(l);
@@ -7191,7 +7227,7 @@ function renderSoloSets(){
           <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${x.total}m</span>
         </div>
         <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${esc(x.focus)}</div>
-        <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">${x.stage?'Stage '+flyStage().n:'Level '+soloLevel(x.tag)} · kit · ${esc(x.kit||'none')}</div>
+        <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">${x.stage?'Stage '+flyStage().n:'Level '+soloLevel(x.tag)+' '+soloTierName(soloLevel(x.tag))} · kit · ${esc(x.kit||'none')}</div>
       </div>`;
     });
     b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSoloSets()">← Back</button></div>
@@ -7209,13 +7245,13 @@ function renderSoloSets(){
       <span style="flex:1;font-size:13px;line-height:1.7;color:var(--text)">${esc(l)}</span></div>`;
   });
   let lvBlock='';
-  if(!x.stage&&x.levels){
+  if(!x.stage&&x.scales){
     const lv=soloLevel(x.tag),cl=soloCleanCount(x);
     let up='';
     if(soloReadyToLevel(x))up=`<button class="wec-log-btn" style="width:100%;margin-top:10px" onclick="soloLevelUp('${x.tag}')">Ready for level ${lv+1}</button>`;
     lvBlock=`<div style="border-top:1px solid var(--border);padding:12px 0;margin-top:14px">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Level ${lv} of ${SOLO_LEVEL_MAX}</span>
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Level ${lv} of ${SOLO_LEVEL_MAX} · ${esc(soloTierName(lv))}</span>
         <span style="font-size:9px;color:var(--text-faint)" onclick="soloLevelDown('${x.tag}')">step back</span>
       </div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${cl} clean session${cl===1?'':'s'} at this level · two moves you up</div>
