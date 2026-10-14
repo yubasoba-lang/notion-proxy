@@ -7704,10 +7704,36 @@ function openSwimPractice(minutes,presetSet){
     });
   }
 }
+// Typing a main set on a wet phone is the worst part of logging a swim. Offer the solo
+// sessions and the sets already in the log — coach repeats sets constantly.
+function swimSetPresets(){
+  const out=SOLO_SETS.map(x=>({label:x.t,text:'Solo · '+x.t}));
+  const seen=new Set(out.map(o=>o.text.toLowerCase()));
+  (state.swimPractices||[]).forEach(p=>{
+    const t=(p.set||'').trim();
+    if(!t||seen.has(t.toLowerCase())||out.length>=14)return;
+    seen.add(t.toLowerCase());
+    out.push({label:t.length>22?t.slice(0,22)+'…':t,text:t});
+  });
+  return out;
+}
+function swimPickSet(text){
+  if(!swimDraft)return;
+  swimDraft.set=text;
+  const t=swimSetTotal(text);
+  if(t)swimDraft.total=t;
+  renderSwimPractice();
+}
 function renderSwimPractice(){
   const b=document.getElementById('swimBody');
   if(!b||!swimDraft)return;
   const d=swimDraft;
+  let presetChips='';
+  swimSetPresets().forEach(x=>{
+    const on=d.set===x.text;
+    const st=on?'background:rgba(232,234,240,0.12);color:var(--text)':'color:var(--text-dim)';
+    presetChips+=`<button class="sil-toggle-btn" style="flex:none;white-space:nowrap;${st}" onclick="swimPickSet('${esc(x.text).replace(/'/g,"\\'")}')">${esc(x.label)}</button>`;
+  });
   let distChips='';
   SWIM_DISTANCES.forEach(m=>{
     let st='color:var(--text-dim)';
@@ -7723,6 +7749,7 @@ function renderSwimPractice(){
   b.innerHTML=`<div style="font-size:18px;font-weight:800;letter-spacing:0.12em;margin:18px 0 4px">SWIM PRACTICE</div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:18px">${d.minutes} min logged · now just the main set</div>
     <div class="wec-lbl">Main set</div>
+    <div style="display:flex;gap:5px;overflow-x:auto;padding:7px 0 2px;-webkit-overflow-scrolling:touch">${presetChips}</div>
     <input type="text" class="wec-inp" id="swimSet" value="${esc(d.set)}" placeholder="e.g. 8×100 3/5 breathing" oninput="swimSetText(this.value)" style="width:100%;text-align:left;margin:6px 0 16px">
     <div class="wec-lbl">Reps done</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 16px">
