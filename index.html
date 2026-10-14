@@ -1427,7 +1427,7 @@ function getRivalFor(stat){
    CSS and step-by-step restore instructions. Nothing was thrown away. */
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[],studyPlan:null,planDone:{},planStatePageId:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[],studyPlan:null,planDone:{},planStatePageId:null,flyStage:null,flyStagePageId:null};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -6781,9 +6781,9 @@ const SOLO_SETS=[
   {t:'Pace',tag:'pace',focus:'Second half faster than the first',total:1400,kit:'None — on purpose',
    why:'Pacing is what collapses when you tire. Start slower than feels right \u2014 every rep should finish faster than it started. No fins and no buoy: both change your speed, so a split done with kit tells you nothing about pacing yourself.',
    lines:['200 easy free','5 \u00d7 100 free negative split, 30s rest','4 \u00d7 66 free descending 1 to 4, 20s rest','200 free, second 100 faster','4 \u00d7 33 fast, full rest','100 easy']},
-  {t:'Butterfly \u00b7 build',tag:'flybuild',focus:'Fly from the chest and hips',total:1400,kit:'Fins for the drills, off for the fly',
+  {t:'Butterfly \u00b7 build',tag:'flybuild',focus:'Fly from the chest and hips',total:1400,kit:'Fins for the drills, off for the fly',stage:true,
    why:'Fly comes from the sternum, not the arms. Fins let the timing click without you dying, then come off so you are not learning a stroke you can only do in fins. Stop every rep when the technique breaks, not when you get tired.',
-   lines:['200 easy free','FINS ON \u00b7 6 \u00d7 33 body dolphin, arms at your sides, 30s rest','6 \u00d7 33 dolphin kick on your side, switch sides each length, 20s rest','8 \u00d7 33 single-arm fly, switch arms each length, 20s rest','FINS OFF \u00b7 6 \u00d7 33 as half fly then easy free to the wall, 30s rest','4 \u00d7 66 easy free','100 easy']},
+   lines:['200 easy free','__STAGE__','4 \u00d7 66 easy free','100 easy']},
   {t:'Butterfly \u00b7 speed',tag:'flyspeed',focus:'Power, once the fly looks like fly',total:1200,kit:'Fins for the underwaters',
    why:'Only once the build session holds together. Full recovery between reps \u2014 if you are gasping it has stopped being a speed set.',
    lines:['300 easy free','6 \u00d7 15m max fly from a push, no fins, easy back to the wall, 60s+ rest','FINS ON \u00b7 6 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','4 \u00d7 66 easy free between efforts','200 easy, some of it backstroke']},
@@ -6791,11 +6791,104 @@ const SOLO_SETS=[
    why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
    lines:['200 easy free with 5 kicks off every wall','8 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','6 \u00d7 66 free, the turn is the fastest part, 20s rest','FINS ON \u00b7 4 \u00d7 33 streamline kick off every wall','100 easy']},
 ];
+// ── Butterfly ladder ─────────────────────────────────────────────────────────
+// The goal isn't fly as an event yet — it's being able to take her best-stroke sets in
+// fly instead of defaulting to free. Each stage adds fly metres only once the previous
+// one holds together, because tired fly teaches bad fly.
+const FLY_STAGES=[
+  {n:1,label:'Drills and half-lengths',fly:200,
+   lines:['FINS ON · 6 × 33 body dolphin, arms at your sides, 30s rest',
+          '6 × 33 dolphin kick on your side, switch sides each length, 20s rest',
+          '8 × 33 single-arm fly, switch arms each length, 20s rest',
+          'FINS OFF · 6 × 33 as half fly then easy free to the wall, 30s rest']},
+  {n:2,label:'Full 33s',fly:260,
+   lines:['FINS ON · 6 × 33 body dolphin, 30s rest',
+          '6 × 33 single-arm fly, 20s rest',
+          'FINS OFF · 8 × 33 full fly, 45s rest — stop the set when a rep goes ugly']},
+  {n:3,label:'Fly into free',fly:130,
+   lines:['FINS ON · 6 × 33 body dolphin, 30s rest',
+          'FINS OFF · 4 × 100 as 33 fly / 66 easy free, 30s rest',
+          '4 × 33 full fly, full rest']},
+  {n:4,label:'Half and half',fly:200,
+   lines:['FINS ON · 4 × 33 body dolphin, 30s rest',
+          'FINS OFF · 6 × 66 as 33 fly / 33 free, 30s rest',
+          '4 × 33 full fly, full rest']},
+  {n:5,label:'Fly-led 100s',fly:260,
+   lines:['FINS ON · 4 × 33 body dolphin, 30s rest',
+          'FINS OFF · 4 × 100 as 66 fly / 33 free, 45s rest',
+          '2 × 33 full fly, full rest']},
+  {n:6,label:'Straight 100s',fly:300,
+   lines:['FINS ON · 4 × 33 body dolphin, 30s rest',
+          'FINS OFF · 3 × 100 fly, 60s+ rest',
+          '100 easy free']},
+];
+const FLY_STAGE_CFG='swim_fly_stage';
+function flyStage(){
+  const n=(state.flyStage&&state.flyStage.stage)||1;
+  return FLY_STAGES.find(x=>x.n===n)||FLY_STAGES[0];
+}
+async function loadFlyStage(){
+  try{
+    const rows=await appConfigRows(FLY_STAGE_CFG);
+    if(rows.length){
+      state.flyStagePageId=rows[0].id;
+      try{state.flyStage=JSON.parse(g.text(rows[0].properties.Value))||{stage:1};}catch(_){state.flyStage={stage:1};}
+    }else{state.flyStagePageId=null;state.flyStage=state.flyStage||{stage:1};}
+    try{localStorage.setItem(FLY_STAGE_CFG,JSON.stringify(state.flyStage));}catch(_){}
+  }catch(e){
+    warn('loadFlyStage',e);
+    try{const c=localStorage.getItem(FLY_STAGE_CFG);if(c)state.flyStage=JSON.parse(c);}catch(_){}
+    if(!state.flyStage)state.flyStage={stage:1};
+  }
+}
+async function saveFlyStage(){
+  try{localStorage.setItem(FLY_STAGE_CFG,JSON.stringify(state.flyStage||{stage:1}));}catch(_){}
+  try{
+    const rich=richChunks(JSON.stringify(state.flyStage||{stage:1}));
+    if(state.flyStagePageId)await nPatch(state.flyStagePageId,{Value:{rich_text:rich}});
+    else{
+      appConfigInvalidate();
+      const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:FLY_STAGE_CFG}}]},Value:{rich_text:rich}});
+      state.flyStagePageId=page.id;
+    }
+  }catch(e){warn('saveFlyStage',e);showToast('Stage save failed — will retry');}
+}
+// Clean fly sessions at the current stage: logged, full scale, every rep done.
+function flyCleanSessions(){
+  const st=flyStage();
+  const since=(state.flyStage&&state.flyStage.since)||'';
+  return (state.swimPractices||[]).filter(p=>{
+    if(!p.set||p.set.indexOf('Butterfly')<0)return false;
+    if(since&&p.date<since)return false;
+    return p.remembered&&p.total&&(p.done||0)>=p.total&&p.scaled==='Full';
+  }).length;
+}
+function flyReadyToAdvance(){
+  const st=flyStage();
+  if(st.n>=FLY_STAGES.length)return false;
+  return flyCleanSessions()>=2;
+}
+function flyAdvance(){
+  const st=flyStage();
+  if(st.n>=FLY_STAGES.length){showToast('Already at the top stage');return;}
+  state.flyStage={stage:st.n+1,since:localToday()};
+  saveFlyStage();
+  showToast('Fly stage '+(st.n+1)+' — '+FLY_STAGES[st.n].label,3000);
+  renderSoloSets();
+}
+function flyStepBack(){
+  const st=flyStage();
+  if(st.n<=1){showToast('Already at stage 1');return;}
+  state.flyStage={stage:st.n-1,since:localToday()};
+  saveFlyStage();
+  showToast('Back to fly stage '+(st.n-1),2500);
+  renderSoloSets();
+}
 // ── What to swim next ────────────────────────────────────────────────────────
 // Looks at the last two practices — coach's sets included — works out which qualities
 // they trained, and picks a session that trains something else. Coach sets are free
 // text, so they're classified by keyword and by what got logged alongside them.
-const SOLO_PRIORITY={aerobic:5,breath:4,economy:4,flybuild:3,turns:2,pace:2,flyspeed:1};
+const SOLO_PRIORITY={aerobic:5,flybuild:5,breath:4,economy:4,turns:2,pace:2,flyspeed:1};
 function classifySwim(p){
   const txt=((p&&p.set)||'').toLowerCase();
   const tags=new Set();
@@ -6846,17 +6939,52 @@ function suggestSoloSet(){
 let _soloIdx=null;
 function openSoloSets(i){
   _soloIdx=(i==null?null:i);
+  if(!state.flyStage){
+    try{const c=localStorage.getItem(FLY_STAGE_CFG);if(c)state.flyStage=JSON.parse(c);}catch(_){}
+    if(!state.flyStage)state.flyStage={stage:1};
+    loadFlyStage().then(()=>renderSoloSets()).catch(e=>warn('loadFlyStage',e));
+  }
   if(document.getElementById('soloSetsPage')){renderSoloSets();return;}
   const el=document.createElement('div');el.id='soloSetsPage';el.className='rival-page';
   el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="soloBody"></div></div>';
   document.body.appendChild(el);
   renderSoloSets();
 }
+// Fly is trained every session, not saved for a fly day. Drills only outside the fly
+// session itself — those are cheap on the shoulder and it's the pattern that needs the
+// repetition, not the mileage. Pace is left alone: it needs you fresh to mean anything.
+const FLY_TOUCH=['FINS ON · 4 × 33 body dolphin, arms at your sides, 30s rest',
+                 'FINS ON · 4 × 33 single-arm fly, switch arms each length, 20s rest'];
+function soloLines(x){
+  const out=[];
+  x.lines.forEach(l=>{
+    if(l==='__STAGE__'){flyStage().lines.forEach(y=>out.push(y));return;}
+    out.push(l);
+  });
+  if(!x.stage&&x.tag!=='pace'&&x.tag!=='flyspeed'){
+    const pick=FLY_TOUCH[(flyStage().n+out.length)%FLY_TOUCH.length];
+    out.splice(1,0,pick);
+  }
+  return out;
+}
 function renderSoloSets(){
   const b=document.getElementById('soloBody');
   if(!b)return;
   let body='';
   if(_soloIdx==null){
+    const st=flyStage();
+    const clean=flyCleanSessions();
+    let stageExtra='';
+    if(flyReadyToAdvance())stageExtra=`<button class="wec-log-btn" style="width:100%;margin-top:10px" onclick="flyAdvance()">Ready for stage ${st.n+1} · ${esc(FLY_STAGES[st.n].label)}</button>`;
+    body+=`<div style="border-top:1px solid var(--border);padding:14px 0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Butterfly stage ${st.n} of ${FLY_STAGES.length}</span>
+        <span style="font-size:9px;color:var(--text-faint)" onclick="flyStepBack()">step back</span>
+      </div>
+      <div style="font-size:15px;color:var(--text-hi);margin-top:5px">${esc(st.label)} · ${st.fly}m of fly</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${clean} clean session${clean===1?'':'s'} at this stage · two moves you up</div>
+      ${stageExtra}
+    </div>`;
     const sug=suggestSoloSet();
     body+=`<div onclick="openSoloSets(${sug.idx})" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">
       <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Suggested</div>
@@ -6882,7 +7010,7 @@ function renderSoloSets(){
   const x=SOLO_SETS[_soloIdx];
   let lines='';
   let run=0;
-  x.lines.forEach((l,i)=>{
+  soloLines(x).forEach((l,i)=>{
     lines+=`<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:${i?'1px solid rgba(232,234,240,0.06)':'none'}">
       <span style="color:var(--text-dim);font-size:11px;width:14px;flex:none">${i+1}</span>
       <span style="flex:1;font-size:13px;line-height:1.7;color:var(--text)">${esc(l)}</span></div>`;
