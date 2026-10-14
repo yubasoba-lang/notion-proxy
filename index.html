@@ -1427,7 +1427,7 @@ function getRivalFor(stat){
    CSS and step-by-step restore instructions. Nothing was thrown away. */
 
 
-let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[],studyPlan:null,planDone:{},planStatePageId:null,flyStage:null,flyStagePageId:null,soloLevels:null,soloLevelsPageId:null};
+let state={stats:[],rivals:[],tasks:[],templates:[],streaks:null,exams:[],sessions:[],activeSession:null,bodyStats:[],exercises:[],journals:[],entries:[],todayQuests:[],todayPlanEntryId:null,breakPeriods:[],h2hStartDate:null,h2hStartPageId:null,latestRecap:null,topicProgress:{},topicProgressPageId:null,lectures:{},lecturesPageId:null,pomoStatePageId:null,workoutDays7:0,workoutDaySet:new Set(),arcs:[],books:[],penalties:[],studyPlan:null,planDone:{},planStatePageId:null,flyStage:null,flyStagePageId:null,soloLevels:null,soloLevelsPageId:null,swimTags:null,swimTagsPageId:null};
 
 // ── Player Title System ──
 const NOUN_STYLES={
@@ -2341,11 +2341,11 @@ function latestRivalLine(){
   return l.length?l[l.length-1]:null;
 }
 
-async function callClaude(system,userMsg,maxTokens){
+async function callClaude(system,userMsg,maxTokens,model){
   const r=await fetch('/api/claude',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({system,message:userMsg,...(maxTokens?{max_tokens:maxTokens}:{})}),
+    body:JSON.stringify({system,message:userMsg,...(maxTokens?{max_tokens:maxTokens}:{}),...(model?{model}:{})}),
   });
   if(!r.ok)throw new Error('Claude API error '+r.status);
   const d=await r.json();
@@ -6981,12 +6981,87 @@ function flyStepBack(){
   showToast('Back to fly stage '+(st.n-1),2500);
   renderSoloSets();
 }
+// ── Reading coach's sets ─────────────────────────────────────────────────────
+// The sets get typed fast and inconsistently — "8x1' hold 1.30", "10x100 br3/5" — and a
+// keyword match only catches the tidy ones. Haiku reads them properly: one small call
+// per practice, cached in AppConfig so the same set is never classified twice, and the
+// keyword classifier stays as the fallback when the call fails.
+const SWIM_TAG_CFG='swim_set_tags';
+const SWIM_TAG_MODEL='claude-haiku-4-5-20251001';
+const SWIM_TAG_VOCAB=['aerobic','breath','economy','pace','flybuild','flyspeed','turns'];
+const SWIM_TAG_SYSTEM='You classify swimming sets written in shorthand by one swimmer. '
+ +'Reply with JSON only, no prose: {"tags":["..."],"stroke":"free|fly|back|breast|mixed|unknown"}. '
+ +'Choose one to three tags from exactly this list: aerobic (sustained repeatable work, long reps, short rest), '
+ +'breath (restricted breathing patterns, every 3/5/7, hypoxic), economy (drills, pull buoy, stroke counting, sculling, catch-up, fist), '
+ +'pace (descending, negative split, race pace, timed efforts), flybuild (butterfly technique or drill work), '
+ +'flyspeed (maximal butterfly sprints), turns (turns, walls, streamline, underwater kick). '
+ +'stroke is the stroke actually swum if the text says so; "best stroke" or no stroke named means unknown. '
+ +'If nothing else fits, use aerobic.';
+async function loadSwimTags(){
+  try{
+    const rows=await appConfigRows(SWIM_TAG_CFG);
+    if(rows.length){
+      state.swimTagsPageId=rows[0].id;
+      try{state.swimTags=JSON.parse(g.text(rows[0].properties.Value))||{};}catch(_){state.swimTags={};}
+    }else{state.swimTagsPageId=null;state.swimTags=state.swimTags||{};}
+    try{localStorage.setItem(SWIM_TAG_CFG,JSON.stringify(state.swimTags));}catch(_){}
+  }catch(e){
+    warn('loadSwimTags',e);
+    try{const c=localStorage.getItem(SWIM_TAG_CFG);if(c)state.swimTags=JSON.parse(c);}catch(_){}
+    if(!state.swimTags)state.swimTags={};
+  }
+}
+let _swimTagSaveTimer=null;
+function saveSwimTags(){
+  try{localStorage.setItem(SWIM_TAG_CFG,JSON.stringify(state.swimTags||{}));}catch(_){}
+  clearTimeout(_swimTagSaveTimer);
+  _swimTagSaveTimer=setTimeout(async()=>{
+    try{
+      const rich=richChunks(JSON.stringify(state.swimTags||{}));
+      if(state.swimTagsPageId)await nPatch(state.swimTagsPageId,{Value:{rich_text:rich}});
+      else{
+        appConfigInvalidate();
+        const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:SWIM_TAG_CFG}}]},Value:{rich_text:rich}});
+        state.swimTagsPageId=page.id;
+      }
+    }catch(e){warn('saveSwimTags',e);}
+  },1200);
+}
+function swimTagKey(p){return p.id||(p.date+'|'+(p.set||''));}
+async function classifySwimAI(p){
+  const key=swimTagKey(p);
+  if(!p.set||((state.swimTags||{})[key]))return false;
+  const ctx=['Set: '+p.set,
+    p.strokes?'Stroke count logged: '+p.strokes+' per length':'',
+    (p.timedDistance&&p.timedSeconds)?'Timed swim logged: '+p.timedDistance+'m':'',
+    p.scaled&&p.scaled!=='Full'?'Scaled down: '+p.scaled:''].filter(Boolean).join('\n');
+  try{
+    const raw=await callClaude(SWIM_TAG_SYSTEM,ctx,200,SWIM_TAG_MODEL);
+    const m=/\{[\s\S]*\}/.exec(raw||'');
+    if(!m)throw new Error('no json');
+    const j=JSON.parse(m[0]);
+    const tags=(j.tags||[]).filter(t=>SWIM_TAG_VOCAB.includes(t));
+    if(!tags.length)throw new Error('no valid tags');
+    state.swimTags={...(state.swimTags||{}),[key]:{tags,stroke:j.stroke||'unknown',at:new Date().toISOString()}};
+    saveSwimTags();
+    return true;
+  }catch(e){warn('classifySwimAI',e);return false;}
+}
+// Only the two practices the suggester reads, and only if they aren't cached already.
+async function classifyRecentSwims(){
+  const recent=(state.swimPractices||[]).filter(p=>p.set).slice(0,2);
+  let changed=false;
+  for(const p of recent){ if(await classifySwimAI(p))changed=true; }
+  return changed;
+}
 // ── What to swim next ────────────────────────────────────────────────────────
 // Looks at the last two practices — coach's sets included — works out which qualities
 // they trained, and picks a session that trains something else. Coach sets are free
 // text, so they're classified by keyword and by what got logged alongside them.
 const SOLO_PRIORITY={aerobic:5,flybuild:5,breath:4,economy:4,turns:2,pace:2,flyspeed:1};
 function classifySwim(p){
+  const cached=p&&(state.swimTags||{})[swimTagKey(p)];
+  if(cached&&cached.tags&&cached.tags.length)return cached.tags;
   const txt=((p&&p.set)||'').toLowerCase();
   const tags=new Set();
   if(/fly|butterfly|dolphin/.test(txt)){
@@ -7045,6 +7120,14 @@ function openSoloSets(i){
     try{const c=localStorage.getItem(SOLO_LEVEL_CFG);if(c)state.soloLevels=JSON.parse(c);}catch(_){}
     if(!state.soloLevels)state.soloLevels={lv:{},since:{}};
     loadSoloLevels().then(()=>renderSoloSets()).catch(e=>warn('loadSoloLevels',e));
+  }
+  if(!state.swimTags){
+    try{const c=localStorage.getItem(SWIM_TAG_CFG);if(c)state.swimTags=JSON.parse(c);}catch(_){}
+    if(!state.swimTags)state.swimTags={};
+    loadSwimTags()
+      .then(()=>classifyRecentSwims())
+      .then(ch=>{if(ch)renderSoloSets();})
+      .catch(e=>warn('swimTags',e));
   }
   if(document.getElementById('soloSetsPage')){renderSoloSets();return;}
   const el=document.createElement('div');el.id='soloSetsPage';el.className='rival-page';
