@@ -6769,28 +6769,80 @@ function closePoolCard(){document.getElementById('poolCardPage')?.remove();}
 // a single job, so a morning in the pool isn't an hour of random drills. Written for
 // roughly 90 minutes including rest; cut from the bottom if you're short on time.
 const SOLO_SETS=[
-  {t:'Aerobic base',focus:'Holding a pace you can repeat',total:1800,kit:'Pull buoy · fins optional',
+  {t:'Aerobic base',tag:'aerobic',focus:'Holding a pace you can repeat',total:1800,kit:'Pull buoy · fins optional',
    why:'The one that fixes your actual gap. Nothing here is fast \u2014 the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
    lines:['200 easy free, breathe every 3','4 \u00d7 100 free, 20s rest, same pace every one','8 \u00d7 66 free, 15s rest, no faster than the 100s','300 pull buoy, long and relaxed','4 \u00d7 66 kick on your front, fins optional, 20s rest','100 easy']},
-  {t:'Breath control',focus:'Being comfortable short of air',total:1550,kit:'Pull buoy',
+  {t:'Breath control',tag:'breath',focus:'Being comfortable short of air',total:1550,kit:'Pull buoy',
    why:'Trains the thing that makes you stop mid-set. Breathing patterns only \u2014 no breath-hold swimming on your own.',
    lines:['200 easy free','6 \u00d7 66 free: breathe every 3, then every 5, alternating','4 \u00d7 100 pull buoy, breathe every 3 the whole way, 20s rest','8 \u00d7 33 free, two breaths per length, 15s rest','200 easy free every 3','100 easy']},
-  {t:'Economy',focus:'Fewer strokes at the same speed',total:1500,kit:'Pull buoy',
+  {t:'Economy',tag:'economy',focus:'Fewer strokes at the same speed',total:1500,kit:'Pull buoy',
    why:'Technique work with a number attached. Count on every length and put the count in the log afterwards. Expect a higher count than a 25m pool \u2014 it is a longer length.',
    lines:['200 easy free','4 \u00d7 33 catch-up drill','4 \u00d7 33 fist swimming','4 \u00d7 66 pull buoy counting strokes \u2014 the buoy kills the kick so you feel the catch','4 \u00d7 66 free, same count without the buoy','6 \u00d7 66 free holding that count, 20s rest','100 easy']},
-  {t:'Pace',focus:'Second half faster than the first',total:1400,kit:'None — on purpose',
+  {t:'Pace',tag:'pace',focus:'Second half faster than the first',total:1400,kit:'None — on purpose',
    why:'Pacing is what collapses when you tire. Start slower than feels right \u2014 every rep should finish faster than it started. No fins and no buoy: both change your speed, so a split done with kit tells you nothing about pacing yourself.',
    lines:['200 easy free','5 \u00d7 100 free negative split, 30s rest','4 \u00d7 66 free descending 1 to 4, 20s rest','200 free, second 100 faster','4 \u00d7 33 fast, full rest','100 easy']},
-  {t:'Butterfly \u00b7 build',focus:'Fly from the chest and hips',total:1400,kit:'Fins for the drills, off for the fly',
+  {t:'Butterfly \u00b7 build',tag:'flybuild',focus:'Fly from the chest and hips',total:1400,kit:'Fins for the drills, off for the fly',
    why:'Fly comes from the sternum, not the arms. Fins let the timing click without you dying, then come off so you are not learning a stroke you can only do in fins. Stop every rep when the technique breaks, not when you get tired.',
    lines:['200 easy free','FINS ON \u00b7 6 \u00d7 33 body dolphin, arms at your sides, 30s rest','6 \u00d7 33 dolphin kick on your side, switch sides each length, 20s rest','8 \u00d7 33 single-arm fly, switch arms each length, 20s rest','FINS OFF \u00b7 6 \u00d7 33 as half fly then easy free to the wall, 30s rest','4 \u00d7 66 easy free','100 easy']},
-  {t:'Butterfly \u00b7 speed',focus:'Power, once the fly looks like fly',total:1200,kit:'Fins for the underwaters',
+  {t:'Butterfly \u00b7 speed',tag:'flyspeed',focus:'Power, once the fly looks like fly',total:1200,kit:'Fins for the underwaters',
    why:'Only once the build session holds together. Full recovery between reps \u2014 if you are gasping it has stopped being a speed set.',
    lines:['300 easy free','6 \u00d7 15m max fly from a push, no fins, easy back to the wall, 60s+ rest','FINS ON \u00b7 6 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','4 \u00d7 66 easy free between efforts','200 easy, some of it backstroke']},
-  {t:'Turns and walls',focus:'The free speed you keep leaving behind',total:1500,kit:'Fins for the kick block',
+  {t:'Turns and walls',tag:'turns',focus:'The free speed you keep leaving behind',total:1500,kit:'Fins for the kick block',
    why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
    lines:['200 easy free with 5 kicks off every wall','8 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','6 \u00d7 66 free, the turn is the fastest part, 20s rest','FINS ON \u00b7 4 \u00d7 33 streamline kick off every wall','100 easy']},
 ];
+// ── What to swim next ────────────────────────────────────────────────────────
+// Looks at the last two practices — coach's sets included — works out which qualities
+// they trained, and picks a session that trains something else. Coach sets are free
+// text, so they're classified by keyword and by what got logged alongside them.
+const SOLO_PRIORITY={aerobic:5,breath:4,economy:4,flybuild:3,turns:2,pace:2,flyspeed:1};
+function classifySwim(p){
+  const txt=((p&&p.set)||'').toLowerCase();
+  const tags=new Set();
+  if(/fly|butterfly|dolphin/.test(txt)){
+    if(/max|sprint|15m|all out|fast/.test(txt))tags.add('flyspeed');
+    else tags.add('flybuild');
+  }
+  if(/breath|hypoxic|every ?[357]|3\/5|co2/.test(txt))tags.add('breath');
+  if(/turn|wall|streamline|push ?off/.test(txt))tags.add('turns');
+  if(/pull|buoy|count|stroke|drill|catch.?up|fist|scull/.test(txt))tags.add('economy');
+  if(/descend|desc|negative|split|pace|build/.test(txt))tags.add('pace');
+  if(/sprint|max|all out/.test(txt)&&!tags.has('flyspeed'))tags.add('pace');
+  if(/kick/.test(txt))tags.add('turns');
+  // what was logged alongside the set says something too
+  if(p&&p.strokes>0)tags.add('economy');
+  if(p&&p.timedDistance&&p.timedSeconds)tags.add('pace');
+  // a long main set with nothing distinctive is aerobic work, which most of them are
+  if(!tags.size||/\b(100|200|400|800)\b/.test(txt))tags.add('aerobic');
+  return [...tags];
+}
+function suggestSoloSet(){
+  const recent=(state.swimPractices||[]).filter(p=>p.set||p.strokes||p.timedDistance).slice(0,2);
+  const last=recent[0]?classifySwim(recent[0]):[];
+  const prev=recent[1]?classifySwim(recent[1]):[];
+  const flyRecently=(state.swimPractices||[]).some(p=>{
+    if(!p.date)return false;
+    const days=Math.round((new Date(localToday()+'T12:00:00')-new Date(p.date+'T12:00:00'))/86400000);
+    return days<=21&&classifySwim(p).includes('flybuild');
+  });
+  const scored=SOLO_SETS.map((x,i)=>{
+    let sc=SOLO_PRIORITY[x.tag]||1;
+    if(last.includes(x.tag))sc-=4;        // just did it
+    else if(prev.includes(x.tag))sc-=2;   // did it the time before
+    let blocked='';
+    if(x.tag==='flyspeed'&&!flyRecently){sc=-99;blocked='needs a fly build session first';}
+    return {i,x,sc,blocked};
+  }).sort((a,b)=>b.sc-a.sc||SOLO_PRIORITY[b.x.tag]-SOLO_PRIORITY[a.x.tag]);
+  const top=scored[0];
+  let reason;
+  if(!recent.length)reason='Nothing logged yet — start with the engine.';
+  else{
+    const names=recent.map(p=>p.set||'a practice');
+    const did=[...new Set([...last,...prev])];
+    reason='Last two were '+names.join(' and ')+'. That covered '+did.join(', ')+', so this trains something else.';
+  }
+  return {idx:top.i,reason,ranked:scored};
+}
 let _soloIdx=null;
 function openSoloSets(i){
   _soloIdx=(i==null?null:i);
@@ -6805,6 +6857,12 @@ function renderSoloSets(){
   if(!b)return;
   let body='';
   if(_soloIdx==null){
+    const sug=suggestSoloSet();
+    body+=`<div onclick="openSoloSets(${sug.idx})" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Suggested</div>
+      <div style="font-size:17px;color:var(--text-hi);margin-top:5px">${esc(SOLO_SETS[sug.idx].t)}</div>
+      <div style="font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:4px">${esc(sug.reason)}</div>
+    </div>`;
     SOLO_SETS.forEach((x,i)=>{
       body+=`<div onclick="openSoloSets(${i})" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
