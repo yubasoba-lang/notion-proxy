@@ -6764,6 +6764,9 @@ function openPoolCard(){
     <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 18px">${esc(strokeLine)}</div>
     <div class="rival-section-label">Completing the set</div>
     <div style="margin:6px 0 20px">${compBlock}</div>
+    <div class="rival-section-label">Target · ${esc(SWIM_GOAL.label)} for the ${SWIM_GOAL.dist}, 25m pool</div>
+    <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 6px">${esc(swimGoalLine())}</div>
+    <div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin:0 0 18px">Between time trials the stroke count is the number that moves. A 33m pool gives no comparable time, so don't try to read one off it.</div>
     <div class="rival-section-label">Personal bests</div>
     <div style="font-size:12px;line-height:1.8;margin:4px 0 18px">${pbLine}</div>
     <div class="rival-section-label">CO2 table</div>
@@ -8526,6 +8529,29 @@ function lcmEquiv(dist,sec){
   const off=SCM_TO_LCM[dist];
   if(!off||!sec)return null;
   return Math.round((sec+off)*10)/10;
+}
+// The standing target, in club-pool short course because that is the only place a
+// 100 gets timed properly. A gap to it is only shown when there is a real 100 to
+// measure against, and how stale that reading is matters as much as the number —
+// timed swims happen when the coach runs one, which is every few months at best.
+const SWIM_GOAL={dist:100,scm:51,label:'sub 51'};
+function swimGoalState(){
+  const b=swimBests()[SWIM_GOAL.dist];
+  if(!b)return {has:false};
+  const gap=Math.round((b.sec-SWIM_GOAL.scm)*10)/10;
+  const days=Math.round((new Date(localToday())-new Date(b.date))/86400000);
+  return {has:true,sec:b.sec,date:b.date,gap:gap,days:days,hit:gap<=0};
+}
+function swimGoalLine(){
+  const g2=swimGoalState();
+  if(!g2.has)return 'no timed 100 yet — ask the coach to run one when she next can';
+  if(g2.hit)return 'hit it · '+fmtSwimTime(g2.sec)+' on '+g2.date;
+  let age='today';
+  if(g2.days===1)age='yesterday';
+  else if(g2.days>1)age=g2.days+' days ago';
+  let stale='';
+  if(g2.days>80)stale=' · worth asking for a fresh one';
+  return fmtSwimTime(g2.sec)+' best · '+g2.gap+'s to go · timed '+age+stale;
 }
 function swimBests(){
   const best={};
