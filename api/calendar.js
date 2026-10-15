@@ -63,7 +63,7 @@ const PLAN = {
   ],
   Sat:[
     {t:"08:00",e:"09:30",l:"Swim practice",n:"Solo · log the main set after",alarm:20},
-    {t:"10:30",e:"12:00",l:"Gym · Push",alarm:15},
+    {t:"10:30",e:"12:00",l:"Gym · Pull and press",alarm:15},
     {t:"12:30",e:"13:30",l:"Lunch together",alarm:10},
     {t:"14:30",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
     {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
