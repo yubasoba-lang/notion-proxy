@@ -8101,8 +8101,6 @@ const PROTEIN_FOODS=[
   {id:'shake',  t:'Protein shake',        g:25, n:'1 scoop · 2 a day max'},
   {id:'turo',   t:'Túró',                 g:30, n:'250g tub'},
   {id:'yogurt', t:'Greek yogurt',         g:15, n:'150g'},
-  {id:'natto',  t:'Natto',                g:8,  n:'one pack'},
-  {id:'tofu',   t:'Tofu',                 g:8,  n:'100g'},
 ];
 function proteinFood(id){return PROTEIN_FOODS.find(f=>f.id===id)||null;}
 function proteinDay(ds){return (state.proteinLog||{})[ds||localToday()]||{};}
