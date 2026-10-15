@@ -7206,6 +7206,29 @@ function openSoloSets(i){
 // repetition, not the mileage. Pace is left alone: it needs you fresh to mean anything.
 const FLY_TOUCH=['FINS ON · 4 × 33 body dolphin, arms at your sides, 12 breaths rest',
                  'FINS ON · 4 × 33 single-arm fly, switch arms each length, 8 breaths rest'];
+// Every line in a pool set gets a count, because the count is the only measure he can
+// take: no watch, no readable clock. Which count depends on the line — a kick set has no
+// stroke count at all, and the buoy and fly counts are different numbers from the free
+// count, so they are tracked separately rather than compared to it. Lines that already
+// name a count are left alone.
+function countNote(l){
+  // Order matters. "backstroke" must not read as a stroke count, a line that says "5 kicks
+  // off every wall" is a free swim and not a kick set, and a drill deliberately changes the
+  // number so it cannot be held against the free count.
+  if(/underwater|dolphin to/i.test(l))return 'count the dolphin kicks';
+  if(/\bcount|strokes per length|\d+ strokes/i.test(l))return '';
+  if(/buoy/i.test(l))return 'count with the buoy, separately from your free count';
+  if(/kick/i.test(l)&&!/free|swim|fly/i.test(l))return 'no stroke count on a kick set — hold a steady tempo';
+  if(/fly|dolphin/i.test(l))return 'count your fly strokes per length';
+  if(/drill|catch-up|fist/i.test(l))return 'count it, but expect a different number from your free count';
+  if(/easy/i.test(l))return 'count it anyway — this is your lowest count of the day';
+  return strokeRule();
+}
+function withCount(l){
+  const n=countNote(l);
+  if(!n)return l;
+  return l+' · '+n;
+}
 function soloLines(x){
   const out=[];
   x.lines.forEach(l=>{
@@ -7220,7 +7243,7 @@ function soloLines(x){
     const pick=FLY_TOUCH[(flyStage().n+out.length)%FLY_TOUCH.length];
     out.splice(1,0,pick);
   }
-  return out;
+  return out.map(withCount);
 }
 function renderSoloSets(){
   const b=document.getElementById('soloBody');
