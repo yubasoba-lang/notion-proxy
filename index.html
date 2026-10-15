@@ -6706,11 +6706,16 @@ function openPoolCard(){
   cur.how.forEach(x=>{cueList+=`<div style="font-size:11px;line-height:1.7;color:var(--text-dim)">· ${esc(x)}</div>`;});
   const st=poolStrokeInfo();
   let strokeLine='no stroke count logged yet';
-  if(st)strokeLine=`last ${st.last} per 25 · best ${st.best} · hold ${st.best} today`;
+  if(st)strokeLine=`last ${st.last} per length · best ${st.best} · hold ${st.best} today`;
   const bests=swimBests();
   const bKeys=Object.keys(bests).map(Number).sort((a,b)=>a-b);
   let pbLine='';
-  bKeys.forEach(d=>{pbLine+=`<span style="margin-right:12px">${d}m <span style="color:var(--gold)">${fmtSwimTime(bests[d].sec)}</span></span>`;});
+  bKeys.forEach(d=>{
+    const lc=lcmEquiv(d,bests[d].sec);
+    let lcTxt='';
+    if(lc)lcTxt=' <span style="color:var(--text-faint);font-size:10px">≈'+fmtSwimTime(lc)+' LC</span>';
+    pbLine+=`<span style="margin-right:12px">${d}m <span style="color:var(--gold)">${fmtSwimTime(bests[d].sec)}</span>${lcTxt}</span>`;
+  });
   if(!pbLine)pbLine='<span style="color:var(--text-faint)">no timed swims yet</span>';
   const comp30=swimCompletion(30);
   const comp90=swimCompletion(90);
@@ -8512,6 +8517,16 @@ function swimRecent(n){
     .reverse();
 }
 // Best time per distance, from logged practices.
+// Club trains in a 25m pool, so every timed 50/100/200 is short course metres.
+// Long course is slower because you get fewer walls: roughly +0.8 on a 50, +2.3 on
+// a 100, +4 on a 200 at his level. Only standard distances convert — a 33m solo
+// pool has no meaningful conversion to anything, so those times stay as they are.
+const SCM_TO_LCM={50:0.8,100:2.3,200:4.0,400:9.0};
+function lcmEquiv(dist,sec){
+  const off=SCM_TO_LCM[dist];
+  if(!off||!sec)return null;
+  return Math.round((sec+off)*10)/10;
+}
 function swimBests(){
   const best={};
   (state.swimPractices||[]).forEach(p=>{
