@@ -5180,7 +5180,7 @@ async function refresh(force=true){
     if(!state.studyPlan){try{const c=localStorage.getItem(PLAN_CACHE_KEY);if(c)state.studyPlan=JSON.parse(c);}catch(_){}}
     if(!Object.keys(state.planDone||{}).length){try{const c=localStorage.getItem(PLAN_DONE_KEY);if(c)state.planDone=JSON.parse(c);}catch(_){}}
     renderPlan();
-    if(!skip)await Promise.all([loadStudyPlan(),loadPlanState()].map(x=>Promise.resolve(x).catch(e=>warn('planLoad',e))));
+    if(!skip)await Promise.all([loadStudyPlan(),loadPlanState(),loadProteinLog()].map(x=>Promise.resolve(x).catch(e=>warn('planLoad',e))));
     _markTabLoaded('plan');renderPlan();
   }
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
@@ -5641,10 +5641,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${reviewCard}${examCard}${planCard}${recapRowHTML()}</div>
+      <div class="home-col-right">${arcCard}${reviewCard}${examCard}${planCard}${proteinRowHTML()}${recapRowHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+reviewCard+examCard+timerWidget+focusCard+planCard+recapRowHTML();
+    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+recapRowHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -8065,6 +8065,207 @@ function recapBindSwipe(el){
 // The Home row. Shows yesterday once the day is closed, because that's the one you
 // look back at; before anything is logged today it's the only thing worth showing.
 function recapPrevDay(){const d=new Date();d.setDate(d.getDate()-1);return localDay(d);}
+// ── Protein ──────────────────────────────────────────────────────────────────
+// A tally, not a food diary. Every section that needed daily typing got deleted
+// (tasks, journal, life stats, sleep), so this is one tap per portion and nothing
+// to weigh or search. Calories are deliberately absent: protein is the number
+// being chased right now, and adding macros is how this turns into the thing he
+// would stop using in a fortnight.
+const PROTEIN_TARGET=140;
+const PROTEIN_CFG='protein_log';
+const PROTEIN_KEY='grind_protein_log';
+// Grams per portion, rounded. "Cheap" is cost per gram of protein, not per item.
+const PROTEIN_FOODS=[
+  {id:'egg',    t:'Egg',                  g:7,  n:'each',            cheap:true},
+  {id:'lentil', t:'Lentils',              g:15, n:'bowl from the Sunday pot', cheap:true},
+  {id:'soy',    t:'Szójakocka',           g:25, n:'cooked portion',  cheap:true},
+  {id:'milk',   t:'Milk',                 g:9,  n:'250ml glass',     cheap:true},
+  {id:'beans',  t:'Beans',                g:15, n:'bowl',            cheap:true},
+  {id:'rice',   t:'Rice',                 g:11, n:'一合 cooked',     cheap:true},
+  {id:'chicken',t:'Chicken breast',       g:40, n:'one fillet'},
+  {id:'pork',   t:'Pork',                 g:27, n:'palm-sized'},
+  {id:'tuna',   t:'Tinned fish',          g:25, n:'one tin'},
+  {id:'shake',  t:'Protein shake',        g:25, n:'1 scoop · 2 a day max'},
+  {id:'turo',   t:'Túró',                 g:30, n:'250g tub'},
+  {id:'yogurt', t:'Greek yogurt',         g:15, n:'150g'},
+  {id:'natto',  t:'Natto',                g:8,  n:'one pack'},
+  {id:'tofu',   t:'Tofu',                 g:8,  n:'100g'},
+];
+function proteinFood(id){return PROTEIN_FOODS.find(f=>f.id===id)||null;}
+function proteinDay(ds){return (state.proteinLog||{})[ds||localToday()]||{};}
+function proteinTotal(ds){
+  const d=proteinDay(ds);
+  let n=0;
+  Object.keys(d).forEach(k=>{const f=proteinFood(k);if(f)n+=f.g*d[k];});
+  return n;
+}
+async function loadProteinLog(){
+  try{
+    const rows=await appConfigRows(PROTEIN_CFG);
+    if(rows.length){
+      state.proteinLogPageId=rows[0].id;
+      try{state.proteinLog=JSON.parse(g.text(rows[0].properties.Value))||{};}catch(_){state.proteinLog={};}
+    }else{
+      state.proteinLogPageId=null;
+      try{const c=localStorage.getItem(PROTEIN_KEY);state.proteinLog=c?JSON.parse(c):{};}catch(_){state.proteinLog={};}
+    }
+    try{localStorage.setItem(PROTEIN_KEY,JSON.stringify(state.proteinLog));}catch(_){}
+  }catch(e){
+    warn('loadProteinLog',e);
+    try{const c=localStorage.getItem(PROTEIN_KEY);if(c&&!Object.keys(state.proteinLog||{}).length)state.proteinLog=JSON.parse(c);}catch(_){}
+    if(!state.proteinLog)state.proteinLog={};
+  }
+}
+let _proteinSaveTimer=null;
+function saveProteinLog(){
+  // Only the last 30 days are kept, so the stored value cannot grow past the
+  // rich_text limit however long this runs.
+  const all=state.proteinLog||{};
+  const keep=Object.keys(all).sort().slice(-30);
+  const trimmed={};
+  keep.forEach(k=>{trimmed[k]=all[k];});
+  state.proteinLog=trimmed;
+  try{localStorage.setItem(PROTEIN_KEY,JSON.stringify(trimmed));}catch(_){}
+  clearTimeout(_proteinSaveTimer);
+  _proteinSaveTimer=setTimeout(async()=>{
+    try{
+      const rich=richChunks(JSON.stringify(state.proteinLog||{}));
+      if(state.proteinLogPageId)await nPatch(state.proteinLogPageId,{Value:{rich_text:rich}});
+      else{
+        appConfigInvalidate();
+        const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:PROTEIN_CFG}}]},Value:{rich_text:rich}});
+        state.proteinLogPageId=page.id;
+      }
+    }catch(e){warn('saveProteinLog',e);showToast('Protein save failed — will retry');}
+  },900);
+}
+function proteinBump(id,dir){
+  const ds=localToday();
+  if(!state.proteinLog)state.proteinLog={};
+  if(!state.proteinLog[ds])state.proteinLog[ds]={};
+  const cur=state.proteinLog[ds][id]||0;
+  const next=Math.max(0,Math.min(40,cur+dir));
+  if(next===cur)return;
+  if(next===0)delete state.proteinLog[ds][id];
+  else state.proteinLog[ds][id]=next;
+  saveProteinLog();
+  proteinPaint();
+}
+function proteinClear(){
+  const ds=localToday();
+  if(state.proteinLog&&state.proteinLog[ds]){delete state.proteinLog[ds];saveProteinLog();}
+  proteinPaint();
+  if(typeof render==='function')render();
+}
+// Repaints the counts and the total in place rather than rebuilding the page, so
+// tapping does not scroll you back to the top.
+function proteinPaint(){
+  const d=proteinDay();
+  const tot=proteinTotal();
+  PROTEIN_FOODS.forEach(f=>{
+    const c=document.getElementById('pc-'+f.id);
+    if(c){
+      const n=d[f.id]||0;
+      c.textContent=n?String(n):'·';
+      c.style.color=n?'var(--gold)':'var(--text-faint)';
+    }
+  });
+  const t=document.getElementById('proteinTotal');
+  if(t)t.textContent=tot;
+  const bar=document.getElementById('proteinBar');
+  if(bar)bar.style.width=Math.min(100,Math.round(100*tot/PROTEIN_TARGET))+'%';
+  const note=document.getElementById('proteinNote');
+  if(note)note.textContent=proteinVerdict(tot);
+}
+function proteinVerdict(tot){
+  if(tot===0)return 'nothing logged yet today';
+  if(tot<70)return 'well short — '+(PROTEIN_TARGET-tot)+'g to go';
+  if(tot<130)return (PROTEIN_TARGET-tot)+'g to go';
+  if(tot<=170)return 'target hit';
+  return 'well over — no harm, but the money is better spent on carbs';
+}
+function proteinRowHTML(){
+  const tot=proteinTotal();
+  const pct=Math.min(100,Math.round(100*tot/PROTEIN_TARGET));
+  return `<div class="flat-sec" style="cursor:pointer" onclick="openProteinCard()">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Protein today</div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;color:var(--text-hi)">${tot}</span>
+          <span style="font-size:11px;color:var(--text-dim)">of ${PROTEIN_TARGET}g</span>
+        </div>
+        <div style="margin-top:8px;height:4px;background:rgba(232,234,240,0.08);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:var(--gold)"></span></div>
+      </div>
+      <span style="font-size:18px;color:var(--text-faint)">›</span>
+    </div>
+  </div>`;
+}
+function closeProteinCard(){
+  document.getElementById('proteinCardPage')?.remove();
+  if(typeof render==='function')render();
+}
+function openProteinCard(){
+  if(document.getElementById('proteinCardPage'))return;
+  const el=document.createElement('div');el.id='proteinCardPage';el.className='rival-page';
+  const d=proteinDay();
+  let cheapRows='';
+  let restRows='';
+  PROTEIN_FOODS.forEach(f=>{
+    const n=d[f.id]||0;
+    const shown=n?String(n):'·';
+    const col=n?'var(--gold)':'var(--text-faint)';
+    const row=`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--text-hi)">${esc(f.t)} <span style="color:var(--gold);font-size:11px">${f.g}g</span></div>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:2px">${esc(f.n)}</div>
+      </div>
+      <button class="wec-log-btn" style="width:34px;padding:6px 0;margin:0" onclick="proteinBump('${f.id}',-1)">−</button>
+      <span id="pc-${f.id}" style="font-family:'JetBrains Mono',monospace;font-size:15px;min-width:22px;text-align:center;color:${col}">${shown}</span>
+      <button class="wec-log-btn" style="width:34px;padding:6px 0;margin:0" onclick="proteinBump('${f.id}',1)">+</button>
+    </div>`;
+    if(f.cheap)cheapRows+=row;
+    else restRows+=row;
+  });
+  const tot=proteinTotal();
+  const pct=Math.min(100,Math.round(100*tot/PROTEIN_TARGET));
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeProteinCard()">← Back</button></div>
+    <div class="rival-page-subtitle" style="margin-top:12px">Protein · today</div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 6px">
+      <span id="proteinTotal" style="font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--text-hi)">${tot}</span>
+      <span style="font-size:13px;color:var(--text-dim)">of ${PROTEIN_TARGET}g</span>
+    </div>
+    <div style="height:5px;background:rgba(232,234,240,0.08);border-radius:3px;overflow:hidden;margin-bottom:6px"><span id="proteinBar" style="display:block;height:100%;width:${pct}%;background:var(--gold)"></span></div>
+    <div id="proteinNote" style="font-size:11px;color:var(--text-dim);margin-bottom:20px">${esc(proteinVerdict(tot))}</div>
+    <div class="rival-section-label">Cheapest per gram</div>
+    <div style="margin:4px 0 20px">${cheapRows}</div>
+    <div class="rival-section-label">Everything else</div>
+    <div style="margin:4px 0 20px">${restRows}</div>
+    <div class="rival-section-label">Shopping</div>
+    <div style="font-size:11px;line-height:1.9;color:var(--text-dim);margin:4px 0 20px">
+      · <strong style="color:var(--text)">lencse</strong> lentils · <strong style="color:var(--text)">vörös lencse</strong> red lentils<br>
+      · <strong style="color:var(--text)">bab</strong> beans · <strong style="color:var(--text)">csicseriborsó</strong> chickpeas<br>
+      · <strong style="color:var(--text)">sárgaborsó</strong> split peas · <strong style="color:var(--text)">szójakocka</strong> soy chunks<br>
+      · dried not canned — about a third of the price<br>
+      · own-brand is the same product<br>
+      · whey only in 2kg+ bags, never tubs
+    </div>
+    <div class="rival-section-label">Red lentils · 15 minutes, no soaking</div>
+    <div style="font-size:11px;line-height:1.9;color:var(--text-dim);margin:4px 0 20px">
+      1 · rinse until the water runs clear<br>
+      2 · 150g lentils to 400ml water, boil then simmer 15 min<br>
+      3 · salt, oil, onion, paprika, stock cube<br>
+      Eat it with rice — lentils are short on methionine, rice on lysine, so together they make a complete protein that neither is alone. 300g dry on Sunday is five portions.
+    </div>
+    <div class="rival-section-label">The point</div>
+    <div style="font-size:11px;line-height:1.9;color:var(--text-dim);margin:4px 0 22px">
+      ${PROTEIN_TARGET}g is a target, not a threshold — 120–130 is genuinely fine. Total food matters more: at 185cm, still growing, nine sessions a week, under-eating will cost you more than landing 20g short. Rice, bread, potatoes, oats are not the enemy.
+    </div>
+    <button class="wec-log-btn" style="width:100%" onclick="proteinClear()">Clear today</button>
+  </div>`;
+  document.body.appendChild(el);
+}
 function recapRowHTML(){
   const yest=recapPrevDay();
   const today=localToday();
