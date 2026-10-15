@@ -6851,7 +6851,7 @@ function soloMainFor(tag,lv){
   if(tag==='breath'){
     const pat=step<2?'every 3, then every 5, alternating':(step<5?'every 3, 5, then 7, rotating':'every 5 throughout');
     const reps=6+step, pull=4+Math.floor(step/2);
-    return [reps+' × 66 free: breathe '+pat+' — hold the count, do not rush when air gets short',
+    return [reps+' × 66 free, breathe '+pat+', '+restBreaths(rest(20,10))+' rest — '+strokeRule()+', do not rush when air gets short',
             pull+' × 100 pull buoy, breathe every '+(step<5?'3':'5')+' the whole way, '+restBreaths(rest(20,10))+' rest'];
   }
   if(tag==='economy'){
@@ -6873,7 +6873,7 @@ function soloMainFor(tag,lv){
   if(tag==='flyspeed'){
     const reps=6+step;
     const extra=step>=3?[(2+Math.floor(step/3))+' × 33 fast fly, full rest']:[];
-    return [reps+' × 15m max fly from a push, no fins, easy back to the wall, 60s+ rest'].concat(extra);
+    return [reps+' × 15m max fly from a push, no fins, easy back to the wall, full recovery'].concat(extra);
   }
   return [];
 }
@@ -6955,29 +6955,29 @@ function soloMainReps(x){
 // one holds together, because tired fly teaches bad fly.
 const FLY_STAGES=[
   {n:1,label:'Drills and half-lengths',fly:200,
-   lines:['FINS ON · 6 × 33 body dolphin, arms at your sides, 30s rest',
-          '6 × 33 dolphin kick on your side, switch sides each length, 20s rest',
-          '8 × 33 single-arm fly, switch arms each length, 20s rest',
-          'FINS OFF · 6 × 33 as half fly then easy free to the wall, 30s rest']},
+   lines:['FINS ON · 6 × 33 body dolphin, arms at your sides, 12 breaths rest',
+          '6 × 33 dolphin kick on your side, switch sides each length, 8 breaths rest',
+          '8 × 33 single-arm fly, switch arms each length, 8 breaths rest',
+          'FINS OFF · 6 × 33 as half fly then easy free to the wall, 12 breaths rest']},
   {n:2,label:'Full 33s',fly:260,
-   lines:['FINS ON · 6 × 33 body dolphin, 30s rest',
-          '6 × 33 single-arm fly, 20s rest',
-          'FINS OFF · 8 × 33 full fly, 45s rest — stop the set when a rep goes ugly']},
+   lines:['FINS ON · 6 × 33 body dolphin, 12 breaths rest',
+          '6 × 33 single-arm fly, 8 breaths rest',
+          'FINS OFF · 8 × 33 full fly, 18 breaths rest — stop the set when a rep goes ugly']},
   {n:3,label:'Fly into free',fly:130,
-   lines:['FINS ON · 6 × 33 body dolphin, 30s rest',
-          'FINS OFF · 4 × 100 as 33 fly / 66 easy free, 30s rest',
+   lines:['FINS ON · 6 × 33 body dolphin, 12 breaths rest',
+          'FINS OFF · 4 × 100 as 33 fly / 66 easy free, 12 breaths rest',
           '4 × 33 full fly, full rest']},
   {n:4,label:'Half and half',fly:200,
-   lines:['FINS ON · 4 × 33 body dolphin, 30s rest',
-          'FINS OFF · 6 × 66 as 33 fly / 33 free, 30s rest',
+   lines:['FINS ON · 4 × 33 body dolphin, 12 breaths rest',
+          'FINS OFF · 6 × 66 as 33 fly / 33 free, 12 breaths rest',
           '4 × 33 full fly, full rest']},
   {n:5,label:'Fly-led 100s',fly:260,
-   lines:['FINS ON · 4 × 33 body dolphin, 30s rest',
-          'FINS OFF · 4 × 100 as 66 fly / 33 free, 45s rest',
+   lines:['FINS ON · 4 × 33 body dolphin, 12 breaths rest',
+          'FINS OFF · 4 × 100 as 66 fly / 33 free, 18 breaths rest',
           '2 × 33 full fly, full rest']},
   {n:6,label:'Straight 100s',fly:300,
-   lines:['FINS ON · 4 × 33 body dolphin, 30s rest',
-          'FINS OFF · 3 × 100 fly, 60s+ rest',
+   lines:['FINS ON · 4 × 33 body dolphin, 12 breaths rest',
+          'FINS OFF · 3 × 100 fly, full recovery',
           '100 easy free']},
 ];
 const FLY_STAGE_CFG='swim_fly_stage';
@@ -7204,8 +7204,8 @@ function openSoloSets(i){
 // Fly is trained every session, not saved for a fly day. Drills only outside the fly
 // session itself — those are cheap on the shoulder and it's the pattern that needs the
 // repetition, not the mileage. Pace is left alone: it needs you fresh to mean anything.
-const FLY_TOUCH=['FINS ON · 4 × 33 body dolphin, arms at your sides, 30s rest',
-                 'FINS ON · 4 × 33 single-arm fly, switch arms each length, 20s rest'];
+const FLY_TOUCH=['FINS ON · 4 × 33 body dolphin, arms at your sides, 12 breaths rest',
+                 'FINS ON · 4 × 33 single-arm fly, switch arms each length, 8 breaths rest'];
 function soloLines(x){
   const out=[];
   x.lines.forEach(l=>{
