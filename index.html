@@ -3328,7 +3328,7 @@ const WORKOUT_WEEK=[
   {abbr:'Wed',label:'Wednesday',sub:'Gym · Pull',             kind:'required'},
   {abbr:'Thu',label:'Thursday', sub:'Swim · club',            kind:'required'},
   {abbr:'Fri',label:'Friday',   sub:'Gym · Legs · jump work', kind:'required'},
-  {abbr:'Sat',label:'Saturday', sub:'Swim, then Gym · Push',  kind:'required'},
+  {abbr:'Sat',label:'Saturday', sub:'Swim, then Gym · Pull and press', kind:'required'},
   {abbr:'Sun',label:'Sunday',   sub:'Swim, then Gym · Upper', kind:'required'},
 ];
 
@@ -3466,7 +3466,7 @@ const DAY_PLAN={
     {t:'06:45',k:'wake',l:'Wake'},
     {t:'08:00',e:'09:30',k:'swim',l:'Swim practice',n:'solo · log the main set after'},
     {t:'09:45',k:'meal',l:'Breakfast'},
-    {t:'10:30',e:'12:00',k:'gym',l:'Gym · Push'},
+    {t:'10:30',e:'12:00',k:'gym',l:'Gym · Pull and press'},
     {t:'12:30',e:'13:30',k:'together',l:'Lunch together'},
     {t:'14:30',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
     {t:'19:00',e:'20:00',k:'together',l:'Dinner together'},
@@ -7823,14 +7823,15 @@ const SESSION_PLAN={
     {h:'Strength',x:[['Leg Press','4 × 10'],['Bulgarian Split Squat','3 × 8 each'],['Dumbbell Romanian Deadlift','3 × 10'],['Hip Thrust','3 × 12'],['Calf Raise Machine','3 × 20']]},
     {h:'Core',x:[['Ab roller','3 × 8'],['Dead Bug','3 × 10 each']]},
   ]},
-  Sat:{title:'Push',note:'After the morning swim · the pressing day, furthest from a club session',blocks:[
-    {h:'Press',x:[['Incline Dumbbell Press','4 × 10'],['Pectoral Fly','3 × 12'],['Machine Shoulder Press','3 × 10 light']]},
-    {h:'Arms',x:[['Cable Overhead Tricep Extension','3 × 12'],['Tricep Pushdown (Machine)','3 × 12'],['Cable Lateral Raises','3 × 15 light']]},
+  Sat:{title:'Pull and press',note:'After the morning swim · pull leads, pressing second — the freshest reps go to the lats. Triceps stay: elbow extension is what finishes the pull in free and fly.',blocks:[
+    {h:'Pull',x:[['Assisted Pull-ups','3 × 6–8, second go at these this week'],['Lat Pulldown','3 × 10, lighter than Wednesday']]},
+    {h:'Press',x:[['Incline Dumbbell Press','3 × 10'],['Pectoral Fly','3 × 12'],['Machine Shoulder Press','3 × 10 light']]},
+    {h:'Arms',x:[['Cable Overhead Tricep Extension','3 × 12'],['Tricep Pushdown (Machine)','3 × 12']]},
     {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Plank Hip Dips','3 × 30s each']]},
     {h:'Finisher',x:[['Stationary Bike','20 min easy']]},
   ]},
   Sun:{title:'Upper · light',note:'Accessory only — rear delts, cuff, arms, core. Nothing heavy before Monday\'s swim',blocks:[
-    {h:'Shoulder',x:[['Face Pulls','3 × 15'],['Machine Rear Delt Fly','3 × 15'],['Cable 90/90 External Rotation','3 × 12 light']]},
+    {h:'Shoulder',x:[['Face Pulls','3 × 15'],['Machine Rear Delt Fly','3 × 15'],['Cable Lateral Raises','3 × 15 light'],['Cable 90/90 External Rotation','3 × 12 light']]},
     {h:'Back',x:[['Single-Arm Dumbbell Row','3 × 10 moderate'],['Dead Hangs','3 × max, active hang']]},
     {h:'Arms',x:[['Hammer Curls','3 × 10'],['Reverse Curls','3 × 12']]},
     {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 20 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
