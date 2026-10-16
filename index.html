@@ -5154,7 +5154,7 @@ async function refresh(force=true){
   // waiting on Notion; the loads below then redraw it with fresh data.
   if(!skip&&currentTab!=='home')paintTabNow(currentTab);
   // Nutrition is read on Home and from the card, so it cannot be tab-gated.
-  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
+  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
   if(currentTab==='home'){
     if(!skip){
       const isFirst=!_hasLoaded;
@@ -6600,58 +6600,196 @@ const SWIM_PRACTICES_DB='3db63a0b-4e7c-81e5-aee2-e16fc36d7893';
 // there's nothing to store and every device shows the same cue.
 // t: the cue · d: what it means · how: how to work on it in the water.
 const SWIM_CUES=[
-  {t:'Exhale underwater',d:'Never hold your breath. Air goes out in a steady stream the whole time your face is down, so the turn to the side is only for breathing in.',
+  {t:'Exhale underwater',k:'felt',d:'Never hold your breath. Air goes out in a steady stream the whole time your face is down, so the turn to the side is only for breathing in.',
    how:['Bobs in the shallow end before practice: sink, hum the air out, come up, breathe in.','Hum on every stroke so you can hear it.','Every 2 strokes on hard sets until it feels automatic.'],
    warm:[{m:100,t:'4x25 sink-down: blow every bit of air out on the push-off, then swim it'},{m:100,t:'2x50 free breathing every 3, humming the whole time your face is down'},{m:100,t:'4x25 free, hum loud enough to hear yourself'},{m:150,t:'150 easy free, the air never stops going out'}]},
-  {t:'Head still, eyes down',d:'Look at the bottom, not forwards. Lifting your head to see ahead drops your hips and adds drag.',
+  {t:'Head still, eyes down',k:'visual',d:'Look at the bottom, not forwards. Lifting your head to see ahead drops your hips and adds drag.',
    how:['Waterline at your hairline, crown leading.','Keep your head still while the body rolls around it.','On easy lengths, pick one tile and watch it go by.'],
    warm:[{m:100,t:'4x25 kick on your front, arms at your sides, eyes on the tile line'},{m:100,t:'2x50 free, count how many times your head lifts - aim for zero'},{m:100,t:'4x25 free, pick one tile and watch it go past'},{m:150,t:'150 easy free, crown leading, waterline at the hairline'}]},
-  {t:'Hips up, flat line',d:'Sinking legs are the biggest source of drag. Lean on your chest a little and hold your middle firm so your body sits level.',
+  {t:'Hips up, flat line',k:'visual',d:'Sinking legs are the biggest source of drag. Lean on your chest a little and hold your middle firm so your body sits level.',
    how:['Press your chest very slightly down; the hips come up.','Keep your middle engaged instead of bending at the waist.','Kick from the hip, not the knee.'],
    warm:[{m:100,t:'4x25 streamline kick on your front, press the chest, heels just breaking'},{m:100,t:'2x50 free with a firm middle, hips riding high'},{m:100,t:'4x25 kick with no board, nothing bending at the waist'},{m:150,t:'150 easy free, holding the flat line'}]},
-  {t:'Quiet kick from the hip',d:'Small, steady and from the hip, with loose ankles. A big knee-bent kick brakes you and burns the energy you need for the pull.',
+  {t:'Quiet kick from the hip',k:'visual',d:'Small, steady and from the hip, with loose ankles. A big knee-bent kick brakes you and burns the energy you need for the pull.',
    how:['Heels just break the surface; no splashing.','Loose ankles — point the toes.','Steady rhythm rather than bursts.'],
    warm:[{m:100,t:'4x25 kick with no board, arms at your sides - silent, no splash'},{m:100,t:'2x50 free, kick small and steady the whole length'},{m:100,t:'4x25 kick with loose ankles, toes pointed'},{m:150,t:'150 easy free'}]},
-  {t:'Breathe with one goggle in',d:'Turn your head with your body roll instead of lifting it. One goggle stays under, the other comes clear.',
+  {t:'Breathe with one goggle in',k:'visual',d:'Turn your head with your body roll instead of lifting it. One goggle stays under, the other comes clear.',
    how:['Breathe in the trough your head makes, not above the surface.','Turn to breathe, then straight back down.','Keep the lower arm extended while you breathe.'],
    warm:[{m:100,t:'4x25 side-kick, one arm forward, breathe by rolling the chin'},{m:100,t:'2x50 free, turn to breathe without lifting - one goggle stays under'},{m:100,t:'4x25 free: 25 breathing left only, 25 breathing right only'},{m:150,t:'150 easy free, lower arm extended while you breathe'}]},
-  {t:'Streamline off every wall',d:'Free speed. Arms squeezed behind your ears, hands stacked, body tight, then a few kicks before your first stroke.',
+  {t:'Streamline off every wall',k:'visual',d:'Free speed. Arms squeezed behind your ears, hands stacked, body tight, then a few kicks before your first stroke.',
    how:['Squeeze your arms against your ears; no gap.','3–5 kicks underwater before surfacing.','Every wall, every length, including warm-up.'],
    warm:[{m:100,t:'4x25 free with 5 underwater kicks off every wall'},{m:100,t:'2x50 free, counting the kicks off both walls'},{m:100,t:'4x25 push-off in streamline, no stroke until you surface'},{m:150,t:'150 easy free, still streamlining every wall'}]},
-  {t:'Relax what you can',d:'Tension costs energy. Face, hands and recovery arm stay loose; only the pulling muscles work hard.',
+  {t:'Relax what you can',k:'felt',d:'Tension costs energy. Face, hands and recovery arm stay loose; only the pulling muscles work hard.',
    how:['Unclench your jaw and face.','Let the recovery arm hang loose from the elbow.','Loose hands — no rigid fingers.'],
    warm:[{m:100,t:'4x25 free with closed fists - forces the arm to stay loose'},{m:100,t:'2x50 free, hands soft, jaw unclenched'},{m:100,t:'4x25 free, recovery arm hanging loose from the elbow'},{m:150,t:'150 easy free, checking your face every length'}]},
-  {t:'High elbow catch',d:'Point your fingertips down early and keep the elbow high, so your forearm faces backwards and pushes water back instead of down.',
+  {t:'High elbow catch',k:'visual',d:'Point your fingertips down early and keep the elbow high, so your forearm faces backwards and pushes water back instead of down.',
    how:['Fingertips down as soon as your hand is in.','Think forearm as a paddle from wrist to elbow.','Slow and exaggerate it on warm-up lengths.'],
    warm:[{m:100,t:'4x25 sculling, arms extended in front, forearms vertical'},{m:100,t:'2x50 free, fingertips down as soon as the hand enters'},{m:100,t:'4x25 catch-up drill, slow and exaggerated'},{m:150,t:'150 easy free'}]},
-  {t:'Finish past the hip',d:'Most people quit the stroke early. Accelerate the hand all the way past the hip before the arm leaves the water.',
+  {t:'Finish past the hip',k:'visual',d:'Most people quit the stroke early. Accelerate the hand all the way past the hip before the arm leaves the water.',
    how:['Brush your thigh with your thumb on every stroke.','Fastest part of the stroke is the last part.','Count a clean finish on every stroke of an easy 50.'],
    warm:[{m:100,t:'4x25 free, thumb brushes the thigh on every stroke'},{m:100,t:'2x50 free, accelerating the hand through the back half'},{m:100,t:'4x25 free, count a clean finish on every stroke'},{m:150,t:'150 easy free'}]},
-  {t:'Rotate onto your side',d:'Swimming flat wastes the strongest muscles. Shoulders and hips roll together, about halfway onto your side each stroke.',
+  {t:'Rotate onto your side',k:'visual',d:'Swimming flat wastes the strongest muscles. Shoulders and hips roll together, about halfway onto your side each stroke.',
    how:['Roll shoulders and hips as one unit.','Feel the down-side shoulder dip as the other arm recovers.','Side-kick drill: one arm forward, on your side, kicking.'],
    warm:[{m:100,t:'4x25 side-kick: 12 kicks one side, rotate, 12 the other'},{m:100,t:'2x50 free, shoulders and hips turning as one piece'},{m:100,t:'4x25 free, feel the down-side shoulder dip'},{m:150,t:'150 easy free'}]},
-  {t:'Long in front',d:'Enter fingertips first and extend forwards under the water before you start pulling. Length per stroke beats extra strokes.',
+  {t:'Long in front',k:'visual',d:'Enter fingertips first and extend forwards under the water before you start pulling. Length per stroke beats extra strokes.',
    how:['Fingertips in first, then reach forward.','Reach without pausing — glide is not stopping.','Feel the stretch through the armpit.'],
    warm:[{m:100,t:'4x25 catch-up, hands touch in front before the next stroke'},{m:100,t:'2x50 free reaching further each length, counting strokes'},{m:100,t:'4x25 free, fingertips in first then extend forward'},{m:150,t:'150 easy free, long and unhurried'}]},
-  {t:'Count your strokes',d:'Strokes per length is your efficiency reading. Same pace with fewer strokes means better technique.',
+  {t:'Count your strokes',k:'measured',d:'Strokes per length is your efficiency reading. Same pace with fewer strokes means better technique.',
    how:['Count strokes on an easy 50 and note it.','Try to hold that count as the set goes on.','Compare the same 50 week to week.'],
    warm:[{m:100,t:'4x25 free easy, count strokes on each and note the number'},{m:100,t:'2x50 free at that same pace, holding the count'},{m:100,t:'4x25 free at the same count, nothing forced'},{m:150,t:'150 easy free'}]},
-  {t:'Hold the count, add pace',d:'Now go slightly faster while keeping the same stroke count. This is where efficiency turns into speed.',
+  {t:'Hold the count, add pace',k:'measured',d:'Now go slightly faster while keeping the same stroke count. This is where efficiency turns into speed.',
    how:['Swim a 50 at your usual count, then a 50 faster with the same count.','If the count jumps, you pushed too hard — back off.','Alternate easy and faster 50s.'],
    warm:[{m:100,t:'4x25: odd 25 at your usual count, even 25 faster at the same count'},{m:100,t:'2x50 free descending - the count must not rise'},{m:100,t:'4x25 free alternating easy and faster'},{m:150,t:'150 easy free'}]},
-  {t:'Fast feet on the turn',d:'Get your feet to the wall and off it quickly. Time is lost hanging at the wall, not in the push-off.',
+  {t:'Fast feet on the turn',k:'visual',d:'Get your feet to the wall and off it quickly. Time is lost hanging at the wall, not in the push-off.',
    how:['Tight tuck, feet planted fast.','Push off on your side, then rotate.','Leave the wall in streamline, not mid-stroke.'],
    warm:[{m:100,t:'4x25 free finishing into a turn: tight tuck, feet planted fast'},{m:100,t:'2x50 free where the turn is the fastest part of the length'},{m:100,t:'4x25 push-off on your side, then rotate'},{m:150,t:'150 easy free, every wall turned properly'}]},
-  {t:'Bilateral breathing',d:'Breathing every 3 on easy swims evens out your stroke and keeps both sides working the same way.',
+  {t:'Bilateral breathing',k:'felt',d:'Breathing every 3 on easy swims evens out your stroke and keeps both sides working the same way.',
    how:['Every 3 on warm-up and cool-down.','Back to every 2 for hard sets.','Notice which side feels awkward — that side needs work.'],
    warm:[{m:100,t:'4x25 free breathing every 3'},{m:100,t:'2x50 free breathing every 3 the whole way'},{m:100,t:'4x25 free breathing every 5'},{m:150,t:'150 easy free breathing every 3'}]},
-  {t:'Negative split',d:'Swim the second half of a distance faster than the first. It teaches pacing, which is what falls apart when you tire.',
+  {t:'Negative split',k:'felt',d:'Swim the second half of a distance faster than the first. It teaches pacing, which is what falls apart when you tire.',
    how:['On a 200, make the second 100 faster.','Start slower than feels right.','Check your times per 50 if the clock is visible.'],
    warm:[{m:100,t:'4x25, the second 25 of each pair faster'},{m:100,t:'2x50 free, second 25 faster than the first'},{m:100,t:'100 free, second 50 faster than the first'},{m:150,t:'150 easy free'}]},
 ];
+// ── Owning a technique ───────────────────────────────────────────────────────
+// The 16 cues used to rotate forever, so a cue came round, got worked, and went
+// away again with no sense of ever having got it. Now each one is owned once the
+// evidence is in — and the evidence differs by cue, so the threshold does too.
+// Felt and measured cues need no new input: Focus Done and Strokes are already
+// logged on every practice. Only the visual ones need a button, pressed after a
+// frame has actually been looked at.
+const CUE_OWN_CFG='swim_cue_own';
+const CUE_NEED={visual:2,measured:4,felt:4};
+function cueNeed(c){return CUE_NEED[c.k]||4;}
+// Self-reported ticks: sessions where this cue was the focus and it was hit.
+function cueFeltCount(c){
+  return (state.swimPractices||[]).filter(p=>p.focus===c.t&&p.focusDone).length;
+}
+// Sessions with a stroke count actually written down. Holding the count is the
+// cue, so a logged number at or under the standing target counts.
+function cueMeasuredCount(c){
+  const t=strokeTarget();
+  return (state.swimPractices||[]).filter(p=>{
+    if(!p.strokes)return false;
+    if(c.t==='Hold the count, add pace')return t&&p.strokes<=t;
+    return true;
+  }).length;
+}
+function cueVisualCount(c){
+  const v=(state.cueOwn&&state.cueOwn.v)||{};
+  return (v[c.t]||[]).length;
+}
+function cueCount(c){
+  if(c.k==='visual')return cueVisualCount(c);
+  if(c.k==='measured')return cueMeasuredCount(c);
+  return cueFeltCount(c);
+}
+function cueOwned(c){return cueCount(c)>=cueNeed(c);}
+function cueOwnedList(){return SWIM_CUES.filter(cueOwned);}
+async function loadCueOwn(){
+  try{
+    const rows=await appConfigRows(CUE_OWN_CFG);
+    if(rows.length){
+      state.cueOwnPageId=rows[0].id;
+      try{state.cueOwn=JSON.parse(g.text(rows[0].properties.Value))||{v:{}};}catch(_){state.cueOwn={v:{}};}
+    }else{state.cueOwnPageId=null;state.cueOwn=state.cueOwn||{v:{}};}
+    if(!state.cueOwn.v)state.cueOwn.v={};
+  }catch(e){
+    warn('loadCueOwn',e);
+    if(!state.cueOwn)state.cueOwn={v:{}};
+    if(!state.cueOwn.v)state.cueOwn.v={};
+  }
+}
+let _cueSaveTimer=null;
+function saveCueOwn(){
+  clearTimeout(_cueSaveTimer);
+  _cueSaveTimer=setTimeout(async()=>{
+    try{
+      const rich=richChunks(JSON.stringify(state.cueOwn||{v:{}}));
+      if(state.cueOwnPageId)await nPatch(state.cueOwnPageId,{Value:{rich_text:rich}});
+      else{
+        if(state._cueOwnCreating){state._cueOwnCreating.then(()=>saveCueOwn());return;}
+        appConfigInvalidate();
+        state._cueOwnCreating=nCreate(DB.appConfig,{Key:{title:[{text:{content:CUE_OWN_CFG}}]},Value:{rich_text:rich}});
+        const page=await state._cueOwnCreating;
+        state.cueOwnPageId=page.id;
+        state._cueOwnCreating=null;
+      }
+    }catch(e){warn('saveCueOwn',e);showToast('Cue save failed — will retry');}
+  },900);
+}
+function cueConfirm(title){
+  const c=SWIM_CUES.find(x=>x.t===title);
+  if(!c||c.k!=='visual')return;
+  if(!state.cueOwn)state.cueOwn={v:{}};
+  if(!state.cueOwn.v)state.cueOwn.v={};
+  const l=state.cueOwn.v[title]||[];
+  l.push(localToday());
+  state.cueOwn.v[title]=l;
+  saveCueOwn();
+  showToast('Confirmed · '+cueCount(c)+'/'+cueNeed(c));
+  renderCuePage();
+}
+function cueUnconfirm(title){
+  const v=(state.cueOwn&&state.cueOwn.v)||{};
+  if(!v[title]||!v[title].length)return;
+  v[title].pop();
+  if(!v[title].length)delete v[title];
+  saveCueOwn();
+  renderCuePage();
+}
+function closeCuePage(){document.getElementById('cuePage')?.remove();}
+function openCuePage(){
+  if(document.getElementById('cuePage'))return;
+  const el=document.createElement('div');el.id='cuePage';el.className='rival-page';
+  el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="cuePageBody"></div></div>';
+  document.body.appendChild(el);
+  renderCuePage();
+}
+const CUE_KIND_LABEL={visual:'frame',measured:'logged',felt:'felt'};
+function renderCuePage(){
+  const b=document.getElementById('cuePageBody');
+  if(!b)return;
+  const owned=cueOwnedList().length;
+  let rows='';
+  ['visual','measured','felt'].forEach(kind=>{
+    const list=SWIM_CUES.filter(c=>c.k===kind);
+    let head='Confirmed from a frame · '+CUE_NEED.visual+' each';
+    if(kind==='measured')head='From your logged stroke count · '+CUE_NEED.measured+' each';
+    if(kind==='felt')head='Your call · '+CUE_NEED.felt+' each';
+    rows+='<div class="rival-section-label" style="margin-top:18px">'+esc(head)+'</div>';
+    list.forEach(c=>{
+      const n=cueCount(c),need=cueNeed(c);
+      const done=n>=need;
+      const pct=Math.min(100,Math.round(100*n/need));
+      let mark='<span style="color:var(--text-faint);font-size:13px">'+n+'/'+need+'</span>';
+      if(done)mark='<span style="color:var(--gold);font-size:13px">owned</span>';
+      let btns='';
+      if(c.k==='visual'){
+        btns='<button class="wec-log-btn" style="width:34px;padding:6px 0;margin:0" onclick="cueUnconfirm(\''+c.t.replace(/'/g,"\\'")+'\')">−</button>'+
+             '<button class="wec-log-btn" style="width:34px;padding:6px 0;margin:0" onclick="cueConfirm(\''+c.t.replace(/'/g,"\\'")+'\')">+</button>';
+      }
+      const nameCol=done?'var(--gold)':'var(--text-hi)';
+      rows+='<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;color:'+nameCol+'">'+esc(c.t)+'</div>'+
+          '<div style="margin-top:6px;height:3px;background:rgba(232,234,240,0.08);border-radius:2px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:var(--gold)"></span></div>'+
+        '</div>'+mark+btns+'</div>';
+    });
+  });
+  b.innerHTML='<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeCuePage()">← Back</button></div>'+
+    '<div class="rival-page-subtitle" style="margin-top:12px">Technique</div>'+
+    '<div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 6px">'+
+      '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:52px;line-height:1;color:var(--text-hi)">'+owned+'</span>'+
+      '<span style="font-size:13px;color:var(--text-dim)">of '+SWIM_CUES.length+' owned</span>'+
+    '</div>'+
+    '<div style="font-size:11px;line-height:1.8;color:var(--text-dim);margin-bottom:6px">A cue is owned once the evidence is in. The weekly focus prefers the ones you have not owned, so this empties out rather than cycling forever.</div>'+
+    '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-bottom:4px">Visual cues need a side-on frame or a short sequence looked at before you tick them. Felt and measured ones count themselves from what you already log.</div>'+
+    rows;
+}
 function swimFocusFor(ds){
   const wk=semesterWeek(ds||localToday());
-  return SWIM_CUES[((wk-1)%SWIM_CUES.length+SWIM_CUES.length)%SWIM_CUES.length];
+  let pool=SWIM_CUES.filter(c=>!cueOwned(c));
+  if(!pool.length)pool=SWIM_CUES;
+  return pool[((wk-1)%pool.length+pool.length)%pool.length];
 }
 // The cue with its detail — tapped from the swim row on the Today page.
 function openSwimFocus(){
@@ -6791,6 +6929,7 @@ function openPoolCard(){
     <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 22px">${lastLine}</div>
     <button class="wec-log-btn" style="width:100%" onclick="openSoloSets()">Solo sessions</button>
     <button class="wec-log-btn" style="width:100%;margin-top:8px" onclick="closePoolCard();openSwimFocus()">All 16 focuses</button>
+    <button class="wec-log-btn" style="width:100%;margin-top:8px" onclick="openCuePage()">Technique · ${cueOwnedList().length}/${SWIM_CUES.length} owned</button>
   </div>`;
   document.body.appendChild(el);
 }
