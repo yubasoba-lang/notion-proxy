@@ -913,6 +913,8 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
 .fld>.cap{font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;display:block;}
 /* .wec-log-btn is width:100%, so beside an input it needs its growth taken away. */
 .btn-inline{width:auto;flex:none;margin:0;padding:12px 16px;}
+.day-nav{background:none;border:none;color:var(--text-dim);font-size:24px;line-height:1;padding:4px 10px;cursor:pointer;font-family:inherit;}
+.day-nav.off{color:rgba(232,234,240,0.15);cursor:default;}
 .wec-day-section{margin-bottom:6px;}
 .wec-day-header{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-radius:9px;cursor:pointer;border:1px solid var(--border);background:var(--bg);transition:border-color 0.15s,background 0.15s;margin-bottom:0;}
 .wec-day-header:hover{border-color:rgba(232,234,240,0.25);background:rgba(232,234,240,0.04);}
@@ -8119,6 +8121,31 @@ const PROTEIN_FOODS=[
   {id:'yogurt', t:'Greek yogurt',         g:15, n:'150g'},
 ];
 function proteinFood(id){return PROTEIN_FOODS.find(f=>f.id===id)||null;}
+// The day the card is showing. Null means today, so the card left open overnight
+// resolves to the new day rather than sticking on the old one.
+let _protDate=null;
+function protDate(){return _protDate||localToday();}
+function protDayShift(ds,n){
+  const d=new Date(ds+'T12:00:00');
+  d.setDate(d.getDate()+n);
+  return localDay(d);
+}
+// Forward stops at today; back stops at 29 days, which is as far as the stored
+// history goes.
+function protShiftDay(dir){
+  const next=protDayShift(protDate(),dir);
+  if(next>localToday())return;
+  if(next<protDayShift(localToday(),-29))return;
+  _protDate=next;
+  const t=document.getElementById('proteinTally');
+  if(t)t.innerHTML=proteinTallyHTML();
+}
+function protDateLabel(){
+  const ds=protDate();
+  if(ds===localToday())return 'today';
+  if(ds===protDayShift(localToday(),-1))return 'yesterday';
+  return ds;
+}
 function proteinDay(ds){return (state.proteinLog||{})[ds||localToday()]||{};}
 function proteinTotal(ds){
   const d=proteinDay(ds);
@@ -8178,7 +8205,7 @@ function saveProteinOrWeightRetry(which){
   else saveWeightLog();
 }
 function proteinBump(id,dir){
-  const ds=localToday();
+  const ds=protDate();
   if(!state.proteinLog)state.proteinLog={};
   if(!state.proteinLog[ds])state.proteinLog[ds]={};
   const cur=state.proteinLog[ds][id]||0;
@@ -8190,16 +8217,17 @@ function proteinBump(id,dir){
   proteinPaint();
 }
 function proteinClear(){
-  const ds=localToday();
+  const ds=protDate();
   if(state.proteinLog&&state.proteinLog[ds]){delete state.proteinLog[ds];saveProteinLog();}
-  proteinPaint();
+  const t=document.getElementById('proteinTally');
+  if(t)t.innerHTML=proteinTallyHTML();
   if(typeof render==='function')render();
 }
 // Repaints the counts and the total in place rather than rebuilding the page, so
 // tapping does not scroll you back to the top.
 function proteinPaint(){
-  const d=proteinDay();
-  const tot=proteinTotal();
+  const d=proteinDay(protDate());
+  const tot=proteinTotal(protDate());
   PROTEIN_FOODS.forEach(f=>{
     const c=document.getElementById('pc-'+f.id);
     if(c){
@@ -8405,14 +8433,9 @@ function proteinRowHTML(){
     </div>
   </div>`;
 }
-function closeProteinCard(){
-  document.getElementById('proteinCardPage')?.remove();
-  if(typeof render==='function')render();
-}
-function openProteinCard(){
-  if(document.getElementById('proteinCardPage'))return;
-  const el=document.createElement('div');el.id='proteinCardPage';el.className='rival-page';
-  const d=proteinDay();
+function proteinTallyHTML(){
+  const ds=protDate();
+  const d=proteinDay(ds);
   let cheapRows='';
   let restRows='';
   PROTEIN_FOODS.forEach(f=>{
@@ -8431,23 +8454,57 @@ function openProteinCard(){
     if(f.cheap)cheapRows+=row;
     else restRows+=row;
   });
-  const tot=proteinTotal();
+  const tot=proteinTotal(ds);
   const pct=Math.min(100,Math.round(100*tot/PROTEIN_TARGET));
-  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
-    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeProteinCard()">← Back</button></div>
-    <div class="rival-page-subtitle" style="margin-top:12px">Weight</div>
-    <div id="weightBody" style="margin-bottom:26px">${weightBodyHTML()}</div>
-    <div class="rival-page-subtitle">Protein · today</div>
+  const atToday=ds===localToday();
+  let fwd='<button class="day-nav" onclick="protShiftDay(1)">›</button>';
+  if(atToday)fwd='<span class="day-nav off">›</span>';
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <button class="day-nav" onclick="protShiftDay(-1)">‹</button>
+      <div class="rival-page-subtitle" style="margin:0">Protein · ${esc(protDateLabel())}</div>
+      ${fwd}
+    </div>
     <div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 6px">
       <span id="proteinTotal" style="font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--text-hi)">${tot}</span>
       <span style="font-size:13px;color:var(--text-dim)">of ${PROTEIN_TARGET}g</span>
     </div>
     <div style="height:5px;background:rgba(232,234,240,0.08);border-radius:3px;overflow:hidden;margin-bottom:6px"><span id="proteinBar" style="display:block;height:100%;width:${pct}%;background:var(--gold)"></span></div>
-    <div id="proteinNote" style="font-size:11px;color:var(--text-dim);margin-bottom:20px">${esc(proteinVerdict(tot))}</div>
+    <div id="proteinNote" style="font-size:11px;color:var(--text-dim);margin-bottom:4px">${esc(proteinVerdict(tot))}</div>
+    <div style="font-size:10px;color:var(--text-faint);margin-bottom:18px">swipe sideways for another day</div>
     <div class="rival-section-label">Cheapest per gram</div>
     <div style="margin:4px 0 20px">${cheapRows}</div>
     <div class="rival-section-label">Everything else</div>
-    <div style="margin:4px 0 20px">${restRows}</div>
+    <div style="margin:4px 0 20px">${restRows}</div>`;
+}
+function protBindSwipe(el){
+  let x0=null,y0=null;
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){x0=null;return;}
+    x0=e.touches[0].clientX;y0=e.touches[0].clientY;
+  },{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(x0===null)return;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-x0,dy=t.clientY-y0;
+    x0=null;
+    if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    protShiftDay(dx<0?1:-1);   // drag left = forward a day, as on the recap
+  },{passive:true});
+}
+function closeProteinCard(){
+  document.getElementById('proteinCardPage')?.remove();
+  _protDate=null;
+  if(typeof render==='function')render();
+}
+function openProteinCard(){
+  if(document.getElementById('proteinCardPage'))return;
+  _protDate=localToday();
+  const el=document.createElement('div');el.id='proteinCardPage';el.className='rival-page';
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeProteinCard()">← Back</button></div>
+    <div class="rival-page-subtitle" style="margin-top:12px">Weight</div>
+    <div id="weightBody" style="margin-bottom:26px">${weightBodyHTML()}</div>
+    <div id="proteinTally">${proteinTallyHTML()}</div>
     <div class="rival-section-label">Shopping</div>
     <div style="font-size:11px;line-height:1.9;color:var(--text-dim);margin:4px 0 20px">
       · <strong style="color:var(--text)">lencse</strong> lentils · <strong style="color:var(--text)">vörös lencse</strong> red lentils<br>
@@ -8468,9 +8525,10 @@ function openProteinCard(){
     <div style="font-size:11px;line-height:1.9;color:var(--text-dim);margin:4px 0 22px">
       ${PROTEIN_TARGET}g is a target, not a threshold — 120–130 is genuinely fine. Total food matters more: at 185cm, still growing, nine sessions a week, under-eating will cost you more than landing 20g short. Rice, bread, potatoes, oats are not the enemy.
     </div>
-    <button class="wec-log-btn" style="width:100%" onclick="proteinClear()">Clear today</button>
+    <button class="wec-log-btn" style="width:100%" onclick="proteinClear()">Clear this day</button>
   </div>`;
   document.body.appendChild(el);
+  protBindSwipe(el);
 }
 function recapRowHTML(){
   const yest=recapPrevDay();
