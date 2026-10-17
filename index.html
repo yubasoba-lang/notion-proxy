@@ -8852,7 +8852,9 @@ const HINA_SQUAD_NAMES=['Dóra','Zsófi','Réka','Panna','Eszter','Lilla','Anna'
 function hinaRollSquad(rnd){
   return HINA_SQUAD_NAMES.map(name=>({
     name,
-    t:Math.round((27.4+rnd()*3.1)*10)/10,          // 27.4 – 30.5
+    // A real B squad is wide. Too tight a range and she sits last for months
+    // with nobody in reach, which reads as a dead feature rather than a slow start.
+    t:Math.round((27.3+rnd()*4.7)*10)/10,          // 27.3 – 32.0
     rate:Math.round((0.02+rnd()*0.10)*1000)/1000,  // seconds off per month
   }));
 }
@@ -8888,8 +8890,9 @@ async function loadHina(){
     state.hina.talent=Math.round((HINA_TALENT_LO+r()*(HINA_TALENT_HI-HINA_TALENT_LO))*1000)/1000;
     dirty=true;
   }
-  if(!state.hina.squad||!state.hina.squad.length){
+  if(!state.hina.squad||!state.hina.squad.length||state.hina.squadV!==2){
     state.hina.squad=hinaRollSquad(hinaRng(state.hina.seed^0x5bf03635));
+    state.hina.squadV=2;
     dirty=true;
   }
   if(!state.hina.peak)state.hina.peak={};
@@ -8946,6 +8949,142 @@ function hinaHexSVG(cur,peak){
     '<polygon points="'+curPts+'" fill="rgba(168,168,168,0.17)" stroke="var(--gold)" stroke-width="1.5"/>'+
     labels+'</svg>';
 }
+// ── Meets ────────────────────────────────────────────────────────────────────
+// One race a month, resolved on the 1st for the month just finished, using her
+// form as it stands then. Results are permanent: they are the record, and a
+// record you can re-roll is worth nothing. Every meet is seeded from the month
+// itself so a reload replays the same race rather than inventing a new one.
+function hinaMonthKey(ds){return (ds||localToday()).slice(0,7);}
+function hinaPrevMonth(ym){
+  const y=+ym.slice(0,4), m=+ym.slice(5,7);
+  if(m===1)return (y-1)+'-12';
+  return y+'-'+String(m-1).padStart(2,'0');
+}
+function hinaMonthsBetween(a,b){
+  const ay=+a.slice(0,4),am=+a.slice(5,7),by=+b.slice(0,4),bm=+b.slice(5,7);
+  return (by-ay)*12+(bm-am);
+}
+// Box–Muller off the seeded generator, so race noise is reproducible.
+function hinaGauss(rnd){
+  let u=0,v=0;
+  while(u===0)u=rnd();
+  while(v===0)v=rnd();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function hinaSeedFor(ym){
+  let h=(state.hina&&state.hina.seed)||1;
+  for(let i=0;i<ym.length;i++)h=((h<<5)-h+ym.charCodeAt(i))|0;
+  return h>>>0||7;
+}
+// 凝 decides how close to her potential she swims; 心 decides the spread.
+// Low Calm is not simply worse — it is wider, so she can blow up or steal one.
+function hinaRaceTime(cur,rnd){
+  const pot=hinaTime(cur);
+  const execPenalty=(1-(cur.focus||0)/100)*0.015;
+  const sigma=0.004+(1-(cur.calm||0)/100)*0.021;
+  const t=pot*(1+execPenalty+hinaGauss(rnd)*sigma);
+  return Math.round(t*100)/100;
+}
+// The squad improve on their own and race with a narrow, steady spread. They are
+// a standard, not a mirror, so nothing he does moves them.
+function hinaSquadAt(monthsOn){
+  return (state.hina.squad||[]).map(s=>({
+    name:s.name,
+    t:Math.max(21.5,Math.round((s.t-s.rate*monthsOn)*100)/100),
+  }));
+}
+function hinaRunMeet(ym,cur){
+  const rnd=hinaRng(hinaSeedFor(ym));
+  const monthsOn=hinaMonthsBetween(hinaMonthKey(state.hina.born),ym);
+  const field=hinaSquadAt(monthsOn).map(s=>({
+    name:s.name,
+    t:Math.round(s.t*(1+hinaGauss(rnd)*0.008)*100)/100,
+  }));
+  const mine=hinaRaceTime(cur,rnd);
+  field.push({name:'Hina',t:mine,me:true});
+  field.sort((a,b)=>a.t-b.t);
+  const place=field.findIndex(x=>x.me)+1;
+  return {ym,t:mine,place,size:field.length,field:field.map(x=>({n:x.name,t:x.t}))};
+}
+// Resolve anything owed. Catches up if the app has not been opened for months.
+function hinaResolveMeets(){
+  if(!state.hina||!state.hina.born)return false;
+  if(!state.hina.meets)state.hina.meets=[];
+  const done=new Set(state.hina.meets.map(m=>m.ym));
+  const thisMonth=hinaMonthKey();
+  let ym=hinaMonthKey(state.hina.born);
+  let changed=false;
+  const cur=hinaCurrent();
+  let guard=0;
+  while(ym!==thisMonth&&guard++<240){
+    if(!done.has(ym)){state.hina.meets.push(hinaRunMeet(ym,cur));changed=true;}
+    const y=+ym.slice(0,4),m=+ym.slice(5,7);
+    if(m===12)ym=(y+1)+'-01';
+    else ym=y+'-'+String(m+1).padStart(2,'0');
+  }
+  if(changed){
+    state.hina.meets.sort((a,b)=>a.ym.localeCompare(b.ym));
+    state.hina.meets=state.hina.meets.slice(-36);
+    saveHina();
+  }
+  return changed;
+}
+function hinaRecord(){
+  const ms=(state.hina&&state.hina.meets)||[];
+  if(!ms.length)return null;
+  const places=ms.map(m=>m.place);
+  const wins=places.filter(p=>p===1).length;
+  const podium=places.filter(p=>p<=3).length;
+  return {
+    meets:ms.length,
+    avg:Math.round(10*places.reduce((a,b)=>a+b,0)/places.length)/10,
+    wins,podium,
+    best:Math.min.apply(null,places),
+    bestT:Math.min.apply(null,ms.map(m=>m.t)),
+    last:ms[ms.length-1],
+  };
+}
+function hinaDaysToMeet(){
+  const d=new Date(localToday()+'T12:00:00');
+  const next=new Date(d.getFullYear(),d.getMonth()+1,1,12,0,0);
+  return Math.max(0,Math.round((next-d)/86400000));
+}
+function hinaOrdinal(n){
+  if(n===1)return '1st';
+  if(n===2)return '2nd';
+  if(n===3)return '3rd';
+  return n+'th';
+}
+function hinaMeetsHTML(){
+  const rec=hinaRecord();
+  if(!rec){
+    return '<div class="rival-section-label" style="margin-top:22px">Record</div>'+
+      '<div style="font-size:12px;color:var(--text-dim);margin-top:8px">no meets yet · first one in '+hinaDaysToMeet()+' days</div>';
+  }
+  const ms=(state.hina.meets||[]).slice(-8).reverse();
+  let rows='';
+  ms.forEach(m=>{
+    let col='var(--text)';
+    if(m.place===1)col='var(--gold)';
+    const beat=m.field.filter(f=>f.n!=='Hina').slice(0,1)[0];
+    rows+='<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid rgba(232,234,240,0.06);font-size:12px">'+
+      '<span style="width:58px;color:var(--text-faint);font-family:\'JetBrains Mono\',monospace">'+m.ym+'</span>'+
+      '<span style="width:40px;color:'+col+'">'+hinaOrdinal(m.place)+'</span>'+
+      '<span style="flex:1;color:var(--text-dim);font-size:11px">of '+m.size+'</span>'+
+      '<span style="font-family:\'JetBrains Mono\',monospace;color:var(--text-hi)">'+m.t.toFixed(2)+'</span>'+
+    '</div>';
+  });
+  return '<div class="rival-section-label" style="margin-top:22px">Record · '+rec.meets+' meets</div>'+
+    '<div style="display:flex;gap:18px;margin:10px 0 6px">'+
+      '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;line-height:1;color:var(--text-hi)">'+rec.avg+'</div><div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">avg place</div></div>'+
+      '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;line-height:1;color:var(--text-hi)">'+rec.wins+'</div><div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">wins</div></div>'+
+      '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;line-height:1;color:var(--text-hi)">'+rec.podium+'</div><div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">podiums</div></div>'+
+      '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;line-height:1;color:var(--text-hi)">'+rec.bestT.toFixed(1)+'</div><div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">best</div></div>'+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--text-faint);margin-bottom:8px">next meet in '+hinaDaysToMeet()+' days</div>'+
+    rows;
+}
+
 function renderHina(){
   const el=document.getElementById('tab-hina');
   if(!el)return;
@@ -8955,6 +9094,7 @@ function renderHina(){
   }
   const cur=hinaCurrent();
   hinaUpdatePeaks(cur);
+  hinaResolveMeets();
   const peak=state.hina.peak||{};
   const t=hinaTime(cur);
   let rows='';
@@ -8995,6 +9135,7 @@ function renderHina(){
     '<div class="rival-section-label" style="margin-top:22px">B squad</div>'+
     '<div style="margin-top:6px">'+ladder+'</div>'+
     '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:18px">They improve on their own. She improves on you.</div>'+
+    hinaMeetsHTML()+
   '</div>';
 }
 
