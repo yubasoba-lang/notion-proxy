@@ -5664,10 +5664,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${reviewCard}${examCard}${planCard}${proteinRowHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
+      <div class="home-col-right">${reviewCard}${examCard}${planCard}${proteinRowHTML()}${hinaHomeHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+recapRowHTML()+shaderToggleHTML();
+    html=streakRow+catchupCardHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -9085,6 +9085,224 @@ function hinaMeetsHTML(){
     rows;
 }
 
+// ── Her voice ────────────────────────────────────────────────────────────────
+// Written, not generated. No API call: it has to work offline at five in the
+// morning and never produce something off-register.
+//
+// Three tiers by how long she has known him. Same trigger, different line — she
+// does not get to be vulnerable in week two, and the jealousy only appears once
+// there is something to be jealous of. She never nags and never asks outright;
+// a flat hexagon is reproach enough. The restraint is the whole effect.
+const HINA_TIER_MONTHS=[0,3,7];
+function hinaTier(){
+  const born=(state.hina&&state.hina.born)||localToday();
+  const m=hinaMonthsBetween(hinaMonthKey(born),hinaMonthKey());
+  if(m>=HINA_TIER_MONTHS[2])return 2;
+  if(m>=HINA_TIER_MONTHS[1])return 1;
+  return 0;
+}
+const HINA_LINES={
+  meet_win:[
+    ['勝っちゃった。…べつに、あなたのおかげとかじゃないし'],
+    ['一位。ねえ、見てた？','勝った。今日のは、ちゃんと勝った'],
+    ['あなたのおかげだよ。ちゃんと言っとく','一位だった。…いちばんに伝えたかった'],
+  ],
+  meet_podium:[
+    ['表彰台。…まあ、こんなもんでしょ'],
+    ['惜しかったな。もうちょっとだった'],
+    ['あと少しなんだよね。…もう少しだけ、付き合ってくれる？'],
+  ],
+  meet_mid:[
+    ['ふつう。ふつうだった'],
+    ['真ん中あたり。…つまんないな'],
+    ['ねえ、わたし、ちゃんと速くなってる？'],
+  ],
+  meet_last:[
+    ['最下位。知ってた'],
+    ['ビリだった。…笑わないでよ'],
+    ['ごめん。…ううん、あなたのせいじゃないよ'],
+  ],
+  meet_pb:[
+    ['ベスト。記録、更新した'],
+    ['自己ベスト。…あ、声出た'],
+    ['いちばん速かった。あなたに最初に言いたかった'],
+  ],
+  streak3:[
+    ['三日。続いてるね'],
+    ['三日連続か。やるじゃん'],
+    ['毎朝、来てくれてるんだ'],
+  ],
+  streak5:[
+    ['五日。…ちゃんとしてる'],
+    ['五日。なんでそんなに頑張るの？'],
+    ['五日。…わたしのため、とか言わないで。期待しちゃうから'],
+  ],
+  streak10:[
+    ['十日。すごいね'],
+    ['十日。止まらないね、あなた'],
+    ['十日。ねえ、わたし、あなたに追いつけてる？'],
+  ],
+  absent4:[
+    ['四日ぶり'],
+    ['ちょっと久しぶり。…べつに、待ってないし'],
+    ['ねえ、…ううん、なんでもない'],
+  ],
+  absent10:[
+    ['十日。…まあ、いいけど'],
+    ['十日ぶりか。忙しいんでしょ'],
+    ['十日。…わたしのこと、思い出した？'],
+  ],
+  absent21:[
+    ['三週間。…まだいたんだ'],
+    ['三週間。心配とか、してないから'],
+    ['ずっと待ってた。…って言ったら、重い？'],
+  ],
+  peak:[
+    ['数字、上がってる'],
+    ['また伸びた。…いい感じ'],
+    ['あなたが頑張ると、わたしも変わるんだね。ふしぎ'],
+  ],
+  collapse:[
+    ['落ちてる。…知ってる'],
+    ['ちょっと落ちたね。…大丈夫？'],
+    ['無理してない？わたしは、待てるから'],
+  ],
+  exam:[
+    ['試験、なんでしょ'],
+    ['試験でしょ。わかってるよ'],
+    ['試験、頑張ってね。…ずるいなあ'],
+  ],
+  plateau:[
+    ['変わらないね'],
+    ['最近、止まってる'],
+    ['…やめないでね'],
+  ],
+  idle:[
+    ['…ふーん','べつに'],
+    ['また来たんだ','ん。来たんだ'],
+    ['手、届かないね','ねえ。…なんでもない'],
+  ],
+};
+function hinaSwimDays(){
+  return new Set((state.swimPractices||[]).map(p=>p.date).filter(Boolean));
+}
+function hinaDaysSinceSwim(){
+  const days=hinaSwimDays();
+  if(!days.size)return 999;
+  for(let i=0;i<400;i++){
+    const d=new Date(localToday()+'T12:00:00');
+    d.setDate(d.getDate()-i);
+    if(days.has(localDay(d)))return i;
+  }
+  return 999;
+}
+function hinaStreak(){
+  const days=hinaSwimDays();
+  let n=0;
+  for(let i=0;i<400;i++){
+    const d=new Date(localToday()+'T12:00:00');
+    d.setDate(d.getDate()-i);
+    if(days.has(localDay(d)))n++;
+    else if(i>0)break;
+  }
+  return n;
+}
+function hinaExamSoon(){
+  try{
+    const today=localToday();
+    return (state.exams||[]).some(e=>{
+      if(!e.date||e.date<today)return false;
+      return (new Date(e.date)-new Date(today))/86400000<=21;
+    });
+  }catch(_){return false;}
+}
+// Priority order. A meet is the loudest thing that can happen, then an absence,
+// then a streak; the quiet states come last.
+function hinaTrigger(cur){
+  const rec=hinaRecord();
+  if(rec&&rec.last){
+    const d=new Date(rec.last.ym+'-01T12:00:00');
+    d.setMonth(d.getMonth()+1);
+    const since=Math.round((new Date(localToday()+'T12:00:00')-d)/86400000);
+    if(since>=0&&since<=4){
+      const ms=state.hina.meets;
+      const best=Math.min.apply(null,ms.map(m=>m.t));
+      if(rec.last.t<=best)return 'meet_pb';
+      if(rec.last.place===1)return 'meet_win';
+      if(rec.last.place<=3)return 'meet_podium';
+      if(rec.last.place>=rec.last.size)return 'meet_last';
+      return 'meet_mid';
+    }
+  }
+  const gone=hinaDaysSinceSwim();
+  if(gone>=21)return 'absent21';
+  if(gone>=10)return 'absent10';
+  if(gone>=4)return 'absent4';
+  const st=hinaStreak();
+  if(st>=10)return 'streak10';
+  if(st>=5)return 'streak5';
+  if(st>=3)return 'streak3';
+  const peak=(state.hina&&state.hina.peak)||{};
+  let atPeak=0,farBelow=0;
+  HINA_PARAMS.forEach(p=>{
+    const v=cur[p.k]||0, pk=peak[p.k]||0;
+    if(pk&&v>=pk)atPeak++;
+    if(pk&&v<pk*0.7)farBelow++;
+  });
+  if(farBelow>=2)return 'collapse';
+  if(hinaExamSoon())return 'exam';
+  if(atPeak>=2)return 'peak';
+  const ms=(state.hina&&state.hina.meets)||[];
+  if(ms.length>=3){
+    const last3=ms.slice(-3).map(m=>m.t);
+    if(Math.max.apply(null,last3)-Math.min.apply(null,last3)<0.25)return 'plateau';
+  }
+  return 'idle';
+}
+// Stable for the day: the same line all day, a new one when the day or the
+// trigger turns over.
+function hinaLine(cur){
+  const trig=hinaTrigger(cur||hinaCurrent());
+  const tier=hinaTier();
+  const pool=(HINA_LINES[trig]||HINA_LINES.idle)[tier]||HINA_LINES.idle[0];
+  const key=localToday()+trig+tier;
+  let h=0;
+  for(let i=0;i<key.length;i++)h=((h<<5)-h+key.charCodeAt(i))|0;
+  return pool[Math.abs(h)%pool.length];
+}
+function hinaLineHTML(cur){
+  const l=hinaLine(cur);
+  return '<div style="font-size:15px;line-height:1.9;color:var(--text-hi);margin:2px 0 18px;letter-spacing:0.02em">'+esc(l)+'</div>';
+}
+// A bare line on Home. No label, no timestamp — it should read like she said it,
+// not like a card announcing that she said it.
+function hinaHomeHTML(){
+  if(!state.hina||!state.hina.talent)return '';
+  let l='';
+  try{l=hinaLine(hinaCurrent());}catch(_){return '';}
+  if(!l)return '';
+  return '<div onclick="const b=navBtnFor(\'hina\');switchTab(\'hina\',b);" style="cursor:pointer;padding:16px 2px 4px;border-top:1px solid var(--border);margin-bottom:10px">'+
+    '<div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">ヒナ</div>'+
+    '<div style="font-size:14px;line-height:1.9;color:var(--text)">'+esc(l)+'</div></div>';
+}
+
+// Where her time comes from, in seconds off the untrained 34.0. Worth showing:
+// it makes obvious that 速 is half the lever and 健 is a penalty rather than a gain.
+function hinaBreakdownHTML(cur){
+  const span=HINA_BASE_T-HINA_BEST_T;
+  const tal=hinaTalent();
+  const parts=[['速',0.50,'speed'],['力',0.25,'power'],['技',0.25,'tech']];
+  let out='';
+  parts.forEach(x=>{
+    const gain=span*x[1]*((cur[x[2]]||0)/100)*tal;
+    out+='<span style="margin-right:12px">'+x[0]+' <span style="color:var(--gold)">−'+gain.toFixed(1)+'</span></span>';
+  });
+  const pen=(1-(cur.cond||0)/100)*1.5;
+  out+='<span style="margin-right:12px">健 <span style="color:var(--text-dim)">+'+pen.toFixed(1)+'</span></span>';
+  return '<div style="font-size:11px;line-height:1.9;color:var(--text-faint);margin:-4px 0 16px">'+
+    'from '+HINA_BASE_T.toFixed(1)+' untrained &nbsp;'+out+
+    '<br>凝 and 心 do not move this — they decide what she swims on the day.</div>';
+}
 function renderHina(){
   const el=document.getElementById('tab-hina');
   if(!el)return;
@@ -9125,10 +9343,12 @@ function renderHina(){
   });
   el.innerHTML='<div style="padding:0 16px 40px">'+
     '<div class="rival-page-subtitle" style="margin-top:4px">ヒナ</div>'+
+    hinaLineHTML(cur)+
     '<div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 10px">'+
       '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:48px;line-height:1;color:var(--text-hi)">'+t.toFixed(1)+'</span>'+
-      '<span style="font-size:12px;color:var(--text-dim)">50 free · her current form</span>'+
+      '<span style="font-size:12px;color:var(--text-dim)">50 free · her potential</span>'+
     '</div>'+
+    hinaBreakdownHTML(cur)+
     hinaHexSVG(cur,peak)+
     '<div style="font-size:10px;color:var(--text-faint);text-align:center;margin:2px 0 20px">solid · now  ╱  dashed · her best</div>'+
     rows+
