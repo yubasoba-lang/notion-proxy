@@ -21,7 +21,7 @@
   --text-hi:   #ededed;
   --text:      #a8a8a8;
   --text-dim:  #505050;
-  --text-faint:#202020;
+  --text-faint:#333333;
   --gold:      #a8a8a8;
   --gold-hi:   #c0c0c0;
   --gold-dim:  #3a3a3e;
@@ -901,6 +901,7 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
 .wec-secondary{background:rgba(100,100,100,0.1);color:var(--text-dim);border:1px solid var(--border);}
 .wec-log-btn{width:100%;padding:10px;background:var(--gold);color:#0a0a0e;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;border:none;border-radius:8px;cursor:pointer;font-family:inherit;}
 .wec-log-btn:disabled{opacity:0.45;cursor:not-allowed;}
+#shaderBg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;display:block;pointer-events:none;}
 .num-in{box-sizing:border-box;width:100%;background:rgba(232,234,240,0.05);border:1px solid rgba(232,234,240,0.12);border-radius:9px;color:var(--text-hi);font-family:'JetBrains Mono',monospace;text-align:center;}
 .num-in:focus{outline:none;border-color:var(--gold);}
 .num-in::-webkit-outer-spin-button,.num-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
@@ -5657,10 +5658,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${reviewCard}${examCard}${planCard}${proteinRowHTML()}${recapRowHTML()}</div>
+      <div class="home-col-right">${arcCard}${reviewCard}${examCard}${planCard}${proteinRowHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+recapRowHTML();
+    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+recapRowHTML()+shaderToggleHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -8230,6 +8231,289 @@ function recapBindSwipe(el){
 // The Home row. Shows yesterday once the day is closed, because that's the one you
 // look back at; before anything is logged today it's the only thing worth showing.
 function recapPrevDay(){const d=new Date();d.setDate(d.getDate()-1);return localDay(d);}
+// ── Animated background ──────────────────────────────────────────────────────
+// Ported by hand from a 21st.dev "Silk" shader. The original ships as a React
+// component, but the React part is only a useRef and a useEffect — the shader is
+// plain GLSL and the setup is plain WebGL, so none of it needed a build step.
+// Recoloured from the original green to near-black greys: the app is monochrome
+// on pure black and the Home sections are transparent, so anything brighter than
+// this sits behind text and ruins it. Cursor interaction is stripped (it was off
+// in the original preset and it is meaningless on a phone).
+const SHADER_VERT=`attribute vec2 a_position;
+void main() {
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+const SHADER_FRAG=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform vec3 u_colors[8];
+uniform vec4 u_scene;
+uniform vec4 u_shape;
+uniform vec4 u_surface;
+uniform vec4 u_finish;
+uniform vec4 u_transform;
+uniform vec4 u_space;
+
+#define u_resolution u_scene.xy
+#define u_time u_scene.z
+#define u_colorCount u_scene.w
+#define u_scale u_shape.x
+#define u_intensity u_shape.y
+#define u_warp u_shape.w
+#define u_detail u_surface.x
+#define u_contrast u_surface.y
+#define u_brightness u_surface.z
+#define u_saturation u_surface.w
+#define u_vignette u_finish.y
+#define u_blur u_finish.z
+#define u_grain u_finish.w
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+#define u_seed u_transform.x
+#else
+#define u_seed mod(u_transform.x, 31.0)
+#endif
+#define u_rotate u_transform.y
+#define u_drift u_transform.z
+#define u_offset u_space.xy
+
+float hash21(vec2 p) {
+#ifndef GL_FRAGMENT_PRECISION_HIGH
+  p = mod(p, 31.0);
+#endif
+  p = fract(p * vec2(234.34, 435.345));
+  p += dot(p, p + 34.23);
+  return fract(p.x * p.y);
+}
+
+float grainHash(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+    mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+    u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 5; i++) {
+    v += a * noise(p);
+    p = p * 2.03 + vec2(17.0, 9.2);
+    a *= 0.5;
+  }
+  return v;
+}
+
+vec3 palette(float x) {
+  float n = max(u_colorCount - 1.0, 1.0);
+  float f = clamp(x, 0.0, 1.0) * n;
+  vec3 col = u_colors[0];
+  for (int i = 0; i < 7; i++) {
+    if (float(i) < n)
+      col = mix(col, u_colors[i + 1],
+        smoothstep(0.0, 1.0, clamp(f - float(i), 0.0, 1.0)));
+  }
+  return col;
+}
+
+vec3 shade(vec2 uv, vec2 p, float t) {
+  vec2 q = p * 1.6;
+  float amp = 0.25 + u_intensity * 0.85;
+  for (float i = 1.0; i < 5.0; i += 1.0) {
+    q.x += amp / i * cos(i * 2.4 * q.y + t * 0.8 + u_seed);
+    q.y += amp / i * cos(i * 1.7 * q.x + t * 0.6);
+  }
+  return palette(0.5 + 0.5 * sin(q.x + q.y));
+}
+
+void main() {
+  vec2 screenUv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution.xy)
+    / min(u_resolution.x, u_resolution.y);
+  vec2 uv = p * min(u_resolution.x, u_resolution.y) / u_resolution.xy + 0.5;
+  p *= u_scale;
+  if (abs(u_rotate) > 0.0001) {
+    float cr = cos(u_rotate), sr = sin(u_rotate);
+    p = mat2(cr, -sr, sr, cr) * p;
+  }
+  p += u_offset;
+  if (u_drift > 0.0001)
+    p += u_drift * vec2(sin(u_time * 0.31), cos(u_time * 0.23));
+  if (u_warp > 0.0) {
+    p += u_warp * (vec2(
+      fbm(p * u_detail + u_seed),
+      fbm(p * u_detail + vec2(5.2, 1.3))) - 0.5);
+  }
+  vec3 col;
+  if (u_blur > 0.0) {
+    float e = u_blur;
+    float pe = e * u_scale;
+    vec2 uvE = vec2(e) * min(u_resolution.x, u_resolution.y) / u_resolution.xy;
+    col  = shade(uv, p, u_time) * 0.36;
+    col += shade(uv + vec2(uvE.x, 0.0), p + vec2(pe, 0.0), u_time) * 0.16;
+    col += shade(uv - vec2(uvE.x, 0.0), p - vec2(pe, 0.0), u_time) * 0.16;
+    col += shade(uv + vec2(0.0, uvE.y), p + vec2(0.0, pe), u_time) * 0.16;
+    col += shade(uv - vec2(0.0, uvE.y), p - vec2(0.0, pe), u_time) * 0.16;
+  } else {
+    col = shade(uv, p, u_time);
+  }
+  if (abs(u_contrast - 1.0) > 0.0001)
+    col = (col - 0.5) * u_contrast + 0.5;
+  if (abs(u_saturation - 1.0) > 0.0001) {
+    float luma = dot(col, vec3(0.299, 0.587, 0.114));
+    col = mix(vec3(luma), col, u_saturation);
+  }
+  if (abs(u_brightness) > 0.0001)
+    col += u_brightness;
+  if (u_vignette > 0.0001) {
+    float vd = length(screenUv - 0.5) * 1.41421356;
+    col *= 1.0 - u_vignette * smoothstep(0.35, 1.0, vd);
+  }
+  if (u_grain > 0.0001)
+    col += (grainHash(
+      gl_FragCoord.xy + vec2(u_seed * 17.0, u_seed * 31.0)) - 0.5) * u_grain;
+  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+`;
+// Four near-black greys in place of the original greens. Anything lighter than
+// the top value here starts fighting the text that sits on top of it.
+// Tops out around #2d2d30. --text-faint was raised to #333 to stay above it:
+// at #202020 faint labels ended up darker than the ground behind them.
+const SHADER_COLORS=[
+  [0.000,0.000,0.000],
+  [0.043,0.043,0.047],
+  [0.098,0.098,0.106],
+  [0.176,0.176,0.188],
+  [0.176,0.176,0.188],
+  [0.176,0.176,0.188],
+  [0.176,0.176,0.188],
+  [0.176,0.176,0.188],
+];
+const SHADER_KEY='grind_shader_bg';
+function shaderBgOn(){
+  try{
+    const v=localStorage.getItem(SHADER_KEY);
+    if(v!==null)return v==='1';
+  }catch(_){}
+  // Off by default for anyone who has asked the OS to reduce motion.
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return false;
+  }catch(_){}
+  return true;
+}
+let _shaderStop=null;
+function shaderBgToggle(){
+  const next=!shaderBgOn();
+  try{localStorage.setItem(SHADER_KEY,next?'1':'0');}catch(_){}
+  if(next)shaderBgStart();
+  else shaderBgStop();
+  if(currentTab==='home')renderHome();
+}
+function shaderBgStop(){
+  if(_shaderStop){try{_shaderStop();}catch(_){}_shaderStop=null;}
+  document.getElementById('shaderBg')?.remove();
+}
+function shaderBgStart(){
+  if(_shaderStop)return;
+  if(!shaderBgOn())return;
+  let canvas=document.getElementById('shaderBg');
+  if(!canvas){
+    canvas=document.createElement('canvas');
+    canvas.id='shaderBg';
+    document.body.insertBefore(canvas,document.body.firstChild);
+  }
+  const gl=canvas.getContext('webgl',{antialias:false,powerPreference:'low-power'});
+  if(!gl){canvas.remove();return;}   // no WebGL: the black body background stands in
+  // The repo stores CRLF, and a stray \r on a #ifdef line upsets some GLSL
+  // preprocessors, so strip them before compiling.
+  const clean=t=>t.replace(/\r/g,'');
+  const compile=(type,src)=>{
+    const sh=gl.createShader(type);
+    gl.shaderSource(sh,clean(src));
+    gl.compileShader(sh);
+    if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){warn('shader',gl.getShaderInfoLog(sh));return null;}
+    return sh;
+  };
+  const vs=compile(gl.VERTEX_SHADER,SHADER_VERT);
+  const fs=compile(gl.FRAGMENT_SHADER,SHADER_FRAG);
+  if(!vs||!fs){canvas.remove();return;}
+  const prog=gl.createProgram();
+  gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+  gl.deleteShader(vs);gl.deleteShader(fs);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){warn('shaderLink',gl.getProgramInfoLog(prog));canvas.remove();return;}
+  gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(prog,'a_position');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const U=n=>gl.getUniformLocation(prog,n);
+  const uColors=U('u_colors'),uScene=U('u_scene'),uShape=U('u_shape'),
+        uSurface=U('u_surface'),uFinish=U('u_finish'),uTransform=U('u_transform'),
+        uSpace=U('u_space');
+  const flat=[];SHADER_COLORS.forEach(c=>{flat.push(c[0],c[1],c[2]);});
+  gl.uniform3fv(uColors,new Float32Array(flat));
+  gl.uniform4f(uShape,1.28,0.47,0.5,0.0);        // scale, intensity, unused, warp
+  gl.uniform4f(uSurface,2.4,0.978,0.0,1.0);      // detail, contrast, brightness, saturation
+  gl.uniform4f(uFinish,0.0,0.0,0.0,0.014);       // hue, vignette, blur, grain
+  gl.uniform4f(uTransform,707.0,0.0,0.0,0.0);    // seed, rotate, drift, oklab
+  gl.uniform4f(uSpace,0.0,0.0,0.0,0.0);
+  const start=performance.now();
+  let raf=0,disposed=false,visible=document.visibilityState==='visible';
+  function size(){
+    // Half device pixels and a 1.2M ceiling: this is a slow background, not a
+    // game, and it runs on a phone the owner uses at five in the morning.
+    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+    const rw=Math.max(1,Math.round(window.innerWidth*dpr));
+    const rh=Math.max(1,Math.round(window.innerHeight*dpr));
+    const k=Math.min(1,Math.sqrt(1200000/Math.max(1,rw*rh)));
+    const w=Math.max(1,Math.round(rw*k)),h=Math.max(1,Math.round(rh*k));
+    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}
+  }
+  function frame(now){
+    raf=0;
+    if(disposed||!visible)return;
+    size();
+    gl.uniform4f(uScene,canvas.width,canvas.height,((now-start)/1000)*0.841,4.0);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    raf=requestAnimationFrame(frame);
+  }
+  const onVis=()=>{
+    visible=document.visibilityState==='visible';
+    if(visible&&!raf&&!disposed)raf=requestAnimationFrame(frame);
+    else if(!visible&&raf){cancelAnimationFrame(raf);raf=0;}
+  };
+  const onResize=()=>{size();};
+  document.addEventListener('visibilitychange',onVis);
+  window.addEventListener('resize',onResize);
+  raf=requestAnimationFrame(frame);
+  _shaderStop=()=>{
+    disposed=true;
+    if(raf)cancelAnimationFrame(raf);
+    document.removeEventListener('visibilitychange',onVis);
+    window.removeEventListener('resize',onResize);
+    gl.deleteBuffer(buf);gl.deleteProgram(prog);
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+  };
+}
+function shaderToggleHTML(){
+  let label='off';
+  if(shaderBgOn())label='on';
+  return `<div style="text-align:center;padding:18px 0 6px"><span onclick="shaderBgToggle()" style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-faint);cursor:pointer">background · ${label}</span></div>`;
+}
+
 // ── Protein ──────────────────────────────────────────────────────────────────
 // A tally, not a food diary. Every section that needed daily typing got deleted
 // (tasks, journal, life stats, sleep), so this is one tap per portion and nothing
@@ -10567,6 +10851,10 @@ function restoreTabSnapshots(){
   });
 }
 restoreTabSnapshots();
+
+// Starts before the first Notion call, so the background is already there while
+// the app loads rather than appearing a second later.
+try{shaderBgStart();}catch(e){warn('shaderBgStart',e);}
 
 renderTzBtn();
 refresh().catch(e=>{
