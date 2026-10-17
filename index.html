@@ -8980,8 +8980,8 @@ function hinaSeedFor(ym){
 // Low Calm is not simply worse — it is wider, so she can blow up or steal one.
 function hinaRaceTime(cur,rnd){
   const pot=hinaTime(cur);
-  const execPenalty=(1-(cur.focus||0)/100)*0.015;
-  const sigma=0.004+(1-(cur.calm||0)/100)*0.021;
+  const execPenalty=(1-(cur.focus||0)/100)*0.022;
+  const sigma=0.004+(1-(cur.calm||0)/100)*0.016;
   const t=pot*(1+execPenalty+hinaGauss(rnd)*sigma);
   return Math.round(t*100)/100;
 }
@@ -9299,9 +9299,29 @@ function hinaBreakdownHTML(cur){
   });
   const pen=(1-(cur.cond||0)/100)*1.5;
   out+='<span style="margin-right:12px">健 <span style="color:var(--text-dim)">+'+pen.toFixed(1)+'</span></span>';
-  return '<div style="font-size:11px;line-height:1.9;color:var(--text-faint);margin:-4px 0 16px">'+
-    'from '+HINA_BASE_T.toFixed(1)+' untrained &nbsp;'+out+
-    '<br>凝 and 心 do not move this — they decide what she swims on the day.</div>';
+  return '<div style="font-size:11px;line-height:1.9;color:var(--text-faint);margin:-4px 0 10px">'+
+    'from '+HINA_BASE_T.toFixed(1)+' untrained &nbsp;'+out+'</div>'+
+    hinaRangeHTML(cur);
+}
+// What she is actually likely to swim. 凝 shifts the whole window later — she
+// goes out wrong and loses time. 心 only widens it, which is why a chaotic month
+// is not simply worse: the bottom end of a wide window is a surprise.
+function hinaRaceWindow(cur){
+  const pot=hinaTime(cur);
+  const exp=pot*(1+(1-(cur.focus||0)/100)*0.022);
+  const sigma=0.004+(1-(cur.calm||0)/100)*0.016;
+  const half=1.96*sigma*pot;
+  return {lo:Math.round((exp-half)*100)/100,hi:Math.round((exp+half)*100)/100,exp:Math.round(exp*100)/100,spread:Math.round(2*half*100)/100};
+}
+function hinaRangeHTML(cur){
+  const w=hinaRaceWindow(cur);
+  let read='tight — she swims what she has';
+  if(w.spread>1.0)read='wild — could blow up, could steal one';
+  else if(w.spread>0.55)read='loose';
+  return '<div style="font-size:11px;line-height:1.9;color:var(--text-faint);margin:0 0 16px">'+
+    'race day &nbsp;<span style="color:var(--text)">'+w.lo.toFixed(2)+' – '+w.hi.toFixed(2)+'</span>'+
+    ' &nbsp;<span style="color:var(--text-dim)">'+read+'</span>'+
+    '<br>凝 shifts the window, 心 widens it.</div>';
 }
 function renderHina(){
   const el=document.getElementById('tab-hina');
