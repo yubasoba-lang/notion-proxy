@@ -1187,7 +1187,8 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
     <button class="nav-btn" onclick="switchTab('workout',this)"><span class="nav-icon">⊕</span><span class="nav-label">Workout</span></button>
     <button class="nav-btn" onclick="switchTab('exams',this)"><span class="nav-icon">✦</span><span class="nav-label">Exams</span></button>
     <button class="nav-btn" onclick="switchTab('study',this)"><span class="nav-icon">◈</span><span class="nav-label">Study</span></button>
-    <button class="nav-btn" onclick="switchTab('arcs',this)"><span class="nav-icon">◉</span><span class="nav-label">Arcs</span></button>
+    <button class="nav-btn" onclick="switchTab('body',this)"><span class="nav-icon">◍</span><span class="nav-label">Body</span></button>
+    <button class="nav-btn" onclick="switchTab('hina',this)"><span class="nav-icon">⬡</span><span class="nav-label">Hina</span></button>
   </div>
   <div id="sidebar-session" class="sidebar-session" style="display:none" onclick="switchTab('home',document.querySelector('.nav-btn'))"></div>
   <div id="sidebar-clock" class="sidebar-clock"></div>
@@ -1199,7 +1200,8 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
     <div id="tab-workout" class="tab-panel" style="display:none"></div>
     <div id="tab-exams" class="tab-panel" style="display:none"></div>
     <div id="tab-study" class="tab-panel" style="display:none"></div>
-    <div id="tab-arcs" class="tab-panel" style="display:none"></div>
+    <div id="tab-body" class="tab-panel" style="display:none"></div>
+    <div id="tab-hina" class="tab-panel" style="display:none"></div>
   </div>
 </div>
 <div class="workout-modal" id="workoutModal" onclick="if(event.target===this)closeWorkoutModal()">
@@ -5155,7 +5157,7 @@ async function refresh(force=true){
   // waiting on Notion; the loads below then redraw it with fresh data.
   if(!skip&&currentTab!=='home')paintTabNow(currentTab);
   // Nutrition is read on Home and from the card, so it cannot be tab-gated.
-  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
+  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn(),loadSleepLog(),loadRestLog(),loadHina()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
   if(currentTab==='home'){
     if(!skip){
       const isFirst=!_hasLoaded;
@@ -5200,10 +5202,16 @@ async function refresh(force=true){
     if(!skip)await Promise.all([loadStudyPlan(),loadPlanState()].map(x=>Promise.resolve(x).catch(e=>warn('planLoad',e))));
     _markTabLoaded('plan');renderPlan();
   }
+  if(currentTab==='body'){_markTabLoaded('body');renderBody();}
+  if(currentTab==='hina'){
+    // Her numbers come from the workout, swim and study logs, so they have to be
+    // in memory before the hexagon means anything.
+    if(!skip)await Promise.all([loadSwimPractices(),loadPRs(),loadSessions()].map(x=>Promise.resolve(x).catch(e=>warn('hinaLoad',e))));
+    _markTabLoaded('hina');renderHina();
+  }
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
-  if(currentTab==='arcs'){if(!skip)await Promise.all([loadArcs(),loadBooks()]);_markTabLoaded('arcs');renderArcs();}
   if(!skip&&currentTab!=='home')saveTabSnapshot(currentTab);   // next launch opens this tab instantly
   setSyncBusy(false);
 }
@@ -5651,17 +5659,15 @@ function renderHome(){
     </div>
   </div>`;
 
-  const rivalTeaser=renderRivalTeaser();
   let html;
-  const arcCard=renderActiveArc();
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
-      <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}${rivalTeaser}</div>
+      <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${arcCard}${reviewCard}${examCard}${planCard}${proteinRowHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
+      <div class="home-col-right">${reviewCard}${examCard}${planCard}${proteinRowHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+rivalTeaser+arcCard+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+recapRowHTML()+shaderToggleHTML();
+    html=streakRow+catchupCardHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+recapRowHTML()+shaderToggleHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -8648,6 +8654,10 @@ function proteinClear(){
 }
 // Repaints the counts and the total in place rather than rebuilding the page, so
 // tapping does not scroll you back to the top.
+function proteinTallyRepaint(){
+  const t=document.getElementById('proteinTally');
+  if(t)t.innerHTML=proteinTallyHTML();
+}
 function proteinPaint(){
   const d=proteinDay(protDate());
   const tot=proteinTotal(protDate());
@@ -8673,6 +8683,464 @@ function proteinVerdict(tot){
   if(tot<=170)return 'target hit';
   return 'well over — no harm, but the money is better spent on carbs';
 }
+// ── Hina ─────────────────────────────────────────────────────────────────────
+// She is the visible output of everything else in this app. Six parameters, each
+// fed by exactly one kind of real work, each anchored to a standard that already
+// exists here — nothing is invented and nothing is scored twice.
+//
+// Decay needs no machinery: every parameter reads a rolling window, so stopping
+// empties the window on its own. The window length IS the decay rate, and the
+// lengths below are chosen to match how the real thing fades — condition goes in
+// days, aerobic fitness in weeks, strength slowly, technique essentially never.
+const HINA_CFG='hina_state';
+const HINA_KEY='grind_hina';
+const HINA_PARAMS=[
+  {k:'speed', ch:'速', en:'Speed',     win:28, src:'swim metres + sets finished'},
+  {k:'power', ch:'力', en:'Power',     win:90, src:'your PRs against the tier ladder'},
+  {k:'tech',  ch:'技', en:'Technique', win:0,  src:'cues owned + stroke count'},
+  {k:'cond',  ch:'健', en:'Condition', win:7,  src:'protein, sleep, weight'},
+  {k:'focus', ch:'凝', en:'Focus',     win:14, src:'study plan kept'},
+  {k:'calm',  ch:'心', en:'Calm',      win:14, src:'sleep, rest'},
+];
+function hinaClamp(v){return Math.max(0,Math.min(100,Math.round(v)));}
+function hinaDaysBack(n){
+  const d=new Date(localToday()+'T12:00:00');
+  d.setDate(d.getDate()-n);
+  return localDay(d);
+}
+// 速 — weekly metres against 25km, the volume that makes sub-51 plausible,
+// scaled by how much of each prescribed set actually got finished.
+function hinaSpeed(){
+  const since=hinaDaysBack(28);
+  const list=(state.swimPractices||[]).filter(p=>p.date&&p.date>=since);
+  if(!list.length)return 0;
+  let m=0,doneSum=0,totSum=0;
+  list.forEach(p=>{
+    let dist=swimSetTotal(p.set)||0;
+    if(!dist)dist=(p.minutes||0)*30;        // no named set: 30m a minute
+    m+=dist;
+    if(p.total){doneSum+=Math.min(p.done||0,p.total);totSum+=p.total;}
+  });
+  const perWeek=m/4;
+  let completion=1;
+  if(totSum)completion=0.6+0.4*(doneSum/totSum);
+  return hinaClamp(100*(perWeek/25000)*completion);
+}
+// 力 — where his PRs sit on the existing tier ladder, across the four muscles
+// that drive a stroke. 100 is pitched at Platinum, not Olympian: the standard
+// that supports a 51, not the one that wins medals.
+const HINA_POWER_MUSCLES=['Latissimus Dorsi','Rhomboids','Triceps','Posterior Deltoid'];
+const HINA_POWER_TIER=11;
+function hinaPower(){
+  const prs=state.prs||{};
+  let n=0,sum=0;
+  HINA_POWER_MUSCLES.forEach(mu=>{
+    const def=PR_THRESHOLDS[mu];
+    if(!def)return;
+    const kg=(prs[mu]&&prs[mu].weight)||prs[mu]||0;
+    if(typeof kg!=='number'||!(kg>0)){n++;return;}
+    let idx=0;
+    def.thresholds.forEach((t,i)=>{if(kg>=t)idx=i+1;});
+    sum+=Math.min(1,idx/HINA_POWER_TIER);
+    n++;
+  });
+  if(!n)return 0;
+  return hinaClamp(100*sum/n);
+}
+// 技 — the one that does not fade. Cues owned are permanent, and a stroke count
+// is a motor pattern, not fitness.
+function hinaTech(){
+  let cues=0;
+  try{cues=cueOwnedList().length/SWIM_CUES.length;}catch(_){cues=0;}
+  const t=strokeTarget();
+  let count=0;
+  if(t)count=Math.max(0,Math.min(1,(28-t)/8));   // 28 strokes poor, 20 excellent
+  return hinaClamp(100*(0.5*cues+0.5*count));
+}
+// 健 — a seven-day window, because eating and sleeping are day-to-day.
+function hinaCond(){
+  const days=lastNDays(7);
+  let fed=0;
+  days.forEach(ds=>{if(proteinTotal(ds)>=120)fed++;});
+  const sl=sleepAvg(7);
+  let slept=0;
+  if(sl!==null)slept=Math.max(0,Math.min(1,sl/8));
+  let mass=0.5;
+  const now=weightLatest(),back=weightBack(28),rng=weightRange();
+  if(now&&rng){
+    if(now.kg>=rng.lo)mass=1;
+    else if(back)mass=now.kg>back.kg?0.75:0.35;
+  }
+  return hinaClamp(100*(0.4*(fed/7)+0.4*slept+0.2*mass));
+}
+// 凝 — the study plan, kept or not. Nothing else in the app measures attention.
+function hinaFocus(){
+  const since=hinaDaysBack(14),today=localToday();
+  let due=0,done=0;
+  try{
+    planAllTasks().forEach(t=>{
+      const d=planMovedTo(t.id)||t.planDate;
+      if(!d||d<since||d>today)return;
+      due++;
+      if(planIsDone(t.id))done++;
+    });
+  }catch(_){return 0;}
+  if(!due)return 0;
+  return hinaClamp(100*done/due);
+}
+// 心 — recovery over a fortnight. Sleep leads on the evidence; rest saturates,
+// because three or four in fourteen is most of the benefit and grinding it is not
+// a thing. Sleep is weighted heavily enough that nothing else rescues a bad one.
+function hinaCalm(){
+  const sl=sleepAvg(14);
+  let sleepPart=0;
+  if(sl!==null)sleepPart=Math.max(0,Math.min(1,(sl-5)/3));   // 5h none, 8h full
+  const rest=restCount(14);
+  const restPart=Math.min(1,Math.sqrt(rest/4));
+  const days=lastNDays(14);
+  const trained=new Set((state.swimPractices||[]).map(p=>p.date));
+  const off=days.filter(ds=>!trained.has(ds)).length;
+  const offPart=Math.max(0,Math.min(1,off/4));
+  return hinaClamp(100*(0.55*sleepPart+0.35*restPart+0.10*offPart));
+}
+function hinaRaw(){
+  return {speed:hinaSpeed(),power:hinaPower(),tech:hinaTech(),cond:hinaCond(),focus:hinaFocus(),calm:hinaCalm()};
+}
+// Current form can never fall below 40% of the best it has been. You lose polish,
+// never the building — which is what makes a wrecked November survivable.
+const HINA_FLOOR=0.4;
+function hinaCurrent(){
+  const raw=hinaRaw();
+  const peak=(state.hina&&state.hina.peak)||{};
+  const out={};
+  HINA_PARAMS.forEach(p=>{
+    const fl=Math.round((peak[p.k]||0)*HINA_FLOOR);
+    out[p.k]=Math.max(raw[p.k],fl);
+  });
+  return out;
+}
+function hinaUpdatePeaks(cur){
+  if(!state.hina)state.hina={};
+  if(!state.hina.peak)state.hina.peak={};
+  let changed=false;
+  HINA_PARAMS.forEach(p=>{
+    if((cur[p.k]||0)>(state.hina.peak[p.k]||0)){state.hina.peak[p.k]=cur[p.k];changed=true;}
+  });
+  if(changed)saveHina();
+}
+// Her talent: how efficiently his work becomes her speed. Rolled once, written to
+// Notion rather than sitting in this file, so reading the source shows the band it
+// came from and never the draw. He asked not to know.
+const HINA_TALENT_LO=0.86, HINA_TALENT_HI=1.14;
+// Untrained over 50m, and what she reaches with every parameter maxed.
+const HINA_BASE_T=34.0, HINA_BEST_T=23.5;
+function hinaTalent(){
+  if(state.hina&&state.hina.talent)return state.hina.talent;
+  return 1;
+}
+function hinaTime(cur){
+  const c=cur||hinaCurrent();
+  const engine=(0.50*c.speed+0.25*c.power+0.25*c.tech)/100;
+  let t=HINA_BASE_T-(HINA_BASE_T-HINA_BEST_T)*engine*hinaTalent();
+  t+=(1-c.cond/100)*1.5;                    // undercooked, cannot reach it
+  return Math.round(t*10)/10;
+}
+// Her club's B squad. Generated once and persisted, then left to develop on their
+// own — nothing he does touches them, which is what makes the ladder a real
+// standard rather than a mirror.
+const HINA_SQUAD_NAMES=['Dóra','Zsófi','Réka','Panna','Eszter','Lilla','Anna'];
+function hinaRollSquad(rnd){
+  return HINA_SQUAD_NAMES.map(name=>({
+    name,
+    t:Math.round((27.4+rnd()*3.1)*10)/10,          // 27.4 – 30.5
+    rate:Math.round((0.02+rnd()*0.10)*1000)/1000,  // seconds off per month
+  }));
+}
+// Seeded so a reload cannot reroll her into a different person.
+function hinaRng(seed){
+  let x=seed>>>0;
+  return function(){
+    x^=x<<13;x>>>=0;x^=x>>17;x^=x<<5;x>>>=0;
+    return x/4294967296;
+  };
+}
+async function loadHina(){
+  try{
+    const rows=await appConfigRows(HINA_CFG);
+    if(rows.length){
+      state.hinaPageId=rows[0].id;
+      try{state.hina=JSON.parse(g.text(rows[0].properties.Value))||{};}catch(_){state.hina={};}
+    }else{
+      state.hinaPageId=null;
+      try{const c=localStorage.getItem(HINA_KEY);state.hina=c?JSON.parse(c):{};}catch(_){state.hina={};}
+    }
+  }catch(e){
+    warn('loadHina',e);
+    try{const c=localStorage.getItem(HINA_KEY);if(c)state.hina=JSON.parse(c);}catch(_){}
+  }
+  if(!state.hina)state.hina={};
+  let dirty=false;
+  if(!state.hina.born){state.hina.born=localToday();dirty=true;}
+  if(!state.hina.seed){state.hina.seed=Math.floor(Math.random()*2147483647)||12345;dirty=true;}
+  if(!state.hina.talent){
+    const r=hinaRng(state.hina.seed);
+    r();r();
+    state.hina.talent=Math.round((HINA_TALENT_LO+r()*(HINA_TALENT_HI-HINA_TALENT_LO))*1000)/1000;
+    dirty=true;
+  }
+  if(!state.hina.squad||!state.hina.squad.length){
+    state.hina.squad=hinaRollSquad(hinaRng(state.hina.seed^0x5bf03635));
+    dirty=true;
+  }
+  if(!state.hina.peak)state.hina.peak={};
+  if(dirty)saveHina();
+}
+let _hinaSaveTimer=null;
+function saveHina(){
+  try{localStorage.setItem(HINA_KEY,JSON.stringify(state.hina||{}));}catch(_){}
+  clearTimeout(_hinaSaveTimer);
+  _hinaSaveTimer=setTimeout(async()=>{
+    try{
+      const rich=richChunks(JSON.stringify(state.hina||{}));
+      if(state.hinaPageId)await nPatch(state.hinaPageId,{Value:{rich_text:rich}});
+      else{
+        if(state._hinaCreating){state._hinaCreating.then(()=>saveHina());return;}
+        appConfigInvalidate();
+        state._hinaCreating=nCreate(DB.appConfig,{Key:{title:[{text:{content:HINA_CFG}}]},Value:{rich_text:rich}});
+        const page=await state._hinaCreating;
+        state.hinaPageId=page.id;
+        state._hinaCreating=null;
+      }
+    }catch(e){warn('saveHina',e);showToast('Hina save failed — will retry');}
+  },900);
+}
+// Six points, clockwise from the top, so the shape itself says what is missing.
+function hinaHexPoints(cur,R,cx,cy){
+  return HINA_PARAMS.map((p,i)=>{
+    const a=(-90+i*60)*Math.PI/180;
+    const v=Math.max(4,cur[p.k]||0)/100;
+    return (cx+R*v*Math.cos(a)).toFixed(1)+','+(cy+R*v*Math.sin(a)).toFixed(1);
+  }).join(' ');
+}
+function hinaHexSVG(cur,peak){
+  const S=250,cx=125,cy=120,R=86;
+  let web='';
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const pts=HINA_PARAMS.map((p,i)=>{
+      const a=(-90+i*60)*Math.PI/180;
+      return (cx+R*f*Math.cos(a)).toFixed(1)+','+(cy+R*f*Math.sin(a)).toFixed(1);
+    }).join(' ');
+    web+='<polygon points="'+pts+'" fill="none" stroke="rgba(232,234,240,0.07)" stroke-width="1"/>';
+  });
+  let labels='';
+  HINA_PARAMS.forEach((p,i)=>{
+    const a=(-90+i*60)*Math.PI/180;
+    const lx=cx+(R+19)*Math.cos(a), ly=cy+(R+19)*Math.sin(a)+5;
+    labels+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="15" fill="var(--text)">'+p.ch+'</text>';
+  });
+  const peakPts=hinaHexPoints(peak,R,cx,cy);
+  const curPts=hinaHexPoints(cur,R,cx,cy);
+  return '<svg viewBox="0 0 '+S+' 240" width="100%" style="max-width:300px;display:block;margin:0 auto">'+
+    web+
+    '<polygon points="'+peakPts+'" fill="none" stroke="rgba(232,234,240,0.22)" stroke-width="1" stroke-dasharray="3 3"/>'+
+    '<polygon points="'+curPts+'" fill="rgba(168,168,168,0.17)" stroke="var(--gold)" stroke-width="1.5"/>'+
+    labels+'</svg>';
+}
+function renderHina(){
+  const el=document.getElementById('tab-hina');
+  if(!el)return;
+  if(!state.hina||!state.hina.talent){
+    el.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--text-dim);font-size:12px">loading…</div>';
+    return;
+  }
+  const cur=hinaCurrent();
+  hinaUpdatePeaks(cur);
+  const peak=state.hina.peak||{};
+  const t=hinaTime(cur);
+  let rows='';
+  HINA_PARAMS.forEach(p=>{
+    const v=cur[p.k]||0, pk=peak[p.k]||0;
+    let gap='';
+    if(pk>v+2)gap='<span style="color:var(--text-faint);font-size:10px"> peak '+pk+'</span>';
+    rows+='<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
+      '<span style="font-size:17px;width:22px;color:var(--text-hi)">'+p.ch+'</span>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:12px;color:var(--text-hi)">'+p.en+gap+'</div>'+
+        '<div style="font-size:9px;color:var(--text-faint);margin-top:2px">'+esc(p.src)+'</div>'+
+        '<div style="margin-top:5px;height:3px;background:rgba(232,234,240,0.08);border-radius:2px;overflow:hidden"><span style="display:block;height:100%;width:'+v+'%;background:var(--gold)"></span></div>'+
+      '</div>'+
+      '<span style="font-family:\'JetBrains Mono\',monospace;font-size:15px;min-width:28px;text-align:right;color:var(--text-hi)">'+v+'</span>'+
+    '</div>';
+  });
+  const squad=(state.hina.squad||[]).slice();
+  const field=squad.concat([{name:'Hina',t:t,me:true}]).sort((a,b)=>a.t-b.t);
+  let ladder='';
+  field.forEach((sw,i)=>{
+    let col='var(--text-dim)';
+    if(sw.me)col='var(--gold)';
+    ladder+='<div style="display:flex;gap:10px;padding:6px 0;font-size:12px;color:'+col+'">'+
+      '<span style="width:18px;color:var(--text-faint)">'+(i+1)+'</span>'+
+      '<span style="flex:1">'+esc(sw.name)+'</span>'+
+      '<span style="font-family:\'JetBrains Mono\',monospace">'+sw.t.toFixed(1)+'</span></div>';
+  });
+  el.innerHTML='<div style="padding:0 16px 40px">'+
+    '<div class="rival-page-subtitle" style="margin-top:4px">ヒナ</div>'+
+    '<div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 10px">'+
+      '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:48px;line-height:1;color:var(--text-hi)">'+t.toFixed(1)+'</span>'+
+      '<span style="font-size:12px;color:var(--text-dim)">50 free · her current form</span>'+
+    '</div>'+
+    hinaHexSVG(cur,peak)+
+    '<div style="font-size:10px;color:var(--text-faint);text-align:center;margin:2px 0 20px">solid · now  ╱  dashed · her best</div>'+
+    rows+
+    '<div class="rival-section-label" style="margin-top:22px">B squad</div>'+
+    '<div style="margin-top:6px">'+ladder+'</div>'+
+    '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:18px">They improve on their own. She improves on you.</div>'+
+  '</div>';
+}
+
+// ── Sleep and recovery ───────────────────────────────────────────────────────
+// Both exist because Hina's 健 and 心 have no inputs without them. One number a
+// night and one tap a day; nothing to score, nothing to keep a streak of.
+const SLEEP_CFG='sleep_log';
+const SLEEP_KEY='grind_sleep_log';
+const REST_CFG='recovery_log';
+const REST_KEY='grind_recovery_log';
+function sleepDates(){return state.sleepLog||{};}
+function restDates(){return state.restLog||{};}
+function lastNDays(n){
+  const out=[];
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(localToday()+'T12:00:00');
+    d.setDate(d.getDate()-i);
+    out.push(localDay(d));
+  }
+  return out;
+}
+function sleepAvg(n){
+  const d=sleepDates();
+  const vals=lastNDays(n).map(ds=>d[ds]).filter(v=>v>0);
+  if(!vals.length)return null;
+  return Math.round(10*vals.reduce((a,b)=>a+b,0)/vals.length)/10;
+}
+function restCount(n){
+  const d=restDates();
+  return lastNDays(n).filter(ds=>d[ds]).length;
+}
+async function loadDayLog(cfg,key,field,pageField){
+  try{
+    const rows=await appConfigRows(cfg);
+    if(rows.length){
+      state[pageField]=rows[0].id;
+      try{state[field]=JSON.parse(g.text(rows[0].properties.Value))||{};}catch(_){state[field]={};}
+    }else{
+      state[pageField]=null;
+      try{const c=localStorage.getItem(key);state[field]=c?JSON.parse(c):{};}catch(_){state[field]={};}
+    }
+    try{localStorage.setItem(key,JSON.stringify(state[field]));}catch(_){}
+  }catch(e){
+    warn('load'+cfg,e);
+    try{const c=localStorage.getItem(key);if(c&&!Object.keys(state[field]||{}).length)state[field]=JSON.parse(c);}catch(_){}
+    if(!state[field])state[field]={};
+  }
+}
+function loadSleepLog(){return loadDayLog(SLEEP_CFG,SLEEP_KEY,'sleepLog','sleepLogPageId');}
+function loadRestLog(){return loadDayLog(REST_CFG,REST_KEY,'restLog','restLogPageId');}
+const _dayLogTimers={};
+function saveDayLog(cfg,key,field,pageField){
+  // Only the last 120 days are kept: nothing downstream looks further back than
+  // a fortnight, and the stored value has to stay under the rich_text limit.
+  const all=state[field]||{};
+  const keep=Object.keys(all).sort().slice(-120);
+  const trimmed={};
+  keep.forEach(k=>{trimmed[k]=all[k];});
+  state[field]=trimmed;
+  try{localStorage.setItem(key,JSON.stringify(trimmed));}catch(_){}
+  clearTimeout(_dayLogTimers[cfg]);
+  _dayLogTimers[cfg]=setTimeout(async()=>{
+    try{
+      const rich=richChunks(JSON.stringify(state[field]||{}));
+      if(state[pageField])await nPatch(state[pageField],{Value:{rich_text:rich}});
+      else{
+        const flag='_creating_'+cfg;
+        if(state[flag]){state[flag].then(()=>saveDayLog(cfg,key,field,pageField));return;}
+        appConfigInvalidate();
+        state[flag]=nCreate(DB.appConfig,{Key:{title:[{text:{content:cfg}}]},Value:{rich_text:rich}});
+        const page=await state[flag];
+        state[pageField]=page.id;
+        state[flag]=null;
+      }
+    }catch(e){warn('save'+cfg,e);showToast('Save failed — will retry');}
+  },900);
+}
+function sleepSubmit(){
+  const el=document.getElementById('sleepInput');
+  if(!el||el.value==='')return;
+  const v=parseFloat(el.value);
+  if(!isFinite(v)||v<0||v>16){showToast('Hours slept, 0 to 16');return;}
+  if(!state.sleepLog)state.sleepLog={};
+  state.sleepLog[localToday()]=Math.round(v*10)/10;
+  saveDayLog(SLEEP_CFG,SLEEP_KEY,'sleepLog','sleepLogPageId');
+  showToast('Logged '+(Math.round(v*10)/10)+'h');
+  renderBody();
+}
+function restToggle(ds){
+  if(!state.restLog)state.restLog={};
+  if(state.restLog[ds])delete state.restLog[ds];
+  else state.restLog[ds]=1;
+  saveDayLog(REST_CFG,REST_KEY,'restLog','restLogPageId');
+  renderBody();
+}
+function sleepVerdict(){
+  const a=sleepAvg(7);
+  if(a===null)return 'nothing logged yet';
+  if(a<6)return a+'h average — this is the thing costing you mornings';
+  if(a<7)return a+'h average — under what a 05:00 alarm needs';
+  if(a<8.5)return a+'h average';
+  return a+'h average — plenty';
+}
+function renderBody(){
+  const el=document.getElementById('tab-body');
+  if(!el)return;
+  const days=lastNDays(7);
+  const sl=sleepDates(),rl=restDates();
+  let sleepBars='';
+  days.forEach(ds=>{
+    const v=sl[ds]||0;
+    const px=v?Math.max(4,Math.round(v*4)):3;
+    let col='var(--gold)';
+    if(!v)col='rgba(232,234,240,0.10)';
+    sleepBars+='<span title="'+ds+' · '+(v||'—')+'h" style="display:inline-block;width:11px;height:'+px+'px;background:'+col+';opacity:0.8;border-radius:1px;margin-right:5px;vertical-align:bottom"></span>';
+  });
+  let restDots='';
+  days.forEach(ds=>{
+    const on=!!rl[ds];
+    let mark='○';
+    if(on)mark='●';
+    let col='var(--text-faint)';
+    if(on)col='var(--gold)';
+    restDots+='<span onclick="restToggle(\''+ds+'\')" style="font-size:17px;color:'+col+';cursor:pointer;margin-right:11px">'+mark+'</span>';
+  });
+  el.innerHTML=`<div style="padding:0 16px 40px">
+    <div class="rival-page-subtitle" style="margin-top:4px">Weight</div>
+    <div id="weightBody" style="margin-bottom:26px">${weightBodyHTML()}</div>
+    <div class="rival-section-label">Recovery</div>
+    <div style="margin:10px 0 6px;min-height:36px">${sleepBars}</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">${esc(sleepVerdict())}</div>
+    <div style="display:flex;gap:9px;align-items:center;margin-bottom:20px">
+      <label class="fld" style="flex:1">
+        <span class="cap">Last night</span>
+        <input id="sleepInput" class="num-in num-in-lg" type="number" step="0.1" inputmode="decimal" placeholder="7.5">
+        <span class="unit">h</span>
+      </label>
+      <button class="wec-log-btn btn-inline" onclick="sleepSubmit()">Log</button>
+    </div>
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Rest · last 7 days</div>
+    <div style="margin-bottom:6px">${restDots}</div>
+    <div style="font-size:10px;color:var(--text-faint);margin-bottom:26px">${restCount(14)} in the last fortnight · feeds 心</div>
+    <div id="proteinTally">${proteinTallyHTML()}</div>
+  </div>`;
+}
+
 // ── Weight ───────────────────────────────────────────────────────────────────
 // One number, as rarely as weekly. Weight trend is the only signal that catches
 // under-eating, which is the real nutrition risk here — not macros. Height lives
@@ -10816,7 +11284,6 @@ function tabHasData(tab){
   if(tab==='study')return (state.sessions||[]).length>0;
   if(tab==='plan')return !!state.studyPlan;
   if(tab==='journal')return (state.journals||[]).length>0;
-  if(tab==='arcs')return (state.arcs||[]).length>0;
   return false;
 }
 function paintTabNow(tab){
@@ -10827,7 +11294,6 @@ function paintTabNow(tab){
     else if(tab==='exams')renderExams();
     else if(tab==='study')renderStudyLog();
     else if(tab==='journal')renderJournal();
-    else if(tab==='arcs')renderArcs();
   }catch(e){warn('paintTabNow',e);}
 }
 function saveTabSnapshot(tab){
@@ -10929,7 +11395,6 @@ const CMD_ACTIONS=[
   {icon:'⊕',label:'Go to Workout',hint:'W',action:()=>{const b=navBtnFor('workout');switchTab('workout',b);}},
   {icon:'✦',label:'Go to Exams',hint:'E',action:()=>{const b=navBtnFor('exams');switchTab('exams',b);}},
   {icon:'◈',label:'Go to Study',hint:'S',action:()=>{const b=navBtnFor('study');switchTab('study',b);}},
-  {icon:'◉',label:'Go to Arcs',hint:'',action:()=>{const b=navBtnFor('arcs');switchTab('arcs',b);}},
   {icon:'▸',label:'Start Study Session',hint:'',action:()=>{const b=document.querySelector('.nav-btn');switchTab('home',b);setTimeout(()=>{const btn=document.querySelector('.study-start-btn');if(btn)btn.click();},200);}},
   {icon:'■',label:'Stop Session',hint:'',action:()=>{if(state.activeSession)stopSession();}},
   {icon:'↺',label:'Sync',hint:'',action:()=>refresh(true)},
