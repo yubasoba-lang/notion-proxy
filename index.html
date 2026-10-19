@@ -7007,8 +7007,19 @@ function restBreaths(sec){
 // Target strokes per length, taken from your own logged counts rather than a number made
 // up here. Best of the last five sessions — a count you have actually held, so holding it
 // again is a fair ask. Null until something is logged, and the sets then just say to count.
+// Counts from the two pools are not comparable: a 33m length takes roughly a
+// third more strokes than a 25m one. Pooling them put a 25m count of 17 on the
+// solo sets as a target for 33m lengths, which cannot be swum. Solo sessions are
+// the 33m pool, club sessions the 25m one, and p.set says which.
+function isSoloPractice(p){return !!(p.set&&p.set.indexOf('Solo · ')===0);}
 function strokeTarget(){
-  const vals=(state.swimPractices||[]).filter(p=>p.strokes>0).slice(0,5).map(p=>p.strokes);
+  const vals=(state.swimPractices||[]).filter(p=>p.strokes>0&&isSoloPractice(p)).slice(0,5).map(p=>p.strokes);
+  if(!vals.length)return null;
+  return Math.min.apply(null,vals);
+}
+// The club pool, kept separate. Only used where a 25m count is the right one.
+function strokeTargetClub(){
+  const vals=(state.swimPractices||[]).filter(p=>p.strokes>0&&!isSoloPractice(p)).slice(0,5).map(p=>p.strokes);
   if(!vals.length)return null;
   return Math.min.apply(null,vals);
 }
@@ -8749,7 +8760,8 @@ function hinaTech(){
   try{cues=cueOwnedList().length/SWIM_CUES.length;}catch(_){cues=0;}
   const t=strokeTarget();
   let count=0;
-  if(t)count=Math.max(0,Math.min(1,(28-t)/8));   // 28 strokes poor, 20 excellent
+  // Anchored to the 33m pool these counts come from: 34 poor, 24 excellent.
+  if(t)count=Math.max(0,Math.min(1,(34-t)/10));
   return hinaClamp(100*(0.5*cues+0.5*count));
 }
 // 健 — a seven-day window, because eating and sleeping are day-to-day.
