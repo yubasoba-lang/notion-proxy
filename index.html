@@ -9357,21 +9357,39 @@ function hinaRevealClose(){
   const el=document.getElementById('hinaReveal');
   if(!el)return;
   el.style.opacity='0';
-  setTimeout(()=>{document.getElementById('hinaReveal')?.remove();},420);
+  setTimeout(()=>{document.getElementById('hinaReveal')?.remove();},620);
 }
+// Heaviest at the top, because that is where the text sits and her hair is pale
+// there. Lighter lower down so her face is actually visible.
+const HINA_SCRIM='linear-gradient(rgba(0,0,0,0.90) 0%,rgba(0,0,0,0.78) 30%,rgba(0,0,0,0.55) 70%,rgba(0,0,0,0.45) 100%)';
+// A full-bleed backdrop rather than a square floating over the page: she sits
+// behind the content and in front of the shader, with a scrim over her so the
+// numbers stay readable. An undimmed picture behind 11px grey text is not.
 function hinaReveal(){
+  if(document.getElementById('hinaReveal'))return;
+  const src=hinaFaceSrc();
+  // A background-image cannot report failure, so load it as an Image first. This
+  // is also how a missing alternate falls back and a missing portrait cancels.
+  const probe=new Image();
+  probe.onload=function(){hinaRevealShow(src);};
+  probe.onerror=function(){
+    if(src===HINA_FACE)return;
+    const p2=new Image();
+    p2.onload=function(){hinaRevealShow(HINA_FACE);};
+    p2.src=HINA_FACE;
+  };
+  probe.src=src;
+}
+function hinaRevealShow(src){
   if(document.getElementById('hinaReveal'))return;
   const el=document.createElement('div');
   el.id='hinaReveal';
-  el.style.cssText='position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.42s ease;cursor:pointer';
-  el.onclick=hinaRevealClose;
-  // If the file is not there she simply does not appear, and the overlay closes
-  // itself rather than showing an empty black screen.
-  // If the alternate is missing the browser falls back to the normal portrait,
-  // and only if that is missing too does the overlay close itself.
-  el.innerHTML='<img src="'+hinaFaceSrc()+'" alt="" '+
-    'onerror="if(this.src.indexOf(\'hina-alt\')>-1){this.src=HINA_FACE;}else{hinaRevealClose();}" '+
-    'style="max-width:84%;max-height:76%;object-fit:contain;opacity:0.92;border-radius:2px">';
+  // z-index -1, appended after the shader canvas: behind the page text, in front
+  // of the shader.
+  el.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;'+
+    'background-image:'+HINA_SCRIM+',url("'+src+'");'+
+    'background-size:cover;background-position:center center;background-repeat:no-repeat;'+
+    'opacity:0;transition:opacity 0.6s ease;pointer-events:none';
   document.body.appendChild(el);
   requestAnimationFrame(()=>{el.style.opacity='1';});
   _hinaRevealTimer=setTimeout(hinaRevealClose,HINA_REVEAL_MS);
