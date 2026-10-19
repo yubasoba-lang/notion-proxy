@@ -2,7 +2,7 @@
  "schema_version": 1,
  "title": "Catch-up plan — 13 Oct to 25 Nov 2026",
  "timezone": "Europe/Budapest",
- "generated": "2026-10-19T15:41:54",
+ "generated": "2026-10-19T15:48:02",
  "subjects": {
   "anki": "Anki",
   "ecg": "ECG",
@@ -52,7 +52,8 @@
   "Wednesday and Friday have the least slack. Move work to Saturday, not into them.",
   "Mycology (Micro IV 1–11) is in MT2, not MT1. Only parasitology — IV 12–37 — is needed by 30 Oct.",
   "Rescheduled 19 Oct 2026 after 17 tasks slipped. Subjects now interleave and each finishes the day before its exam.",
-  "ECG tasks were dropped: that exam has been sat."
+  "ECG tasks were dropped: that exam has been sat.",
+  "Thu 22 Oct is a study evening, not a swim — the club pool is shut. One-off."
  ],
  "days": [
   {
@@ -235,19 +236,19 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-14-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A1",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
      "id": "2026-10-20-02",
      "subject": "micro",
      "kind": "study",
      "title": "Micro IV 20–21",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-20-03",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro blurt only",
+     "detail": "5-min blurt of each topic so far",
      "est_minutes": 75
     }
    ]
@@ -269,6 +270,22 @@
      "est_minutes": 20
     },
     {
+     "id": "2026-10-21-02",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 22–25",
+     "detail": "Finishes protozoa",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-14-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A1",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
      "id": "2026-10-15-04",
      "subject": "pharm",
      "kind": "study",
@@ -277,11 +294,11 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-10-20-03",
+     "id": "2026-10-22-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro blurt only",
-     "detail": "5-min blurt of each topic so far",
+     "title": "Micro IV 26–29",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     }
    ]
@@ -311,11 +328,11 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-10-21-02",
+     "id": "2026-10-23-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 22–25",
-     "detail": "Finishes protozoa",
+     "title": "Micro IV 30–33",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     }
    ]
@@ -343,11 +360,11 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-10-22-02",
+     "id": "2026-10-24-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 26–29",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "title": "Micro IV 34–37",
+     "detail": "Finishes helminths",
      "est_minutes": 75
     },
     {
@@ -383,10 +400,10 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-23-02",
+     "id": "2026-10-26-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 30–33",
+     "title": "Micro blurt everything once",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -423,11 +440,11 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-24-02",
+     "id": "2026-10-28-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 34–37",
-     "detail": "Finishes helminths",
+     "title": "Micro written practice: protozoa",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
@@ -465,10 +482,10 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-26-02",
+     "id": "2026-10-29-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro blurt everything once",
+     "title": "Micro written practice: helminths + life cycles",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
@@ -497,20 +514,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-28-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro written practice: protozoa",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
      "id": "2026-10-26-04",
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A10",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
+    },
+    {
+     "id": "2026-10-16-05",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
     }
    ]
   },
@@ -531,12 +548,12 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-29-02",
-     "subject": "micro",
+     "id": "2026-10-27-03",
+     "subject": "pharm",
      "kind": "study",
-     "title": "Micro written practice: helminths + life cycles",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
+     "title": "Pharm A12",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     },
     {
      "id": "2026-10-29-03",
@@ -565,7 +582,7 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-16-05",
+     "id": "2026-10-18-05",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -573,10 +590,10 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-27-03",
+     "id": "2026-10-28-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A12",
+     "title": "Pharm A13",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -621,7 +638,7 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-10-18-05",
+     "id": "2026-10-21-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -629,12 +646,12 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-28-03",
-     "subject": "pharm",
+     "id": "2026-11-01-02",
+     "subject": "micro",
      "kind": "study",
-     "title": "Pharm A13",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
+     "title": "Micro III.1–4",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
     }
    ]
   },
@@ -653,15 +670,15 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-01-02",
-     "subject": "micro",
+     "id": "2026-10-29-04",
+     "subject": "pharm",
      "kind": "study",
-     "title": "Micro III.1–4",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
+     "title": "Pharm A14",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     },
     {
-     "id": "2026-10-21-04",
+     "id": "2026-10-23-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -669,10 +686,10 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-29-04",
+     "id": "2026-11-02-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A14",
+     "title": "Pharm A15",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     }
@@ -701,7 +718,7 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-10-23-04",
+     "id": "2026-10-28-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -709,10 +726,10 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-02-03",
+     "id": "2026-11-03-03",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A15",
+     "title": "Pharm A16",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     }
@@ -743,7 +760,7 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-10-28-04",
+     "id": "2026-11-01-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -775,10 +792,10 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-11-03-03",
+     "id": "2026-11-05-04",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A16",
+     "title": "Pharm A17",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     }
@@ -835,15 +852,15 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-05-04",
+     "id": "2026-11-08-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A17",
+     "title": "Pharm A18",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-11-01-04",
+     "id": "2026-11-04-03",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -875,22 +892,6 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-08-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A18",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-04-03",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    },
-    {
      "id": "2026-11-09-02",
      "subject": "pharm",
      "kind": "study",
@@ -905,6 +906,22 @@
      "title": "Patho: organ description + slides",
      "detail": "Organ description, then slides",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-08-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-10-02",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A20",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -923,7 +940,15 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-08-03",
+     "id": "2026-11-09-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho: organ description + slides",
+     "detail": "Organ description, then slides",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-11-03",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
@@ -931,20 +956,12 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-10-02",
+     "id": "2026-11-11-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A20",
+     "title": "Pharm A21",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
-    },
-    {
-     "id": "2026-11-09-03",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: organ description + slides",
-     "detail": "Organ description, then slides",
-     "est_minutes": 20
     }
    ]
   },
@@ -963,23 +980,23 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-11-02",
+     "id": "2026-11-12-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides + definitions",
+     "detail": "",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-12-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A21",
+     "title": "Pharm A22",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-11-11-03",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-12-03",
+     "id": "2026-11-13-03",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides + definitions",
@@ -1005,18 +1022,18 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-12-02",
+     "id": "2026-11-13-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A22",
+     "title": "Pharm recall A11 + A12",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-11-13-03",
+     "id": "2026-11-14-03",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho slides + definitions",
+     "title": "Patho: organ descriptions",
      "detail": "",
      "est_minutes": 20
     }
@@ -1037,20 +1054,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-13-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm recall A11 + A12",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-14-03",
+     "id": "2026-11-15-04",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho: organ descriptions",
+     "title": "Patho definitions",
      "detail": "",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-14-02",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm recall A18 + A19",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -1071,18 +1088,18 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-14-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm recall A18 + A19",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-15-04",
+     "id": "2026-11-17-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho definitions",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-18-02",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides + organ descriptions",
      "detail": "",
      "est_minutes": 20
     }
@@ -1111,12 +1128,12 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-11-17-02",
-     "subject": "patho",
+     "id": "2026-10-22-04",
+     "subject": "pathophys",
      "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
+     "title": "Pathophysiology L1",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
     }
    ]
   },
@@ -1135,22 +1152,6 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-18-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides + organ descriptions",
-     "detail": "",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-10-22-04",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L1",
-     "detail": "One recorded lecture from the backlog",
-     "est_minutes": 60
-    },
-    {
      "id": "2026-11-19-02",
      "subject": "patho",
      "kind": "study",
@@ -1165,6 +1166,22 @@
      "title": "Pathophysiology L2",
      "detail": "One recorded lecture from the backlog",
      "est_minutes": 60
+    },
+    {
+     "id": "2026-11-15-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm practice questions",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-20-02",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
     }
    ]
   },
@@ -1183,26 +1200,26 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-15-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm practice questions",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-20-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    },
-    {
      "id": "2026-10-26-05",
      "subject": "pathophys",
      "kind": "study",
      "title": "Pathophysiology L3",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-21-02",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho: organ descriptions + slides",
+     "detail": "",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-29-05",
+     "subject": "pathophys",
+     "kind": "study",
+     "title": "Pathophysiology L4",
      "detail": "One recorded lecture from the backlog",
      "est_minutes": 60
     }
@@ -1225,23 +1242,15 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-21-02",
+     "id": "2026-11-22-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho: organ descriptions + slides",
+     "title": "Patho definitions + slides",
      "detail": "",
      "est_minutes": 20
     },
     {
-     "id": "2026-10-29-05",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L4",
-     "detail": "One recorded lecture from the backlog",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-16-04",
+     "id": "2026-11-16-03",
      "subject": "pharm",
      "kind": "exam",
      "title": "Pharm MT2 — A10–A22",
@@ -1264,14 +1273,6 @@
      "kind": "study",
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-22-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho definitions + slides",
-     "detail": "",
      "est_minutes": 20
     },
     {
