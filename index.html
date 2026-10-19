@@ -35,6 +35,10 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+/* html keeps the colour and becomes the page canvas; body must not paint its own
+   box on top of it, or anything at z-index -1 — the shader, Hina's backdrop — is
+   hidden behind it. */
+body { background: transparent; }
 
 /* Ambient glow orbs */
 body::before {
