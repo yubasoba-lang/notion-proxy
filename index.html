@@ -9738,17 +9738,29 @@ function foodCustomTotal(ds){
   return foodCustom(ds).reduce((a,x)=>a+(x.g||0),0);
 }
 let _foodBusy=false;
+let _foodDraft='';
 async function foodEstimate(){
-  if(_foodBusy)return;
   const el=document.getElementById('foodInput');
-  if(!el)return;
-  const txt=(el.value||'').trim();
-  if(!txt)return;
+  const txt=((el&&el.value)||_foodDraft||'').trim();
+  const out0=document.getElementById('foodOut');
+  // Every early exit says something now. A silent no-op is indistinguishable from
+  // a broken button.
+  if(!txt){
+    if(out0)out0.innerHTML='<div style="font-size:11px;color:var(--text)">Type what you ate first.</div>';
+    return;
+  }
+  if(_foodBusy){
+    if(out0)out0.innerHTML='<div style="font-size:11px;color:var(--text)">Still working on the last one…</div>';
+    return;
+  }
   _foodBusy=true;
-  const out=document.getElementById('foodOut');
+  const out=out0;
   if(out)out.innerHTML='<div style="font-size:11px;color:var(--text-dim);padding:8px 0">estimating…</div>';
   try{
-    const raw=await callClaude(FOOD_SYS,txt,600,FOOD_MODEL);
+    const raw=await Promise.race([
+      callClaude(FOOD_SYS,txt,600,FOOD_MODEL),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timed out')),25000)),
+    ]);
     let j=null;
     try{
       const m=raw.match(/\{[\s\S]*\}/);
@@ -9771,9 +9783,11 @@ async function foodEstimate(){
     foodPaintPending();
   }catch(e){
     warn('foodEstimate',e);
-    if(out)out.innerHTML='<div style="font-size:11px;color:var(--text)">Could not reach the estimator. Your taps still work.</div>';
+    const out=document.getElementById('foodOut');
+    if(out)out.innerHTML='<div style="font-size:11px;line-height:1.8;color:var(--text)">Could not reach the estimator ('+esc(e.message||'error')+'). Your taps still work.</div>';
+  }finally{
+    _foodBusy=false;
   }
-  _foodBusy=false;
 }
 let _foodPending=null;
 function foodPaintPending(){
@@ -9807,6 +9821,7 @@ function foodAccept(){
   state.proteinLog[ds].__x.push({t:_foodPending.t.slice(0,60),g:_foodPending.g});
   saveProteinLog();
   _foodPending=null;
+  _foodDraft='';
   const el=document.getElementById('foodInput');
   if(el)el.value='';
   showToast('Added');
@@ -9838,7 +9853,7 @@ function foodHTML(){
     '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin:4px 0 10px">Describe it and it will estimate. Approximate on purpose — better than logging nothing.</div>'+
     rows+
     '<div style="display:flex;gap:8px;align-items:center;margin-top:10px">'+
-      '<input id="foodInput" class="num-in num-in-sm" type="text" placeholder="gyros tál, chips" style="text-align:left;padding-left:14px">'+
+      '<input id="foodInput" class="num-in num-in-sm" type="text" placeholder="gyros tál, chips" value="'+esc(_foodDraft)+'" oninput="_foodDraft=this.value" style="text-align:left;padding-left:14px">'+
       '<button class="wec-log-btn btn-inline" onclick="foodEstimate()">Estimate</button>'+
     '</div>'+
     '<div id="foodOut"></div>';
