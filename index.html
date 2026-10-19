@@ -5216,6 +5216,7 @@ async function refresh(force=true){
   setSyncBusy(false);
 }
 function switchTab(tab,btn){
+  if(typeof hinaRevealClose==='function')hinaRevealClose();
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>{p.style.display='none';p.classList.remove('active');});
   if(btn)btn.classList.add('active');
@@ -9325,6 +9326,46 @@ function hinaRangeHTML(cur){
     ' &nbsp;<span style="color:var(--text-dim)">'+read+'</span>'+
     '<br>凝 shifts the window, 心 widens it.</div>';
 }
+// Three taps on the empty part of her page and she appears for half a minute.
+// Hidden rather than absent: the page has to stay openable in a lecture, which is
+// the whole reason there is no avatar sitting on it permanently.
+const HINA_FACE='/hina.webp';
+const HINA_REVEAL_MS=30000;
+const HINA_TAP_WINDOW=900;
+let _hinaTaps=[];
+let _hinaRevealTimer=null;
+function hinaRevealClose(){
+  clearTimeout(_hinaRevealTimer);_hinaRevealTimer=null;
+  const el=document.getElementById('hinaReveal');
+  if(!el)return;
+  el.style.opacity='0';
+  setTimeout(()=>{document.getElementById('hinaReveal')?.remove();},420);
+}
+function hinaReveal(){
+  if(document.getElementById('hinaReveal'))return;
+  const el=document.createElement('div');
+  el.id='hinaReveal';
+  el.style.cssText='position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.42s ease;cursor:pointer';
+  el.onclick=hinaRevealClose;
+  // If the file is not there she simply does not appear, and the overlay closes
+  // itself rather than showing an empty black screen.
+  el.innerHTML='<img src="'+HINA_FACE+'" alt="" '+
+    'onerror="hinaRevealClose()" '+
+    'style="max-width:84%;max-height:76%;object-fit:contain;opacity:0.92;border-radius:2px">';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{el.style.opacity='1';});
+  _hinaRevealTimer=setTimeout(hinaRevealClose,HINA_REVEAL_MS);
+}
+// Only taps on the page itself count — not on a button, a field, or the hexagon.
+function hinaTap(ev){
+  const t=ev&&ev.target;
+  if(t&&t.closest&&t.closest('button,input,a,svg,.wec-log-btn'))return;
+  const now=Date.now();
+  _hinaTaps=_hinaTaps.filter(x=>now-x<HINA_TAP_WINDOW);
+  _hinaTaps.push(now);
+  if(_hinaTaps.length>=3){_hinaTaps=[];hinaReveal();}
+}
+
 function renderHina(){
   const el=document.getElementById('tab-hina');
   if(!el)return;
@@ -9363,6 +9404,7 @@ function renderHina(){
       '<span style="flex:1">'+esc(sw.name)+'</span>'+
       '<span style="font-family:\'JetBrains Mono\',monospace">'+sw.t.toFixed(1)+'</span></div>';
   });
+  el.onclick=hinaTap;
   el.innerHTML='<div style="padding:0 16px 40px">'+
     '<div class="rival-page-subtitle" style="margin-top:4px">ヒナ</div>'+
     hinaLineHTML(cur)+
