@@ -9329,7 +9329,25 @@ function hinaRangeHTML(cur){
 // Three taps on the empty part of her page and she appears for half a minute.
 // Hidden rather than absent: the page has to stay openable in a lecture, which is
 // the whole reason there is no avatar sitting on it permanently.
-const HINA_FACE='/hina.webp';
+const HINA_FACE='/hina.jpeg';
+// Swapped for 24 hours after a day is marked. Falls back to the normal portrait
+// if the alternate file is not there, so the reveal never breaks.
+const HINA_FACE_ALT='/hina-alt.jpeg';
+const HINA_ALT_MS=86400000;
+function hinaFaceSrc(){
+  const log=state.restLog||{};
+  let newest=0;
+  Object.keys(log).forEach(ds=>{
+    const v=log[ds];
+    // Older entries stored 1; newer ones store the moment they were toggled on.
+    let t=0;
+    if(typeof v==='number'&&v>1)t=v;
+    else if(v)t=new Date(ds+'T12:00:00').getTime();
+    if(t>newest)newest=t;
+  });
+  if(newest&&Date.now()-newest<HINA_ALT_MS)return HINA_FACE_ALT;
+  return HINA_FACE;
+}
 const HINA_REVEAL_MS=30000;
 const HINA_TAP_WINDOW=900;
 let _hinaTaps=[];
@@ -9349,8 +9367,10 @@ function hinaReveal(){
   el.onclick=hinaRevealClose;
   // If the file is not there she simply does not appear, and the overlay closes
   // itself rather than showing an empty black screen.
-  el.innerHTML='<img src="'+HINA_FACE+'" alt="" '+
-    'onerror="hinaRevealClose()" '+
+  // If the alternate is missing the browser falls back to the normal portrait,
+  // and only if that is missing too does the overlay close itself.
+  el.innerHTML='<img src="'+hinaFaceSrc()+'" alt="" '+
+    'onerror="if(this.src.indexOf(\'hina-alt\')>-1){this.src=HINA_FACE;}else{hinaRevealClose();}" '+
     'style="max-width:84%;max-height:76%;object-fit:contain;opacity:0.92;border-radius:2px">';
   document.body.appendChild(el);
   requestAnimationFrame(()=>{el.style.opacity='1';});
@@ -9529,7 +9549,7 @@ function sleepSubmit(){
 function restToggle(ds){
   if(!state.restLog)state.restLog={};
   if(state.restLog[ds])delete state.restLog[ds];
-  else state.restLog[ds]=1;
+  else state.restLog[ds]=Date.now();
   saveDayLog(REST_CFG,REST_KEY,'restLog','restLogPageId');
   renderBody();
 }
