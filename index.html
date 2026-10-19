@@ -9386,6 +9386,8 @@ function renderHina(){
 // night and one tap a day; nothing to score, nothing to keep a streak of.
 const SLEEP_CFG='sleep_log';
 const SLEEP_KEY='grind_sleep_log';
+// The stored key stays 'recovery_log' so existing entries are not orphaned; only
+// the label on screen changed.
 const REST_CFG='recovery_log';
 const REST_KEY='grind_recovery_log';
 function sleepDates(){return state.sleepLog||{};}
@@ -9497,6 +9499,7 @@ function sleepVerdict(){
   if(a<8.5)return a+'h average';
   return a+'h average — plenty';
 }
+const SLEEP_DOW=['S','M','T','W','T','F','S'];
 function renderBody(){
   const el=document.getElementById('tab-body');
   if(!el)return;
@@ -9510,8 +9513,15 @@ function renderBody(){
     if(!v)col='rgba(232,234,240,0.10)';
     let ring='';
     if(ds===sleepDay()&&_sleepDay)ring=';outline:1px solid var(--gold);outline-offset:2px';
-    sleepBars+='<span onclick="sleepPick(\''+ds+'\')" title="'+ds+' · '+(v||'—')+'h" style="display:inline-block;width:16px;height:'+px+'px;background:'+col+';opacity:0.85;border-radius:1px;margin-right:7px;vertical-align:bottom;cursor:pointer'+ring+'"></span>';
+    const dd=new Date(ds+'T12:00:00');
+    let dayCol2='var(--text-faint)';
+    if(ds===localToday())dayCol2='var(--text)';
+    sleepBars+='<span onclick="sleepPick(\''+ds+'\')" title="'+ds+' · '+(v||'—')+'h" style="display:inline-block;width:30px;text-align:center;cursor:pointer;vertical-align:bottom">'+
+      '<span style="display:block;height:34px;line-height:0"><span style="display:inline-block;width:16px;height:'+px+'px;background:'+col+';opacity:0.85;border-radius:1px;vertical-align:bottom'+ring+'"></span></span>'+
+      '<span style="display:block;font-size:9px;letter-spacing:0.04em;color:'+dayCol2+';margin-top:5px">'+SLEEP_DOW[dd.getDay()]+'</span>'+
+    '</span>';
   });
+  const DOW=['S','M','T','W','T','F','S'];
   let restDots='';
   days.forEach(ds=>{
     const on=!!rl[ds];
@@ -9519,13 +9529,19 @@ function renderBody(){
     if(on)mark='●';
     let col='var(--text-faint)';
     if(on)col='var(--gold)';
-    restDots+='<span onclick="restToggle(\''+ds+'\')" style="font-size:17px;color:'+col+';cursor:pointer;margin-right:11px">'+mark+'</span>';
+    let dayCol='var(--text-faint)';
+    if(ds===localToday())dayCol='var(--text)';
+    const d=new Date(ds+'T12:00:00');
+    restDots+='<span onclick="restToggle(\''+ds+'\')" style="display:inline-block;text-align:center;width:30px;cursor:pointer">'+
+      '<span style="display:block;font-size:19px;line-height:1;color:'+col+'">'+mark+'</span>'+
+      '<span style="display:block;font-size:9px;letter-spacing:0.04em;color:'+dayCol+';margin-top:5px">'+DOW[d.getDay()]+'</span>'+
+    '</span>';
   });
   el.innerHTML=`<div style="padding:0 16px 40px">
     <div class="rival-page-subtitle" style="margin-top:4px">Weight</div>
     <div id="weightBody" style="margin-bottom:26px">${weightBodyHTML()}</div>
     <div class="rival-section-label">Recovery</div>
-    <div style="margin:10px 0 6px;min-height:36px">${sleepBars}</div>
+    <div style="margin:10px 0 6px;min-height:52px">${sleepBars}</div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">${esc(sleepVerdict())}</div>
     <div style="font-size:10px;color:var(--text-faint);margin-bottom:12px">tap a bar to log an earlier night</div>
     <div style="display:flex;gap:9px;align-items:center;margin-bottom:20px">
@@ -9536,7 +9552,7 @@ function renderBody(){
       </label>
       <button class="wec-log-btn btn-inline" onclick="sleepSubmit()">Log</button>
     </div>
-    <div style="font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Rest · last 7 days</div>
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Sex · last 7 days</div>
     <div style="margin-bottom:6px">${restDots}</div>
     <div style="font-size:10px;color:var(--text-faint);margin-bottom:26px">${restCount(14)} in the last fortnight · feeds 心</div>
     <div id="proteinTally">${proteinTallyHTML()}</div>
