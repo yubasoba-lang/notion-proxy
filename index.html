@@ -3011,6 +3011,20 @@ async function appConfigRows(key){
     .sort((a,b)=>(b.last_edited_time||'').localeCompare(a.last_edited_time||''));
 }
 
+// Creating a row after checking only an in-memory flag produced duplicates: two
+// page loads each believed none existed, and AppConfig ended up with two
+// hina_state rows carrying different talents. Re-query before creating, so a row
+// made by another load is adopted instead of duplicated.
+async function appConfigUpsert(cfg,pageId,json){
+  const rich=richChunks(json);
+  if(pageId){await nPatch(pageId,{Value:{rich_text:rich}});return pageId;}
+  appConfigInvalidate();
+  const rows=await appConfigRows(cfg);
+  if(rows.length){await nPatch(rows[0].id,{Value:{rich_text:rich}});return rows[0].id;}
+  const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:cfg}}]},Value:{rich_text:rich}});
+  appConfigInvalidate();
+  return page.id;
+}
 const nPatch=(id,props)=>nFetch(`/pages/${id}`,'PATCH',{properties:props});
 const nCreate=(dbId,props)=>nFetch('/pages','POST',{parent:{database_id:dbId},properties:props});
 const nAddBlocks=(pageId,children)=>nFetch(`/blocks/${pageId}/children`,'PATCH',{children});
@@ -6715,16 +6729,7 @@ function saveCueOwn(){
   clearTimeout(_cueSaveTimer);
   _cueSaveTimer=setTimeout(async()=>{
     try{
-      const rich=richChunks(JSON.stringify(state.cueOwn||{v:{}}));
-      if(state.cueOwnPageId)await nPatch(state.cueOwnPageId,{Value:{rich_text:rich}});
-      else{
-        if(state._cueOwnCreating){state._cueOwnCreating.then(()=>saveCueOwn());return;}
-        appConfigInvalidate();
-        state._cueOwnCreating=nCreate(DB.appConfig,{Key:{title:[{text:{content:CUE_OWN_CFG}}]},Value:{rich_text:rich}});
-        const page=await state._cueOwnCreating;
-        state.cueOwnPageId=page.id;
-        state._cueOwnCreating=null;
-      }
+      state.cueOwnPageId=await appConfigUpsert(CUE_OWN_CFG,state.cueOwnPageId,JSON.stringify(state.cueOwn||{v:{}}));
     }catch(e){warn('saveCueOwn',e);showToast('Cue save failed — will retry');}
   },900);
 }
@@ -8619,26 +8624,9 @@ function saveProteinLog(){
   clearTimeout(_proteinSaveTimer);
   _proteinSaveTimer=setTimeout(async()=>{
     try{
-      const rich=richChunks(JSON.stringify(state.proteinLog||{}));
-      if(state.proteinLogPageId)await nPatch(state.proteinLogPageId,{Value:{rich_text:rich}});
-      else{
-        // One create only. Without this, a weight and a height saved in quick
-        // succession each created their own row.
-        if(state._proteinLogCreating){state._proteinLogCreating.then(()=>saveProteinOrWeightRetry('proteinLog'));return;}
-        appConfigInvalidate();
-        state._proteinLogCreating=nCreate(DB.appConfig,{Key:{title:[{text:{content:PROTEIN_CFG}}]},Value:{rich_text:rich}});
-        const page=await state._proteinLogCreating;
-        state.proteinLogPageId=page.id;
-        state._proteinLogCreating=null;
-      }
+      state.proteinLogPageId=await appConfigUpsert(PROTEIN_CFG,state.proteinLogPageId,JSON.stringify(state.proteinLog||{}));
     }catch(e){warn('saveProteinLog',e);showToast('Protein save failed — will retry');}
   },900);
-}
-// If a create was already in flight, the second save waits for it and then patches
-// the row that now exists instead of making another one.
-function saveProteinOrWeightRetry(which){
-  if(which==='proteinLog')saveProteinLog();
-  else saveWeightLog();
 }
 function proteinBump(id,dir){
   const ds=protDate();
@@ -8911,16 +8899,7 @@ function saveHina(){
   clearTimeout(_hinaSaveTimer);
   _hinaSaveTimer=setTimeout(async()=>{
     try{
-      const rich=richChunks(JSON.stringify(state.hina||{}));
-      if(state.hinaPageId)await nPatch(state.hinaPageId,{Value:{rich_text:rich}});
-      else{
-        if(state._hinaCreating){state._hinaCreating.then(()=>saveHina());return;}
-        appConfigInvalidate();
-        state._hinaCreating=nCreate(DB.appConfig,{Key:{title:[{text:{content:HINA_CFG}}]},Value:{rich_text:rich}});
-        const page=await state._hinaCreating;
-        state.hinaPageId=page.id;
-        state._hinaCreating=null;
-      }
+      state.hinaPageId=await appConfigUpsert(HINA_CFG,state.hinaPageId,JSON.stringify(state.hina||{}));
     }catch(e){warn('saveHina',e);showToast('Hina save failed — will retry');}
   },900);
 }
@@ -9527,17 +9506,7 @@ function saveDayLog(cfg,key,field,pageField){
   clearTimeout(_dayLogTimers[cfg]);
   _dayLogTimers[cfg]=setTimeout(async()=>{
     try{
-      const rich=richChunks(JSON.stringify(state[field]||{}));
-      if(state[pageField])await nPatch(state[pageField],{Value:{rich_text:rich}});
-      else{
-        const flag='_creating_'+cfg;
-        if(state[flag]){state[flag].then(()=>saveDayLog(cfg,key,field,pageField));return;}
-        appConfigInvalidate();
-        state[flag]=nCreate(DB.appConfig,{Key:{title:[{text:{content:cfg}}]},Value:{rich_text:rich}});
-        const page=await state[flag];
-        state[pageField]=page.id;
-        state[flag]=null;
-      }
+      state[pageField]=await appConfigUpsert(cfg,state[pageField],JSON.stringify(state[field]||{}));
     }catch(e){warn('save'+cfg,e);showToast('Save failed — will retry');}
   },900);
 }
@@ -9707,18 +9676,7 @@ function saveWeightLog(){
   clearTimeout(_weightSaveTimer);
   _weightSaveTimer=setTimeout(async()=>{
     try{
-      const rich=richChunks(JSON.stringify(state.weightLog||{d:{},h:0}));
-      if(state.weightLogPageId)await nPatch(state.weightLogPageId,{Value:{rich_text:rich}});
-      else{
-        // One create only. Without this, a weight and a height saved in quick
-        // succession each created their own row.
-        if(state._weightLogCreating){state._weightLogCreating.then(()=>saveProteinOrWeightRetry('weightLog'));return;}
-        appConfigInvalidate();
-        state._weightLogCreating=nCreate(DB.appConfig,{Key:{title:[{text:{content:WEIGHT_CFG}}]},Value:{rich_text:rich}});
-        const page=await state._weightLogCreating;
-        state.weightLogPageId=page.id;
-        state._weightLogCreating=null;
-      }
+      state.weightLogPageId=await appConfigUpsert(WEIGHT_CFG,state.weightLogPageId,JSON.stringify(state.weightLog||{d:{},h:0}));
     }catch(e){warn('saveWeightLog',e);showToast('Weight save failed — will retry');}
   },900);
 }
