@@ -8580,6 +8580,8 @@ function proteinTotal(ds){
   const d=proteinDay(ds);
   let n=0;
   Object.keys(d).forEach(k=>{const f=proteinFood(k);if(f)n+=f.g*d[k];});
+  // __x holds estimated meals: free text with a number, not a tapped portion.
+  (d.__x||[]).forEach(x=>{n+=x.g||0;});
   return n;
 }
 async function loadProteinLog(){
@@ -9705,6 +9707,143 @@ function proteinRowHTML(){
     </div>
   </div>`;
 }
+// ── Eating out ───────────────────────────────────────────────────────────────
+// Tapping fixed portions cannot cover a restaurant, and the honest comparison is
+// not estimate-versus-perfect, it is estimate-versus-nothing: an untracked meal
+// logs as zero, which actively lies and drags 健 down for no reason.
+//
+// The field is called protein_g and the prompt spells out the difference, because
+// an earlier version using "g" returned portion weights — a gyros tál came back
+// as 550g. The guards below exist for the same reason: never trust it blindly.
+const FOOD_MODEL='claude-sonnet-5-5';
+const FOOD_MAX_TOTAL=200;   // no single meal is over this
+const FOOD_MAX_ITEM=100;
+const FOOD_SYS=
+ 'You estimate how much PROTEIN a meal contains, for a food log. The user is a 185cm '+
+ '68kg male swimmer in Budapest, Hungary who eats large portions. Prefer Hungarian and '+
+ 'European menu data.\n'+
+ 'CRITICAL: protein_g is GRAMS OF PROTEIN, never the weight of the food. A 250g portion '+
+ 'of pork contains about 45g of protein, so protein_g is 45, not 250. Chips, rice, pita '+
+ 'and bread contain little protein. A whole meal is rarely over 80g.\n'+
+ 'Return ONLY JSON: {"items":[{"name":"...","protein_g":number}],"total_protein_g":number,'+
+ '"confidence":"high|medium|low","note":"one short sentence, or a question if too vague"}\n'+
+ 'If the input is too vague to estimate, set total_protein_g to 0, confidence low, and ask '+
+ 'what was on the plate.';
+function foodCustom(ds){
+  const d=(state.proteinLog||{})[ds||protDate()];
+  if(!d||!d.__x)return [];
+  return d.__x;
+}
+function foodCustomTotal(ds){
+  return foodCustom(ds).reduce((a,x)=>a+(x.g||0),0);
+}
+let _foodBusy=false;
+async function foodEstimate(){
+  if(_foodBusy)return;
+  const el=document.getElementById('foodInput');
+  if(!el)return;
+  const txt=(el.value||'').trim();
+  if(!txt)return;
+  _foodBusy=true;
+  const out=document.getElementById('foodOut');
+  if(out)out.innerHTML='<div style="font-size:11px;color:var(--text-dim);padding:8px 0">estimating…</div>';
+  try{
+    const raw=await callClaude(FOOD_SYS,txt,600,FOOD_MODEL);
+    let j=null;
+    try{
+      const m=raw.match(/\{[\s\S]*\}/);
+      j=JSON.parse(m?m[0]:raw);
+    }catch(_){throw new Error('could not read the reply');}
+    const items=(j.items||[]).filter(x=>x&&typeof x.protein_g==='number');
+    let total=Math.round(j.total_protein_g||0);
+    // Guards. The model has returned food weights before; it must never silently
+    // become a 550g entry.
+    const bad=items.some(x=>x.protein_g>FOOD_MAX_ITEM)||total>FOOD_MAX_TOTAL;
+    if(bad){
+      if(out)out.innerHTML='<div style="font-size:11px;line-height:1.8;color:var(--text)">That came back as '+total+'g, which is not a meal — it has probably read portion weights rather than protein. Try describing it differently.</div>';
+      _foodBusy=false;return;
+    }
+    if(!total||!items.length){
+      if(out)out.innerHTML='<div style="font-size:11px;line-height:1.8;color:var(--text)">'+esc(j.note||'Not enough to go on — what was on the plate?')+'</div>';
+      _foodBusy=false;return;
+    }
+    _foodPending={t:txt,g:total,items:items.map(x=>({n:String(x.name||'').slice(0,40),g:Math.round(x.protein_g)})),c:j.confidence||'medium',note:j.note||''};
+    foodPaintPending();
+  }catch(e){
+    warn('foodEstimate',e);
+    if(out)out.innerHTML='<div style="font-size:11px;color:var(--text)">Could not reach the estimator. Your taps still work.</div>';
+  }
+  _foodBusy=false;
+}
+let _foodPending=null;
+function foodPaintPending(){
+  const out=document.getElementById('foodOut');
+  if(!out)return;
+  if(!_foodPending){out.innerHTML='';return;}
+  const p=_foodPending;
+  let rows='';
+  p.items.forEach(x=>{
+    rows+='<div style="display:flex;gap:10px;font-size:11px;color:var(--text-dim);padding:3px 0"><span style="flex:1">'+esc(x.n)+'</span><span style="font-family:\'JetBrains Mono\',monospace">'+x.g+'g</span></div>';
+  });
+  let note='';
+  if(p.note)note='<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:6px">'+esc(p.note)+'</div>';
+  out.innerHTML='<div style="border-top:1px solid rgba(232,234,240,0.08);margin-top:10px;padding-top:10px">'+
+    '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px">'+
+      '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;line-height:1;color:var(--text-hi)">'+p.g+'</span>'+
+      '<span style="font-size:11px;color:var(--text-dim)">g · '+esc(p.c)+' confidence</span></div>'+
+    rows+note+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+      '<button class="wec-log-btn" onclick="foodAccept()">Add to '+esc(protDateLabel())+'</button>'+
+      '<button class="wec-log-btn btn-inline" style="background:transparent;color:var(--text-dim);border:1px solid var(--border)" onclick="foodDiscard()">Discard</button>'+
+    '</div></div>';
+}
+function foodDiscard(){_foodPending=null;foodPaintPending();}
+function foodAccept(){
+  if(!_foodPending)return;
+  const ds=protDate();
+  if(!state.proteinLog)state.proteinLog={};
+  if(!state.proteinLog[ds])state.proteinLog[ds]={};
+  if(!state.proteinLog[ds].__x)state.proteinLog[ds].__x=[];
+  state.proteinLog[ds].__x.push({t:_foodPending.t.slice(0,60),g:_foodPending.g});
+  saveProteinLog();
+  _foodPending=null;
+  const el=document.getElementById('foodInput');
+  if(el)el.value='';
+  showToast('Added');
+  const t=document.getElementById('proteinTally');
+  if(t)t.innerHTML=proteinTallyHTML();
+}
+function foodRemove(i){
+  const ds=protDate();
+  const d=(state.proteinLog||{})[ds];
+  if(!d||!d.__x)return;
+  d.__x.splice(i,1);
+  if(!d.__x.length)delete d.__x;
+  saveProteinLog();
+  const t=document.getElementById('proteinTally');
+  if(t)t.innerHTML=proteinTallyHTML();
+}
+function foodHTML(){
+  const cus=foodCustom();
+  let rows='';
+  cus.forEach((x,i)=>{
+    rows+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text-hi)">'+esc(x.t)+'</div>'+
+      '<div style="font-size:9px;color:var(--text-faint);margin-top:2px">estimated</div></div>'+
+      '<span style="font-family:\'JetBrains Mono\',monospace;font-size:14px;color:var(--gold)">'+x.g+'g</span>'+
+      '<button class="wec-log-btn" style="width:30px;padding:5px 0;margin:0;background:transparent;color:var(--text-dim);border:1px solid var(--border)" onclick="foodRemove('+i+')">×</button>'+
+    '</div>';
+  });
+  return '<div class="rival-section-label" style="margin-top:20px">Ate out</div>'+
+    '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin:4px 0 10px">Describe it and it will estimate. Approximate on purpose — better than logging nothing.</div>'+
+    rows+
+    '<div style="display:flex;gap:8px;align-items:center;margin-top:10px">'+
+      '<input id="foodInput" class="num-in num-in-sm" type="text" placeholder="gyros tál, chips" style="text-align:left;padding-left:14px">'+
+      '<button class="wec-log-btn btn-inline" onclick="foodEstimate()">Estimate</button>'+
+    '</div>'+
+    '<div id="foodOut"></div>';
+}
+
 function proteinTallyHTML(){
   const ds=protDate();
   const d=proteinDay(ds);
@@ -9746,7 +9885,8 @@ function proteinTallyHTML(){
     <div class="rival-section-label">Cheapest per gram</div>
     <div style="margin:4px 0 20px">${cheapRows}</div>
     <div class="rival-section-label">Everything else</div>
-    <div style="margin:4px 0 20px">${restRows}</div>`;
+    <div style="margin:4px 0 20px">${restRows}</div>
+    ${foodHTML()}`;
 }
 function protBindSwipe(el){
   let x0=null,y0=null;
