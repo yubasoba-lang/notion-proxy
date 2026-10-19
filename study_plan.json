@@ -2,7 +2,7 @@
  "schema_version": 1,
  "title": "Catch-up plan — 13 Oct to 25 Nov 2026",
  "timezone": "Europe/Budapest",
- "generated": "2026-10-13T21:48:40",
+ "generated": "2026-10-19T15:41:54",
  "subjects": {
   "anki": "Anki",
   "ecg": "ECG",
@@ -22,13 +22,13 @@
   {
    "date": "2026-10-30",
    "subject": "micro",
-   "title": "Micro MT1 — IV 1–37",
+   "title": "Micro MT1 — IV 12–37 (parasitology)",
    "target": "50%"
   },
   {
    "date": "2026-11-06",
    "subject": "micro",
-   "title": "Micro MT2 — III.1–19",
+   "title": "Micro MT2 — III.1–19 + mycology IV 1–11",
    "target": "50%"
   },
   {
@@ -49,9 +49,10 @@
   "On a bad day drop pathophysiology first, then pharmacology. Never drop the next exam’s subject.",
   "Nothing new after swim training — Tuesday and Thursday evenings are review only.",
   "Anki first thing, every day.",
-  "ECG comes from the LITFL ECG Library (litfl.com/ecg-library/basics) — reading and strips, no video.",
   "Wednesday and Friday have the least slack. Move work to Saturday, not into them.",
-  "Cascaded one slot on 13 Oct 2026 — pharm and micro run a day later than first planned."
+  "Mycology (Micro IV 1–11) is in MT2, not MT1. Only parasitology — IV 12–37 — is needed by 30 Oct.",
+  "Rescheduled 19 Oct 2026 after 17 tasks slipped. Subjects now interleave and each finishes the day before its exam.",
+  "ECG tasks were dropped: that exam has been sat."
  ],
  "days": [
   {
@@ -109,22 +110,6 @@
      "title": "Micro IV 1–4",
      "detail": "General mycology — likely not in Sketchy, use notes",
      "est_minutes": 75
-    },
-    {
-     "id": "2026-10-14-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A1",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-14-05",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
     }
    ]
   },
@@ -159,14 +144,6 @@
      "title": "Micro IV 5–8",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
-    },
-    {
-     "id": "2026-10-15-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A2",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
     }
    ]
   },
@@ -175,136 +152,21 @@
    "weekday": "Friday",
    "semester_week": 6,
    "tags": [],
-   "tasks": [
-    {
-     "id": "2026-10-16-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-10-16-02",
-     "subject": "ecg",
-     "kind": "study",
-     "title": "ECG: Electrolytes, hypertrophy, strain",
-     "detail": "LITFL → Waves and Intervals (Osborne/J wave, QT, ST) and ECG anatomy: atrial enlargement, hypertrophy",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-16-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 9–11",
-     "detail": "Finishes fungi",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-16-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A3",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-16-05",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    }
-   ]
+   "tasks": []
   },
   {
    "date": "2026-10-17",
    "weekday": "Saturday",
    "semester_week": 6,
    "tags": [],
-   "tasks": [
-    {
-     "id": "2026-10-17-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-10-17-02",
-     "subject": "ecg",
-     "kind": "study",
-     "title": "ECG: Killer rhythms + pacemakers",
-     "detail": "LITFL → Killer ECG Rhythms and the pacemaker pages, then the first half of the 150 ECG Quiz",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-17-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 12–15",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-17-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A4",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    }
-   ]
+   "tasks": []
   },
   {
    "date": "2026-10-18",
    "weekday": "Sunday",
    "semester_week": 6,
    "tags": [],
-   "tasks": [
-    {
-     "id": "2026-10-18-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-10-18-02",
-     "subject": "ecg",
-     "kind": "study",
-     "title": "ECG: Timed quiz, then review mistakes",
-     "detail": "LITFL → 150 ECG Quiz under time, then work back through every one you got wrong",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-18-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 16–19",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-18-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A5",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-18-05",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    }
-   ]
+   "tasks": []
   },
   {
    "date": "2026-10-19",
@@ -321,14 +183,6 @@
      "title": "ECG exam",
      "detail": "Target: Pass",
      "est_minutes": null
-    },
-    {
-     "id": "2026-10-19-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
     }
    ]
   },
@@ -349,19 +203,19 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-20-02",
+     "id": "2026-10-17-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 20–21",
+     "title": "Micro IV 12–15",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
-     "id": "2026-10-20-03",
+     "id": "2026-10-18-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro blurt only",
-     "detail": "5-min blurt of each topic so far",
+     "title": "Micro IV 16–19",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     }
    ]
@@ -381,28 +235,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-21-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 22–25",
-     "detail": "Finishes protozoa",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-21-03",
+     "id": "2026-10-14-04",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A6",
+     "title": "Pharm A1",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-10-21-04",
-     "subject": "patho",
+     "id": "2026-10-20-02",
+     "subject": "micro",
      "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
+     "title": "Micro IV 20–21",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
     }
    ]
   },
@@ -423,28 +269,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-22-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 26–29",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-22-03",
+     "id": "2026-10-15-04",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A7",
+     "title": "Pharm A2",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-10-22-04",
-     "subject": "pathophys",
+     "id": "2026-10-20-03",
+     "subject": "micro",
      "kind": "study",
-     "title": "Pathophysiology L1",
-     "detail": "One recorded lecture from the backlog",
-     "est_minutes": 60
+     "title": "Micro blurt only",
+     "detail": "5-min blurt of each topic so far",
+     "est_minutes": 75
     }
    ]
   },
@@ -465,28 +303,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-23-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 30–33",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-10-23-03",
+     "id": "2026-10-16-04",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A8",
+     "title": "Pharm A3",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-10-23-04",
-     "subject": "patho",
+     "id": "2026-10-21-02",
+     "subject": "micro",
      "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
+     "title": "Micro IV 22–25",
+     "detail": "Finishes protozoa",
+     "est_minutes": 75
     }
    ]
   },
@@ -498,6 +328,94 @@
    "tasks": [
     {
      "id": "2026-10-24-01",
+     "subject": "anki",
+     "kind": "study",
+     "title": "Anki",
+     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-17-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A4",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-10-22-02",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 26–29",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-18-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A5",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-10-21-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A6",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    }
+   ]
+  },
+  {
+   "date": "2026-10-25",
+   "weekday": "Sunday",
+   "semester_week": 7,
+   "tags": [],
+   "tasks": [
+    {
+     "id": "2026-10-25-01",
+     "subject": "anki",
+     "kind": "study",
+     "title": "Anki",
+     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-23-02",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro IV 30–33",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-22-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A7",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-10-23-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A8",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    }
+   ]
+  },
+  {
+   "date": "2026-10-26",
+   "weekday": "Monday",
+   "semester_week": 8,
+   "tags": [],
+   "tasks": [
+    {
+     "id": "2026-10-26-01",
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
@@ -521,75 +439,11 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-10-24-04",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L2",
-     "detail": "One recorded lecture from the backlog",
-     "est_minutes": 60
-    }
-   ]
-  },
-  {
-   "date": "2026-10-25",
-   "weekday": "Sunday",
-   "semester_week": 7,
-   "tags": [],
-   "tasks": [
-    {
-     "id": "2026-10-25-01",
-     "subject": "rest",
-     "kind": "rest",
-     "title": "Day off",
-     "detail": "Earned. Nothing scheduled",
-     "est_minutes": null
-    }
-   ]
-  },
-  {
-   "date": "2026-10-26",
-   "weekday": "Monday",
-   "semester_week": 8,
-   "tags": [],
-   "tasks": [
-    {
-     "id": "2026-10-26-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-10-26-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro blurt everything once",
-     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-     "est_minutes": 75
-    },
-    {
      "id": "2026-10-26-03",
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A11",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-26-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A10",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-26-05",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L3",
-     "detail": "One recorded lecture from the backlog",
      "est_minutes": 60
     }
    ]
@@ -611,20 +465,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-27-02",
+     "id": "2026-10-26-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro written practice: mycology",
+     "title": "Micro blurt everything once",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
     },
     {
-     "id": "2026-10-27-03",
-     "subject": "pharm",
+     "id": "2026-10-14-05",
+     "subject": "patho",
      "kind": "study",
-     "title": "Pharm A12",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
     }
    ]
   },
@@ -651,20 +505,12 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-10-28-03",
+     "id": "2026-10-26-04",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A13",
+     "title": "Pharm A10",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
-    },
-    {
-     "id": "2026-10-28-04",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
     }
    ]
   },
@@ -699,22 +545,6 @@
      "title": "Micro light review, sleep early",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
-    },
-    {
-     "id": "2026-10-29-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A14",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-10-29-05",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L4",
-     "detail": "One recorded lecture from the backlog",
-     "est_minutes": 60
     }
    ]
   },
@@ -727,20 +557,36 @@
    ],
    "tasks": [
     {
-     "id": "2026-10-30-EX",
-     "subject": "micro",
-     "kind": "exam",
-     "title": "Micro MT1 — IV 1–37",
-     "detail": "Target: 50%",
-     "est_minutes": null
-    },
-    {
      "id": "2026-10-30-01",
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-10-16-05",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-27-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A12",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-10-30-04",
+     "subject": "micro",
+     "kind": "exam",
+     "title": "Micro MT1 — IV 12–37 (parasitology)",
+     "detail": "Exam day",
+     "est_minutes": 0
     }
    ]
   },
@@ -759,11 +605,35 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-10-31-02",
-     "subject": "pathophys",
+     "id": "2026-10-16-03",
+     "subject": "micro",
      "kind": "study",
-     "title": "Pathophysiology L5",
-     "detail": "One recorded lecture from the backlog",
+     "title": "Micro IV 9–11",
+     "detail": "Finishes fungi",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-27-02",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro written practice: mycology",
+     "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
+     "est_minutes": 75
+    },
+    {
+     "id": "2026-10-18-05",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-28-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A13",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     }
    ]
@@ -791,20 +661,20 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-11-01-03",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L6",
-     "detail": "One recorded lecture from the backlog",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-01-04",
+     "id": "2026-10-21-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
      "detail": "About 20 minutes",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-10-29-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A14",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -831,19 +701,19 @@
      "est_minutes": 75
     },
     {
+     "id": "2026-10-23-04",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
      "id": "2026-11-02-03",
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A15",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-02-04",
-     "subject": "pathophys",
-     "kind": "study",
-     "title": "Pathophysiology L7",
-     "detail": "One recorded lecture from the backlog",
      "est_minutes": 60
     }
    ]
@@ -873,12 +743,12 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-11-03-03",
-     "subject": "pharm",
+     "id": "2026-10-28-04",
+     "subject": "patho",
      "kind": "study",
-     "title": "Pharm A16",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
     }
    ]
   },
@@ -905,12 +775,12 @@
      "est_minutes": 75
     },
     {
-     "id": "2026-11-04-03",
-     "subject": "patho",
+     "id": "2026-11-03-03",
+     "subject": "pharm",
      "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
+     "title": "Pharm A16",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     }
    ]
   },
@@ -945,14 +815,6 @@
      "title": "Micro written practice + weak spots",
      "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
      "est_minutes": 75
-    },
-    {
-     "id": "2026-11-05-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A17",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
     }
    ]
   },
@@ -965,20 +827,36 @@
    ],
    "tasks": [
     {
-     "id": "2026-11-06-EX",
-     "subject": "micro",
-     "kind": "exam",
-     "title": "Micro MT2 — III.1–19",
-     "detail": "Target: 50%",
-     "est_minutes": null
-    },
-    {
      "id": "2026-11-06-01",
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-05-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A17",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-01-04",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-06-04",
+     "subject": "micro",
+     "kind": "exam",
+     "title": "Micro MT2 — III.1–19 + mycology IV 1–11",
+     "detail": "Exam day",
+     "est_minutes": 0
     }
    ]
   },
@@ -995,6 +873,30 @@
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-08-02",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A18",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-04-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-09-02",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A19",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
     },
     {
      "id": "2026-11-07-02",
@@ -1021,42 +923,18 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-08-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A18",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
      "id": "2026-11-08-03",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides ×3",
      "detail": "About 20 minutes",
      "est_minutes": 20
-    }
-   ]
-  },
-  {
-   "date": "2026-11-09",
-   "weekday": "Monday",
-   "semester_week": 10,
-   "tags": [],
-   "tasks": [
-    {
-     "id": "2026-11-09-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
     },
     {
-     "id": "2026-11-09-02",
+     "id": "2026-11-10-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A19",
+     "title": "Pharm A20",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
@@ -1071,39 +949,13 @@
    ]
   },
   {
-   "date": "2026-11-10",
-   "weekday": "Tuesday",
-   "semester_week": 10,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-10-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-10-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A20",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    }
-   ]
-  },
-  {
-   "date": "2026-11-11",
-   "weekday": "Wednesday",
+   "date": "2026-11-09",
+   "weekday": "Monday",
    "semester_week": 10,
    "tags": [],
    "tasks": [
     {
-     "id": "2026-11-11-01",
+     "id": "2026-11-09-01",
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
@@ -1125,6 +977,80 @@
      "title": "Patho slides ×3",
      "detail": "About 20 minutes",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-12-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides + definitions",
+     "detail": "",
+     "est_minutes": 20
+    }
+   ]
+  },
+  {
+   "date": "2026-11-10",
+   "weekday": "Tuesday",
+   "semester_week": 10,
+   "tags": [
+    "swim"
+   ],
+   "tasks": [
+    {
+     "id": "2026-11-10-01",
+     "subject": "anki",
+     "kind": "study",
+     "title": "Anki",
+     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-12-02",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm A22",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-13-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho slides + definitions",
+     "detail": "",
+     "est_minutes": 20
+    }
+   ]
+  },
+  {
+   "date": "2026-11-11",
+   "weekday": "Wednesday",
+   "semester_week": 10,
+   "tags": [],
+   "tasks": [
+    {
+     "id": "2026-11-11-01",
+     "subject": "anki",
+     "kind": "study",
+     "title": "Anki",
+     "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-11-13-02",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm recall A11 + A12",
+     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-14-03",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho: organ descriptions",
+     "detail": "",
+     "est_minutes": 20
     }
    ]
   },
@@ -1145,18 +1071,18 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-12-02",
+     "id": "2026-11-14-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm A22",
+     "title": "Pharm recall A18 + A19",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-11-12-03",
+     "id": "2026-11-15-04",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho slides + definitions",
+     "title": "Patho definitions",
      "detail": "",
      "est_minutes": 20
     }
@@ -1177,19 +1103,19 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-13-02",
+     "id": "2026-11-15-02",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm recall A11 + A12",
+     "title": "Pharm recall A20 + A21",
      "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
      "est_minutes": 60
     },
     {
-     "id": "2026-11-13-03",
+     "id": "2026-11-17-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho slides + definitions",
-     "detail": "",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
      "est_minutes": 20
     }
    ]
@@ -1209,20 +1135,36 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-14-02",
-     "subject": "pharm",
+     "id": "2026-11-18-02",
+     "subject": "patho",
      "kind": "study",
-     "title": "Pharm recall A18 + A19",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+     "title": "Patho slides + organ descriptions",
+     "detail": "",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-22-04",
+     "subject": "pathophys",
+     "kind": "study",
+     "title": "Pathophysiology L1",
+     "detail": "One recorded lecture from the backlog",
      "est_minutes": 60
     },
     {
-     "id": "2026-11-14-03",
+     "id": "2026-11-19-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho: organ descriptions",
+     "title": "Patho definitions",
      "detail": "",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-10-24-04",
+     "subject": "pathophys",
+     "kind": "study",
+     "title": "Pathophysiology L2",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
     }
    ]
   },
@@ -1241,14 +1183,6 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-15-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm recall A20 + A21",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 60
-    },
-    {
      "id": "2026-11-15-03",
      "subject": "pharm",
      "kind": "study",
@@ -1257,12 +1191,20 @@
      "est_minutes": 60
     },
     {
-     "id": "2026-11-15-04",
+     "id": "2026-11-20-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho definitions",
-     "detail": "",
+     "title": "Patho slides ×3",
+     "detail": "About 20 minutes",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-10-26-05",
+     "subject": "pathophys",
+     "kind": "study",
+     "title": "Pathophysiology L3",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
     }
    ]
   },
@@ -1275,20 +1217,36 @@
    ],
    "tasks": [
     {
-     "id": "2026-11-16-EX",
-     "subject": "pharm",
-     "kind": "exam",
-     "title": "Pharm MT2 — A10–A22",
-     "detail": "Target: 19/30",
-     "est_minutes": null
-    },
-    {
      "id": "2026-11-16-01",
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-21-02",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho: organ descriptions + slides",
+     "detail": "",
+     "est_minutes": 20
+    },
+    {
+     "id": "2026-10-29-05",
+     "subject": "pathophys",
+     "kind": "study",
+     "title": "Pathophysiology L4",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-11-16-04",
+     "subject": "pharm",
+     "kind": "exam",
+     "title": "Pharm MT2 — A10–A22",
+     "detail": "Exam day",
+     "est_minutes": 0
     }
    ]
   },
@@ -1309,12 +1267,20 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-17-02",
+     "id": "2026-11-22-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
+     "title": "Patho definitions + slides",
+     "detail": "",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-10-31-02",
+     "subject": "pathophys",
+     "kind": "study",
+     "title": "Pathophysiology L5",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
     }
    ]
   },
@@ -1333,7 +1299,7 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-18-02",
+     "id": "2026-11-23-02",
      "subject": "patho",
      "kind": "study",
      "title": "Patho slides + organ descriptions",
@@ -1359,12 +1325,12 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-19-02",
-     "subject": "patho",
+     "id": "2026-11-01-03",
+     "subject": "pathophys",
      "kind": "study",
-     "title": "Patho definitions",
-     "detail": "",
-     "est_minutes": 20
+     "title": "Pathophysiology L6",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
     }
    ]
   },
@@ -1383,11 +1349,11 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-20-02",
+     "id": "2026-11-24-02",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
+     "title": "Patho definitions, light review",
+     "detail": "",
      "est_minutes": 20
     }
    ]
@@ -1407,12 +1373,12 @@
      "est_minutes": 20
     },
     {
-     "id": "2026-11-21-02",
-     "subject": "patho",
+     "id": "2026-11-02-04",
+     "subject": "pathophys",
      "kind": "study",
-     "title": "Patho: organ descriptions + slides",
-     "detail": "",
-     "est_minutes": 20
+     "title": "Pathophysiology L7",
+     "detail": "One recorded lecture from the backlog",
+     "est_minutes": 60
     }
    ]
   },
@@ -1429,14 +1395,6 @@
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
-    },
-    {
-     "id": "2026-11-22-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho definitions + slides",
-     "detail": "",
-     "est_minutes": 20
     }
    ]
   },
@@ -1452,14 +1410,6 @@
      "kind": "study",
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-23-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides + organ descriptions",
-     "detail": "",
      "est_minutes": 20
     }
    ]
@@ -1479,14 +1429,6 @@
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
-    },
-    {
-     "id": "2026-11-24-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho definitions, light review",
-     "detail": "",
-     "est_minutes": 20
     }
    ]
   },
@@ -1499,20 +1441,20 @@
    ],
    "tasks": [
     {
-     "id": "2026-11-25-EX",
-     "subject": "patho",
-     "kind": "exam",
-     "title": "Pathology practical",
-     "detail": "Target: Pass — needed for the signature",
-     "est_minutes": null
-    },
-    {
      "id": "2026-11-25-01",
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
      "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
      "est_minutes": 20
+    },
+    {
+     "id": "2026-11-25-02",
+     "subject": "patho",
+     "kind": "exam",
+     "title": "Pathology practical",
+     "detail": "Exam day",
+     "est_minutes": 0
     }
    ]
   }
