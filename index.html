@@ -9455,15 +9455,31 @@ function saveDayLog(cfg,key,field,pageField){
     }catch(e){warn('save'+cfg,e);showToast('Save failed — will retry');}
   },900);
 }
+let _sleepDay=null;
+function sleepDay(){return _sleepDay||localToday();}
+function sleepPick(ds){
+  if(_sleepDay===ds)_sleepDay=null;
+  else _sleepDay=ds;
+  renderBody();
+}
+function sleepLabel(){
+  const ds=sleepDay();
+  if(ds===localToday())return 'Last night';
+  const d=new Date(localToday()+'T12:00:00');
+  d.setDate(d.getDate()-1);
+  if(ds===localDay(d))return 'The night before';
+  return ds;
+}
 function sleepSubmit(){
   const el=document.getElementById('sleepInput');
-  if(!el||el.value==='')return;
+  if(!el||el.value===''){showToast('Hours slept');return;}
   const v=parseFloat(el.value);
   if(!isFinite(v)||v<0||v>16){showToast('Hours slept, 0 to 16');return;}
   if(!state.sleepLog)state.sleepLog={};
-  state.sleepLog[localToday()]=Math.round(v*10)/10;
+  state.sleepLog[sleepDay()]=Math.round(v*10)/10;
   saveDayLog(SLEEP_CFG,SLEEP_KEY,'sleepLog','sleepLogPageId');
-  showToast('Logged '+(Math.round(v*10)/10)+'h');
+  showToast('Logged '+(Math.round(v*10)/10)+'h · '+sleepLabel().toLowerCase());
+  _sleepDay=null;
   renderBody();
 }
 function restToggle(ds){
@@ -9492,7 +9508,9 @@ function renderBody(){
     const px=v?Math.max(4,Math.round(v*4)):3;
     let col='var(--gold)';
     if(!v)col='rgba(232,234,240,0.10)';
-    sleepBars+='<span title="'+ds+' · '+(v||'—')+'h" style="display:inline-block;width:11px;height:'+px+'px;background:'+col+';opacity:0.8;border-radius:1px;margin-right:5px;vertical-align:bottom"></span>';
+    let ring='';
+    if(ds===sleepDay()&&_sleepDay)ring=';outline:1px solid var(--gold);outline-offset:2px';
+    sleepBars+='<span onclick="sleepPick(\''+ds+'\')" title="'+ds+' · '+(v||'—')+'h" style="display:inline-block;width:16px;height:'+px+'px;background:'+col+';opacity:0.85;border-radius:1px;margin-right:7px;vertical-align:bottom;cursor:pointer'+ring+'"></span>';
   });
   let restDots='';
   days.forEach(ds=>{
@@ -9508,10 +9526,11 @@ function renderBody(){
     <div id="weightBody" style="margin-bottom:26px">${weightBodyHTML()}</div>
     <div class="rival-section-label">Recovery</div>
     <div style="margin:10px 0 6px;min-height:36px">${sleepBars}</div>
-    <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">${esc(sleepVerdict())}</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">${esc(sleepVerdict())}</div>
+    <div style="font-size:10px;color:var(--text-faint);margin-bottom:12px">tap a bar to log an earlier night</div>
     <div style="display:flex;gap:9px;align-items:center;margin-bottom:20px">
       <label class="fld" style="flex:1">
-        <span class="cap">Last night</span>
+        <span class="cap">${esc(sleepLabel())}</span>
         <input id="sleepInput" class="num-in num-in-lg" type="number" step="0.1" inputmode="decimal" placeholder="7.5">
         <span class="unit">h</span>
       </label>
