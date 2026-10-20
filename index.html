@@ -905,7 +905,11 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
 .wec-secondary{background:rgba(100,100,100,0.1);color:var(--text-dim);border:1px solid var(--border);}
 .wec-log-btn{width:100%;padding:10px;background:var(--gold);color:#0a0a0e;font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;border:none;border-radius:8px;cursor:pointer;font-family:inherit;}
 .wec-log-btn:disabled{opacity:0.45;cursor:not-allowed;}
-#shaderBg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;display:block;pointer-events:none;}
+/* The shader's brightest value is #2d2d30 and --text-faint is #333333 — a contrast
+   ratio of about 1.07, which is why faint text vanished over the light patches.
+   Opacity against the black html background is the simplest dimmer: one number,
+   no need to re-tune the palette or the shader maths. */
+#shaderBg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;display:block;pointer-events:none;opacity:0.55;}
 .num-in{box-sizing:border-box;width:100%;background:rgba(232,234,240,0.05);border:1px solid rgba(232,234,240,0.12);border-radius:9px;color:var(--text-hi);font-family:'JetBrains Mono',monospace;text-align:center;}
 .num-in:focus{outline:none;border-color:var(--gold);}
 .num-in::-webkit-outer-spin-button,.num-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
