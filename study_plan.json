@@ -60,9 +60,10 @@
     "Wednesday and Friday have the least slack. Move work to Saturday, not into them.",
     "Micro MT1 and the German MT are both on 29 Oct 2026. Micro MT1 is IV 12–37, parasites only — no mycology.",
     "German is a closed list, so it crams. Micro does not. On exam morning the last thing you read is the German sheet.",
-    "Pharm A6–A9 are MT1 material and are not rescheduled. MT2 is A10–A22 only.",
-    "Pharm is suspended 22–28 Oct and restarts at A10 on 31 Oct, one lecture per study day to 13 Nov, recall 14–15 Nov.",
-    "Pathophysiology has no exam in this plan and is shed first whenever a day runs over 215 minutes."
+    "Pathophysiology has no exam in this plan and is shed first whenever a day runs over 215 minutes.",
+    "Pharm runs A1–A9 as a foundation pass (31 Oct–4 Nov) then A10–A22 at full depth (7–13 Nov). A1–A9 are not on MT2 but are on the winter semifinal, so they are covered properly, not skipped.",
+    "Pharm stays suspended 22–28 Oct and off 5 Nov (Micro MT2 eve).",
+    "A winter semifinal covers the whole pharm year. Nothing in A1–A22 gets dropped — only resequenced."
   ],
   "days": [
     {
@@ -326,20 +327,20 @@
       ],
       "tasks": [
         {
-          "id": "2026-10-19-EX",
-          "subject": "ecg",
-          "kind": "exam",
-          "title": "ECG exam",
-          "detail": "Target: Pass",
-          "est_minutes": null
-        },
-        {
           "id": "2026-10-19-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
           "est_minutes": 20
+        },
+        {
+          "id": "2026-10-19-EX",
+          "subject": "ecg",
+          "kind": "exam",
+          "title": "ECG exam",
+          "detail": "Target: Pass",
+          "est_minutes": null
         }
       ]
     },
@@ -665,12 +666,12 @@
       ],
       "tasks": [
         {
-          "id": "2026-10-29-EX1",
-          "subject": "german",
-          "kind": "exam",
-          "title": "German MT — written, 45 min",
-          "detail": "Bring a pen. Skim the definition sheet on the way in — nothing else",
-          "est_minutes": null
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
+          "est_minutes": 20,
+          "id": "2026-10-29-03"
         },
         {
           "id": "2026-10-29-EX2",
@@ -681,12 +682,12 @@
           "est_minutes": null
         },
         {
-          "subject": "anki",
-          "kind": "study",
-          "title": "Anki",
-          "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20,
-          "id": "2026-10-29-03"
+          "id": "2026-10-29-EX1",
+          "subject": "german",
+          "kind": "exam",
+          "title": "German MT — written, 45 min",
+          "detail": "Bring a pen. Skim the definition sheet on the way in — nothing else",
+          "est_minutes": null
         }
       ]
     },
@@ -732,9 +733,9 @@
           "id": "2026-10-31-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A10",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A1 + A2",
+          "est_minutes": 75,
+          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
         },
         {
           "id": "2026-10-31-02",
@@ -772,9 +773,9 @@
           "id": "2026-11-01-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A11",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A3 + A4",
+          "est_minutes": 75,
+          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
         },
         {
           "id": "2026-11-01-04",
@@ -812,9 +813,9 @@
           "id": "2026-11-02-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A12",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A5 + A6",
+          "est_minutes": 75,
+          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
         },
         {
           "id": "2026-11-02-04",
@@ -854,9 +855,9 @@
           "id": "2026-11-03-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A13",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A7 + A8",
+          "est_minutes": 75,
+          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
         }
       ]
     },
@@ -886,9 +887,9 @@
           "id": "2026-11-04-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A14",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A9",
+          "est_minutes": 60,
+          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
         },
         {
           "id": "2026-11-04-03",
@@ -943,20 +944,20 @@
       ],
       "tasks": [
         {
-          "id": "2026-11-06-EX",
-          "subject": "micro",
-          "kind": "exam",
-          "title": "Micro MT2 — III.1–19",
-          "detail": "Target: 50%",
-          "est_minutes": null
-        },
-        {
           "id": "2026-11-06-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
           "est_minutes": 20
+        },
+        {
+          "id": "2026-11-06-EX",
+          "subject": "micro",
+          "kind": "exam",
+          "title": "Micro MT2 — III.1–19",
+          "detail": "Target: 50%",
+          "est_minutes": null
         }
       ]
     },
@@ -978,9 +979,9 @@
           "id": "2026-11-07-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A15+A16",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 100
+          "title": "Pharm A10 + A11",
+          "est_minutes": 100,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         },
         {
           "id": "2026-11-07-02",
@@ -1010,9 +1011,9 @@
           "id": "2026-11-08-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A17",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A12 + A13",
+          "est_minutes": 100,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         },
         {
           "id": "2026-11-08-03",
@@ -1042,9 +1043,9 @@
           "id": "2026-11-09-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A18",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A14 + A15",
+          "est_minutes": 100,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         },
         {
           "id": "2026-11-09-03",
@@ -1076,9 +1077,9 @@
           "id": "2026-11-10-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A19",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A16 + A17",
+          "est_minutes": 100,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         }
       ]
     },
@@ -1100,9 +1101,9 @@
           "id": "2026-11-11-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A20",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A18 + A19",
+          "est_minutes": 100,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         },
         {
           "id": "2026-11-11-03",
@@ -1134,9 +1135,9 @@
           "id": "2026-11-12-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A21",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "title": "Pharm A20 + A21",
+          "est_minutes": 100,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         },
         {
           "id": "2026-11-12-03",
@@ -1167,8 +1168,8 @@
           "subject": "pharm",
           "kind": "study",
           "title": "Pharm A22",
-          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
-          "est_minutes": 60
+          "est_minutes": 60,
+          "detail": "MT2 scope. Full depth — drug names, mechanisms, side effects"
         },
         {
           "id": "2026-11-13-03",
@@ -1198,7 +1199,7 @@
           "id": "2026-11-14-PR1",
           "subject": "pharm",
           "kind": "review",
-          "title": "Pharm recall: A10 + A11 + A12",
+          "title": "Pharm recall: A10–A14",
           "detail": "Closed notes. Blurt first, then check",
           "est_minutes": 60
         },
@@ -1206,7 +1207,7 @@
           "id": "2026-11-14-PR2",
           "subject": "pharm",
           "kind": "review",
-          "title": "Pharm recall: A18 + A19",
+          "title": "Pharm recall: A15–A18",
           "detail": "Closed notes. Blurt first, then check",
           "est_minutes": 60
         },
@@ -1238,7 +1239,7 @@
           "id": "2026-11-15-PR1",
           "subject": "pharm",
           "kind": "review",
-          "title": "Pharm recall: A13 + A14 + A20 + A21",
+          "title": "Pharm recall: A19–A22",
           "detail": "Closed notes. Blurt first, then check",
           "est_minutes": 60
         },
@@ -1269,20 +1270,20 @@
       ],
       "tasks": [
         {
-          "id": "2026-11-16-EX",
-          "subject": "pharm",
-          "kind": "exam",
-          "title": "Pharm MT2 — A10–A22",
-          "detail": "Target: 19/30",
-          "est_minutes": null
-        },
-        {
           "id": "2026-11-16-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
           "est_minutes": 20
+        },
+        {
+          "id": "2026-11-16-EX",
+          "subject": "pharm",
+          "kind": "exam",
+          "title": "Pharm MT2 — A10–A22",
+          "detail": "Target: 19/30",
+          "est_minutes": null
         }
       ]
     },
@@ -1493,20 +1494,20 @@
       ],
       "tasks": [
         {
-          "id": "2026-11-25-EX",
-          "subject": "patho",
-          "kind": "exam",
-          "title": "Pathology practical",
-          "detail": "Target: Pass — needed for the signature",
-          "est_minutes": null
-        },
-        {
           "id": "2026-11-25-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
           "est_minutes": 20
+        },
+        {
+          "id": "2026-11-25-EX",
+          "subject": "patho",
+          "kind": "exam",
+          "title": "Pathology practical",
+          "detail": "Target: Pass — needed for the signature",
+          "est_minutes": null
         }
       ]
     }
