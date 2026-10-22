@@ -60,7 +60,9 @@
     "Wednesday and Friday have the least slack. Move work to Saturday, not into them.",
     "Micro MT1 and the German MT are both on 29 Oct 2026. Micro MT1 is IV 12–37, parasites only — no mycology.",
     "German is a closed list, so it crams. Micro does not. On exam morning the last thing you read is the German sheet.",
-    "Pharm and pathophysiology are suspended 22–28 Oct. They resume 31 Oct; Pharm MT2 is not until 16 Nov."
+    "Pharm A6–A9 are MT1 material and are not rescheduled. MT2 is A10–A22 only.",
+    "Pharm is suspended 22–28 Oct and restarts at A10 on 31 Oct, one lecture per study day to 13 Nov, recall 14–15 Nov.",
+    "Pathophysiology has no exam in this plan and is shed first whenever a day runs over 215 minutes."
   ],
   "days": [
     {
@@ -727,6 +729,14 @@
           "est_minutes": 20
         },
         {
+          "id": "2026-10-31-PH",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A10",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
+          "est_minutes": 60
+        },
+        {
           "id": "2026-10-31-02",
           "subject": "pathophys",
           "kind": "study",
@@ -759,11 +769,11 @@
           "est_minutes": 75
         },
         {
-          "id": "2026-11-01-03",
-          "subject": "pathophys",
+          "id": "2026-11-01-PH",
+          "subject": "pharm",
           "kind": "study",
-          "title": "Pathophysiology L6",
-          "detail": "One recorded lecture from the backlog",
+          "title": "Pharm A11",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -799,11 +809,11 @@
           "est_minutes": 75
         },
         {
-          "id": "2026-11-02-03",
+          "id": "2026-11-02-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A15",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A12",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -841,11 +851,11 @@
           "est_minutes": 75
         },
         {
-          "id": "2026-11-03-03",
+          "id": "2026-11-03-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A16",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A13",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         }
       ]
@@ -871,6 +881,14 @@
           "title": "Micro III.11–15",
           "detail": "Adenovirus + herpes",
           "est_minutes": 75
+        },
+        {
+          "id": "2026-11-04-PH",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A14",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
+          "est_minutes": 60
         },
         {
           "id": "2026-11-04-03",
@@ -913,14 +931,6 @@
           "title": "Micro written practice + weak spots",
           "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
           "est_minutes": 75
-        },
-        {
-          "id": "2026-11-05-04",
-          "subject": "pharm",
-          "kind": "study",
-          "title": "Pharm A17",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-          "est_minutes": 60
         }
       ]
     },
@@ -965,6 +975,14 @@
           "est_minutes": 20
         },
         {
+          "id": "2026-11-07-PH",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A15+A16",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
+          "est_minutes": 100
+        },
+        {
           "id": "2026-11-07-02",
           "subject": "patho",
           "kind": "study",
@@ -989,11 +1007,11 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-08-02",
+          "id": "2026-11-08-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A18",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A17",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -1021,11 +1039,11 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-09-02",
+          "id": "2026-11-09-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A19",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A18",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -1055,11 +1073,11 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-10-02",
+          "id": "2026-11-10-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A20",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A19",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         }
       ]
@@ -1079,11 +1097,11 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-11-02",
+          "id": "2026-11-11-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A21",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A20",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -1113,11 +1131,11 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-12-02",
+          "id": "2026-11-12-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm A22",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A21",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -1145,11 +1163,11 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-13-02",
+          "id": "2026-11-13-PH",
           "subject": "pharm",
           "kind": "study",
-          "title": "Pharm recall A11 + A12",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "title": "Pharm A22",
+          "detail": "MT2 scope is A10–A22. Re-paced 22 Oct after the German/Micro week",
           "est_minutes": 60
         },
         {
@@ -1177,11 +1195,19 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-14-02",
+          "id": "2026-11-14-PR1",
           "subject": "pharm",
-          "kind": "study",
-          "title": "Pharm recall A18 + A19",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "kind": "review",
+          "title": "Pharm recall: A10 + A11 + A12",
+          "detail": "Closed notes. Blurt first, then check",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-14-PR2",
+          "subject": "pharm",
+          "kind": "review",
+          "title": "Pharm recall: A18 + A19",
+          "detail": "Closed notes. Blurt first, then check",
           "est_minutes": 60
         },
         {
@@ -1209,19 +1235,19 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-11-15-02",
+          "id": "2026-11-15-PR1",
           "subject": "pharm",
-          "kind": "study",
-          "title": "Pharm recall A20 + A21",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "kind": "review",
+          "title": "Pharm recall: A13 + A14 + A20 + A21",
+          "detail": "Closed notes. Blurt first, then check",
           "est_minutes": 60
         },
         {
-          "id": "2026-11-15-03",
+          "id": "2026-11-15-PR2",
           "subject": "pharm",
-          "kind": "study",
-          "title": "Pharm practice questions",
-          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "kind": "review",
+          "title": "Pharm recall: practice questions, full A10–A22 sweep",
+          "detail": "Closed notes. Blurt first, then check",
           "est_minutes": 60
         },
         {
