@@ -7525,7 +7525,7 @@ function closeSoloSets(){document.getElementById('soloSetsPage')?.remove();_solo
 const PLAN_CACHE_KEY='grind-study-plan-v1';
 const PLAN_DONE_KEY='grind-plan-done-v1';
 const PLAN_STATE_CFG='study_plan_state';
-const PLAN_SUBJECT_ORDER=['anki','ecg','micro','pharm','pathophys','patho','rest'];
+const PLAN_SUBJECT_ORDER=['anki','ecg','micro','german','pharm','pathophys','patho','rest'];
 async function loadStudyPlan(){
   try{
     const r=await fetch('/study_plan.json?v='+Date.now(),{cache:'no-store'});
