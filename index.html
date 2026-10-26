@@ -3383,9 +3383,12 @@ function dayKind(ds){
   const d=WORKOUT_WEEK.find(w=>w.abbr===abbr);
   return d?d.kind:'rest';
 }
-// Consecutive scheduled sessions hit. Rest and optional days neither break the streak
-// nor are needed for it, but a workout on one still counts. Today can't break it —
-// it only counts once something is logged.
+// Consecutive days with any exercise logged — volleyball, a random swim, a lift that
+// wasn't the scheduled one. What the plan said that day is deliberately not consulted:
+// training off-plan is still training, and a streak that only rewards obedience
+// punishes the weeks where not following the plan was the right call.
+// Rest and optional days still can't break it. Today can't either — it only counts
+// once something is logged, so the number never accuses you at 9am.
 // endDs lets 影 ask what the streak was on a past day; defaults to today.
 function scheduledWorkoutStreak(endDs){
   const done=state.workoutDaySet||new Set();
@@ -3393,7 +3396,7 @@ function scheduledWorkoutStreak(endDs){
   let n=0,ds=end;
   for(let i=0;i<WORKOUT_DAYS_WINDOW;i++){
     if(done.has(ds))n++;
-    else if(dayKind(ds)==='required'&&ds!==end)break;
+    else if(dayKind(ds)!=='rest'&&ds!==end)break;
     ds=prevDay(ds);
   }
   return n;
