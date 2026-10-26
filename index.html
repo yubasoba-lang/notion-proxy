@@ -3350,6 +3350,10 @@ async function loadWorkoutDays(){
 }
 // How far back workout days are loaded — also the longest streak that can be counted.
 const WORKOUT_DAYS_WINDOW=90;
+// Missed days tolerated before a streak dies: two survive, the third ends it.
+// The study streak always worked this way. The workout streak now matches it,
+// because a rest day you actually needed should not read as a failure.
+const STREAK_GRACE=3;
 const CO2_EXERCISE='CO2 Table';
 
 // Minutes → the log's sets/reps/weight. XP is sets × XP per set, so one set per
@@ -3393,10 +3397,11 @@ function dayKind(ds){
 function scheduledWorkoutStreak(endDs){
   const done=state.workoutDaySet||new Set();
   const end=endDs||localToday();
-  let n=0,ds=end;
+  let n=0,gap=0,ds=end;
   for(let i=0;i<WORKOUT_DAYS_WINDOW;i++){
-    if(done.has(ds))n++;
-    else if(dayKind(ds)!=='rest'&&ds!==end)break;
+    if(done.has(ds)){n++;gap=0;}
+    else if(dayKind(ds)==='rest'){/* a scheduled rest day is not a gap at all */}
+    else{gap++;if(gap>=STREAK_GRACE)break;}
     ds=prevDay(ds);
   }
   return n;
@@ -4333,7 +4338,7 @@ function getRivalStreak(){
   const days=getRivalDays();let streak=0,cd=0;
   for(let i=days.length-1;i>=0;i--){
     if(!days[i].dark){streak++;cd=0;}
-    else{cd++;if(cd>=3)break;}
+    else{cd++;if(cd>=STREAK_GRACE)break;}
   }
   return streak;
 }
@@ -4437,7 +4442,7 @@ function getWorkoutStreak(workoutDayMap,dates){
   let streak=0,cd=0;
   for(let i=dates.length-1;i>=0;i--){
     if(workoutDayMap[dates[i]]){streak++;cd=0;}
-    else{cd++;if(cd>=3)break;}
+    else{cd++;if(cd>=STREAK_GRACE)break;}
   }
   return streak;
 }
@@ -4894,7 +4899,7 @@ function getUserStudyStreak(){
     const d=new Date(today);d.setDate(d.getDate()-i);
     const ds=localDay(d);
     if(studiedDates.has(ds)){streak++;cd=0;}
-    else{cd++;if(cd>=3)break;}
+    else{cd++;if(cd>=STREAK_GRACE)break;}
   }
   return streak;
 }
