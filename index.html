@@ -6971,11 +6971,11 @@ const SOLO_SETS=[
   {t:'Aerobic base',tag:'aerobic',scales:true,focus:'Holding a pace you can repeat',total:3400,kit:'Pull buoy · fins optional',
    why:'The one that fixes your actual gap. Nothing here is fast \u2014 the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
    
-   lines:['400 easy free, breathe every 3','__MAIN__','500 pull buoy, long and relaxed','8 \u00d7 66 kick on your front, fins optional, 6 breaths rest','300 easy']},
+   lines:['400 easy free, breathe every 3','__MAIN__','500 pull buoy, long and relaxed','8 \u00d7 66 kick on your front, fins optional, 8 breaths rest','300 easy']},
   {t:'Breath control',tag:'breath',scales:true,focus:'Being comfortable short of air',total:2950,kit:'Pull buoy',
    why:'Trains the thing that makes you stop mid-set. Breathing patterns only \u2014 no breath-hold swimming on your own.',
    
-   lines:['400 easy free','__MAIN__','10 \u00d7 33 free, two breaths per length, 5 breaths rest','500 easy free every 3','300 easy']},
+   lines:['400 easy free','__MAIN__','10 \u00d7 33 free, two breaths per length, 7 breaths rest','500 easy free every 3','300 easy']},
   {t:'Economy',tag:'economy',scales:true,focus:'Fewer strokes at the same speed',total:2950,kit:'Pull buoy',
    why:'Technique work with a number attached. Count on every length and put the count in the log afterwards. Expect a higher count than a 25m pool \u2014 it is a longer length.',
    
@@ -7044,9 +7044,13 @@ function strokeRule(){
 // short of what fits in 90 minutes.
 function soloMainFor(tag,lv){
   const step=lv-1;
-  const rest=(base,floorV)=>Math.max(floorV,base-5*Math.floor(step/3));
+  // Rest eases off every FOURTH level, not every third, and starts higher than it
+  // used to. The sets grew by about 60% in October; holding the old rest on top of
+  // that would have been two progressions at once, which is how a set stops being
+  // completable and the completion factor — the thing that keeps 速 honest — rots.
+  const rest=(base,floorV)=>Math.max(floorV,base-5*Math.floor(step/4));
   if(tag==='aerobic'){
-    const reps=8+step, r=rest(20,10);
+    const reps=8+step, r=rest(25,12);
     const second=12+step;
     return [reps+' × 100 free '+strokeRule()+', '+restBreaths(r)+' rest, same count every one',
             second+' × 66 free, 5 breaths rest, no faster than the 100s'];
@@ -7054,24 +7058,24 @@ function soloMainFor(tag,lv){
   if(tag==='breath'){
     const pat=step<2?'every 3, then every 5, alternating':(step<5?'every 3, 5, then 7, rotating':'every 5 throughout');
     const reps=11+step, pull=7+Math.floor(step/2);
-    return [reps+' × 66 free, breathe '+pat+', '+restBreaths(rest(20,10))+' rest — '+strokeRule()+', do not rush when air gets short',
-            pull+' × 100 pull buoy, breathe every '+(step<5?'3':'5')+' the whole way, '+restBreaths(rest(20,10))+' rest'];
+    return [reps+' × 66 free, breathe '+pat+', '+restBreaths(rest(25,12))+' rest — '+strokeRule()+', do not rush when air gets short',
+            pull+' × 100 pull buoy, breathe every '+(step<5?'3':'5')+' the whole way, '+restBreaths(rest(25,12))+' rest'];
   }
   if(tag==='economy'){
     const dist=step<4?66:100;
     const reps=12+step-(dist===100?4:0);
-    return [reps+' × '+dist+' free '+strokeRule()+', '+restBreaths(rest(20,10))+' rest — end the set when the count climbs'];
+    return [reps+' × '+dist+' free '+strokeRule()+', '+restBreaths(rest(25,12))+' rest — end the set when the count climbs'];
   }
   if(tag==='pace'){
     const dist=step<4?100:200;
     const reps=dist===100?(10+step):(5+Math.floor(step/2));
-    return [reps+' × '+dist+' free, second half at the same count but more effort, '+restBreaths(rest(30,15))+' rest',
-            (9+Math.floor(step/2))+' × 66 free descending effort, count never rises, 6 breaths rest'];
+    return [reps+' × '+dist+' free, second half at the same count but more effort, '+restBreaths(rest(35,18))+' rest',
+            (9+Math.floor(step/2))+' × 66 free descending effort, count never rises, 8 breaths rest'];
   }
   if(tag==='turns'){
     const dist=step<4?66:100;
     const reps=16+step-(dist===100?6:0);
-    return [reps+' × '+dist+' free, the turn is the fastest part, '+restBreaths(rest(20,10))+' rest'];
+    return [reps+' × '+dist+' free, the turn is the fastest part, '+restBreaths(rest(25,12))+' rest'];
   }
   if(tag==='flyspeed'){
     const reps=10+step;
