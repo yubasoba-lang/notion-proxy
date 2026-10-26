@@ -6968,33 +6968,33 @@ function closePoolCard(){document.getElementById('poolCardPage')?.remove();}
 // a single job, so a morning in the pool isn't an hour of random drills. Written for
 // roughly 90 minutes including rest; cut from the bottom if you're short on time.
 const SOLO_SETS=[
-  {t:'Aerobic base',tag:'aerobic',scales:true,focus:'Holding a pace you can repeat',total:2650,kit:'Pull buoy · fins optional',
+  {t:'Aerobic base',tag:'aerobic',scales:true,focus:'Holding a pace you can repeat',total:3400,kit:'Pull buoy · fins optional',
    why:'The one that fixes your actual gap. Nothing here is fast \u2014 the point is to keep moving at a cost you can sustain, which is what fails on coach\'s sets.',
    
-   lines:['300 easy free, breathe every 3','__MAIN__','400 pull buoy, long and relaxed','6 \u00d7 66 kick on your front, fins optional, 6 breaths rest','200 easy']},
-  {t:'Breath control',tag:'breath',scales:true,focus:'Being comfortable short of air',total:2100,kit:'Pull buoy',
+   lines:['400 easy free, breathe every 3','__MAIN__','500 pull buoy, long and relaxed','8 \u00d7 66 kick on your front, fins optional, 6 breaths rest','300 easy']},
+  {t:'Breath control',tag:'breath',scales:true,focus:'Being comfortable short of air',total:2950,kit:'Pull buoy',
    why:'Trains the thing that makes you stop mid-set. Breathing patterns only \u2014 no breath-hold swimming on your own.',
    
-   lines:['300 easy free','__MAIN__','8 \u00d7 33 free, two breaths per length, 5 breaths rest','300 easy free every 3','200 easy']},
-  {t:'Economy',tag:'economy',scales:true,focus:'Fewer strokes at the same speed',total:2100,kit:'Pull buoy',
+   lines:['400 easy free','__MAIN__','10 \u00d7 33 free, two breaths per length, 5 breaths rest','500 easy free every 3','300 easy']},
+  {t:'Economy',tag:'economy',scales:true,focus:'Fewer strokes at the same speed',total:2950,kit:'Pull buoy',
    why:'Technique work with a number attached. Count on every length and put the count in the log afterwards. Expect a higher count than a 25m pool \u2014 it is a longer length.',
    
-   lines:['300 easy free','4 \u00d7 33 catch-up drill','4 \u00d7 33 fist swimming','6 \u00d7 66 pull buoy counting strokes \u2014 the buoy kills the kick so you feel the catch','6 \u00d7 66 free, same count without the buoy','__MAIN__','200 easy']},
-  {t:'Pace',tag:'pace',scales:true,focus:'Second half faster than the first',total:2350,kit:'None \u2014 on purpose',
+   lines:['400 easy free','6 \u00d7 33 catch-up drill','6 \u00d7 33 fist swimming','8 \u00d7 66 pull buoy counting strokes \u2014 the buoy kills the kick so you feel the catch','8 \u00d7 66 free, same count without the buoy','__MAIN__','300 easy']},
+  {t:'Pace',tag:'pace',scales:true,focus:'Second half faster than the first',total:3100,kit:'None \u2014 on purpose',
    why:'Pacing is what collapses when you tire. Start slower than feels right \u2014 every rep should finish faster than it started. No fins and no buoy: both change your speed, so a split done with kit tells you nothing about pacing yourself.',
    
-   lines:['300 easy free','__MAIN__','400 free, second 200 faster','4 \u00d7 33 fast, full rest','200 easy']},
-  {t:'Butterfly \u00b7 build',tag:'flybuild',focus:'Fly from the chest and hips',total:1500,kit:'Fins for the drills, off for the fly',stage:true,
+   lines:['400 easy free','__MAIN__','400 free, second 200 faster','4 \u00d7 33 fast, full rest','400 easy']},
+  {t:'Butterfly \u00b7 build',tag:'flybuild',focus:'Fly from the chest and hips',total:1950,kit:'Fins for the drills, off for the fly',stage:true,
    why:'Fly comes from the sternum, not the arms. Fins let the timing click without you dying, then come off so you are not learning a stroke you can only do in fins. Stop every rep when the technique breaks, not when you get tired. This one follows the butterfly ladder, not a level.',
-   lines:['300 easy free','__STAGE__','6 \u00d7 66 easy free','200 easy']},
-  {t:'Butterfly \u00b7 speed',tag:'flyspeed',scales:true,focus:'Power, once the fly looks like fly',total:1700,kit:'Fins for the underwaters',
+   lines:['500 easy free','__STAGE__','10 \u00d7 66 easy free','400 pull buoy, long and relaxed','400 easy']},
+  {t:'Butterfly \u00b7 speed',tag:'flyspeed',scales:true,focus:'Power, once the fly looks like fly',total:2200,kit:'Fins for the underwaters',
    why:'Only once the build session holds together. Full recovery between reps \u2014 if you are gasping it has stopped being a speed set. Rest never shortens on this one.',
    
-   lines:['400 easy free','__MAIN__','FINS ON \u00b7 8 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','6 \u00d7 66 easy free between efforts','300 easy, some of it backstroke']},
-  {t:'Turns and walls',tag:'turns',scales:true,focus:'The free speed you keep leaving behind',total:1900,kit:'Fins for the kick block',
+   lines:['500 easy free','__MAIN__','FINS ON \u00b7 8 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','10 \u00d7 66 easy free between efforts','400 pull buoy, easy','500 easy, some of it backstroke']},
+  {t:'Turns and walls',tag:'turns',scales:true,focus:'The free speed you keep leaving behind',total:2880,kit:'Fins for the kick block',
    why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
    
-   lines:['300 easy free with 5 kicks off every wall','12 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','__MAIN__','FINS ON \u00b7 8 \u00d7 33 streamline kick off every wall','200 easy']},
+   lines:['500 easy free with 5 kicks off every wall','16 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','__MAIN__','FINS ON \u00b7 12 \u00d7 33 streamline kick off every wall','400 easy']},
 ];
 // Per-session levels. Aerobic capacity and turn skill improve at different rates, so a
 // single global level would always be wrong for one of them. Two clean completions of a
@@ -7046,35 +7046,35 @@ function soloMainFor(tag,lv){
   const step=lv-1;
   const rest=(base,floorV)=>Math.max(floorV,base-5*Math.floor(step/3));
   if(tag==='aerobic'){
-    const reps=6+step, r=rest(20,10);
-    const second=10+step;
+    const reps=8+step, r=rest(20,10);
+    const second=12+step;
     return [reps+' × 100 free '+strokeRule()+', '+restBreaths(r)+' rest, same count every one',
             second+' × 66 free, 5 breaths rest, no faster than the 100s'];
   }
   if(tag==='breath'){
     const pat=step<2?'every 3, then every 5, alternating':(step<5?'every 3, 5, then 7, rotating':'every 5 throughout');
-    const reps=8+step, pull=5+Math.floor(step/2);
+    const reps=11+step, pull=7+Math.floor(step/2);
     return [reps+' × 66 free, breathe '+pat+', '+restBreaths(rest(20,10))+' rest — '+strokeRule()+', do not rush when air gets short',
             pull+' × 100 pull buoy, breathe every '+(step<5?'3':'5')+' the whole way, '+restBreaths(rest(20,10))+' rest'];
   }
   if(tag==='economy'){
     const dist=step<4?66:100;
-    const reps=8+step-(dist===100?2:0);
+    const reps=12+step-(dist===100?4:0);
     return [reps+' × '+dist+' free '+strokeRule()+', '+restBreaths(rest(20,10))+' rest — end the set when the count climbs'];
   }
   if(tag==='pace'){
     const dist=step<4?100:200;
-    const reps=dist===100?(7+step):(4+Math.floor(step/2));
+    const reps=dist===100?(10+step):(5+Math.floor(step/2));
     return [reps+' × '+dist+' free, second half at the same count but more effort, '+restBreaths(rest(30,15))+' rest',
-            (6+Math.floor(step/2))+' × 66 free descending effort, count never rises, 6 breaths rest'];
+            (9+Math.floor(step/2))+' × 66 free descending effort, count never rises, 6 breaths rest'];
   }
   if(tag==='turns'){
     const dist=step<4?66:100;
-    const reps=8+step-(dist===100?2:0);
+    const reps=16+step-(dist===100?6:0);
     return [reps+' × '+dist+' free, the turn is the fastest part, '+restBreaths(rest(20,10))+' rest'];
   }
   if(tag==='flyspeed'){
-    const reps=8+step;
+    const reps=10+step;
     const extra=step>=3?[(2+Math.floor(step/3))+' × 33 fast fly, full rest']:[];
     return [reps+' × 15m max fly from a push, no fins, easy back to the wall, full recovery'].concat(extra);
   }
