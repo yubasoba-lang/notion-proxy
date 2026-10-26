@@ -6979,7 +6979,7 @@ const SOLO_SETS=[
   {t:'Economy',tag:'economy',scales:true,focus:'Fewer strokes at the same speed',total:2950,kit:'Pull buoy',
    why:'Technique work with a number attached. Count on every length and put the count in the log afterwards. Expect a higher count than a 25m pool \u2014 it is a longer length.',
    
-   lines:['400 easy free','6 \u00d7 33 catch-up drill','6 \u00d7 33 fist swimming','8 \u00d7 66 pull buoy counting strokes \u2014 the buoy kills the kick so you feel the catch','8 \u00d7 66 free, same count without the buoy','__MAIN__','300 easy']},
+   lines:['400 easy free','6 \u00d7 33 catch-up drill, 4 breaths rest','6 \u00d7 33 fist swimming, 4 breaths rest','8 \u00d7 66 pull buoy counting strokes, 6 breaths rest \u2014 the buoy kills the kick so you feel the catch','8 \u00d7 66 free, same count without the buoy, 6 breaths rest','__MAIN__','300 easy']},
   {t:'Pace',tag:'pace',scales:true,focus:'Second half faster than the first',total:3100,kit:'None \u2014 on purpose',
    why:'Pacing is what collapses when you tire. Start slower than feels right \u2014 every rep should finish faster than it started. No fins and no buoy: both change your speed, so a split done with kit tells you nothing about pacing yourself.',
    
@@ -6990,11 +6990,11 @@ const SOLO_SETS=[
   {t:'Butterfly \u00b7 speed',tag:'flyspeed',scales:true,focus:'Power, once the fly looks like fly',total:2200,kit:'Fins for the underwaters',
    why:'Only once the build session holds together. Full recovery between reps \u2014 if you are gasping it has stopped being a speed set. Rest never shortens on this one.',
    
-   lines:['500 easy free','__MAIN__','FINS ON \u00b7 8 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','10 \u00d7 66 easy free between efforts','400 pull buoy, easy','500 easy, some of it backstroke']},
+   lines:['500 easy free','__MAIN__','FINS ON \u00b7 8 \u00d7 underwater dolphin to 10\u201312m, then 3 strokes, then easy','10 \u00d7 66 easy free between efforts, easy as you like','400 pull buoy, easy','500 easy, some of it backstroke']},
   {t:'Turns and walls',tag:'turns',scales:true,focus:'The free speed you keep leaving behind',total:2880,kit:'Fins for the kick block',
    why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
    
-   lines:['500 easy free with 5 kicks off every wall','16 \u00d7 33 free finishing into a turn \u2014 tight tuck, feet planted fast','__MAIN__','FINS ON \u00b7 12 \u00d7 33 streamline kick off every wall','400 easy']},
+   lines:['500 easy free with 5 kicks off every wall','16 \u00d7 33 free finishing into a turn, 6 breaths rest \u2014 tight tuck, feet planted fast','__MAIN__','FINS ON \u00b7 12 \u00d7 33 streamline kick off every wall, 5 breaths rest','400 easy']},
 ];
 // Per-session levels. Aerobic capacity and turn skill improve at different rates, so a
 // single global level would always be wrong for one of them. Two clean completions of a
@@ -7053,7 +7053,7 @@ function soloMainFor(tag,lv){
     const reps=8+step, r=rest(25,12);
     const second=12+step;
     return [reps+' × 100 free '+strokeRule()+', '+restBreaths(r)+' rest, same count every one',
-            second+' × 66 free, 5 breaths rest, no faster than the 100s'];
+            second+' × 66 free, '+restBreaths(Math.max(15,r-4))+' rest, no faster than the 100s'];
   }
   if(tag==='breath'){
     const pat=step<2?'every 3, then every 5, alternating':(step<5?'every 3, 5, then 7, rotating':'every 5 throughout');
