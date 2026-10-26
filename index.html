@@ -8736,6 +8736,11 @@ function hinaDaysBack(n){
 }
 // 速 — weekly metres against 25km, the volume that makes sub-51 plausible,
 // scaled by how much of each prescribed set actually got finished.
+// His own figure for an ordinary session: about 2 km in 90 minutes. The estimate
+// used to assume 30 m a minute, which credited a 90-minute practice with 2700 m
+// and quietly inflated 速 by a third. It is also the floor under a written set,
+// since a set never lists the warm-up or the swimming between reps.
+const SWIM_M_PER_MIN=22;
 function hinaSpeed(){
   const since=hinaDaysBack(28);
   const list=(state.swimPractices||[]).filter(p=>p.date&&p.date>=since);
@@ -8747,9 +8752,8 @@ function hinaSpeed(){
     // 25m a minute is a slow honest floor; 30m a minute is the estimate when the
     // set says nothing at all.
     let dist=swimSetMetres(p.set);
-    const byTime=(p.minutes||0)*30;
-    if(!dist)dist=byTime;
-    else dist=Math.max(dist,(p.minutes||0)*25);
+    if(!dist)dist=(p.minutes||0)*SWIM_M_PER_MIN;
+    else dist=Math.max(dist,(p.minutes||0)*SWIM_M_PER_MIN);
     m+=dist;
     if(p.total){doneSum+=Math.min(p.done||0,p.total);totSum+=p.total;}
   });
