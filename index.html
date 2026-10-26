@@ -8742,8 +8742,14 @@ function hinaSpeed(){
   if(!list.length)return 0;
   let m=0,doneSum=0,totSum=0;
   list.forEach(p=>{
-    let dist=swimSetTotal(p.set)||0;
-    if(!dist)dist=(p.minutes||0)*30;        // no named set: 30m a minute
+    // Parsed metres, floored by the time in the water: a written set never lists
+    // the warm-up and the easy swimming between reps, so it always undercounts.
+    // 25m a minute is a slow honest floor; 30m a minute is the estimate when the
+    // set says nothing at all.
+    let dist=swimSetMetres(p.set);
+    const byTime=(p.minutes||0)*30;
+    if(!dist)dist=byTime;
+    else dist=Math.max(dist,(p.minutes||0)*25);
     m+=dist;
     if(p.total){doneSum+=Math.min(p.done||0,p.total);totSum+=p.total;}
   });
@@ -10104,6 +10110,22 @@ async function loadSwimPractices(){
 function swimSetTotal(text){
   const m=String(text||'').match(/(\d+)\s*[x×]\s*\d+/i);
   return m?parseInt(m[1]):null;
+}
+// Metres in a written set. swimSetTotal returns the REP COUNT, which 速 was using
+// as a distance — so "400 free warmup, 8x75 ..." counted as 8 metres instead of
+// a thousand, and every club practice read as roughly nothing.
+// Sums the n×m products first, then any standalone distance left over (a multiple
+// of 25 up to 1500), so "400 free warmup, 8x75" is 400 + 600.
+function swimSetMetres(text){
+  let t=String(text||'');
+  let m=0;
+  t=t.replace(/(\d+)\s*[x×]\s*(\d+)/gi,function(_,a,b){m+=parseInt(a)*parseInt(b);return ' ';});
+  const rest=t.match(/\d+/g)||[];
+  rest.forEach(function(n){
+    const v=parseInt(n);
+    if(v>=25&&v<=1500&&v%25===0)m+=v;
+  });
+  return m;
 }
 // Same set typed slightly differently still groups together.
 function swimSetKey(text){return String(text||'').toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim();}
