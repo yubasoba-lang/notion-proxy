@@ -2,7 +2,7 @@
   "schema_version": 1,
   "title": "Catch-up plan — 13 Oct to 25 Nov 2026",
   "timezone": "Europe/Budapest",
-  "generated": "2026-10-22",
+  "generated": "2026-10-27",
   "subjects": {
     "anki": "Anki",
     "ecg": "ECG",
@@ -22,18 +22,18 @@
     },
     {
       "date": "2026-10-29",
-      "subject": "micro",
-      "title": "Micro MT1 — IV 12–37 (parasites only)",
-      "target": "50%"
-    },
-    {
-      "date": "2026-10-29",
       "subject": "german",
       "title": "German MT — written, 45 min",
       "target": "Pass"
     },
     {
-      "date": "2026-11-06",
+      "date": "2026-10-30",
+      "subject": "micro",
+      "title": "Micro MT1 — IV 12–37 (parasites only)",
+      "target": "50%"
+    },
+    {
+      "date": "2026-11-05",
       "subject": "micro",
       "title": "Micro MT2 — III.1–19",
       "target": "50%"
@@ -58,12 +58,13 @@
     "Anki first thing, every day.",
     "ECG comes from the LITFL ECG Library (litfl.com/ecg-library/basics) — reading and strips, no video.",
     "Wednesday and Friday have the least slack. Move work to Saturday, not into them.",
-    "Micro MT1 and the German MT are both on 29 Oct 2026. Micro MT1 is IV 12–37, parasites only — no mycology.",
     "German is a closed list, so it crams. Micro does not. On exam morning the last thing you read is the German sheet.",
     "Pathophysiology has no exam in this plan and is shed first whenever a day runs over 215 minutes.",
     "Pharm runs A1–A9 as a foundation pass (31 Oct–4 Nov) then A10–A22 at full depth (7–13 Nov). A1–A9 are not on MT2 but are on the winter semifinal, so they are covered properly, not skipped.",
     "Pharm stays suspended 22–28 Oct and off 5 Nov (Micro MT2 eve).",
-    "A winter semifinal covers the whole pharm year. Nothing in A1–A22 gets dropped — only resequenced."
+    "A winter semifinal covers the whole pharm year. Nothing in A1–A22 gets dropped — only resequenced.",
+    "German MT is Thu 29 Oct. Micro MT1 (IV 12–37, parasites) is Fri 30 Oct. Micro MT2 (III.1–19) is Thu 5 Nov.",
+    "The afternoon of 29 Oct, after the German, belongs to micro — MT1 is the next morning."
   ],
   "days": [
     {
@@ -640,18 +641,18 @@
         },
         {
           "subject": "micro",
-          "kind": "review",
+          "kind": "study",
           "title": "Micro: blurt everything once",
           "detail": "IV 12–37 end to end from memory. Whatever is blank, reread tonight",
           "est_minutes": 90,
           "id": "2026-10-28-02"
         },
         {
-          "subject": "micro",
-          "kind": "practice",
-          "title": "Micro written practice: parasites + life cycles",
-          "detail": "Write out the life cycles by hand. Highest yield thing left",
-          "est_minutes": 75,
+          "subject": "german",
+          "kind": "study",
+          "title": "German: Task 3 + full mock",
+          "detail": "Question bank, then time yourself 45 min: 7 terms, 8 sentences, 5 questions — sheet: german/german-mt-29oct.md",
+          "est_minutes": 30,
           "id": "2026-10-28-03"
         }
       ]
@@ -671,22 +672,30 @@
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
           "est_minutes": 20,
+          "id": "2026-10-29-02"
+        },
+        {
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro written practice: parasites + life cycles",
+          "detail": "After the German. Write the life cycles out by hand — highest-yield thing left before tomorrow",
+          "est_minutes": 75,
           "id": "2026-10-29-03"
         },
         {
-          "id": "2026-10-29-EX2",
           "subject": "micro",
-          "kind": "exam",
-          "title": "Micro MT1 — IV 12–37",
-          "detail": "Parasites only",
-          "est_minutes": null
+          "kind": "review",
+          "title": "Micro: weak spots from the blurt",
+          "detail": "Only what came up blank yesterday. Then sleep early",
+          "est_minutes": 60,
+          "id": "2026-10-29-04"
         },
         {
           "id": "2026-10-29-EX1",
           "subject": "german",
           "kind": "exam",
           "title": "German MT — written, 45 min",
-          "detail": "Bring a pen. Skim the definition sheet on the way in — nothing else",
+          "detail": "Bring a pen. Skim the definitions on the way in",
           "est_minutes": null
         }
       ]
@@ -695,7 +704,9 @@
       "date": "2026-10-30",
       "weekday": "Friday",
       "semester_week": 8,
-      "tags": [],
+      "tags": [
+        "exam"
+      ],
       "tasks": [
         {
           "subject": "anki",
@@ -703,14 +714,14 @@
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
           "est_minutes": 20,
-          "id": "2026-10-30-01"
+          "id": "2026-10-30-02"
         },
         {
-          "id": "2026-10-30-02",
-          "subject": "rest",
-          "kind": "rest",
-          "title": "Day off — two exams yesterday",
-          "detail": "Earned it",
+          "id": "2026-10-30-EX",
+          "subject": "micro",
+          "kind": "exam",
+          "title": "Micro MT1 — IV 12–37",
+          "detail": "Parasites only — no mycology",
           "est_minutes": null
         }
       ]
@@ -722,28 +733,28 @@
       "tags": [],
       "tasks": [
         {
-          "id": "2026-10-31-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-10-31-01"
         },
         {
-          "id": "2026-10-31-PH",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.1–4",
+          "detail": "MT2 scope starts today. Sketchy + notes, blurt before moving on",
+          "est_minutes": 75,
+          "id": "2026-10-31-02"
+        },
+        {
           "subject": "pharm",
           "kind": "study",
           "title": "Pharm A1 + A2",
+          "detail": "A1–A9 is foundation for the winter semifinal; A10–A22 is MT2 scope",
           "est_minutes": 75,
-          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
-        },
-        {
-          "id": "2026-10-31-02",
-          "subject": "pathophys",
-          "kind": "study",
-          "title": "Pathophysiology L5",
-          "detail": "One recorded lecture from the backlog",
-          "est_minutes": 60
+          "id": "2026-10-31-03"
         }
       ]
     },
@@ -754,36 +765,36 @@
       "tags": [],
       "tasks": [
         {
-          "id": "2026-11-01-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-11-01-01"
         },
         {
-          "id": "2026-11-01-02",
           "subject": "micro",
           "kind": "study",
-          "title": "Micro III.1–4",
-          "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-          "est_minutes": 75
+          "title": "Micro III.5–8",
+          "detail": "Sketchy + notes, blurt before moving on",
+          "est_minutes": 75,
+          "id": "2026-11-01-02"
         },
         {
-          "id": "2026-11-01-PH",
           "subject": "pharm",
           "kind": "study",
           "title": "Pharm A3 + A4",
+          "detail": "A1–A9 is foundation for the winter semifinal; A10–A22 is MT2 scope",
           "est_minutes": 75,
-          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
+          "id": "2026-11-01-03"
         },
         {
-          "id": "2026-11-01-04",
           "subject": "patho",
           "kind": "study",
           "title": "Patho slides ×3",
-          "detail": "About 20 minutes",
-          "est_minutes": 20
+          "detail": "Practical is 25 Nov",
+          "est_minutes": 20,
+          "id": "2026-11-01-04"
         }
       ]
     },
@@ -794,36 +805,28 @@
       "tags": [],
       "tasks": [
         {
-          "id": "2026-11-02-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-11-02-01"
         },
         {
-          "id": "2026-11-02-02",
           "subject": "micro",
           "kind": "study",
-          "title": "Micro III.5–7",
-          "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-          "est_minutes": 75
+          "title": "Micro III.9–12",
+          "detail": "Sketchy + notes, blurt before moving on",
+          "est_minutes": 75,
+          "id": "2026-11-02-02"
         },
         {
-          "id": "2026-11-02-PH",
           "subject": "pharm",
           "kind": "study",
           "title": "Pharm A5 + A6",
+          "detail": "A1–A9 is foundation for the winter semifinal; A10–A22 is MT2 scope",
           "est_minutes": 75,
-          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
-        },
-        {
-          "id": "2026-11-02-04",
-          "subject": "pathophys",
-          "kind": "study",
-          "title": "Pathophysiology L7",
-          "detail": "One recorded lecture from the backlog",
-          "est_minutes": 60
+          "id": "2026-11-02-03"
         }
       ]
     },
@@ -836,28 +839,28 @@
       ],
       "tasks": [
         {
-          "id": "2026-11-03-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-11-03-01"
         },
         {
-          "id": "2026-11-03-02",
           "subject": "micro",
           "kind": "study",
-          "title": "Micro III.8–10",
-          "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-          "est_minutes": 75
+          "title": "Micro III.13–16",
+          "detail": "Sketchy + notes, blurt before moving on",
+          "est_minutes": 75,
+          "id": "2026-11-03-02"
         },
         {
-          "id": "2026-11-03-PH",
           "subject": "pharm",
           "kind": "study",
           "title": "Pharm A7 + A8",
-          "est_minutes": 75,
-          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
+          "detail": "A1–A9 is foundation for the winter semifinal; A10–A22 is MT2 scope",
+          "est_minutes": 60,
+          "id": "2026-11-03-03"
         }
       ]
     },
@@ -868,36 +871,28 @@
       "tags": [],
       "tasks": [
         {
-          "id": "2026-11-04-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-11-04-01"
         },
         {
-          "id": "2026-11-04-02",
           "subject": "micro",
           "kind": "study",
-          "title": "Micro III.11–15",
-          "detail": "Adenovirus + herpes",
-          "est_minutes": 75
-        },
-        {
-          "id": "2026-11-04-PH",
-          "subject": "pharm",
-          "kind": "study",
-          "title": "Pharm A9",
+          "title": "Micro III.17–19",
+          "detail": "Last of the new content",
           "est_minutes": 60,
-          "detail": "Foundation pass. Not on MT2, but A10+ will not land without it — and it IS on the winter semifinal. Concepts and mechanisms, not detail"
+          "id": "2026-11-04-02"
         },
         {
-          "id": "2026-11-04-03",
-          "subject": "patho",
-          "kind": "study",
-          "title": "Patho slides ×3",
-          "detail": "About 20 minutes",
-          "est_minutes": 20
+          "subject": "micro",
+          "kind": "review",
+          "title": "Micro: blurt III.1–19 once",
+          "detail": "End to end from memory. Sleep early",
+          "est_minutes": 75,
+          "id": "2026-11-04-03"
         }
       ]
     },
@@ -906,32 +901,25 @@
       "weekday": "Thursday",
       "semester_week": 9,
       "tags": [
+        "exam",
         "swim"
       ],
       "tasks": [
         {
-          "id": "2026-11-05-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-11-05-02"
         },
         {
-          "id": "2026-11-05-02",
+          "id": "2026-11-05-EX",
           "subject": "micro",
-          "kind": "study",
-          "title": "Micro III.16–19",
-          "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-          "est_minutes": 75
-        },
-        {
-          "id": "2026-11-05-03",
-          "subject": "micro",
-          "kind": "study",
-          "title": "Micro written practice + weak spots",
-          "detail": "Sketchy + notes, close them, 2–3 min blurt per topic",
-          "est_minutes": 75
+          "kind": "exam",
+          "title": "Micro MT2 — III.1–19",
+          "detail": "",
+          "est_minutes": null
         }
       ]
     },
@@ -939,25 +927,31 @@
       "date": "2026-11-06",
       "weekday": "Friday",
       "semester_week": 9,
-      "tags": [
-        "exam"
-      ],
+      "tags": [],
       "tasks": [
         {
-          "id": "2026-11-06-01",
           "subject": "anki",
           "kind": "study",
           "title": "Anki",
           "detail": "Pharm + pathology definitions, ~6 new. 2nd-year decks paused",
-          "est_minutes": 20
+          "est_minutes": 20,
+          "id": "2026-11-06-01"
         },
         {
-          "id": "2026-11-06-EX",
-          "subject": "micro",
-          "kind": "exam",
-          "title": "Micro MT2 — III.1–19",
-          "detail": "Target: 50%",
-          "est_minutes": null
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A9",
+          "detail": "A1–A9 is foundation for the winter semifinal; A10–A22 is MT2 scope",
+          "est_minutes": 60,
+          "id": "2026-11-06-02"
+        },
+        {
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho slides ×3",
+          "detail": "Practical is 25 Nov",
+          "est_minutes": 20,
+          "id": "2026-11-06-03"
         }
       ]
     },
