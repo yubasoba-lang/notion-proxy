@@ -18,6 +18,13 @@ const EXAMS_DB = "21463a0b4e7c802ebea5c74d09c69b8e";
 const ANCHOR = { Mon:"20260907", Tue:"20260908", Wed:"20260909", Thu:"20260910", Fri:"20260911", Sat:"20260912", Sun:"20260913" };
 
 // alarm: minutes before the start; 0 or absent = no notification.
+// ── Pool under construction ────────────────────────────────────────────
+// The club pool is open mornings only, so club practice moved to Monday and Friday
+// first thing. PLAN below stays the normal week; POOL_AM_PLAN overlays the days that
+// changed, and Friday's gym and evening rules in ALTERNATING are filtered out while
+// this is on. Set to false when the pool reopens. Mirrors index.html.
+const POOL_MORNINGS_ONLY = true;
+
 const PLAN = {
   Mon:[
     {t:"05:30",e:"06:00",l:"Leave for the pool",alarm:10},
@@ -80,8 +87,68 @@ const PLAN = {
   ],
 };
 
+
+// Days that change while the club pool is mornings only. The spare solo swim is on
+// Wednesday rather than Thursday, because Thursday has an 08:00 lecture on odd weeks.
+const POOL_AM_PLAN = {
+  Mon:[
+    {t:"05:30",e:"06:00",l:"Leave for the pool",alarm:10},
+    {t:"06:00",e:"07:30",l:"Swim practice",n:"Club · log the main set after",alarm:20},
+    {t:"07:45",e:"08:25",l:"Pool to campus",n:"40 min",alarm:10},
+    {t:"10:00",e:"11:30",l:"Clinical ECG",alarm:15},
+    {t:"11:45",e:"12:45",l:"Lunch together",alarm:10},
+    {t:"13:15",e:"15:00",l:"Study room",alarm:10},
+    {t:"15:15",e:"17:45",l:"Pharmacology I",alarm:15,n:"Two blocks, 15 min gap at 16:45"},
+    {t:"18:30",e:"19:30",l:"Dinner together",alarm:10},
+    {t:"20:00",e:"22:30",l:"Study room",n:"22:00 peak",alarm:10},
+  ],
+  Tue:[
+    {t:"09:30",e:"11:00",l:"Pharmacology lecture",alarm:15},
+    {t:"11:00",e:"12:00",l:"Study room",n:"Lecture review",alarm:10},
+    {t:"12:15",e:"13:45",l:"Lunch together",alarm:10},
+    {t:"14:00",e:"15:30",l:"Gym · Pull",n:"Through the door before 15:00 — no swim today, go heavy",alarm:15},
+    {t:"15:45",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
+    {t:"18:30",e:"19:30",l:"Dinner together",alarm:10},
+    {t:"20:00",e:"21:45",l:"Study room",alarm:10},
+  ],
+  Wed:[
+    {t:"05:30",e:"06:00",l:"Leave for the pool",alarm:10},
+    {t:"06:00",e:"07:30",l:"Swim practice",n:"Solo · log the main set after",alarm:20},
+    {t:"07:45",e:"08:25",l:"Pool to campus",n:"40 min",alarm:10},
+    {t:"09:30",e:"12:45",l:"Pathology I",alarm:15,n:"Two blocks — snack in the 11:00 gap"},
+    {t:"13:15",e:"14:15",l:"Lunch together",alarm:10},
+    {t:"14:30",e:"16:00",l:"Study room",alarm:10},
+    {t:"16:15",e:"16:30",l:"CO2 table",n:"Sitting down, at home",alarm:10},
+    {t:"18:45",e:"19:45",l:"Dinner together",alarm:10},
+    {t:"20:15",e:"22:00",l:"Study room",alarm:10},
+  ],
+  Thu:[
+    {t:"10:30",e:"12:00",l:"German for Medical Purposes",alarm:15},
+    {t:"12:15",e:"13:45",l:"Lunch together",alarm:10},
+    {t:"14:00",e:"15:30",l:"Gym · Legs",n:"Through the door before 15:00 — jump work",alarm:15},
+    {t:"15:45",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
+    {t:"18:30",e:"19:30",l:"Dinner together",alarm:10},
+    {t:"20:00",e:"21:45",l:"Study room",alarm:10},
+  ],
+  Fri:[
+    {t:"05:30",e:"06:00",l:"Leave for the pool",alarm:10},
+    {t:"06:00",e:"07:30",l:"Swim practice",n:"Club · leave early if Statistics is tight",alarm:20},
+    {t:"07:45",e:"08:25",l:"Pool to campus",n:"40 min",alarm:10},
+    {t:"08:30",e:"09:45",l:"Medical Statistics",alarm:15},
+    {t:"12:00",e:"13:00",l:"Lunch together",alarm:10},
+    {t:"13:15",e:"15:00",l:"Study room",alarm:10},
+    {t:"15:15",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
+    {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
+    {t:"20:15",e:"20:30",l:"CO2 table",n:"Sitting down, at home",alarm:10},
+    {t:"20:30",e:"22:00",l:"Study room",alarm:10},
+  ],
+};
+if(POOL_MORNINGS_ONLY)Object.assign(PLAN, POOL_AM_PLAN);
+
 // Events that don't repeat every week.
-const ALTERNATING = [
+// Friday's gym and evening blocks are replaced by POOL_AM_PLAN while the pool is
+// mornings only, so they are filtered out below rather than deleted.
+const ALTERNATING_ALL = [
   // Thursday 08:00 — lecture on odd weeks (first: 24 Sep, week 3), study on even (17 Sep).
   {day:"Thu",start:"20260924",t:"08:00",e:"10:30",l:"Clinical Pathophysiology",alarm:15,every:2,n:"Odd weeks only"},
   {day:"Thu",start:"20260917",t:"08:00",e:"10:30",l:"Study room",every:2,n:"No lecture this week",alarm:10},
@@ -104,6 +171,9 @@ const ALTERNATING = [
   {day:"Fri",start:"20261030",t:"20:15",e:"20:30",l:"CO2 table",n:"Sitting down, at home",alarm:10},
   {day:"Fri",start:"20261030",t:"20:30",e:"22:30",l:"Study room",n:"22:00 peak",alarm:10},
 ];
+const ALTERNATING = POOL_MORNINGS_ONLY
+  ? ALTERNATING_ALL.filter(x=>!(x.day==="Fri" && /Gym|Study room|Dinner together|Lunch together|CO2/.test(x.l)))
+  : ALTERNATING_ALL;
 
 const BYDAY = { Mon:"MO", Tue:"TU", Wed:"WE", Thu:"TH", Fri:"FR", Sat:"SA", Sun:"SU" };
 
