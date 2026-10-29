@@ -3365,7 +3365,17 @@ function cardioToSets(minutes){
 
 // The week's shape — shared by the Workout tab headers and the Home streak.
 // kind: 'required' breaks the streak if missed; 'optional' and 'rest' only ever add to it.
-const WORKOUT_WEEK=[
+// ── Pool under construction ──────────────────────────────────────────────────
+// The club pool is open mornings only, so club practice moved to Monday and Friday
+// first thing and the two evening practices are gone. The normal week is left intact
+// in WORKOUT_WEEK_NORMAL and DAY_PLAN; POOL_AM_PLAN overlays the days that changed.
+// Set this to false when the pool reopens and everything reverts with one word.
+//
+// The spare solo swim went to Wednesday, not Thursday: Thursday has an 08:00 lecture
+// on odd weeks, so a 06:00 swim cannot work there. That frees Tue and Thu for lifting,
+// which are the only two days in the week with no swim in them.
+const POOL_MORNINGS_ONLY=true;
+const WORKOUT_WEEK_NORMAL=[
   {abbr:'Mon',label:'Monday',   sub:'Swim · morning, solo',   kind:'required'},
   {abbr:'Tue',label:'Tuesday',  sub:'Swim · club',            kind:'required'},
   {abbr:'Wed',label:'Wednesday',sub:'Gym · Pull',             kind:'required'},
@@ -3374,6 +3384,18 @@ const WORKOUT_WEEK=[
   {abbr:'Sat',label:'Saturday', sub:'Swim, then Gym · Pull and press', kind:'required'},
   {abbr:'Sun',label:'Sunday',   sub:'Swim, then Gym · Upper', kind:'required'},
 ];
+// While the club pool is mornings only. Same five swims and four lifts, rearranged:
+// the lifts land on Tue and Thu, the only two days with no swim in them.
+const WORKOUT_WEEK_POOL_AM=[
+  {abbr:'Mon',label:'Monday',   sub:'Swim · club, morning',   kind:'required'},
+  {abbr:'Tue',label:'Tuesday',  sub:'Gym · Pull',             kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Swim · morning, solo',   kind:'required'},
+  {abbr:'Thu',label:'Thursday', sub:'Gym · Legs · jump work', kind:'required'},
+  {abbr:'Fri',label:'Friday',   sub:'Swim · club, morning',   kind:'required'},
+  {abbr:'Sat',label:'Saturday', sub:'Swim, then Gym · Pull and press', kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Swim, then Gym · Upper', kind:'required'},
+];
+const WORKOUT_WEEK=POOL_MORNINGS_ONLY?WORKOUT_WEEK_POOL_AM:WORKOUT_WEEK_NORMAL;
 
 const WEEK_ABBR=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // The current split started here. Before it, the old Mon–Sat split had Sunday as its
@@ -3436,6 +3458,77 @@ function displayedWorkoutStreak(){
 // that's what flips Thursday's odd/even lecture and Friday's week-8 layout.
 const SEMESTER_START='2026-09-07';
 // w: 'odd' | 'even' | 'upto7' | 'from8' (omitted = every week). k picks the dot colour.
+// The day-by-day overlay for POOL_MORNINGS_ONLY, declared with the week above.
+const POOL_AM_PLAN={
+  Mon:[
+    {t:'05:00',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
+    {t:'05:30',e:'06:00',k:'travel',l:'Leave for the pool'},
+    {t:'06:00',e:'07:30',k:'swim',l:'Swim practice',n:'club · log the main set after'},
+    {t:'07:45',e:'08:25',k:'travel',l:'Pool to campus',n:'40 min'},
+    {t:'08:30',k:'meal',l:'Breakfast',n:'eat on campus — eggs boiled the night before travel well'},
+    {t:'10:00',e:'11:30',k:'class',l:'Clinical ECG'},
+    {t:'11:45',e:'12:45',k:'together',l:'Lunch together'},
+    {t:'13:15',e:'15:00',k:'study',l:'Study room'},
+    {t:'15:15',e:'17:45',k:'class',l:'Pharmacology I',n:'two blocks, 15 min gap at 16:45'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
+    {t:'22:45',k:'sleep',l:'Sleep'},
+  ],
+  Tue:[
+    {t:'08:00',k:'wake',l:'Wake'},
+    {t:'08:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'09:30',e:'11:00',k:'class',l:'Pharmacology lecture'},
+    {t:'11:00',e:'12:00',k:'study',l:'Study room',n:'lecture review'},
+    {t:'12:15',e:'13:45',k:'together',l:'Lunch together'},
+    {t:'14:00',e:'15:30',k:'gym',l:'Gym · Pull',n:'be through the door before 15:00 — no swim today, so go heavy'},
+    {t:'15:45',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'21:45',k:'study',l:'Study room'},
+    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Wednesday swim starts 06:00'},
+  ],
+  Wed:[
+    {t:'05:00',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
+    {t:'05:30',e:'06:00',k:'travel',l:'Leave for the pool'},
+    {t:'06:00',e:'07:30',k:'swim',l:'Swim practice',n:'solo · log the main set after'},
+    {t:'07:45',e:'08:25',k:'travel',l:'Pool to campus',n:'40 min'},
+    {t:'08:30',k:'meal',l:'Breakfast'},
+    {t:'09:30',e:'12:45',k:'class',l:'Pathology I',n:'two blocks — snack in the 11:00 gap'},
+    {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
+    {t:'14:30',e:'16:00',k:'study',l:'Study room'},
+    {t:'16:15',e:'16:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'18:45',e:'19:45',k:'together',l:'Dinner together'},
+    {t:'20:15',e:'22:00',k:'study',l:'Study room'},
+    {t:'22:15',k:'sleep',l:'Sleep',n:'Thursday starts 08:00'},
+  ],
+  Thu:[
+    {t:'07:00',k:'wake',l:'Wake'},
+    {t:'07:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'08:00',e:'10:30',k:'class',l:'Clinical Pathophysiology',w:'odd'},
+    {t:'08:00',e:'10:30',k:'study',l:'Study room',n:'no lecture this week',w:'even'},
+    {t:'10:30',e:'12:00',k:'class',l:'German for Medical Purposes'},
+    {t:'12:15',e:'13:45',k:'together',l:'Lunch together'},
+    {t:'14:00',e:'15:30',k:'gym',l:'Gym · Legs',n:'be through the door before 15:00 — jump work'},
+    {t:'15:45',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'21:45',k:'study',l:'Study room'},
+    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Friday swim starts 06:00'},
+  ],
+  Fri:[
+    {t:'05:00',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
+    {t:'05:30',e:'06:00',k:'travel',l:'Leave for the pool'},
+    {t:'06:00',e:'07:30',k:'swim',l:'Swim practice',n:'club · leave early if Statistics is tight'},
+    {t:'07:45',e:'08:25',k:'travel',l:'Pool to campus',n:'40 min'},
+    {t:'08:30',e:'09:45',k:'class',l:'Medical Statistics'},
+    {t:'10:15',e:'11:30',k:'class',l:'Microbiology practical'},
+    {t:'12:00',e:'13:00',k:'together',l:'Lunch together'},
+    {t:'13:15',e:'15:00',k:'study',l:'Study room'},
+    {t:'15:15',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'19:00',e:'20:00',k:'together',l:'Dinner together'},
+    {t:'20:15',e:'20:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'20:30',e:'22:00',k:'study',l:'Study room'},
+    {t:'22:15',k:'sleep',l:'Sleep'},
+  ],
+};
 const DAY_PLAN={
   Mon:[
     {t:'05:00',k:'wake',l:'Wake',n:'only off a 22:00 bedtime — otherwise start at 06:45'},
@@ -3532,6 +3625,8 @@ const DAY_PLAN={
     {t:'22:00',k:'sleep',l:'Sleep',n:'early — Monday swim starts 06:00'},
   ],
 };
+if(POOL_MORNINGS_ONLY)Object.assign(DAY_PLAN,POOL_AM_PLAN);
+
 const PLAN_DOT={wake:'rgba(232,234,240,0.35)',meal:'#c8824a',together:'#d98fb0',class:'#8B8B9B',study:'var(--gold)',swim:'#5aa9d6',breath:'#5aa9d6',gym:'#6fbf73',cardio:'#6fbf73',travel:'rgba(232,234,240,0.35)',cook:'#c8824a',sleep:'#6b6b9b'};
 let planViewAbbr=null;
 
