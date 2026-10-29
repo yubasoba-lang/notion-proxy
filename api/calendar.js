@@ -119,6 +119,7 @@ const POOL_AM_PLAN = {
     {t:"13:15",e:"14:15",l:"Lunch together",alarm:10},
     {t:"14:30",e:"16:00",l:"Study room",alarm:10},
     {t:"16:15",e:"16:30",l:"CO2 table",n:"Sitting down, at home",alarm:10},
+    {t:"16:45",e:"18:30",l:"Study room",n:"17:00 peak",alarm:10},
     {t:"18:45",e:"19:45",l:"Dinner together",alarm:10},
     {t:"20:15",e:"22:00",l:"Study room",alarm:10},
   ],
