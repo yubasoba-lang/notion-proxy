@@ -5289,7 +5289,7 @@ async function refresh(force=true){
   // waiting on Notion; the loads below then redraw it with fresh data.
   if(!skip&&currentTab!=='home')paintTabNow(currentTab);
   // Nutrition is read on Home and from the card, so it cannot be tab-gated.
-  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn(),loadSleepLog(),loadRestLog(),loadHina()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
+  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn(),loadSleepLog(),loadRestLog(),loadAnkiLog(),loadHina()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
   if(currentTab==='home'){
     if(!skip){
       const isFirst=!_hasLoaded;
@@ -7924,7 +7924,7 @@ function renderPlan(){
   const tabs=[['today','Today'],['week','Plan'],['exams','Exams']]
     .map(([k,l])=>`<button class="sil-toggle-btn${planSubTab===k?' active':''}" onclick="setPlanSubTab('${k}')" style="flex:1;text-align:center">${l}</button>`).join('');
   let body='';
-  if(planSubTab==='today')body=renderPlanToday();
+  if(planSubTab==='today')body=renderPlanToday()+ankiCardHTML();
   else if(planSubTab==='week')body=renderPlanWeek();
   else body=renderPlanExams();
   el.innerHTML=`<div style="padding:10px 16px 40px">
@@ -9664,6 +9664,113 @@ async function loadDayLog(cfg,key,field,pageField){
 }
 function loadSleepLog(){return loadDayLog(SLEEP_CFG,SLEEP_KEY,'sleepLog','sleepLogPageId');}
 function loadRestLog(){return loadDayLog(REST_CFG,REST_KEY,'restLog','restLogPageId');}
+
+// ── Anki ─────────────────────────────────────────────────────────────────────
+// Cards reviewed, one number a day. Deliberately not scored and deliberately not
+// fed into 凝: the plan already has an Anki task most days, and ticking that is
+// what moves Focus. Counting the cards again would pay twice for the same work.
+// What this is for is the thing the tick cannot show — whether the reviews are
+// actually getting done daily or arriving in Sunday-night piles of 400.
+const ANKI_CFG='anki_log';
+const ANKI_KEY='grind_anki_log';
+function ankiDates(){return state.ankiLog||{};}
+function loadAnkiLog(){return loadDayLog(ANKI_CFG,ANKI_KEY,'ankiLog','ankiLogPageId');}
+function ankiTotal(n){
+  const d=ankiDates();
+  return lastNDays(n).reduce(function(a,ds){return a+(d[ds]||0);},0);
+}
+// Averaged over days actually logged, not over the window: a blank day means
+// "not written down", and dividing by seven would read it as a zero.
+function ankiAvg(n){
+  const d=ankiDates();
+  const vals=lastNDays(n).map(function(ds){return d[ds];}).filter(function(v){return v>0;});
+  if(!vals.length)return null;
+  return Math.round(ankiTotal(n)/vals.length);
+}
+// Same grace as the study and workout streaks, for the same reason: one bad day
+// should not erase a month.
+function ankiStreak(){
+  const d=ankiDates();
+  let n=0,gap=0,ds=localToday();
+  for(let i=0;i<120;i++){
+    if(d[ds]>0){n++;gap=0;}
+    else{gap++;if(gap>=STREAK_GRACE)break;}
+    ds=prevDay(ds);
+  }
+  return n;
+}
+let _ankiDay=null;
+function ankiDay(){return _ankiDay||localToday();}
+function ankiPick(ds){
+  if(_ankiDay===ds)_ankiDay=null;
+  else _ankiDay=ds;
+  renderPlan();
+}
+function ankiLabel(){
+  const ds=ankiDay();
+  if(ds===localToday())return 'Today';
+  if(ds===prevDay(localToday()))return 'Yesterday';
+  return ds;
+}
+function ankiSubmit(){
+  const el=document.getElementById('ankiInput');
+  if(!el||el.value===''){showToast('Cards reviewed');return;}
+  const v=parseInt(el.value,10);
+  if(!isFinite(v)||v<0||v>2000){showToast('Cards reviewed, 0 to 2000');return;}
+  if(!state.ankiLog)state.ankiLog={};
+  // Overwrites rather than adds, so a second session the same day means typing the
+  // day's running total off the Anki screen — which is the number Anki shows anyway.
+  if(v===0)delete state.ankiLog[ankiDay()];
+  else state.ankiLog[ankiDay()]=v;
+  saveDayLog(ANKI_CFG,ANKI_KEY,'ankiLog','ankiLogPageId');
+  showToast(v+' cards · '+ankiLabel().toLowerCase());
+  _ankiDay=null;
+  renderPlan();
+}
+const ANKI_DOW=['S','M','T','W','T','F','S'];
+function ankiCardHTML(){
+  const days=lastNDays(7);
+  const d=ankiDates();
+  let peak=0;
+  days.forEach(function(ds){if((d[ds]||0)>peak)peak=d[ds];});
+  let bars='';
+  days.forEach(function(ds){
+    const v=d[ds]||0;
+    let px=3;
+    if(v&&peak)px=Math.max(4,Math.round(34*v/peak));
+    let col='rgba(232,234,240,0.10)';
+    if(v)col='var(--gold)';
+    let ring='';
+    if(ds===ankiDay()&&_ankiDay)ring=';outline:1px solid var(--gold);outline-offset:2px';
+    const dd=new Date(ds+'T12:00:00');
+    let dayCol='var(--text-faint)';
+    if(ds===localToday())dayCol='var(--text)';
+    bars+='<span onclick="ankiPick(\''+ds+'\')" title="'+ds+' · '+(v||'—')+' cards" style="display:inline-block;width:30px;text-align:center;cursor:pointer;vertical-align:bottom">'+
+      '<span style="display:block;height:34px;line-height:0"><span style="display:inline-block;width:16px;height:'+px+'px;background:'+col+';opacity:0.85;border-radius:1px;vertical-align:bottom'+ring+'"></span></span>'+
+      '<span style="display:block;font-size:9px;letter-spacing:0.04em;color:'+dayCol+';margin-top:5px">'+ANKI_DOW[dd.getDay()]+'</span>'+
+    '</span>';
+  });
+  const avg=ankiAvg(7);
+  let line='nothing logged yet';
+  if(avg!==null)line=ankiTotal(7)+' cards in 7 days · '+avg+' on a day you sat down';
+  const st=ankiStreak();
+  let streakLine='';
+  if(st)streakLine='<span style="color:var(--gold)">'+st+'-day streak</span> · ';
+  return '<div class="rival-status-card" style="margin-top:18px">'+
+    '<div class="rival-section-label">ANKI</div>'+
+    '<div style="margin:10px 0 6px;min-height:52px">'+bars+'</div>'+
+    '<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">'+streakLine+esc(line)+'</div>'+
+    '<div style="font-size:10px;color:var(--text-faint);margin-bottom:12px">tap a bar to log an earlier day</div>'+
+    '<div style="display:flex;gap:9px;align-items:center">'+
+      '<label class="fld" style="flex:1">'+
+        '<span class="cap">'+esc(ankiLabel())+'</span>'+
+        '<input id="ankiInput" class="num-in num-in-lg" type="number" step="1" inputmode="numeric" placeholder="120">'+
+        '<span class="unit">cards</span>'+
+      '</label>'+
+      '<button class="wec-log-btn btn-inline" onclick="ankiSubmit()">Log</button>'+
+    '</div>'+
+  '</div>';
+}
 const _dayLogTimers={};
 function saveDayLog(cfg,key,field,pageField){
   // Only the last 120 days are kept: nothing downstream looks further back than
