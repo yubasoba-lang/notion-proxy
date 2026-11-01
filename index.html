@@ -8156,6 +8156,27 @@ const SESSION_PLAN={
   ]},
 };
 
+// ── Pool under construction · which weekday each session lands on ────────────
+// The lifts and the swims themselves are unchanged; only the day they sit on
+// moves. Built by shifting the days above rather than restating them, so there is
+// exactly one copy of every session and clearing POOL_MORNINGS_ONLY restores the
+// original week with nothing to re-merge. This was missed when the overlay first
+// went in: WORKOUT_WEEK and DAY_PLAN moved but the exercise lists did not, so the
+// Workout tab offered a club swim on Tuesday and a Pull session on Wednesday.
+if(POOL_MORNINGS_ONLY){
+  const N=SESSION_PLAN;
+  const club=function(note){
+    return {title:'Swim \u00b7 club',note:note,blocks:[{h:'Pool',x:[['Swimming','90 min']]}]};
+  };
+  Object.assign(SESSION_PLAN,{
+    Mon:club('Club practice 06:00\u201307:30 \u2014 no lifting. Log the main set after'),
+    Tue:{...N.Wed},
+    Wed:{...N.Mon,note:'Morning session, 06:00 \u2014 pick one from Solo sessions'},
+    Thu:{...N.Fri,note:'Jumps first, while fresh \u00b7 90s rest between plyo sets \u00b7 one of the only two days out of the water'},
+    Fri:club('Club practice 06:00\u201307:30 \u2014 statistics at 08:30, so leave early if you must. No lifting'),
+  });
+}
+
 // Which days an exercise belongs to, read off the split rather than the Day property
 // in Notion. That property was set for the old Push/Pull/Legs days and is empty on most
 // rows, so the Workout tab's day sections had drifted away from the actual plan.
