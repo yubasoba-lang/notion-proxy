@@ -91,9 +91,9 @@
      "id": "2026-11-01-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III 1–10",
-     "detail": "General virology, all of it: virus structure + viroid/prion (1), propagation and productive infection (2), latent and persistent infection (3), congenital infection (4), viral oncogenesis (5), host defence (6), pathogenicity and pathogenesis (7), chemoprophylaxis and treatment (8), obligatory and non-obligatory vaccines (9–10)",
-     "est_minutes": 180
+     "title": "Micro III 1–4",
+     "detail": "Short night — 06:15 practice tomorrow. Just the foundation: virus structure + viroid/prion (1), propagation and productive infection (2), latent and persistent infection (3), congenital infection (4). Everything else in virology leans on 1 and 2, so this is the right 80 minutes to spend. Stop by 22:15 whatever happens",
+     "est_minutes": 80
     }
    ]
   },
@@ -117,9 +117,9 @@
      "id": "2026-11-02-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III 11–19",
-     "detail": "The DNA viruses: adenovirus (11), HSV-1/2 (12), VZV (13), EBV (14), CMV (15), HHV-6/7/8 (16), parvovirus (17), papilloma + polyoma BK/JC (18), poxviruses (19). Sketchy carries these — it should move faster than yesterday. Virology is finished after this",
-     "est_minutes": 190
+     "title": "Micro III 5–14",
+     "detail": "Viral oncogenesis (5), host defence (6), pathogenicity and pathogenesis (7), chemoprophylaxis and treatment (8), vaccines (9–10), then the DNA viruses begin: adenovirus (11), HSV-1/2 (12), VZV (13), EBV (14). The virus topics are in Sketchy and move fast",
+     "est_minutes": 200
     }
    ]
   },
@@ -143,9 +143,9 @@
      "id": "2026-11-03-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 1–11 — all of mycology",
-     "detail": "General mycology first and together, it is the foundation for the rest: structure/metabolism/classification (1), pathomechanism + risk factors (2), cultivation + diagnosis (3), treatment (4). Then dermatophytoses (5), superficial and subcutaneous (6), the dimorphics Coccidioides/Histoplasma/Blastomyces/Paracoccidioides (7–8), Cryptococcus + Pneumocystis (9), zygomycoses + Aspergillus + Penicillium (10), Candida (11)",
-     "est_minutes": 200
+     "title": "Micro III 15–19 + IV 1–6",
+     "detail": "Finish virology: CMV (15), HHV-6/7/8 (16), parvovirus (17), papilloma + polyoma (18), poxviruses (19). Then mycology starts with the general block, kept together because the rest sits on it: structure/classification (1), pathomechanism + risk factors (2), cultivation + diagnosis (3), treatment (4), dermatophytoses (5), superficial and subcutaneous (6). Heaviest day of the week",
+     "est_minutes": 220
     }
    ]
   },
@@ -169,17 +169,17 @@
      "id": "2026-11-04-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Blurt all 30 topics",
-     "detail": "Closed book, 60 seconds each: III 1–19 then IV 1–11. Mark every one you stall on",
-     "est_minutes": 70
+     "title": "Micro IV 7–11",
+     "detail": "The last five, all organism topics and all in Sketchy: Coccidioides + Histoplasma (7), Blastomyces + Paracoccidioides (8), Cryptococcus + Pneumocystis (9), zygomycoses + Aspergillus + Penicillium (10), Candida (11)",
+     "est_minutes": 100
     },
     {
      "id": "2026-11-04-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Weak spots only",
-     "detail": "Read only what the blurt exposed. Mycology is one day old, so expect most of the misses there. Nothing new tonight",
-     "est_minutes": 80
+     "title": "Blurt all 30 topics",
+     "detail": "Closed book, 60 seconds each: III 1–19 then IV 1–11. Mark the misses, read only those, then stop",
+     "est_minutes": 50
     }
    ]
   },
