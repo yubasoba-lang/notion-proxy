@@ -91,9 +91,9 @@
      "id": "2026-11-01-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 1–8",
-     "detail": "All of general mycology (1–4: structure/classification, pathomechanism, cultivation + diagnosis, treatment), then dermatophytoses (5), superficial and subcutaneous (6), and the dimorphics — Coccidioides, Histoplasma, Blastomyces, Paracoccidioides (7–8)",
-     "est_minutes": 160
+     "title": "Micro III 1–10",
+     "detail": "General virology, all of it: virus structure + viroid/prion (1), propagation and productive infection (2), latent and persistent infection (3), congenital infection (4), viral oncogenesis (5), host defence (6), pathogenicity and pathogenesis (7), chemoprophylaxis and treatment (8), obligatory and non-obligatory vaccines (9–10)",
+     "est_minutes": 180
     }
    ]
   },
@@ -117,17 +117,9 @@
      "id": "2026-11-02-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro IV 9–11",
-     "detail": "Cryptococcus + Pneumocystis, the zygomycoses with Aspergillus and Penicillium, then Candida. Mycology is finished after this",
-     "est_minutes": 70
-    },
-    {
-     "id": "2026-11-02-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III 1–5",
-     "detail": "General virology: virus structure + viroid/prion, propagation and productive infection, latent and persistent infection, congenital infection, viral oncogenesis",
-     "est_minutes": 100
+     "title": "Micro III 11–19",
+     "detail": "The DNA viruses: adenovirus (11), HSV-1/2 (12), VZV (13), EBV (14), CMV (15), HHV-6/7/8 (16), parvovirus (17), papilloma + polyoma BK/JC (18), poxviruses (19). Sketchy carries these — it should move faster than yesterday. Virology is finished after this",
+     "est_minutes": 190
     }
    ]
   },
@@ -151,9 +143,9 @@
      "id": "2026-11-03-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III 6–14",
-     "detail": "Host defence, pathogenicity, chemoprophylaxis and treatment, obligatory and non-obligatory vaccines (6–10), then the DNA viruses start: adenovirus (11), HSV-1/2 (12), VZV (13), EBV (14)",
-     "est_minutes": 180
+     "title": "Micro IV 1–11 — all of mycology",
+     "detail": "General mycology first and together, it is the foundation for the rest: structure/metabolism/classification (1), pathomechanism + risk factors (2), cultivation + diagnosis (3), treatment (4). Then dermatophytoses (5), superficial and subcutaneous (6), the dimorphics Coccidioides/Histoplasma/Blastomyces/Paracoccidioides (7–8), Cryptococcus + Pneumocystis (9), zygomycoses + Aspergillus + Penicillium (10), Candida (11)",
+     "est_minutes": 200
     }
    ]
   },
@@ -177,17 +169,17 @@
      "id": "2026-11-04-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro III 15–19",
-     "detail": "CMV, HHV-6/7/8, parvovirus, papilloma + polyoma (BK, JC), poxviruses. That closes the MT2 scope",
-     "est_minutes": 90
+     "title": "Blurt all 30 topics",
+     "detail": "Closed book, 60 seconds each: III 1–19 then IV 1–11. Mark every one you stall on",
+     "est_minutes": 70
     },
     {
      "id": "2026-11-04-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Blurt all 30 topics",
-     "detail": "Closed book, 60 seconds each: IV 1–11 then III 1–19. Mark every one you stall on and read only those tonight",
-     "est_minutes": 40
+     "title": "Weak spots only",
+     "detail": "Read only what the blurt exposed. Mycology is one day old, so expect most of the misses there. Nothing new tonight",
+     "est_minutes": 80
     }
    ]
   },
