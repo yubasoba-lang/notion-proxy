@@ -84,7 +84,7 @@
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
      "est_minutes": 20
     },
     {
@@ -110,7 +110,7 @@
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
      "est_minutes": 20
     },
     {
@@ -136,7 +136,7 @@
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
      "est_minutes": 20
     },
     {
@@ -162,7 +162,7 @@
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
      "est_minutes": 20
     },
     {
@@ -196,7 +196,7 @@
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
-     "detail": "Light review only — exam day",
+     "detail": "Due reviews only — exam day. No new cards",
      "est_minutes": 20
     },
     {
