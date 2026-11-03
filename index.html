@@ -7157,6 +7157,18 @@ function strokeTarget(){
   if(!vals.length)return null;
   return Math.min.apply(null,vals);
 }
+// Fly, counted on its own. Solo sessions only, same as the free target, and the best
+// of the last five rather than an average — a count you have actually held.
+function flyStrokeTarget(){
+  const vals=(state.swimPractices||[]).filter(p=>p.flyStrokes>0&&isSoloPractice(p)).slice(0,5).map(p=>p.flyStrokes);
+  if(!vals.length)return null;
+  return Math.min.apply(null,vals);
+}
+function flyStrokeRule(){
+  const t=flyStrokeTarget();
+  if(!t)return 'count your fly strokes per length';
+  return 'at '+t+' fly strokes or under';
+}
 // The club pool, kept separate. Only used where a 25m count is the right one.
 function strokeTargetClub(){
   const vals=(state.swimPractices||[]).filter(p=>p.strokes>0&&!isSoloPractice(p)).slice(0,5).map(p=>p.strokes);
@@ -7294,32 +7306,32 @@ const MEET_PHASES=[
   {upto:99,n:1,label:'Fly a third of the session',total:2400,lines:[
     '9 × 33 free easy, breathe every 3',
     '6 × 66 as 33 fly / 33 free easy, 4 breaths rest',
-    'FLY · 8 × half a length of fly then easy free into the wall, 6 breaths rest — hold your count',
+    'FLY · 8 × half a length of fly then easy free into the wall, 6 breaths rest',
     'FLY · 4 × 33 fly, 8 breaths rest',
     'FLY · 1 × 33 fly, 3 breaths, then half a length of fly back',
-    '15 × 33 free at your count, 3 breaths rest — never maximal',
-    '10 × 33 free one under your count, 4 breaths rest',
-    '10 × 33 free alternating at your count and one under, 3 breaths rest',
+    '15 × 33 free, 3 breaths rest — repeatable, not a sprint',
+    '10 × 33 free, one stroke under your count, 4 breaths rest — longer and stronger',
+    '10 × 33 free alternating: one normal, one a stroke under, 3 breaths rest',
     '6 × 33 free fast off the wall, 10 breaths rest',
     '9 × 33 easy, breathe every 3']},
   {upto:10,n:2,label:'Half and half',total:2600,lines:[
     '9 × 33 free easy, breathe every 3',
     '6 × 66 as 33 fly / 33 free easy, 4 breaths rest',
-    'FLY · 6 × 33 fly, 8 breaths rest — one over your count is fine, two over twice ends the set',
+    'FLY · 6 × 33 fly, 8 breaths rest — one over target is fine, two over twice ends the set',
     'FLY · 2 × (33 fly, 3 breaths, half a length of fly back), 10 breaths between',
     'FLY · 1 × 33 fly at race effort — only on the best of the three days this week, and early',
     'FLY · 4 × half a length of fly easy, 6 breaths rest — rebuild the stroke after the hard work',
-    '20 × 33 free at your count, 3 breaths rest',
-    '12 × 33 free one under your count, 4 breaths rest',
-    '8 × 33 as half the length hard into easy, 4 breaths rest — this is the back half of the 100',
+    '20 × 33 free, 3 breaths rest — repeatable, not a sprint',
+    '12 × 33 free, one stroke under your count, 4 breaths rest — longer and stronger',
+    '8 × 33 as half the length hard, then relaxed into the wall, 4 breaths rest — this is the back half of the 100',
     '2 × 33 free maximal, 15 breaths rest — the only true all-out free of the week',
     '4 × 33 free fast off the wall, 10 breaths rest',
     '9 × 33 easy']},
   {upto:4,n:3,label:'Taper — wake it up, arrive fresh',total:1400,lines:[
     '9 × 33 free easy, breathe every 3',
-    'FLY · 4 × half a length of fly, 6 breaths rest, at your count',
+    'FLY · 4 × half a length of fly, 6 breaths rest',
     'FLY · 1 × 33 fly at race effort. Once. Nothing else fly today',
-    '12 × 33 free one under your count, 4 breaths rest',
+    '12 × 33 free, one stroke under your count, 4 breaths rest — longer and stronger',
     '4 × 33 free fast off the wall, 10 breaths rest',
     '9 × 33 easy',
     'Club practice Thursday and Friday as the coach writes it. Add nothing']},
@@ -7608,11 +7620,13 @@ function countNote(l){
   // Order matters. "backstroke" must not read as a stroke count, a line that says "5 kicks
   // off every wall" is a free swim and not a kick set, and a drill deliberately changes the
   // number so it cannot be held against the free count.
+  if(/club practice|coach writes/i.test(l))return '';
+  if(/maximal|all out|fast off the wall/i.test(l))return '';
   if(/underwater|dolphin to/i.test(l))return 'count the dolphin kicks';
   if(/\bcount|strokes per length|\d+ strokes/i.test(l))return '';
   if(/buoy/i.test(l))return 'count with the buoy, separately from your free count';
   if(/kick/i.test(l)&&!/free|swim|fly/i.test(l))return 'no stroke count on a kick set — hold a steady tempo';
-  if(/fly|dolphin/i.test(l))return 'count your fly strokes per length';
+  if(/fly|dolphin/i.test(l))return flyStrokeRule();
   if(/drill|catch-up|fist/i.test(l))return 'count it, but expect a different number from your free count';
   if(/easy/i.test(l))return 'count it anyway — this is your lowest count of the day';
   return strokeRule();
@@ -10334,7 +10348,7 @@ function recapRowHTML(){
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
-const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds']),strokes:g.num(q.Strokes)};};
+const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds']),strokes:g.num(q.Strokes),flyStrokes:g.num(q['Fly Strokes'])};};
 async function loadSwimPractices(){
   try{
     const p=await nQuery(SWIM_PRACTICES_DB,null,[{property:'Date',direction:'descending'}]);
@@ -10461,7 +10475,7 @@ function openSwimPractice(minutes,presetSet){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
   const set=presetSet||(last?last.set:'');
-  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:'',strokes:0};
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:'',strokes:0,flyStrokes:0};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
@@ -10538,6 +10552,12 @@ function renderSwimPractice(){
       <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;min-width:54px;text-align:center"><span id="swimStrokes">${d.strokes||'—'}</span></div>
       <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimStrokeStep(1)">+</button>
     </div>
+    <div class="wec-lbl">Fly strokes per length (optional)</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 16px">
+      <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimFlyStrokeStep(-1)">−</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;min-width:54px;text-align:center"><span id="swimFlyStrokes">${d.flyStrokes||'—'}</span></div>
+      <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimFlyStrokeStep(1)">+</button>
+    </div>
     <div class="wec-lbl">Timed swim (optional)</div>
     <div style="display:flex;gap:4px;margin:6px 0 8px">${distChips}</div>
     <input type="text" class="wec-inp" id="swimTime" value="${esc(d.timedRaw)}" placeholder="29.2 or 1:45.3" oninput="swimDraft.timedRaw=this.value" style="width:100%;text-align:left;margin-bottom:16px">
@@ -10580,6 +10600,16 @@ function swimStrokeStep(dir){
   const el=document.getElementById('swimStrokes');
   if(el)el.textContent=d.strokes||'—';
 }
+// Fly is counted separately from free. A fly length takes far fewer strokes than a
+// free one, so pooling them would drag the free target down and make the fly target
+// impossible — the same mistake the two pools caused before they were split.
+function swimFlyStrokeStep(dir){
+  const d=swimDraft;
+  if(!d)return;
+  d.flyStrokes=Math.max(0,Math.min(40,(d.flyStrokes||0)+dir));
+  const el=document.getElementById('swimFlyStrokes');
+  if(el)el.textContent=d.flyStrokes||'—';
+}
 function swimSetDist(m){
   const inp=document.getElementById('swimTime');
   if(inp)swimDraft.timedRaw=inp.value;          // keep what's typed through the re-render
@@ -10602,6 +10632,7 @@ async function saveSwimPractice(remembered){
   };
   if(d.focus)props.Focus={rich_text:richChunks(d.focus)};
   if(d.strokes>0)props.Strokes={number:d.strokes};
+  if(d.flyStrokes>0)props['Fly Strokes']={number:d.flyStrokes};
   const secs=parseSwimTime(d.timedRaw);
   if(d.timedDist&&secs!=null){
     props['Timed Distance']={number:d.timedDist};
