@@ -704,6 +704,14 @@
      "title": "Patho slides ×4",
      "detail": "",
      "est_minutes": 40
+    },
+    {
+     "id": "2026-11-18-04",
+     "subject": "patho",
+     "kind": "study",
+     "title": "Patho definitions",
+     "detail": "Moved off Saturday — the meet is that day",
+     "est_minutes": 60
     }
    ]
   },
@@ -777,9 +785,9 @@
      "id": "2026-11-20-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.34–35",
-     "detail": "Molecular mimicry and antigen shift, nosocomial infections",
-     "est_minutes": 35
+     "title": "Micro I.34–37",
+     "detail": "Molecular mimicry and antigen shift, nosocomial infections, sepsis, the normal human flora. Section I is finished — four topics today because tomorrow is the meet",
+     "est_minutes": 70
     },
     {
      "id": "2026-11-20-03",
@@ -812,32 +820,16 @@
      "subject": "anki",
      "kind": "study",
      "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+     "detail": "Due reviews only — race day. No new cards",
      "est_minutes": 20
     },
     {
      "id": "2026-11-21-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro I.36–37",
-     "detail": "Sepsis, the normal human flora. Section I is finished",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-21-03",
      "subject": "patho",
      "kind": "study",
-     "title": "Patho: definitions + slides",
-     "detail": "",
-     "est_minutes": 90
-    },
-    {
-     "id": "2026-11-21-04",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho histology",
-     "detail": "",
-     "est_minutes": 45
+     "title": "Patho slides, light",
+     "detail": "MEFOB today — 50 free, 100 free, 50 fly. This is the only study task and it is an evening one. If you are wrecked, skip it: the practical is four days out and you have Sunday",
+     "est_minutes": 30
     }
    ]
   },
@@ -871,15 +863,15 @@
      "kind": "study",
      "title": "Patho: organ descriptions",
      "detail": "",
-     "est_minutes": 75
+     "est_minutes": 60
     },
     {
      "id": "2026-11-22-04",
      "subject": "patho",
      "kind": "study",
      "title": "Patho histology",
-     "detail": "",
-     "est_minutes": 60
+     "detail": "Picks up what Saturday did not do",
+     "est_minutes": 75
     }
    ]
   },
