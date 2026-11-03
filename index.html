@@ -7097,6 +7097,14 @@ const SOLO_SETS=[
    why:'Nobody practises this alone and it is worth seconds a race. A 33m pool gives you three walls per 100 instead of four, so each one counts for more.',
    
    lines:['500 easy free with 5 kicks off every wall','16 \u00d7 33 free finishing into a turn, 6 breaths rest \u2014 tight tuck, feet planted fast','__MAIN__','FINS ON \u00b7 12 \u00d7 33 streamline kick off every wall, 5 breaths rest','400 easy']},
+  // Entered for the 50 free, 100 free and 50 fly at MEFOB on 21 Nov 2026. Fixed rather
+  // than levelled: the phase comes from how far out the meet is, not from how many clean
+  // sessions have been logged, and the whole thing disappears from the list the day after
+  // the race. Fly goes first in every phase and stays capped \u2014 the extra metres that make
+  // this a full session are aerobic free, because that is what a 100 is won on.
+  {t:'Meet prep \u00b7 free and fly',tag:'meetprep',fixed:true,focus:'Free speed, and surviving a 50 fly',total:2400,kit:'None',
+   why:'Every fly set ends when the stroke breaks, not when the number is reached: hands entering wide, elbow dropping on the recovery, head up before the hands. One ugly length is the warning, two and fly is done for the day. Bad fly is what hurts shoulders, not fly. If the shoulder says anything at all, fly goes to zero and you race the two freestyles.',
+   lines:['__MEET__']},
 ];
 // Per-session levels. Aerobic capacity and turn skill improve at different rates, so a
 // single global level would always be wrong for one of them. Two clean completions of a
@@ -7107,6 +7115,24 @@ const SOLO_LEVEL_MAX=10;
 // first and rest only tightens every third level, because shortening rest is the harder
 // progression and the one that most often breaks a set.
 const SOLO_TIERS=[[1,'Base'],[3,'Club'],[5,'Regional'],[7,'National'],[9,'Elite']];
+// A fixed session's size and caption come from its phase, not from a level, so both
+// the list row and the detail header ask for them rather than reading x.total directly.
+function soloTotal(x){
+  if(!x.fixed)return x.total;
+  const ph=meetPhase();
+  return ph?ph.total:x.total;
+}
+function soloStageLabel(x){
+  if(x.fixed){
+    const ph=meetPhase();
+    if(!ph)return '';
+    const d=meetDaysLeft();
+    return 'Phase '+ph.n+' \u00b7 '+ph.label+' \u00b7 '+d+' day'+(d===1?'':'s')+' to the meet';
+  }
+  if(x.stage)return 'Stage '+flyStage().n;
+  const lv=soloLevel(x.tag);
+  return 'Level '+lv+' '+soloTierName(lv);
+}
 function soloTierName(lv){
   let n='Base';
   SOLO_TIERS.forEach(([at,name])=>{if(lv>=at)n=name;});
@@ -7257,6 +7283,57 @@ function soloMainReps(x){
   let n=0;
   lines.forEach(l=>{const m=/(\d+)\s*×/.exec(l);if(m)n=Math.max(n,parseInt(m[1]));});
   return n||8;
+}
+// ── Meet prep ────────────────────────────────────────────────────────────────
+// MEFOB, 21 Nov 2026: 50 free, 100 free and 50 fly. Three phases, chosen by how many
+// days are left rather than by a level, so the session is right without anything to
+// tick. Past the meet meetPhase() returns null and the session drops out of the list
+// on its own — nothing to remember to remove.
+const MEET_DATE='2026-11-21';
+const MEET_PHASES=[
+  {upto:99,n:1,label:'Fly a third of the session',total:2400,lines:[
+    '9 × 33 free easy, breathe every 3',
+    '6 × 66 as 33 fly / 33 free easy, 4 breaths rest',
+    'FLY · 8 × half a length of fly then easy free into the wall, 6 breaths rest — hold your count',
+    'FLY · 4 × 33 fly, 8 breaths rest',
+    'FLY · 1 × 33 fly, 3 breaths, then half a length of fly back',
+    '15 × 33 free at your count, 3 breaths rest — never maximal',
+    '10 × 33 free one under your count, 4 breaths rest',
+    '10 × 33 free alternating at your count and one under, 3 breaths rest',
+    '6 × 33 free fast off the wall, 10 breaths rest',
+    '9 × 33 easy, breathe every 3']},
+  {upto:10,n:2,label:'Half and half',total:2600,lines:[
+    '9 × 33 free easy, breathe every 3',
+    '6 × 66 as 33 fly / 33 free easy, 4 breaths rest',
+    'FLY · 6 × 33 fly, 8 breaths rest — one over your count is fine, two over twice ends the set',
+    'FLY · 2 × (33 fly, 3 breaths, half a length of fly back), 10 breaths between',
+    'FLY · 1 × 33 fly at race effort — only on the best of the three days this week, and early',
+    'FLY · 4 × half a length of fly easy, 6 breaths rest — rebuild the stroke after the hard work',
+    '20 × 33 free at your count, 3 breaths rest',
+    '12 × 33 free one under your count, 4 breaths rest',
+    '8 × 33 as half the length hard into easy, 4 breaths rest — this is the back half of the 100',
+    '2 × 33 free maximal, 15 breaths rest — the only true all-out free of the week',
+    '4 × 33 free fast off the wall, 10 breaths rest',
+    '9 × 33 easy']},
+  {upto:4,n:3,label:'Taper — wake it up, arrive fresh',total:1400,lines:[
+    '9 × 33 free easy, breathe every 3',
+    'FLY · 4 × half a length of fly, 6 breaths rest, at your count',
+    'FLY · 1 × 33 fly at race effort. Once. Nothing else fly today',
+    '12 × 33 free one under your count, 4 breaths rest',
+    '4 × 33 free fast off the wall, 10 breaths rest',
+    '9 × 33 easy',
+    'Club practice Thursday and Friday as the coach writes it. Add nothing']},
+];
+// Days until the meet, so the phase and the countdown agree.
+function meetDaysLeft(){
+  return Math.round((new Date(MEET_DATE+'T12:00:00')-new Date(localToday()+'T12:00:00'))/86400000);
+}
+function meetPhase(){
+  const d=meetDaysLeft();
+  if(d<0)return null;
+  let pick=MEET_PHASES[0];
+  MEET_PHASES.forEach(function(p){if(d<=p.upto)pick=p;});
+  return pick;
 }
 // ── Butterfly ladder ─────────────────────────────────────────────────────────
 // The goal isn't fly as an event yet — it's being able to take her best-stroke sets in
@@ -7439,7 +7516,7 @@ async function classifyRecentSwims(){
 // Looks at the last two practices — coach's sets included — works out which qualities
 // they trained, and picks a session that trains something else. Coach sets are free
 // text, so they're classified by keyword and by what got logged alongside them.
-const SOLO_PRIORITY={aerobic:5,flybuild:5,breath:4,economy:4,turns:2,pace:2,flyspeed:1};
+const SOLO_PRIORITY={meetprep:9,aerobic:5,flybuild:5,breath:4,economy:4,turns:2,pace:2,flyspeed:1};
 function classifySwim(p){
   const cached=p&&(state.swimTags||{})[swimTagKey(p)];
   if(cached&&cached.tags&&cached.tags.length)return cached.tags;
@@ -7477,6 +7554,7 @@ function suggestSoloSet(){
     else if(prev.includes(x.tag))sc-=2;   // did it the time before
     let blocked='';
     if(x.tag==='flyspeed'&&!flyRecently){sc=-99;blocked='needs a fly build session first';}
+    if(x.fixed&&!meetPhase())sc=-999;     // the meet has been and gone
     return {i,x,sc,blocked};
   }).sort((a,b)=>b.sc-a.sc||SOLO_PRIORITY[b.x.tag]-SOLO_PRIORITY[a.x.tag]);
   const top=scored[0];
@@ -7548,13 +7626,14 @@ function soloLines(x){
   const out=[];
   x.lines.forEach(l=>{
     if(l==='__STAGE__'){flyStage().lines.forEach(y=>out.push(y));return;}
+    if(l==='__MEET__'){const ph=meetPhase();if(ph)ph.lines.forEach(y=>out.push(y));return;}
     if(l==='__MAIN__'){
       soloMainFor(x.tag,soloLevel(x.tag)).forEach(y=>out.push(y));
       return;
     }
     out.push(l);
   });
-  if(!x.stage&&x.tag!=='pace'&&x.tag!=='flyspeed'){
+  if(!x.stage&&!x.fixed&&x.tag!=='pace'&&x.tag!=='flyspeed'){
     const pick=FLY_TOUCH[(flyStage().n+out.length)%FLY_TOUCH.length];
     out.splice(1,0,pick);
   }
@@ -7585,13 +7664,14 @@ function renderSoloSets(){
       <div style="font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:4px">${esc(sug.reason)}</div>
     </div>`;
     SOLO_SETS.forEach((x,i)=>{
+      if(x.fixed&&!meetPhase())return;    // the meet has been and gone
       body+=`<div onclick="openSoloSets(${i})" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
           <span style="font-size:15px;color:var(--text-hi)">${esc(x.t)}</span>
-          <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${x.total}m</span>
+          <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${soloTotal(x)}m</span>
         </div>
         <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${esc(x.focus)}</div>
-        <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">${x.stage?'Stage '+flyStage().n:'Level '+soloLevel(x.tag)+' '+soloTierName(soloLevel(x.tag))} · kit · ${esc(x.kit||'none')}</div>
+        <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">${esc(soloStageLabel(x))} · kit · ${esc(x.kit||'none')}</div>
       </div>`;
     });
     b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSoloSets()">← Back</button></div>
@@ -7623,7 +7703,8 @@ function renderSoloSets(){
   }
   b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="openSoloSets()">← All sessions</button></div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">${esc(x.t.toUpperCase())}</div>
-    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${x.total}m · ${esc(x.focus)}</div>
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${soloTotal(x)}m · ${esc(x.focus)}</div>
+    <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-top:4px">${esc(soloStageLabel(x))}</div>
     <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">Kit · ${esc(x.kit||'none')}</div>
     <div style="font-size:12px;line-height:1.75;color:var(--text-dim);margin:16px 0 4px">${esc(x.why)}</div>
     <div style="margin-top:14px">${lines}</div>
