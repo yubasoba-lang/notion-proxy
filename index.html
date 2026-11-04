@@ -7103,7 +7103,7 @@ const SOLO_SETS=[
   // the race. Fly goes first in every phase and stays capped \u2014 the extra metres that make
   // this a full session are aerobic free, because that is what a 100 is won on.
   {t:'Meet prep \u00b7 free and fly',tag:'meetprep',fixed:true,focus:'Free speed, and surviving a 50 fly',total:2400,kit:'None',
-   why:'Every fly set ends when the stroke breaks, not when the number is reached: hands entering wide, elbow dropping on the recovery, head up before the hands. One ugly length is the warning, two and fly is done for the day. Bad fly is what hurts shoulders, not fly. If the shoulder says anything at all, fly goes to zero and you race the two freestyles.',
+   why:'Every fly set ends when the stroke breaks, not when the number is reached: the elbow dropping on the recovery, hands slapping in low, the head coming up before the hands. A slightly wide entry is correct for sprint fly and is not a fault. One ugly length is the warning, two and fly is done for the day. Bad fly is what hurts shoulders, not fly. If the shoulder says anything at all, the volume goes back down and you race the two freestyles.',
    lines:['__MEET__']},
 ];
 // Per-session levels. Aerobic capacity and turn skill improve at different rates, so a
@@ -7301,25 +7301,37 @@ function soloMainReps(x){
 // days are left rather than by a level, so the session is right without anything to
 // tick. Past the meet meetPhase() returns null and the session drops out of the list
 // on its own — nothing to remember to remove.
+//
+// Fly volume was raised on 4 Nov (300/500 → 450/850) once the shoulder had stayed quiet
+// and a 100 fly in club practice came to light — the earlier sets were written as though
+// 25s with full rest were the ceiling, which was wrong. A 50 is well inside what he has
+// already swum, so the race piece is a 66 at effort, not a 33. What did not change is the
+// stopping rule: the limiter is stroke quality, not metres. The cues below come from the
+// technique breakdown he brought in — kick timing is the big one.
 const MEET_DATE='2026-11-21';
 const MEET_PHASES=[
-  {upto:99,n:1,label:'Fly a third of the session',total:2400,lines:[
+  {upto:99,n:1,label:'Fly a third of the session',total:2550,lines:[
     '9 × 33 free easy, breathe every 3',
     '6 × 66 as 33 fly / 33 free easy, 4 breaths rest',
+    'CUE · main kick as the hands EXIT, support kick as they ENTER. Kicking before the pull keeps you deep and the stroke stops lifting',
     'FLY · 8 × half a length of fly then easy free into the wall, 6 breaths rest',
-    'FLY · 4 × 33 fly, 8 breaths rest',
-    'FLY · 1 × 33 fly, 3 breaths, then half a length of fly back',
+    'FLY · 6 × 33 fly, 8 breaths rest — catch wide, thumbs finish by the hips',
+    'FLY · 4 × dead start: push off, glide until the speed dies, then 2 explosive fly strokes. Full rest',
+    'FLY · 2 × (33 fly, 3 breaths, then half a length of fly back), 10 breaths between',
     '15 × 33 free, 3 breaths rest — repeatable, not a sprint',
     '10 × 33 free, one stroke under your count, 4 breaths rest — longer and stronger',
     '10 × 33 free alternating: one normal, one a stroke under, 3 breaths rest',
     '6 × 33 free fast off the wall, 10 breaths rest',
     '9 × 33 easy, breathe every 3']},
-  {upto:10,n:2,label:'Half and half',total:2600,lines:[
+  {upto:10,n:2,label:'Half and half',total:2950,lines:[
     '9 × 33 free easy, breathe every 3',
     '6 × 66 as 33 fly / 33 free easy, 4 breaths rest',
-    'FLY · 6 × 33 fly, 8 breaths rest — one over target is fine, two over twice ends the set',
+    'CUE · breathe early: start lifting as the catch starts, chin low, head back down before the hands enter. Every stroke is fine',
+    'FLY · 10 × 33 fly, 8 breaths rest — one over target is fine, two over twice ends the set',
+    'FLY · 4 × 66 fly, 15 breaths rest — past race distance on purpose. Drop to 33s the moment two in a row go ugly',
+    'FLY · 6 × dead start: glide until the speed dies, then 3 explosive fly strokes. Full rest — this is the first 15m of the race',
     'FLY · 2 × (33 fly, 3 breaths, half a length of fly back), 10 breaths between',
-    'FLY · 1 × 33 fly at race effort — only on the best of the three days this week, and early',
+    'FLY · 1 × 66 fly at race effort — only on the best of the three days this week, and early. Two lengths covers the 50 with room to spare',
     'FLY · 4 × half a length of fly easy, 6 breaths rest — rebuild the stroke after the hard work',
     '20 × 33 free, 3 breaths rest — repeatable, not a sprint',
     '12 × 33 free, one stroke under your count, 4 breaths rest — longer and stronger',
@@ -7330,6 +7342,7 @@ const MEET_PHASES=[
   {upto:4,n:3,label:'Taper — wake it up, arrive fresh',total:1400,lines:[
     '9 × 33 free easy, breathe every 3',
     'FLY · 4 × half a length of fly, 6 breaths rest',
+    'FLY · 3 × dead start into 2 explosive fly strokes. Full rest',
     'FLY · 1 × 33 fly at race effort. Once. Nothing else fly today',
     '12 × 33 free, one stroke under your count, 4 breaths rest — longer and stronger',
     '4 × 33 free fast off the wall, 10 breaths rest',
@@ -7620,6 +7633,7 @@ function countNote(l){
   // Order matters. "backstroke" must not read as a stroke count, a line that says "5 kicks
   // off every wall" is a free swim and not a kick set, and a drill deliberately changes the
   // number so it cannot be held against the free count.
+  if(/^CUE ·/.test(l))return '';          // a cue is not a set
   if(/club practice|coach writes/i.test(l))return '';
   if(/maximal|all out|fast off the wall/i.test(l))return '';
   if(/underwater|dolphin to/i.test(l))return 'count the dolphin kicks';
