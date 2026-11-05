@@ -563,7 +563,9 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
 .session-quality.grind { background: rgba(200,130,60,0.12); color: #c8824a; }
 .session-quality.distracted { background: rgba(180,60,60,0.1); color: #c06060; }
 /* Quality picker overlay */
-.quality-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; display: flex; align-items: flex-end; justify-content: center; animation: fade-in 0.15s ease; }
+/* Above #lsTimer (8000): the landscape clock used to cover the rating sheet, so the
+   only way to answer it was to close the clock first. */
+.quality-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 8500; display: flex; align-items: flex-end; justify-content: center; animation: fade-in 0.15s ease; }
 .quality-sheet { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 4px 4px 0 0; padding: 20px 20px 36px; width: 100%; max-width: 420px; }
 .quality-title { font-size: 8px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; text-align: center; }
 .quality-btns { display: flex; gap: 10px; }
@@ -747,7 +749,7 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
 @keyframes toast-up { from { opacity: 0; transform: translateX(-50%) translateY(6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
 /* ── Pomo Flash Overlay ── */
-.pomo-flash-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.93); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 310; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+.pomo-flash-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.93); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 8200; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
 .pomo-flash-overlay.visible { opacity: 1; pointer-events: all; }
 .pf-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .pf-dot { position: absolute; border-radius: 50%; animation: pf-fly 1.8s ease forwards; }
@@ -2575,6 +2577,10 @@ function closePomoFlash(){
 // CSS stayed, so sessions stopped being rated after 10 Aug. Skip counts as Grind.
 function showQualityPicker(sessionId){
   if(!sessionId)return;
+  // Drop the landscape clock first. It is a full-screen layer, and a sheet asking a
+  // question is no use behind it — even raised above it, a rotated clock underneath
+  // makes the sheet hard to read. The clock comes back by tapping the digits again.
+  try{if(document.body.classList.contains('ls-on'))lsTimerClose();}catch(e){warn('quality.lsClose',e);}
   document.getElementById('qualityOverlay')?.remove();
   const overlay=document.createElement('div');overlay.id='qualityOverlay';overlay.className='quality-overlay';
   overlay.innerHTML=`<div class="quality-sheet">
@@ -2740,13 +2746,30 @@ function startTimer(){
           if(_pendingQualityId){const qid=_pendingQualityId;_pendingQualityId=null;showQualityPicker(qid);}
         }
       }else{
-        // Break over — clear pomo so user manually starts next
+        // Break over. This used to stop dead and wait to be restarted by hand, which is
+        // why the timer "kept stopping" — every cycle needed a tap that is easy to miss,
+        // and a missed tap silently ended the run. Now the next work phase starts itself
+        // on the same subject, so a set of pomodoros runs unattended until the daily goal.
+        // It still stops on its own at the goal, and still stops if there is no subject
+        // to resume (nothing has been started this session), which is the old behaviour.
         pomoPhase='work';pomoPhaseEnd=null;
-        clearInterval(timerInterval);timerInterval=null;
-        savePomoPersist();
-        renderHome();
-        if(currentTab==='study')renderStudyLog();
-        try{showPomoFlash('work');}catch(e){warn('breakEnd.cue',e);}
+        const goalLeft=pomoCount<pomoGoal;
+        if(goalLeft&&lastSubject&&!state.activeSession){
+          savePomoPersist();
+          try{showPomoFlash('work');}catch(e){warn('breakEnd.cue',e);}
+          // startSession sets the work phase end and restarts this interval itself.
+          startSession(lastSubject).catch(e=>{
+            warn('breakEnd.autoStart',e);
+            clearInterval(timerInterval);timerInterval=null;
+            renderHome();
+          });
+        }else{
+          clearInterval(timerInterval);timerInterval=null;
+          savePomoPersist();
+          renderHome();
+          if(currentTab==='study')renderStudyLog();
+          try{showPomoFlash('work');}catch(e){warn('breakEnd.cue',e);}
+        }
       }
     }
   },1000);
