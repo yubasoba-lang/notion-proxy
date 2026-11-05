@@ -1305,7 +1305,7 @@
      "kind": "study",
      "title": "Micro V.1–4",
      "detail": "Skin + wound, abdominal, ophthalmic, airborne URT infections — the bacteria and their diagnosis. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-05-03",
@@ -1314,6 +1314,14 @@
      "title": "Pharm recall: A1–A6",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 60
+    },
+    {
+     "id": "2026-12-05-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.20–22",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 55
     }
    ]
   },
@@ -1339,7 +1347,7 @@
      "kind": "study",
      "title": "Micro V.5–8",
      "detail": "Oral flora + oral infections, GI flora, faecal-oral pathogens, urinary tract pathogens. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-06-03",
@@ -1348,6 +1356,14 @@
      "title": "Pharm recall: A7–A11",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 60
+    },
+    {
+     "id": "2026-12-06-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.23–25",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 55
     }
    ]
   },
@@ -1373,7 +1389,7 @@
      "kind": "study",
      "title": "Micro V.9–12",
      "detail": "Arthropod-borne bacteria, food poisoning + toxico-infections, zoonoses, meningitis + encephalitis. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-07-03",
@@ -1390,6 +1406,14 @@
      "title": "Pathophys L14",
      "detail": "Catch-up — this clears all 14. Pathophys exam prep starts after the December exams",
      "est_minutes": 50
+    },
+    {
+     "id": "2026-12-07-05",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.26–28",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 55
     }
    ]
   },
@@ -1415,7 +1439,7 @@
      "kind": "study",
      "title": "Micro V.13–16",
      "detail": "Lower RT infections, exotoxins and their diseases, bacteraemia/endocarditis/sepsis, anaerobes. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-08-03",
@@ -1424,6 +1448,14 @@
      "title": "Pharm recall: A17–A22",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 60
+    },
+    {
+     "id": "2026-12-08-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.29–31",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 55
     }
    ]
   },
@@ -1449,7 +1481,7 @@
      "kind": "study",
      "title": "Micro V.17–20",
      "detail": "Enteral parasites, arthropod-borne parasites, airborne viruses, enteral viruses. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 60
+     "est_minutes": 45
     },
     {
      "id": "2026-12-09-03",
@@ -1458,6 +1490,14 @@
      "title": "Pharm recall: practice questions, full year",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 60
+    },
+    {
+     "id": "2026-12-09-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.32–33",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 40
     }
    ]
   },
@@ -1483,7 +1523,7 @@
      "kind": "study",
      "title": "Micro V.21–24",
      "detail": "Arthropod-borne viruses, viral + fungal meningitis, fungal + parasitic lung infections, pre/perinatal infections. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-10-03",
@@ -1492,6 +1532,14 @@
      "title": "Pharm recall: weak spots from the practice set",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 50
+    },
+    {
+     "id": "2026-12-10-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.34–35",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 40
     }
    ]
   },
@@ -1517,7 +1565,7 @@
      "kind": "study",
      "title": "Micro V.25–28",
      "detail": "Childhood exanthemas, genital flora + STDs, HIV screening + AIDS opportunists, hepatitis. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-11-03",
@@ -1526,6 +1574,14 @@
      "title": "Pharm recall: A1–A11 second pass",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 50
+    },
+    {
+     "id": "2026-12-11-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro III.36–37",
+     "detail": "RNA viruses — the half of section III that MT2 did not cover. Titles from your own topic list. Sketchy where it exists, then cards",
+     "est_minutes": 40
     }
    ]
   },
@@ -1551,7 +1607,7 @@
      "kind": "study",
      "title": "Micro V.29–33",
      "detail": "Specimen collection and transport, virulence + attenuation + bioterrorism, laboratory animals, sero- and phage-typing, molecular methods. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-12-03",
@@ -1585,7 +1641,7 @@
      "kind": "study",
      "title": "Micro V.34–37",
      "detail": "Atypical pneumonia, diarrhoea, evaluating serology + paired sera, parasites causing eye infections. Section V is finished. Section V is synthesis — answer from I–IV first, look it up only when you stall",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-13-03",
@@ -1626,8 +1682,8 @@
      "subject": "micro",
      "kind": "study",
      "title": "Micro: blurt sections III and IV",
-     "detail": "The two you were examined on — this is retention, it should be fast",
-     "est_minutes": 60
+     "detail": "IV and III 1–19 are retention and should be fast. III 20–37 is the RNA virology you only met this month — expect it to be slower and mark every gap",
+     "est_minutes": 80
     }
    ]
   },
