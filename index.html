@@ -3451,6 +3451,19 @@ function displayedWorkoutStreak(){
   if(state.workoutDaysLoaded)return scheduledWorkoutStreak();
   return state.streaks?.workoutStored??0;
 }
+// The Mind streak used to come from Notion's `Mind streak` formula, which counts daily
+// Log rows whose Mind rollup is above zero. Those Log rows stopped being written on
+// 24 Sep 2026, so the number froze — and even before that it only moved when a
+// Mind-category task (in practice: 'Read 30 mins') was ticked and linked to the day.
+// Studying never reached it. Now it is computed the same way the workout streak is:
+// from what was actually logged. getUserStudyStreak() counts consecutive days with at
+// least one completed study session, with the same grace as every other streak.
+// Falls back to the stale Notion value only until the sessions have loaded, so the
+// number never drops to 0 for a moment on a cold open.
+function displayedMindStreak(){
+  if((state.sessions||[]).length)return getUserStudyStreak();
+  return state.streaks?.mind??0;
+}
 
 // ── Today plan ───────────────────────────────────────────────────────────────
 // The weekly plan — classes, study room, meals together, swim, gym, sleep — as data,
@@ -5780,7 +5793,7 @@ function renderHome(){
         <path d="M7,11 C7,11 10,10 12,11 L12,3 C10,2 7,3 7,3"/>
         <line x1="7" y1="3" x2="7" y2="11"/>
       </svg>
-      <span class="streak-num${s?'':' loading'}">${s?s.mind??0:'—'}</span>
+      <span class="streak-num${s||(state.sessions||[]).length?'':' loading'}">${s||(state.sessions||[]).length?displayedMindStreak():'—'}</span>
     </div>
     <div class="streak-item" title="Swims in the last 7 days">
       <svg class="streak-svg" width="17" height="17" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
@@ -5806,7 +5819,7 @@ function renderHome(){
   const _scrollTop=_scroll?_scroll.scrollTop:0;
   document.getElementById('tab-home').innerHTML=html;
   if(_scroll)_scroll.scrollTop=_scrollTop;
-  const _newStreakSig=s?`${s.workout}|${s.mind}|${swimsLast7()}`:'';
+  const _newStreakSig=s?`${displayedWorkoutStreak()}|${displayedMindStreak()}|${swimsLast7()}`:'';
   if(_newStreakSig!==renderHome._lastStreakSig){
     renderHome._lastStreakSig=_newStreakSig;
     document.querySelectorAll('.streak-num:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
