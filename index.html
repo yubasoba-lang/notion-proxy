@@ -8287,6 +8287,12 @@ const SESSION_PLAN={
     {h:'Power',x:[['Jump Squats','4 × 5'],['Broad Jumps','4 × 4'],['Skater Jumps','3 × 6 each']]},
     {h:'Strength',x:[['Leg Press','4 × 10'],['Bulgarian Split Squat','3 × 8 each'],['Dumbbell Romanian Deadlift','3 × 10'],['Hip Thrust','3 × 12'],['Calf Raise Machine','3 × 20']]},
     {h:'Core',x:[['Ab roller','3 × 8'],['Dead Bug','3 × 10 each']]},
+    // 5 Nov 2026: the leg press was broken and the floor was too crowded for plyos, so
+    // the session fell back to machines — but Leg Extension and Hamstring Curl Machine
+    // are in no session block, and the Workout tab groups by block, not by the Day
+    // property. They existed in the library and still could not be found. Listing them
+    // here makes the fallback loggable on the day it is actually used.
+    {h:'If the press is taken',x:[['Leg Extension','3 × 12'],['Hamstring Curl Machine','3 × 12']]},
   ]},
   Sat:{title:'Pull and press',note:'After the morning swim · pull leads, pressing second — the freshest reps go to the lats. Triceps stay: elbow extension is what finishes the pull in free and fly.',blocks:[
     {h:'Pull',x:[['Assisted Pull-ups','3 × 6–8, second go at these this week'],['Lat Pulldown','3 × 10, lighter than the Pull day']]},
