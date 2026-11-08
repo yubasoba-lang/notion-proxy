@@ -57,9 +57,9 @@
   }
  ],
  "rules": [
-  "Anki first thing, every day. Micro sections I and II live there now.",
+  "Anki first thing, every day. Micro sections I and II live there now. Section II is the organism deck and it is the one that matters — do not let the I.1-15 general cards, which are now deferred to December, sit in the queue ahead of it.",
   "The bacteriology background track runs EVERY day from 6 Nov. It is small on purpose. It is the one thing that is never skipped — section V of the final is unanswerable without it.",
-  "Tripwire: by 26 Nov you should have ~40 topics of section I/II done. Under 30 means drop the pharm semifinal to January and keep the micro final in December. Decide by the count, not by how you feel that week.",
+  "Tripwire: by 26 Nov you should have ~30 topics done, and at least 14 of them ORGANISMS from section II. General bacteriology I.1-15 was deferred to 12-13 Dec on purpose, so a healthy topic count made of theory alone no longer counts as healthy. Under 25, or under 10 organisms, means drop the pharm semifinal to January and keep the micro final in December. Decide by the count, not by how you feel that week.",
   "On a bad day shed pathophysiology first, then pharmacology, then patho slides. Never shed the next exam's subject and never shed the bacteriology track.",
   "Nothing new after swim training. Tuesday and Thursday evenings are review only.",
   "Wednesday is the shortest day — ECG practical 17:30–19:00 plus 80 minutes of commuting. Never move work into it; move work to Saturday.",
@@ -237,8 +237,8 @@
      "id": "2026-11-08-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.1–3",
-     "detail": "History and significance, pro- vs eukaryotic cells, essential bacterial structures. Background track — small and daily, never skipped",
+     "title": "Micro II.1–2",
+     "detail": "Staphylococcus aureus, coagulase-negative staphylococci. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 50
     }
    ]
@@ -271,8 +271,8 @@
      "id": "2026-11-09-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.4–6",
-     "detail": "The cell wall, accessory components, taxonomy. Background track — small and daily, never skipped",
+     "title": "Micro II.3–4",
+     "detail": "S. pneumoniae + oral streptococci + anaerobic cocci, S. pyogenes. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 50
     }
    ]
@@ -305,8 +305,8 @@
      "id": "2026-11-10-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.7–9",
-     "detail": "Bacterial metabolism, genetics (mutation and transfer). Background track — small and daily, never skipped",
+     "title": "Micro II.5–6",
+     "detail": "S. agalactiae + Enterococcus, anaerobic Gram-negative rods. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 50
     },
     {
@@ -347,8 +347,8 @@
      "id": "2026-11-11-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.10–12",
-     "detail": "Sterilization + LAL, disinfection, selective toxicity + chemotherapeutic index. Background track — small and daily, never skipped",
+     "title": "Micro II.7–8",
+     "detail": "N. meningitidis, N. gonorrhoeae + Moraxella. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 50
     }
    ]
@@ -381,8 +381,8 @@
      "id": "2026-11-12-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.13–15",
-     "detail": "Chemoprophylaxis, antibiotic combinations, risks and side effects. Background track — small and daily, never skipped",
+     "title": "Micro II.9–10",
+     "detail": "Salmonella (gastroenteritis), S. typhi + paratyphi. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 50
     }
    ]
@@ -415,9 +415,9 @@
      "id": "2026-11-13-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.16–19",
-     "detail": "Penicillins + cephalosporins, monobactam/carbapenem/bacitracin, aminoglycosides + tetracyclines, chloramphenicol/macrolides/lincosamides. Background track — small and daily, never skipped",
-     "est_minutes": 65
+     "title": "Micro I.16–19 — recall",
+     "detail": "Penicillins + cephalosporins, monobactam/carbapenem/bacitracin, aminoglycosides + tetracyclines, chloramphenicol/macrolides/lincosamides. You covered these for last semester’s semifinal, so this is retrieval, not reading: blurt all four closed-book FIRST, then read only what did not come. If more than half is gone, say so and this block gets its full hour back",
+     "est_minutes": 35
     },
     {
      "id": "2026-11-13-04",
@@ -449,9 +449,9 @@
      "id": "2026-11-14-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro I.20–23",
-     "detail": "Nucleic acid synthesis inhibitors, glycopeptides + membrane agents, antituberculotics, resistance mechanisms. Background track — small and daily, never skipped",
-     "est_minutes": 65
+     "title": "Micro I.20–23 — recall",
+     "detail": "Nucleic acid synthesis inhibitors, glycopeptides + membrane agents, antituberculotics, resistance mechanisms. Same rule — closed book first. Resistance mechanisms is the one to be honest about: it is the most examined of the four and the easiest to think you remember",
+     "est_minutes": 35
     },
     {
      "id": "2026-11-14-03",
@@ -761,8 +761,8 @@
      "id": "2026-11-22-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.1–2",
-     "detail": "Staphylococcus aureus, coagulase-negative staphylococci",
+     "title": "Micro II.11–12",
+     "detail": "E. coli, Shigella",
      "est_minutes": 35
     },
     {
@@ -803,8 +803,8 @@
      "id": "2026-11-23-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.3–4",
-     "detail": "S. pneumoniae + oral streptococci + anaerobic cocci, S. pyogenes",
+     "title": "Micro II.13–14",
+     "detail": "Klebsiella/Enterobacter/Proteus/Serratia, Yersinia",
      "est_minutes": 35
     },
     {
@@ -905,8 +905,8 @@
      "id": "2026-11-26-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.5–8",
-     "detail": "S. agalactiae + Enterococcus, anaerobic Gram-negative rods, N. meningitidis, N. gonorrhoeae + Moraxella. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.15–17",
+     "detail": "V. cholerae, other vibrios + Aeromonas, Campylobacter + H. pylori. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 80
     },
     {
@@ -939,8 +939,8 @@
      "id": "2026-11-27-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.9–12",
-     "detail": "Salmonella (gastroenteritis), S. typhi + paratyphi, E. coli, Shigella. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.18–20",
+     "detail": "Haemophilus, Pseudomonas group + Acinetobacter, Bordetella. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 80
     },
     {
@@ -981,8 +981,8 @@
      "id": "2026-11-28-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.13–16",
-     "detail": "Klebsiella/Enterobacter/Proteus/Serratia, Yersinia, V. cholerae, other vibrios + Aeromonas. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.21–23",
+     "detail": "Legionella, Brucella, Pasteurella/Francisella/Bartonella. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 80
     },
     {
@@ -1015,8 +1015,8 @@
      "id": "2026-11-29-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.17–19",
-     "detail": "Campylobacter + H. pylori, Haemophilus, Pseudomonas group + Acinetobacter. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.24–25",
+     "detail": "B. anthracis, the gas-gangrene clostridia. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 60
     },
     {
@@ -1049,8 +1049,8 @@
      "id": "2026-11-30-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.20–23",
-     "detail": "Bordetella, Legionella, Brucella, Pasteurella/Francisella/Bartonella. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.26–28",
+     "detail": "C. tetani, C. botulinum + C. difficile, Listeria + Erysipelothrix + probiotics. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 80
     },
     {
@@ -1091,8 +1091,8 @@
      "id": "2026-12-01-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.24–27",
-     "detail": "B. anthracis, gas-gangrene clostridia, C. tetani, C. botulinum + C. difficile. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.29–31",
+     "detail": "Treponema, Borrelia, Leptospira. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 80
     },
     {
@@ -1125,8 +1125,8 @@
      "id": "2026-12-02-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.28–30",
-     "detail": "Listeria + Erysipelothrix + probiotics, Treponema, Borrelia. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.32–33",
+     "detail": "C. diphtheriae + Propionibacterium, Actinomyces/Nocardia/atypical mycobacteria. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 60
     },
     {
@@ -1159,8 +1159,8 @@
      "id": "2026-12-03-02",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.31–34",
-     "detail": "Leptospira, C. diphtheriae + Propionibacterium, Actinomyces/Nocardia/atypical mycobacteria, TB + M. leprae. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.34–36",
+     "detail": "TB + M. leprae, Rickettsia/Orientia/Coxiella, Chlamydia. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 80
     },
     {
@@ -1201,8 +1201,8 @@
      "id": "2026-12-04-03",
      "subject": "micro",
      "kind": "study",
-     "title": "Micro II.35–37",
-     "detail": "Rickettsia/Orientia/Coxiella, Chlamydia, Mycoplasma + Ureaplasma. Section II is finished. Sketchy + notes, then close them and blurt each topic before moving on",
+     "title": "Micro II.37 + weak spots",
+     "detail": "Mycoplasma + Ureaplasma. Section II is finished — spend whatever is left on the organisms that did not stick. Sketchy + notes, then close them and blurt each topic before moving on",
      "est_minutes": 60
     }
    ]
@@ -1540,6 +1540,14 @@
      "title": "Pharm recall: A12–A22 second pass",
      "detail": "Closed book first. The semifinal covers the whole year",
      "est_minutes": 50
+    },
+    {
+     "id": "2026-12-12-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro I.1–8 — cram",
+     "detail": "History and significance, pro- vs eukaryotic cells, bacterial structures, the cell wall, accessory components, taxonomy, metabolism, genetics. Deferred from November because the organisms teach most of it. Read fast, blurt, make cards only for what did not come",
+     "est_minutes": 60
     }
    ]
   },
@@ -1573,6 +1581,14 @@
      "kind": "study",
      "title": "Pharm recall: practice questions, timed",
      "detail": "Closed book first. The semifinal covers the whole year",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-12-13-04",
+     "subject": "micro",
+     "kind": "study",
+     "title": "Micro I.9–15 — cram",
+     "detail": "Genetics (mutation and transfer), sterilization + LAL, disinfection, selective toxicity + chemotherapeutic index, chemoprophylaxis, antibiotic combinations, risks and side effects. Same rule: fast, then blurt. Tomorrow's blurt is the safety net — if this section comes out badly there, it gets the 15th",
      "est_minutes": 60
     }
    ]
