@@ -12033,10 +12033,16 @@ function renderWorkout(){
       const pbStr=prVal!=null?(prDef?.isReps?`PB  ${prVal} reps`:`PB  ${prVal}kg`):'';
       // Prefill from the last logged session so you never retype what you already did.
       const last=state.lastSets?.[e.name]||null;
-      const sugg=overloadSuggestion(e,last);
+      // 14 Nov 2026: the weight box used to be prefilled with last weight + 1.25/2.5 kg
+      // whenever the rep target had been hit. Machines go up in their own steps (5 kg
+      // plates, 2.5 kg pins), so that produced numbers like 25.75 kg that no stack has, and
+      // every log started by deleting the app's guess. It now prefills exactly what was
+      // lifted last time, and the 'try X kg' line is gone with it. overloadSuggestion() is
+      // left in place, unused, in case a stack-aware version is wanted later.
+      const sugg=null;
       const vSets=last?last.sets:3;
       const vReps=last?last.reps:10;
-      const vWeight=sugg!=null?sugg:(last?last.weight:0);
+      const vWeight=last?last.weight:0;
       // Cardio logs as one Minutes field; the minutes are stored in Reps (see cardioToSets).
       const isCardio=e.category==='Cardio';
       const vMin=last&&last.reps?last.reps:30;
