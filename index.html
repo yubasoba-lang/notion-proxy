@@ -7824,6 +7824,8 @@ const PLAN_MICRO_CAP=3;
 // with its exam when the exam date is moved.
 const PLAN_PREP_N={'2026-11-16|pharm':1,'2026-11-25|patho':2,'2026-12-14|micro':3,'2026-12-17|pharm':2};
 // Blocks that belong to their day and never move.
+// Days that never receive catch-up, whatever the fit options say: 21 Nov is MEFOB.
+const PLAN_NO_CATCHUP=['2026-11-21'];
 const PLAN_FIXED_RE=/blurt|cram|recall|out loud|full run|weak spots|light/i;
 // A numbered topic in a series: "Micro II.14", "Pharm A7".
 const PLAN_SERIES_RE=/^(Micro (?:I|II|III|IV|V)|Pharm A)\.?(\d+)$/;
@@ -8114,6 +8116,7 @@ function planLayout(D,ovIn){
       if(!ov.open[p])blocked[p]=true;
     }
   });
+  PLAN_NO_CATCHUP.forEach(d=>{blocked[d]=true;});
   const load={},micro={},extraUsed={},items={},place={},kindOf={};
   const daySet={};
   ix.days.forEach(d=>{daySet[d]=true;});
