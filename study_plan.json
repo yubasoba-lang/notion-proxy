@@ -40,7 +40,7 @@
   {
    "date": "2026-12-17",
    "subject": "pharm",
-   "title": "Pharmacology semifinal — A1–A22 (oral; 18th if a slot opens)",
+   "title": "Pharmacology semifinal — oral: drugs, core concept, A, C (18th if a slot opens)",
    "target": "Pass"
   },
   {
@@ -61,7 +61,8 @@
   "Anything marked TARGET is for good days. If it is skipped it slides to the next good day. Never do three to catch up — that is how the old plan broke.",
   "Anki due reviews every day, all decks. That is the review of the midterm material — do not re-read old notes until the blurt days in December.",
   "Micro final Monday 14 Dec, so everything micro is done by Sunday the 13th. There is no exam-week buffer before it.",
-  "Pharm is oral. Every pharm topic ends with saying the oral outline out loud. Pharm drops to Anki only from 10 to 14 Dec while micro finishes.",
+  "Pharm semifinal is oral: drug recognition (waived only with 19+ on BOTH midterms), then one core concept, one A topic and one C topic. A blank on any one of them fails it.",
+  "List C overlaps micro: penicillins, cephalosporins, aminoglycosides, macrolides, antituberculotics, antivirals, antifungals. Learn each once, for both exams.",
   "Pathophysiology is out of the plan until after the December exams.",
   "Every winter date is yours to choose. Pathophys and genetics/immunology are January."
  ],
@@ -1001,6 +1002,22 @@
      "title": "Pharm A9",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-11-26-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C1",
+     "detail": "Disinfectants and antiseptics. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-11-26-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC1",
+     "detail": "Core concepts 1–3: Drug development stages, types of clinical trials, history of the Hungarian pharmaceutical industry. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1051,6 +1068,22 @@
      "title": "Pharm A10",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-11-27-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C2",
+     "detail": "Antimycobacterial drugs. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.22: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-11-27-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC2",
+     "detail": "Core concepts 4–6: Molecular targets, receptor theory (agonist, partial agonist, antagonist, inverse agonist), efficacy vs potency. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1102,6 +1135,22 @@
      "title": "Pharm A11",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-11-28-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C3",
+     "detail": "Antiprotozoal and antihelminthic drugs. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-11-28-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC3",
+     "detail": "Core concepts 7–10: Population dose-effect, adverse drug reactions, therapeutic index, tolerance/tachyphylaxis/dependence. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1153,6 +1202,22 @@
      "title": "Pharm A12",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-11-29-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C4",
+     "detail": "Antifungal agents. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps mycology: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-11-29-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC4",
+     "detail": "Core concepts 11–14: Absorption, membrane transport, distribution, bioavailability. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1203,6 +1268,22 @@
      "title": "Pharm A13",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-11-30-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C5",
+     "detail": "Anti-HSV/VZV/CMV, anti-influenza, anti-corona and other antivirals. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps virology: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-11-30-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC5",
+     "detail": "Core concepts 15–18: Volume of distribution, biotransformation phases, excretion, linear vs non-linear kinetics. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1254,6 +1335,22 @@
      "title": "Pharm A14",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-12-01-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C6",
+     "detail": "Antiretroviral agents. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro III.32: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-01-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC6",
+     "detail": "Core concepts 19–22: Clearance, half-life, loading and maintenance dose, accumulation and cumulation. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1304,6 +1401,22 @@
      "title": "Pharm A15",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-12-02-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C7",
+     "detail": "Agents against hepatitis viruses. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro III.34–35: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-02-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC7",
+     "detail": "Core concepts 23–26: Enzyme inducers, enzyme inhibitors, PD synergism, PD antagonism. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1354,6 +1467,22 @@
      "title": "Pharm A16",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-12-03-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C8",
+     "detail": "Penicillins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.16: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-03-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC8",
+     "detail": "Core concepts 27–30: PK interactions at absorption, distribution, metabolism, elimination. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1404,6 +1533,22 @@
      "title": "Pharm A17",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-12-04-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C9",
+     "detail": "Cephalosporins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.16: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-04-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC9",
+     "detail": "Core concepts 31–36: Biologics, orphan drugs, ATMPs and vaccines, supplements, herbal substances, medical devices. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1455,6 +1600,22 @@
      "title": "Pharm A18",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-12-05-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C10",
+     "detail": "Carbapenems, monobactams, beta-lactamase inhibitors. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.17: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-05-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC10",
+     "detail": "Core concepts 37–41: Antimicrobial principles: selective toxicity, empirical/targeted/prophylactic, cidal/static and combinations, time/concentration dependence, spectrum. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1506,6 +1667,22 @@
      "title": "Pharm A19",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
      "est_minutes": 30
+    },
+    {
+     "id": "2026-12-06-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C11",
+     "detail": "Chloramphenicol, polymyxins, antifolates. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-06-07",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm CC11",
+     "detail": "Core concepts 42–46: Antibiotic choice in pregnancy/childhood, by compartment, by comorbidity; classification by structure; the SmPC. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1555,6 +1732,14 @@
      "kind": "study",
      "title": "Pharm A20",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-07-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C12",
+     "detail": "Tetracyclines and glycylcyclines. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.18: learn it once for both exams. FLOOR",
      "est_minutes": 30
     }
    ]
@@ -1606,6 +1791,14 @@
      "kind": "study",
      "title": "Pharm A21",
      "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-08-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C13",
+     "detail": "Aminoglycosides. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.18: learn it once for both exams. FLOOR",
      "est_minutes": 30
     }
    ]
@@ -1660,6 +1853,14 @@
     },
     {
      "id": "2026-12-09-06",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C14",
+     "detail": "Quinolones and fluoroquinolones. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
+     "est_minutes": 30
+    },
+    {
+     "id": "2026-12-09-07",
      "subject": "micro",
      "kind": "study",
      "title": "Micro V.1–12 — blurt",
@@ -1712,9 +1913,9 @@
      "id": "2026-12-10-05",
      "subject": "pharm",
      "kind": "study",
-     "title": "Pharm: Anki only until the 14th",
-     "detail": "Micro comes first now. Pharm stays warm through the deck; the full pharm recall is on the 15th and 16th",
-     "est_minutes": 0
+     "title": "Pharm C15",
+     "detail": "Macrolides, pleuromutilins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.19: learn it once for both exams. FLOOR",
+     "est_minutes": 30
     }
    ]
   },
@@ -1749,6 +1950,14 @@
      "title": "Micro: blurt section II",
      "detail": "All 37 topics, 60 seconds each, closed book. Mark every miss",
      "est_minutes": 90
+    },
+    {
+     "id": "2026-12-11-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C16",
+     "detail": "Clindamycin, streptogramins, oxazolidinones, fusidans. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.19: learn it once for both exams. FLOOR",
+     "est_minutes": 30
     }
    ]
   },
@@ -1787,6 +1996,14 @@
     },
     {
      "id": "2026-12-12-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C17",
+     "detail": "Glycopeptides, lipopeptides, bacitracin, mupirocin. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.21: learn it once for both exams. FLOOR",
+     "est_minutes": 25
+    },
+    {
+     "id": "2026-12-12-05",
      "subject": "micro",
      "kind": "study",
      "title": "Micro: blurt section III + IV",
@@ -1827,6 +2044,14 @@
      "title": "Micro: weak spots only",
      "detail": "Everything the blurts marked. Nothing new. Stop at a reasonable hour",
      "est_minutes": 75
+    },
+    {
+     "id": "2026-12-13-04",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm C18",
+     "detail": "Metronidazole, fidaxomicin, rifaximin, nitrofurantoin, fosfomycin. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
+     "est_minutes": 25
     }
    ]
   },
@@ -1877,9 +2102,17 @@
      "id": "2026-12-15-02",
      "subject": "pharm",
      "kind": "study",
+     "title": "Pharm: core concepts out loud",
+     "detail": "All 46, two or three sentences each. One is guaranteed, and a blank one fails the exam",
+     "est_minutes": 60
+    },
+    {
+     "id": "2026-12-15-03",
+     "subject": "pharm",
+     "kind": "study",
      "title": "Pharm: A1–A11 out loud",
      "detail": "Oral outline for each, out loud, 3–5 minutes. Then read only what you stalled on",
-     "est_minutes": 150
+     "est_minutes": 100
     }
    ]
   },
@@ -1904,8 +2137,16 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm: A12–A22 out loud",
-     "detail": "Same as yesterday. If the exam is on the 18th, tomorrow becomes a full mock: random topics, out loud, no notes",
-     "est_minutes": 150
+     "detail": "Same as yesterday",
+     "est_minutes": 80
+    },
+    {
+     "id": "2026-12-16-03",
+     "subject": "pharm",
+     "kind": "study",
+     "title": "Pharm: C1–C18 out loud",
+     "detail": "Same again. If the exam is on the 18th, tomorrow becomes a full mock: one core concept, one A, one C, random, out loud, no notes",
+     "est_minutes": 80
     }
    ]
   },
@@ -1929,8 +2170,8 @@
      "id": "2026-12-17-02",
      "subject": "pharm",
      "kind": "exam",
-     "title": "Pharmacology semifinal — A1–A22",
-     "detail": "Oral. On the 18th instead if that slot opens",
+     "title": "Pharmacology semifinal",
+     "detail": "Oral: drug recognition (unless waived), then one core concept, one topic from A, one from C. On the 18th instead if that slot opens",
      "est_minutes": 0
     }
    ]
