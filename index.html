@@ -3429,6 +3429,8 @@ function dayKind(ds){
   const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
   if(ds<SPLIT_START)return abbr==='Sun'?'rest':'required';
   if(abbr==='Fri'&&ds<FRI_TRAINING_START)return 'rest';
+  // v2: the one gym-only day is a full rest day in a deload week.
+  if(TRAIN_V2&&ds>=TRAINING_V2_START&&abbr===GYM_ONLY_DAY&&seasonWeek(ds).deload)return 'rest';
   const d=WORKOUT_WEEK.find(w=>w.abbr===abbr);
   return d?d.kind:'rest';
 }
@@ -3498,8 +3500,8 @@ const SEMESTER_START='2026-09-07';
 const POOL_AM_PLAN={
   Mon:[
     {t:'05:00',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
-    {t:'05:30',e:'06:00',k:'travel',l:'Leave for the pool'},
-    {t:'06:00',e:'07:30',k:'swim',l:'Swim practice',n:'club · log the main set after'},
+    {t:'05:45',e:'06:15',k:'travel',l:'Leave for the pool'},
+    {t:'06:15',e:'07:45',k:'swim',l:'Swim practice',n:'club · log the main set after'},
     {t:'07:45',e:'08:25',k:'travel',l:'Pool to home',n:'40 min'},
     {t:'08:30',k:'meal',l:'Breakfast'},
     {t:'09:00',e:'12:00',k:'study',l:'Study room',n:'ECG moved to Wednesday — this slot is yours now'},
@@ -3555,8 +3557,8 @@ const POOL_AM_PLAN={
   ],
   Fri:[
     {t:'05:00',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
-    {t:'05:30',e:'06:00',k:'travel',l:'Leave for the pool'},
-    {t:'06:00',e:'07:30',k:'swim',l:'Swim practice',n:'club · leave early if Statistics is tight'},
+    {t:'05:45',e:'06:15',k:'travel',l:'Leave for the pool'},
+    {t:'06:15',e:'07:40',k:'swim',l:'Swim practice',n:'club · leave early if Statistics is tight'},
     {t:'07:45',e:'08:25',k:'travel',l:'Pool to campus',n:'40 min'},
     {t:'08:30',e:'09:45',k:'class',l:'Medical Statistics'},
     {t:'10:15',e:'11:45',k:'class',l:'Microbiology practical'},
@@ -3665,7 +3667,7 @@ const DAY_PLAN={
     {t:'15:30',e:'18:15',k:'study',l:'Study room',peak:'17:00'},
     {t:'18:45',e:'19:45',k:'together',l:'Dinner together'},
     {t:'19:45',e:'21:30',k:'study',l:'Study room',n:'plan the week first'},
-    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Monday swim starts 06:00'},
+    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Monday swim starts 06:15'},
   ],
 };
 if(POOL_MORNINGS_ONLY)Object.assign(DAY_PLAN,POOL_AM_PLAN);
@@ -7072,6 +7074,13 @@ function openPoolCard(){
     if(last.remembered&&last.total)done=`${last.done||0}/${last.total}`;
     lastLine=`${esc(last.date)} · ${esc(last.set||'set not noted')} · ${done}`;
   }
+  // The goal section. v2 shows the season and the three ladders; before the switch
+  // it is the single sub-51 target, unchanged.
+  let targetBlock;
+  if(TRAIN_V2)targetBlock=v2TargetHTML();
+  else targetBlock=`<div class="rival-section-label">Target · ${esc(SWIM_GOAL.label)} for the ${SWIM_GOAL.dist}, 25m pool</div>
+    <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 6px">${esc(swimGoalLine())}</div>
+    <div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin:0 0 18px">Between time trials the stroke count is the number that moves. A 33m pool gives no comparable time, so don't try to read one off it.</div>`;
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closePoolCard()">← Back</button></div>
     <div class="rival-page-subtitle" style="margin-top:12px">Week ${wk} · pool card</div>
@@ -7085,9 +7094,7 @@ function openPoolCard(){
     <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 18px">${esc(strokeLine)}</div>
     <div class="rival-section-label">Completing the set</div>
     <div style="margin:6px 0 20px">${compBlock}</div>
-    <div class="rival-section-label">Target · ${esc(SWIM_GOAL.label)} for the ${SWIM_GOAL.dist}, 25m pool</div>
-    <div style="font-size:12px;line-height:1.8;color:var(--text);margin:4px 0 6px">${esc(swimGoalLine())}</div>
-    <div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin:0 0 18px">Between time trials the stroke count is the number that moves. A 33m pool gives no comparable time, so don't try to read one off it.</div>
+    ${targetBlock}
     <div class="rival-section-label">Personal bests</div>
     <div style="font-size:12px;line-height:1.8;margin:4px 0 18px">${pbLine}</div>
     <div class="rival-section-label">CO2 table</div>
@@ -7710,6 +7717,7 @@ function soloLines(x){
 function renderSoloSets(){
   const b=document.getElementById('soloBody');
   if(!b)return;
+  if(TRAIN_V2){renderSoloSetsV2();return;}
   let body='';
   if(_soloIdx==null){
     const st=flyStage();
@@ -8085,6 +8093,7 @@ function renderPlan(){
   </div>`;
 }
 function logSoloSet(i){
+  if(TRAIN_V2){logSoloSetV2(i,false);return;}
   const x=SOLO_SETS[i];
   const reps=soloMainReps(x);
   closeSoloSets();
@@ -8324,13 +8333,1119 @@ if(POOL_MORNINGS_ONLY){
     return {title:'Swim \u00b7 club',note:note,blocks:[{h:'Pool',x:[['Swimming','90 min']]}]};
   };
   Object.assign(SESSION_PLAN,{
-    Mon:club('Club practice 06:00\u201307:30 \u2014 no lifting. Log the main set after'),
+    Mon:club('Club practice 06:15\u201307:45 \u2014 no lifting. Log the main set after'),
     Tue:{...N.Wed},
     Wed:{...N.Mon,note:'Morning session, 06:00 \u2014 pick one from Solo sessions'},
     Thu:{...N.Fri,note:'Jumps first, while fresh \u00b7 90s rest between plyo sets \u00b7 one of the only two days out of the water'},
-    Fri:club('Club practice 06:00\u201307:30 \u2014 statistics at 08:30, so leave early if you must. No lifting'),
+    Fri:club('Club practice 06:15\u201307:40 \u2014 statistics at 08:30, so leave early if you must. No lifting'),
   });
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TRAINING v2 · sub-50 for the 100 free, sub-24 for the 50, sub-26 for the 50 fly
+// ══════════════════════════════════════════════════════════════════════════════
+// Everything in this block switches on at TRAINING_V2_START and not a day before.
+// Until then TRAIN_V2 is false, nothing below is applied, and meet prep, the taper
+// and the old week run exactly as they did. The old SOLO_SETS, SESSION_PLAN and
+// DAY_PLAN are left in the file untouched: past rows in Swim Practices are named
+// after the old sessions and still need them to be counted.
+//
+// HAS_WATCH follows the POOL_MORNINGS_ONLY pattern: one word. Off, every set is
+// written in strokes per length and breaths of rest, because he has no way to read
+// a clock in the pool. On, the SAME sets show leave-on intervals, target splits and
+// rest in seconds, split targets start following logged times, and the Garmin
+// import further down is allowed to run. No set needs the watch to be swum.
+const TRAINING_V2_START='2026-11-22';
+// Preview: opening the app with ?preview=v2 before the start date shows the 22 Nov
+// view on this device only (a flag in localStorage), with a bar across the top to
+// leave it. ?preview=off also leaves. A preview never resets peaks; anything
+// logged while in it is a real log. After the start date the flag is ignored.
+const V2_PREVIEW_KEY='grind-v2-preview';
+function v2PreviewOn(){
+  try{
+    const q=String(location.search||'');
+    if(/[?&]preview=v2(&|$)/.test(q))localStorage.setItem(V2_PREVIEW_KEY,'1');
+    if(/[?&]preview=off(&|$)/.test(q))localStorage.removeItem(V2_PREVIEW_KEY);
+    return localStorage.getItem(V2_PREVIEW_KEY)==='1';
+  }catch(_){return false;}
+}
+const V2_DATE_ON=localToday()>=TRAINING_V2_START;
+const V2_PREVIEW=!V2_DATE_ON&&v2PreviewOn();
+const TRAIN_V2=V2_DATE_ON||V2_PREVIEW;
+function v2LeavePreview(){
+  try{localStorage.removeItem(V2_PREVIEW_KEY);}catch(_){}
+  location.href=location.pathname;
+}
+if(V2_PREVIEW)window.addEventListener('load',function(){
+  const bar=document.createElement('div');
+  bar.textContent='PREVIEW · THE 22 NOV VIEW · TAP TO LEAVE';
+  bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#c8a24a;color:#111;font-size:10px;font-weight:700;letter-spacing:0.14em;text-align:center;padding:calc(6px + env(safe-area-inset-top)) 6px 6px;cursor:pointer';
+  bar.onclick=v2LeavePreview;
+  document.body.appendChild(bar);
+});
+const HAS_WATCH=false;
+// Swim Practices has a Timed Stroke select (Free / Fly), added 14 Nov 2026. A timed
+// swim with no stroke on it is freestyle, which is what every older row is.
+const SWIM_HAS_STROKE_PROP=true;
+const SOLO_POOL_M=33.3;
+// Volleyball is usually Saturday. Jumps and heavy legs stay off Saturday and off
+// Friday, which is why the leg day is Thursday while the pool is mornings only and
+// Wednesday (not Friday) once it reopens. Saturday already holds the 100-pace swim
+// and the volleyball, so it gets the lightest lift of the week; pull-and-press moved
+// to Sunday.
+const VOLLEYBALL_DAYS=['Sat'];
+// Left open across midnight on the 21st the page would keep the old week; reload once.
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&(localToday()>=TRAINING_V2_START)!==V2_DATE_ON)location.reload();
+});
+
+// ── The week ─────────────────────────────────────────────────────────────────
+// Six swims and four lifts. Club is Monday and Friday at 06:15 while the pool is
+// mornings only; solo swims are Tue, Wed, Sat, Sun. Thursday is the one day out of
+// the water and is a full rest day every fourth (deload) week.
+const WORKOUT_WEEK_V2_POOL_AM=[
+  {abbr:'Mon',label:'Monday',   sub:'Swim · club, 06:15',                 kind:'required'},
+  {abbr:'Tue',label:'Tuesday',  sub:'Swim · speed, then Gym · Pull',      kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Swim · aerobic and technique',       kind:'required'},
+  {abbr:'Thu',label:'Thursday', sub:'Gym · Lower power',                  kind:'required'},
+  {abbr:'Fri',label:'Friday',   sub:'Swim · club, 06:15',                 kind:'required'},
+  {abbr:'Sat',label:'Saturday', sub:'Swim · 100 pace, then Gym · Upper, light', kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Swim · base, then Gym · Pull and press', kind:'required'},
+];
+const WORKOUT_WEEK_V2_NORMAL=[
+  {abbr:'Mon',label:'Monday',   sub:'Swim · speed, morning',              kind:'required'},
+  {abbr:'Tue',label:'Tuesday',  sub:'Swim · club',                        kind:'required'},
+  {abbr:'Wed',label:'Wednesday',sub:'Swim · aerobic, then Gym · Lower power', kind:'required'},
+  {abbr:'Thu',label:'Thursday', sub:'Swim · club',                        kind:'required'},
+  {abbr:'Fri',label:'Friday',   sub:'Gym · Pull',                         kind:'required'},
+  {abbr:'Sat',label:'Saturday', sub:'Swim · 100 pace, then Gym · Upper, light', kind:'required'},
+  {abbr:'Sun',label:'Sunday',   sub:'Swim · base, then Gym · Pull and press', kind:'required'},
+];
+// Which solo session belongs to which day, and the one gym-only day.
+const SOLO_DAY_ROLE=POOL_MORNINGS_ONLY
+  ?{Tue:'v2speed',Wed:'v2aer',Sat:'v2pace',Sun:'v2base'}
+  :{Mon:'v2speed',Wed:'v2aer',Sat:'v2pace',Sun:'v2base'};
+const GYM_ONLY_DAY=POOL_MORNINGS_ONLY?'Thu':'Fri';
+
+// Tue and Wed were checked against the timetable: out of the water 07:45, forty
+// minutes to campus, and the first class either day is 09:30 (Pharmacology lecture
+// on Tuesday, Pathology on Wednesday). Friday is the tight one — Statistics is 08:30,
+// so club ends at 07:40 for him. Thursday's 08:00 lecture is why Thursday has no swim.
+// Monday's evening study block ends 45 minutes earlier than it used to: Tuesday now
+// starts at 05:15, and a 22:45 bedtime would leave six and a half hours.
+function v2MorningSwim(note,dest){
+  return [
+    {t:'05:15',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
+    {t:'05:45',e:'06:15',k:'travel',l:'Leave for the pool'},
+    {t:'06:15',e:'07:45',k:'swim',l:'Swim practice',n:note},
+    {t:'07:55',e:'08:35',k:'travel',l:dest,n:'40 min'},
+    {t:'08:40',k:'meal',l:'Breakfast'},
+  ];
+}
+const DAY_PLAN_V2_POOL_AM={
+  Mon:v2MorningSwim('club · log the main set after','Pool to home').concat([
+    {t:'09:00',e:'12:00',k:'study',l:'Study room',n:'ECG moved to Wednesday — this slot is yours now'},
+    {t:'12:15',e:'13:15',k:'together',l:'Lunch together'},
+    {t:'13:30',e:'14:45',k:'study',l:'Study room'},
+    {t:'15:00',e:'15:15',k:'travel',l:'Study room to campus',n:'one station'},
+    {t:'15:15',e:'17:45',k:'class',l:'Pharmacology I',n:'two blocks, 15 min gap at 16:45'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'21:45',k:'study',l:'Study room'},
+    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Tuesday swim starts 06:15'},
+  ]),
+  Tue:v2MorningSwim('solo · speed day · 60 to 90 min · log it after','Pool to campus').concat([
+    {t:'09:30',e:'11:00',k:'class',l:'Pharmacology lecture'},
+    {t:'11:00',e:'12:00',k:'study',l:'Study room',n:'lecture review'},
+    {t:'12:15',e:'13:45',k:'together',l:'Lunch together'},
+    {t:'14:00',e:'15:30',k:'gym',l:'Gym · Pull',n:'be through the door before 15:00 — the heavy pull day'},
+    {t:'15:45',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'21:45',k:'study',l:'Study room'},
+    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Wednesday swim starts 06:15'},
+  ]),
+  Wed:v2MorningSwim('solo · aerobic and technique · 60 to 90 min · log it after','Pool to campus').concat([
+    {t:'09:30',e:'12:45',k:'class',l:'Pathology I',n:'two blocks — snack in the 11:00 gap'},
+    {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
+    {t:'14:30',e:'16:15',k:'study',l:'Study room'},
+    {t:'16:45',e:'17:25',k:'travel',l:'Leave for the ECG practical',n:'40 min'},
+    {t:'17:30',e:'19:00',k:'class',l:'Clinical ECG practical'},
+    {t:'19:00',e:'19:40',k:'travel',l:'Travel home',n:'40 min'},
+    {t:'19:45',e:'20:30',k:'together',l:'Dinner together'},
+    {t:'20:45',e:'21:00',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'21:00',e:'22:00',k:'study',l:'Study room'},
+    {t:'22:15',k:'sleep',l:'Sleep',n:'Thursday starts 08:00'},
+  ]),
+  Thu:[
+    {t:'07:00',k:'wake',l:'Wake'},
+    {t:'07:15',k:'meal',l:'Breakfast',n:'3 eggs + a carb'},
+    {t:'08:00',e:'10:30',k:'class',l:'Clinical Pathophysiology',w:'odd'},
+    {t:'08:00',e:'10:30',k:'study',l:'Study room',n:'no lecture this week',w:'even'},
+    {t:'10:30',e:'12:00',k:'class',l:'German for Medical Purposes'},
+    {t:'12:15',e:'13:45',k:'together',l:'Lunch together'},
+    {t:'14:00',e:'15:30',k:'gym',l:'Gym · Lower power',n:'through the door before 15:00 — jumps first. A full rest day every fourth week'},
+    {t:'15:45',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+    {t:'20:00',e:'21:45',k:'study',l:'Study room'},
+    {t:'22:00',k:'sleep',l:'Sleep',n:'early — Friday swim starts 06:15'},
+  ],
+  Fri:[
+    {t:'05:15',k:'wake',l:'Wake',n:'only off a 22:00 bedtime'},
+    {t:'05:45',e:'06:15',k:'travel',l:'Leave for the pool'},
+    {t:'06:15',e:'07:40',k:'swim',l:'Swim practice',n:'club · out of the water by 07:40, Statistics is 08:30'},
+    {t:'07:45',e:'08:25',k:'travel',l:'Pool to campus',n:'40 min'},
+    {t:'08:30',e:'09:45',k:'class',l:'Medical Statistics'},
+    {t:'10:15',e:'11:45',k:'class',l:'Microbiology practical'},
+    {t:'12:00',e:'13:00',k:'together',l:'Lunch together'},
+    {t:'13:15',e:'15:00',k:'study',l:'Study room'},
+    {t:'15:15',e:'18:00',k:'study',l:'Study room',peak:'17:00'},
+    {t:'19:00',e:'20:00',k:'together',l:'Dinner together'},
+    {t:'20:15',e:'20:30',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+    {t:'20:30',e:'22:00',k:'study',l:'Study room'},
+    {t:'22:15',k:'sleep',l:'Sleep'},
+  ],
+};
+// The week once the club pool reopens and practice goes back to Tue and Thu evenings.
+// Built from the normal DAY_PLAN, which is what DAY_PLAN still holds when the flag is off.
+function v2Relabel(list,to,note){
+  return list.map(function(it){
+    if(it.k==='sleep'&&/Monday swim starts 06:00/.test(it.n||''))return Object.assign({},it,{n:'early — Monday swim starts 06:15'});
+    if(it.k!=='gym')return it;
+    const o=Object.assign({},it);o.l=to;if(note)o.n=note;return o;
+  });
+}
+function v2NormalDays(){
+  const relabel=v2Relabel;
+  return {
+    Mon:v2MorningSwim('solo · speed day · 60 to 90 min · log it after','Pool to home').concat([
+      {t:'09:00',e:'12:00',k:'study',l:'Study room',n:'ECG moved to Wednesday — this slot is yours now'},
+      {t:'12:15',e:'13:15',k:'together',l:'Lunch together'},
+      {t:'13:30',e:'14:45',k:'study',l:'Study room'},
+      {t:'15:00',e:'15:15',k:'travel',l:'Study room to campus',n:'one station'},
+      {t:'15:15',e:'17:45',k:'class',l:'Pharmacology I',n:'two blocks, 15 min gap at 16:45'},
+      {t:'18:30',e:'19:30',k:'together',l:'Dinner together'},
+      {t:'20:00',e:'22:30',k:'study',l:'Study room',peak:'22:00'},
+      {t:'22:45',k:'sleep',l:'Sleep'},
+    ]),
+    Wed:v2MorningSwim('solo · aerobic and technique · 60 to 90 min · log it after','Pool to campus').concat([
+      {t:'09:30',e:'12:45',k:'class',l:'Pathology I',n:'two blocks — snack in the 11:00 gap'},
+      {t:'13:15',e:'14:15',k:'together',l:'Lunch together'},
+      {t:'14:45',e:'16:15',k:'gym',l:'Gym · Lower power',n:'be through the door before 15:00 — jumps first'},
+      {t:'16:45',e:'17:25',k:'travel',l:'Leave for the ECG practical',n:'40 min'},
+      {t:'17:30',e:'19:00',k:'class',l:'Clinical ECG practical'},
+      {t:'19:00',e:'19:40',k:'travel',l:'Travel home',n:'40 min'},
+      {t:'19:45',e:'20:30',k:'together',l:'Dinner together'},
+      {t:'20:45',e:'21:00',k:'breath',l:'CO2 table',n:'sitting down, at home'},
+      {t:'21:00',e:'22:00',k:'study',l:'Study room'},
+      {t:'22:30',k:'sleep',l:'Sleep',n:'Thursday starts 08:00'},
+    ]),
+    Fri:relabel(DAY_PLAN.Fri,'Gym · Pull','the heavy pull day · quiet hour · a full rest day every fourth week'),
+  };
+}
+const DAY_PLAN_V2=POOL_MORNINGS_ONLY?DAY_PLAN_V2_POOL_AM:v2NormalDays();
+// Saturday and Sunday keep their times in both weeks; only the lift changes hands.
+DAY_PLAN_V2.Sat=v2Relabel(DAY_PLAN.Sat,'Gym · Upper','light — volleyball today');
+DAY_PLAN_V2.Sun=v2Relabel(DAY_PLAN.Sun,'Gym · Pull and press','moderate — club swim tomorrow');
+
+// ── The lifts ────────────────────────────────────────────────────────────────
+// Shifted toward power for a sprinter: one heavy two-legged lift done fast, jumps
+// before it, and a pull-up ladder that ends weighted. No free barbell — he dislikes
+// it and does not need it; a trap bar or the Smith machine carries the heavy lift.
+// The cuff and upper-back work is unchanged: that is the shoulder's insurance.
+// Biceps stay off the pull day on purpose, as before.
+const V2_POOL_BLOCK={h:'Pool · this morning',x:[['Swimming','90 min']]};
+const V2_LIFT={
+  pull:{title:'Pull · strength',note:'The heavy pull day. Pull-ups first and fresh: when 6 clean reps come at 10 kg of assist, move to bodyweight; when bodyweight gives 8, start adding weight. Nothing overhead.',blocks:[
+    {h:'Swim-specific',x:[['Straight-Arm Cable Pulldown','3 × 12, arms long — this is the catch, not a pull']]},
+    {h:'Pull-up ladder',x:[['Assisted Pull-ups','4 × 5, as little assist as gives 5 clean'],['Pull-ups','once the assist is under 10 kg · 4 × 3–5'],['Weighted Pull-ups','once bodyweight gives 8 · 4 × 3–5']]},
+    {h:'Main',x:[['Lat Pulldown','4 × 6 heavy — chase bodyweight'],['Cable Seated Row','4 × 8'],['Chest-Supported Dumbbell Row','3 × 10']]},
+    {h:'Arms',x:[['Cable Tricep Rope Pushdowns','3 × 12 — elbow extension finishes the pull']]},
+    {h:'Shoulder',x:[['Cable Archer Pull','3 × 12'],['Cable External Rotation','3 × 15 each, light']]},
+    {h:'Core',x:[['Hanging Leg Raises','3 × 12'],['Suitcase Carries','3 × 40m']]},
+  ]},
+  lower:{title:'Lower · power',note:'Jumps first, while fresh · full rest between jump sets, every one as high or as far as you can · then one heavy lift moved fast. Two clear days before weekend volleyball. Every fourth week this day is rest.',blocks:[
+    {h:'Jumps',x:[['Box Jumps','4 × 4, step down'],['Broad Jumps','4 × 4, stick the landing'],['Pogo Hops','3 × 12, stiff ankles, quick off the floor']]},
+    {h:'Main lift · pick one',x:[['Trap Bar Deadlift','4 × 4 heavy, fast on the way up'],['Smith Machine Squat','4 × 5 heavy — if there is no trap bar']]},
+    {h:'Strength',x:[['Bulgarian Split Squat','3 × 6 each'],['Dumbbell Romanian Deadlift','3 × 8'],['Hip Thrust','3 × 8'],['Calf Raise Machine','3 × 12 heavy']]},
+    {h:'Core',x:[['Ab roller','3 × 8'],['Dead Bug','3 × 10 each']]},
+    {h:'If the rack is taken',x:[['Leg Press','4 × 6 heavy'],['Leg Extension','3 × 12'],['Hamstring Curl Machine','3 × 12']]},
+  ]},
+  press:{title:'Pull and press',note:'After the morning swim · pull leads, pressing second, the shoulder press stays light. Moderate, not heavy: Monday is a club swim.',blocks:[
+    {h:'Pull',x:[['Assisted Pull-ups','3 × 6–8, second go at these this week'],['Lat Pulldown','3 × 10, lighter than the Pull day']]},
+    {h:'Press',x:[['Incline Dumbbell Press','3 × 8'],['Pectoral Fly','3 × 12'],['Machine Shoulder Press','3 × 10 light']]},
+    {h:'Arms',x:[['Cable Overhead Tricep Extension','3 × 12'],['Tricep Pushdown (Machine)','3 × 12']]},
+    {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Plank Hip Dips','3 × 30s each']]},
+  ]},
+  upper:{title:'Upper · light',note:'After the morning swim · the lightest lift of the week on purpose, because Saturday is also volleyball. Rear delts, cuff, arms, core — no legs, no jumps, nothing heavy. Forty-five minutes.',blocks:[
+    {h:'Shoulder',x:[['Face Pulls','3 × 15'],['Machine Rear Delt Fly','3 × 15'],['Cable Lateral Raises','3 × 15 light'],['Cable 90/90 External Rotation','3 × 12 light']]},
+    {h:'Back',x:[['Single-Arm Dumbbell Row','3 × 10 moderate'],['Scapular Pull-ups','3 × 8, hang and pull the shoulder blades down only']]},
+    {h:'Arms',x:[['Hammer Curls','3 × 10'],['Reverse Curls','3 × 12']]},
+    {h:'Forearms',x:[['Dumbbell Wrist Curls','3 × 20 light'],['Dumbbell Wrist Extensions','3 × 15 light']]},
+    {h:'Core',x:[['Hollow Body Hold','3 × 30s'],['DB Russian Twists','3 × 20']]},
+  ]},
+};
+function v2Swim(title,note,min){return {title:title,note:note,blocks:[{h:'Pool',x:[['Swimming',(min||90)+' min']]}]};}
+function v2SwimThenLift(lift,swimNote){
+  const L=V2_LIFT[lift];
+  return {title:L.title,note:swimNote+' '+L.note,blocks:[V2_POOL_BLOCK].concat(L.blocks)};
+}
+const SESSION_PLAN_V2=POOL_MORNINGS_ONLY?{
+  Mon:v2Swim('Swim · club','Club practice 06:15–07:45 — no lifting. Log the main set after'),
+  Tue:v2SwimThenLift('pull','Solo swim 06:15 — the speed session — then the gym at 14:00.'),
+  Wed:v2Swim('Swim · solo','06:15 — aerobic and technique. Pick it from Solo sessions'),
+  Thu:V2_LIFT.lower,
+  Fri:v2Swim('Swim · club','Club practice 06:15 — out by 07:40 for Statistics. No lifting'),
+  Sat:v2SwimThenLift('upper','Solo swim 08:00 — the 100 pace session.'),
+  Sun:v2SwimThenLift('press','Solo swim 08:00 — base, kick and fly.'),
+}:{
+  Mon:v2Swim('Swim · solo','06:15 — the speed session. Pick it from Solo sessions'),
+  Tue:v2Swim('Swim · club','No lifting — log the main set after',60),
+  Wed:v2SwimThenLift('lower','Solo swim 06:15 — aerobic and technique — then the gym at 14:45.'),
+  Thu:v2Swim('Swim · club','No lifting — log the main set after',60),
+  Fri:V2_LIFT.pull,
+  Sat:v2SwimThenLift('upper','Solo swim 08:00 — the 100 pace session.'),
+  Sun:v2SwimThenLift('press','Solo swim 08:00 — base, kick and fly.'),
+};
+// The switch itself. The three plan objects are mutated in place so every reader of
+// WORKOUT_WEEK, DAY_PLAN and SESSION_PLAN — there are about fifteen — follows without
+// being touched. Before the start date this is skipped and nothing above is used.
+if(TRAIN_V2){
+  const wkV2=POOL_MORNINGS_ONLY?WORKOUT_WEEK_V2_POOL_AM:WORKOUT_WEEK_V2_NORMAL;
+  WORKOUT_WEEK.splice(0,WORKOUT_WEEK.length,...wkV2);
+  Object.assign(DAY_PLAN,DAY_PLAN_V2);
+  Object.assign(SESSION_PLAN,SESSION_PLAN_V2);
+}
+
+// ── Season ───────────────────────────────────────────────────────────────────
+// Base, build and race, each with a weekly volume that moves instead of the same
+// week on repeat. Volume starts at 10 km because that is what he actually swims now
+// (about 2 km in 90 minutes, five times), not at what six sessions could hold.
+// Every fourth week drops a fifth: that is the deload, and the week Thursday is rest.
+// 30 km a week is his stated long-term figure; it is the far end of this table, not
+// something the first year reaches. Phase edges are Mondays; exam weeks sit in Base.
+const SEASON=[
+  {k:'base', label:'Base',   from:'2026-11-22',to:'2027-02-07',km:[10,15],lactate:false},
+  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-04-18',km:[15,20],lactate:true},
+  {k:'race', label:'Race',   from:'2027-04-19',to:'2027-05-09',km:[15,10],lactate:true,taper:true},
+  {k:'base', label:'Base 2', from:'2027-05-10',to:'2027-08-01',km:[16,22],lactate:false},
+  {k:'build',label:'Build 2',from:'2027-08-02',to:'2027-10-31',km:[22,25],lactate:true},
+  {k:'race', label:'Race 2', from:'2027-11-01',to:'2027-11-21',km:[20,12],lactate:true,taper:true},
+];
+const SEASON_LONG_KM=30;
+const SEASON_BASELINE_KM=10;
+function v2DaysBetween(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);}
+function v2AddDays(ds,n){const d=new Date(ds+'T12:00:00');d.setDate(d.getDate()+n);return localDay(d);}
+// The Monday of the week ds falls in. Sunday belongs to the week that ends on it —
+// except 22 Nov itself, which is day one and is counted with the week after it.
+function v2WeekStart(ds){
+  if(ds>=TRAINING_V2_START&&ds<='2026-11-29')return TRAINING_V2_START;
+  const dow=new Date(ds+'T12:00:00').getDay();
+  return v2AddDays(ds,-((dow+6)%7));
+}
+function seasonWeek(ds){
+  let day=ds||localToday();
+  if(V2_PREVIEW&&day<TRAINING_V2_START)day=TRAINING_V2_START;   // a preview shows week one
+  if(day<TRAINING_V2_START)return {pre:true,label:'Before the rebuild',km:SEASON_BASELINE_KM,week:0,of:0,deload:false,lactate:false,taper:false,no:0};
+  let ph=SEASON[SEASON.length-1],after=true;
+  for(let i=0;i<SEASON.length;i++){if(day>=SEASON[i].from&&day<=SEASON[i].to){ph=SEASON[i];after=false;break;}}
+  // Week numbers count from Monday 23 Nov; Sunday the 22nd is folded into week one.
+  const no=Math.max(0,Math.floor(v2DaysBetween('2026-11-23',day)/7));
+  if(after)return {k:'base',label:'Base',km:20,week:0,of:0,deload:(no+1)%4===0,lactate:false,taper:false,no:no,open:true};
+  const first=Math.max(0,Math.floor(v2DaysBetween('2026-11-23',ph.from==='2026-11-22'?'2026-11-23':ph.from)/7));
+  const of=Math.round((v2DaysBetween(ph.from,ph.to)+1)/7);
+  const i=Math.min(of-1,Math.max(0,no-first));
+  let km=ph.km[0];
+  if(of>1)km=ph.km[0]+(ph.km[1]-ph.km[0])*i/(of-1);
+  const deload=!ph.taper&&(no+1)%4===0;
+  if(deload)km*=0.8;
+  return {k:ph.k,label:ph.label,km:Math.round(km*10)/10,week:i+1,of:of,deload:deload,lactate:!!ph.lactate,taper:!!ph.taper,no:no};
+}
+// Metres in one logged practice. A v2 solo session writes its own metres into the
+// set text ("… · 1700m") because its size depends on the week it was swum in and
+// cannot be rebuilt afterwards. The old solo cards claimed up to 3400 m for a
+// 90-minute session he swims 2 km in, so those are capped at 30 m a minute.
+function v2PracticeMetres(p){
+  const m=/· (\d{3,5})m$/.exec((p&&p.set)||'');
+  if(m)return parseInt(m[1]);
+  const floorM=((p&&p.minutes)||0)*SWIM_M_PER_MIN;
+  let dist=soloPracticeMetres(p.set);
+  if(dist)return Math.min(dist,Math.max(floorM,((p.minutes)||0)*30));
+  dist=swimSetMetres(p.set);
+  if(!dist)return floorM;
+  return Math.max(dist,floorM);
+}
+function v2WeekMetres(ds){
+  const from=v2WeekStart(ds||localToday());
+  let to=v2AddDays(from,6);
+  if(from===TRAINING_V2_START)to=v2AddDays(from,7);
+  let m=0,n=0;
+  (state.swimPractices||[]).forEach(function(p){
+    if(!p.date||p.date<from||p.date>to)return;
+    m+=v2PracticeMetres(p);n++;
+  });
+  return {m:m,n:n,from:from,to:to};
+}
+function seasonLine(){
+  const s=seasonWeek();
+  if(s.pre)return '';
+  let t=s.label;
+  if(s.of)t+=' · week '+s.week+' of '+s.of;
+  if(s.deload)t+=' · deload';
+  if(s.taper)t+=' · taper';
+  return t;
+}
+
+// ── Goals and the checkpoint ladder ──────────────────────────────────────────
+// Three ladders, all in 25 m short course. The 100 is the main target and the one
+// training is built for: a 49.9 normally arrives with about a 23.8 for the 50, so
+// the 50 follows from it. (Set 14 Nov 2026, replacing sub-45 / sub-22.) A rung is the next time to beat; set paces are taken from
+// the current rung, never from the far end.
+// PLACEHOLDERS: the first rungs get re-anchored on the MEFOB results of 21 Nov.
+const SWIM_LADDERS=[
+  {k:'free100',label:'100 free',dist:100,stroke:'Free',main:true,rungs:[59.9,57.4,55.2,53.2,51.4,49.9]},
+  {k:'free50', label:'50 free', dist:50, stroke:'Free',rungs:[27.2,26.4,25.6,24.9,24.4,23.9]},
+  {k:'fly50',  label:'50 fly',  dist:50, stroke:'Fly', rungs:[31.9,29.9,28.4,27.2,25.9]},
+];
+const SWIM_LADDER_NEXT_BY='spring 2027';
+// A time swum long course is brought back to short course before it is compared;
+// a time from the 33 m pool converts to nothing and is left out.
+function v2ScmSeconds(p){
+  if(!p.timedDistance||!p.timedSeconds)return null;
+  if(p.course==='33 m')return null;
+  if(p.course==='50 m'){
+    const off=SCM_TO_LCM[p.timedDistance];
+    if(!off)return null;
+    return Math.round((p.timedSeconds-off)*10)/10;
+  }
+  return p.timedSeconds;
+}
+function v2Best(lad){
+  let best=null;
+  (state.swimPractices||[]).forEach(function(p){
+    if(p.timedDistance!==lad.dist)return;
+    const stroke=(SWIM_HAS_STROKE_PROP&&p.timedStroke)||'Free';
+    if(stroke!==lad.stroke)return;
+    const sec=v2ScmSeconds(p);
+    if(sec==null)return;
+    if(!best||sec<best.sec)best={sec:sec,date:p.date};
+  });
+  return best;
+}
+function v2LadderState(){
+  const out={};
+  SWIM_LADDERS.forEach(function(lad){
+    const best=v2Best(lad);
+    const goal=lad.rungs[lad.rungs.length-1];
+    let idx=0;
+    if(best){idx=lad.rungs.length;for(let i=0;i<lad.rungs.length;i++){if(best.sec>lad.rungs[i]){idx=i;break;}}}
+    const done=idx>=lad.rungs.length;
+    out[lad.k]={lad:lad,best:best,idx:idx,done:done,next:done?goal:lad.rungs[idx],goal:goal};
+  });
+  return out;
+}
+function v2LadderHTML(){
+  const st=v2LadderState();
+  let rows='';
+  SWIM_LADDERS.forEach(function(lad){
+    const s=st[lad.k];
+    let line;
+    if(lad.stroke==='Fly'&&!SWIM_HAS_STROKE_PROP)line='no timed 50 fly on record yet · first rung '+lad.rungs[0].toFixed(1);
+    else if(!s.best)line='no timed '+lad.dist+' yet · first rung '+fmtSwimTime(s.next);
+    else if(s.done)line='goal hit · '+fmtSwimTime(s.best.sec)+' on '+s.best.date;
+    else line=fmtSwimTime(s.best.sec)+' best · next '+fmtSwimTime(s.next)+' · '+(Math.round((s.best.sec-s.next)*10)/10)+'s to go';
+    let dots='';
+    lad.rungs.forEach(function(r,i){
+      let col='var(--text-faint)';
+      if(s.best&&i<s.idx)col='var(--gold)';
+      else if(i===s.idx)col='var(--text-hi)';
+      dots+='<span style="margin-right:9px;color:'+col+'">'+r.toFixed(1)+'</span>';
+    });
+    rows+='<div style="padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'+
+        '<span style="font-size:13px;color:var(--text-hi)">'+esc(lad.label)+(lad.main?' · main':'')+'</span>'+
+        '<span style="font-size:10px;color:var(--text-dim)">goal '+fmtSwimTime(s.goal)+'</span></div>'+
+      '<div style="font-size:11px;line-height:1.7;color:var(--text);margin-top:3px">'+esc(line)+'</div>'+
+      '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;margin-top:3px">'+dots+'</div></div>';
+  });
+  const a=st.free50.best,b=st.free100.best;
+  let ratio='';
+  if(a&&b)ratio='<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:8px">Your 100 is '+(b.sec/a.sec).toFixed(2)+' × your 50. About 2.1 is where it should sit — anything above that is the back half, not a lack of speed.</div>';
+  return rows+ratio+'<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:8px">25 m pool times. The next rung is for '+SWIM_LADDER_NEXT_BY+'; the ones after it carry no date yet. First rungs are placeholders until the MEFOB times are in.</div>';
+}
+// Replaces the old single-target section on the pool card.
+function v2TargetHTML(){
+  const s=seasonWeek();
+  const wm=v2WeekMetres();
+  const target=Math.round(s.km*1000);
+  const pct=Math.max(0,Math.min(100,Math.round(100*wm.m/Math.max(1,target))));
+  let note='Volume climbs from what you swim now, a little each week. '+SEASON_LONG_KM+' km a week is the long-term figure, not this season\'s.';
+  if(s.deload)note='Deload week: a fifth less on purpose, and Thursday is a full rest day.';
+  if(s.taper)note='Taper: less swimming, the same speed. Add nothing.';
+  return '<div class="rival-section-label">Season · '+esc(seasonLine())+'</div>'+
+    '<div style="display:flex;align-items:flex-end;gap:10px;margin:8px 0 4px">'+
+      '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:36px;color:var(--text-hi);line-height:1">'+(wm.m/1000).toFixed(1)+'</span>'+
+      '<span style="font-size:10px;color:var(--text-dim);padding-bottom:5px">of '+s.km.toFixed(1)+' km this week · '+wm.n+' swim'+(wm.n===1?'':'s')+' logged</span></div>'+
+    '<div style="height:3px;background:rgba(232,234,240,0.08);margin:6px 0 8px"><div style="height:3px;width:'+pct+'%;background:var(--gold)"></div></div>'+
+    '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin:0 0 18px">'+esc(note)+'</div>'+
+    '<div class="rival-section-label">Targets</div>'+
+    '<div style="margin:4px 0 18px">'+v2LadderHTML()+'</div>';
+}
+
+// ── Underwater ───────────────────────────────────────────────────────────────
+// His weakest part and the cheapest speed there is, so it opens every session.
+// The measure needs no clock and no markings: dolphin kicks held off the wall, and
+// where the head comes up. "Held" means two of the last four solo logs reached it.
+function v2SoloLogs(n){
+  return (state.swimPractices||[]).filter(function(p){return v2IsSolo(p)&&(p.kicks>0||p.breakout>0);}).slice(0,n||4);
+}
+function uwHeldKicks(){
+  const logs=v2SoloLogs(4).map(function(p){return p.kicks||0;}).sort(function(a,b){return b-a;});
+  if(logs.length<2)return logs.length?Math.min(logs[0],4):0;
+  return logs[1];
+}
+function uwKickTarget(){return Math.max(4,Math.min(10,uwHeldKicks()+1));}
+function uwBreakoutBest(){
+  let b=0;
+  v2SoloLogs(4).forEach(function(p){if((p.breakout||0)>b)b=p.breakout;});
+  return b;
+}
+// 0–1. Seven kicks held, or surfacing 10 m out, is the top of this scale: what a
+// sub-50 100 needs off each wall, not what a world-class underwater looks like.
+function uwScore(){
+  return Math.max(0,Math.min(1,Math.max(uwHeldKicks()/7,uwBreakoutBest()/10)));
+}
+
+// ── Solo sessions v2 ─────────────────────────────────────────────────────────
+// Four sessions, one per solo day, each with one job. Every set is written once as
+// data — reps, distance, rest in seconds, which pace it is swum at — and rendered
+// twice: without the watch as strokes and breaths, with it as leave-on intervals
+// and target splits. Sessions are sized from the week's volume target, so the
+// aerobic sets grow by themselves; speed and race-pace sets never grow by adding
+// metres, only by a level earned with two clean sessions.
+// Each one carries a 60-minute cut: everything above the line is the session, the
+// rest is what a 90-minute morning adds.
+const SOLO_V2=[
+  {t:'Speed · underwater and sprints',tag:'v2speed',levels:true,focus:'Top speed and the first 15 metres',kit:'Fins for the kick lengths',
+   why:'Speed is trained fresh or not at all. Every sprint is 15 metres and no further, from a push, with enough rest that the next one is as fast as the first — if you are still breathing hard, wait. The moment one comes back slower, the block is over. This is not a hard session and it should not feel like one.'},
+  {t:'Aerobic · technique',tag:'v2aer',focus:'Repeatable swimming at a count you can hold',kit:'Pull buoy · fins for the kick lengths',
+   why:'The day after the heavy pull session, so nothing here is fast. The job is to keep moving: leave on the interval, hold the stroke count, and do not stand at the wall. Standing at the wall is where your metres have been going.'},
+  {t:'Race pace · 100',tag:'v2pace',levels:true,focus:'The speed of the 100, and holding it on the way home',kit:'Fins for the kick lengths',
+   why:'Your 100 is slower than your 50 says it should be, and this is the session that closes that. Broken 100s teach the pace with short breaks at the wall; in the build phase the lactate set teaches the last 35 metres. Go out controlled — the second half of every rep is the one being trained.'},
+  {t:'Base · kick and fly',tag:'v2base',focus:'The engine, the legs and the second stroke',kit:'Fins · pull buoy',
+   why:'The longest swim of the week and the one that grows. The main set gets a little bigger most weeks without you doing anything. Kick is here because a sprinter\'s legs are half the race, and fly is here because it is your second event and because dolphin kick is dolphin kick.'},
+];
+// How this week's metres are shared out. Two club practices are counted at 2 km each
+// (his own figure for one); the four solo sessions split what is left.
+// Each session has a floor — warm-up, the underwater block and its main set cannot be
+// made smaller without it stopping being that session — and the four floors together
+// are the 6 km the solo days hold in week one. Everything the season adds on top is
+// shared out by V2_SHARE, most of it to the two aerobic days. 3400 m is what fits in
+// 90 minutes, so that is the ceiling however large the week's target gets.
+const V2_FLOOR={v2speed:1500,v2aer:1400,v2pace:1300,v2base:1800};
+const V2_SHARE={v2speed:0.10,v2aer:0.30,v2pace:0.20,v2base:0.40};
+const V2_CLUB_M=2000;
+function v2Budget(tag,ds){
+  const s=seasonWeek(ds);
+  let floorSum=0;
+  Object.keys(V2_FLOOR).forEach(function(k){floorSum+=V2_FLOOR[k];});
+  const extra=Math.max(0,s.km*1000-2*V2_CLUB_M-floorSum);
+  // A deload or taper week goes under the floor on purpose: the warm-up and the easy
+  // swimming shrink, the main set does not.
+  const ease=(s.deload||s.taper)?0.85:1;
+  return Math.min(3400,Math.round((V2_FLOOR[tag]+extra*V2_SHARE[tag])*ease/50)*50);
+}
+function v2Clock(sec){
+  const s=Math.round(sec);
+  const m=Math.floor(s/60),r=s%60;
+  return m+':'+(r<10?'0':'')+r;
+}
+function v2Round5(sec){return Math.ceil(sec/5)*5;}
+// Seconds per 100 m. Without logged times these are starting guesses and are meant
+// to be wrong: two weeks of real splits replace them. "cruise" is the aerobic pace,
+// p100 and p50 come from the current ladder rung plus a little for the push start.
+const V2_PACE_DEFAULT={easy:130,cruise:118};
+// "100: 92 93 1:35" → the rep distance, then one time per rep.
+function v2ParseSplits(txt){
+  const m=/^\s*(\d+)\s*:\s+(.*)$/.exec(String(txt||''));
+  if(!m)return null;
+  const d=parseInt(m[1]);
+  const ts=m[2].split(/[\s,]+/).map(parseSwimTime).filter(function(v){return v!=null;});
+  if(!d||!ts.length)return null;
+  const avg=ts.reduce(function(a,b){return a+b;},0)/ts.length;
+  return {d:d,n:ts.length,avg:avg,per100:avg/d*100};
+}
+// The best average he has actually held on this session's main set, last three logs.
+function v2LoggedPace(tag){
+  const x=SOLO_V2.find(function(v){return v.tag===tag;});
+  if(!x)return null;
+  const vals=[];
+  (state.swimPractices||[]).forEach(function(p){
+    if(vals.length>=3||!p.splits||!p.set||p.set.indexOf('Solo · '+x.t)!==0)return;
+    const r=v2ParseSplits(p.splits);
+    if(r)vals.push(r.per100);
+  });
+  if(!vals.length)return null;
+  return Math.min.apply(null,vals);
+}
+// Split targets progress from logged times: the target is half a percent quicker
+// than the best average held, so it only moves when he does.
+function v2Pace(kind){
+  const lad=v2LadderState();
+  if(kind==='p100'){
+    const l=HAS_WATCH?v2LoggedPace('v2pace'):null;
+    if(l)return l*0.995;
+    return lad.free100.next+2;
+  }
+  if(kind==='p50')return (lad.free50.next+1)*2;
+  if(kind==='cruise'){
+    const l=HAS_WATCH?(v2LoggedPace('v2base')||v2LoggedPace('v2aer')):null;
+    if(l)return l*0.995;
+    return V2_PACE_DEFAULT.cruise;
+  }
+  return V2_PACE_DEFAULT.easy;
+}
+// Which rows were swum in the 33 m pool. The old test only knew the "Solo · " prefix,
+// so an off-plan solo swim typed by hand ("10 × 33 half fly…") was read as a club
+// practice and its count never reached the solo target. A 33 or a 66 in the set, or
+// a logged course, settles it.
+function v2IsSolo(p){
+  if(p.course)return p.course==='33 m';
+  return isSoloPractice(p)||/(^|[^\d])(33|66)([^\d]|$)/.test(p.set||'');
+}
+function v2StrokeTarget(){
+  const vals=(state.swimPractices||[]).filter(function(p){return p.strokes>0&&v2IsSolo(p);}).slice(0,5).map(function(p){return p.strokes;});
+  if(!vals.length)return null;
+  return Math.min.apply(null,vals);
+}
+function v2StrokeRule(){
+  const t=v2StrokeTarget();
+  if(!t)return 'counting strokes every length';
+  return 'at '+t+' strokes or under';
+}
+// One line of a set, both ways. it: {n,d,what,rest,pace,full,target,count,head,note}
+// rest is always seconds; restBreaths() turns it into breaths when there is no watch.
+function v2Line(it){
+  if(it.raw)return {t:v2Legacy(it.raw),m:it.m||0};
+  const n=it.n||1;
+  let t;
+  if(it.head)t=it.head+' '+it.what;
+  else if(n>1)t=n+' × '+it.d+' '+it.what;
+  else t=it.d+' '+it.what;
+  if(it.count)t+=' '+v2StrokeRule();
+  if(!HAS_WATCH){
+    if(it.full)t+=' · full rest, about '+restBreaths(it.rest||90)+' — wait until the next one can be just as fast';
+    else if(it.rest&&n>1)t+=' · '+restBreaths(it.rest)+' rest';
+  }else{
+    let per=null;
+    if(it.pace)per=v2Pace(it.pace)*it.d/100;
+    if(it.full||per==null){
+      if(it.rest&&n>1)t+=' · rest '+v2Clock(it.rest);
+    }else if(n>1){
+      t+=' · leave every '+v2Clock(v2Round5(per+(it.rest||0)));
+    }
+    if(per!=null&&it.target){
+      let tg=v2Clock(per);
+      if(per<60)tg=per.toFixed(1)+'s';
+      t+=' · target '+tg;
+    }
+  }
+  if(it.note)t+=' — '+it.note;
+  return {t:t,m:n*(it.d||0),n:n,d:it.d||0,main:!!it.main};
+}
+// The fly ladder's lines are older than this block and are written in breaths.
+function v2Legacy(l){
+  if(!HAS_WATCH)return l;
+  return l.replace(/(\d+) breaths rest/g,function(_,b){return 'rest '+v2Clock(parseInt(b)*3);})
+          .replace(/(\d+) breaths between/g,function(_,b){return v2Clock(parseInt(b)*3)+' between';});
+}
+// light: a deload or taper week. Same block, fewer lengths.
+function v2UwBlock(light){
+  const k=uwKickTarget();
+  return [
+    {head:'4 × 20 seconds',what:'vertical dolphin kick, arms crossed, deep end',rest:20,n:4,d:0,note:'small and fast, from the chest, not the knees'},
+    {n:light?4:6,d:33,what:'push off, '+k+' dolphin kicks in a tight streamline, surface, then easy to the wall',rest:20,note:'count the kicks and notice where your head comes up. Log both'},
+    {n:light?2:4,d:33,what:'dolphin kick on your back in streamline, fins on',rest:20},
+  ];
+}
+// The full session as data. cut:true marks the 60-minute line.
+function v2Spec(tag,ds){
+  const lv=soloLevel(tag);
+  const s=seasonWeek(ds);
+  const budget=v2Budget(tag,ds);
+  const light=!!(s.deload||s.taper);
+  const uw=v2UwBlock(light);
+  const sum=function(list){let m=0;list.forEach(function(it){if(!it.cut)m+=(it.m!=null?it.m:(it.n||1)*(it.d||0));});return m;};
+  let pre=[],post=[],main=[];
+  if(tag==='v2speed'){
+    pre=[{d:light?200:300,what:'easy free, breathe every 3, 5 kicks off every wall'},
+         {n:4,d:33,what:'free building to fast over the length',rest:20}].concat(uw);
+    main=[{head:(5+Math.min(lv,5))+' × 15 m',n:5+Math.min(lv,5),d:33,what:'max speed from a push, then easy to the wall',full:true,rest:90,main:true,note:'stop the block when one comes back slower'},
+          {n:3+Math.floor(lv/2),d:33,what:'free at 50 pace',rest:75,pace:'p50',target:true,note:'the breakout is part of the rep'},
+          {head:'4 × 15 m',n:4,d:33,what:'max fly from a push, then easy free to the wall',full:true,rest:90}];
+    const room=budget-sum(pre)-sum(main)-200;
+    const n66=Math.max(2,Math.min(6,Math.round(room/66)));
+    post=[{n:n66,d:66,what:'easy free',rest:15,pace:'easy',count:true},{d:200,what:'easy, some of it backstroke'}];
+    const extra=Math.floor((room-n66*66)/100);
+    if(extra>=2)post.splice(1,0,{n:extra,d:100,what:'easy free, long strokes',rest:15,pace:'easy'});
+  }else if(tag==='v2aer'){
+    pre=[{d:light?200:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw);
+    post=[{n:budget>=1900?6:3,d:66,what:'pull buoy, long and relaxed',rest:15,pace:'cruise'},{d:200,what:'easy'}];
+    const n=Math.max(4,Math.min(20,Math.round((budget-sum(pre)-sum(post))/100)));
+    main=[{n:n,d:100,what:'free',count:true,rest:15,pace:'cruise',target:true,main:true,note:'same count every one. Go when the rest is up, not when you feel ready'}];
+  }else if(tag==='v2pace'){
+    pre=[{d:light?200:300,what:'easy free, breathe every 3, 5 kicks off every wall'},
+         {n:4,d:33,what:'free building to 100 pace',rest:20}].concat(uw);
+    const reps=Math.min(8,3+Math.floor(lv/2));
+    main=[{head:reps+' × broken 100',n:reps,d:100,what:'as 3 × 33 at 100 pace with one breath-and-go at each wall',rest:120,pace:'p100',target:true,main:true,note:'the third length is the one that counts. Full recovery between hundreds'}];
+    if(s.lactate){
+      main.push({n:Math.min(6,2+Math.floor(lv/3)),d:66,what:'all out, second length faster than the first',full:true,rest:180,note:'this is the last 35 metres of the 100. Stop when the stroke falls apart'});
+    }
+    post=[{d:200,what:'easy'}];
+    const n=Math.min(14,Math.round((budget-sum(pre)-sum(main)-sum(post))/100));
+    if(n>=2)post.unshift({n:n,d:100,what:'steady free',count:true,rest:15,pace:'cruise'});
+  }else{
+    pre=[{d:budget>=2200?400:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw);
+    const st=flyStage();
+    post=[{n:budget>=2300?8:4,d:66,what:'kick on your front, fins optional',rest:20},
+          {raw:'FLY · stage '+st.n+' · '+st.label,m:0}]
+      .concat(st.lines.map(function(l,i){return {raw:l,m:i?0:st.fly};}))
+      .concat([{d:light?200:300,what:'easy'}]);
+    let n=Math.max(3,Math.min(24,Math.round((budget-sum(pre)-sum(post))/100)));
+    if(n>=12&&n%2===0)main=[{n:n/2,d:200,what:'free',count:true,rest:20,pace:'cruise',target:true,main:true,note:'even pace, same count the whole way'}];
+    else main=[{n:n,d:100,what:'free',count:true,rest:15,pace:'cruise',target:true,main:true,note:'same count every one. Leave on the interval'}];
+  }
+  return pre.concat(main,[{cut:true}],post);
+}
+function v2Session(tag,ds){
+  const x=SOLO_V2.find(function(v){return v.tag===tag;});
+  const lines=[];
+  let full=0,cutM=0,reps=8,mainD=100,seenCut=false;
+  v2Spec(tag,ds).forEach(function(it){
+    if(it.cut){seenCut=true;cutM=full;lines.push({cut:true});return;}
+    const l=v2Line(it);
+    full+=l.m;
+    if(l.main){reps=l.n;mainD=l.d;}
+    lines.push(l);
+  });
+  if(!seenCut)cutM=full;
+  return {x:x,lines:lines,full:full,cutM:cutM,reps:reps,mainD:mainD};
+}
+// Two clean completions since the level last moved — the same rule the old levels
+// used, matched on the start of the set text because v2 appends the metres to it.
+function v2CleanCount(x){
+  const since=soloLevelSince(x.tag);
+  return (state.swimPractices||[]).filter(function(p){
+    if(!p.set||p.set.indexOf('Solo · '+x.t)!==0)return false;
+    if(since&&p.date<since)return false;
+    return p.remembered&&p.total&&(p.done||0)>=p.total&&p.scaled==='Full';
+  }).length;
+}
+function v2SuggestIdx(){
+  const order=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let i=order.indexOf(WEEK_ABBR[new Date().getDay()]);
+  for(let g2=0;g2<7;g2++){
+    const tag=SOLO_DAY_ROLE[order[(i+g2)%7]];
+    if(tag)return {idx:SOLO_V2.findIndex(function(v){return v.tag===tag;}),day:order[(i+g2)%7],today:g2===0};
+  }
+  return {idx:0,day:order[i],today:true};
+}
+function v2LevelLabel(x){
+  if(!x.levels)return seasonLine();
+  const st=v2LadderState();
+  const next=x.tag==='v2speed'?st.free50.next:st.free100.next;
+  return 'Level '+soloLevel(x.tag)+' of '+SOLO_LEVEL_MAX+' · working toward '+fmtSwimTime(next);
+}
+function renderSoloSetsV2(){
+  const b=document.getElementById('soloBody');
+  if(!b)return;
+  const mode=HAS_WATCH?'Watch on · leave-on intervals and target splits':'No watch · strokes per length and breaths of rest';
+  if(_soloIdx==null||!SOLO_V2[_soloIdx]){
+    const sug=v2SuggestIdx();
+    const sx=SOLO_V2[sug.idx];
+    const wm=v2WeekMetres(),s=seasonWeek();
+    let body='<div style="border-top:1px solid var(--border);padding:14px 0">'+
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">'+esc(seasonLine())+'</div>'+
+      '<div style="font-size:15px;color:var(--text-hi);margin-top:5px">'+(wm.m/1000).toFixed(1)+' of '+s.km.toFixed(1)+' km this week</div>'+
+      '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">Underwater · '+uwKickTarget()+' kicks off every wall is the target</div></div>';
+    body+='<div onclick="openSoloSets('+sug.idx+')" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">'+
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">'+(sug.today?'Today':'Next · '+esc(sug.day))+'</div>'+
+      '<div style="font-size:17px;color:var(--text-hi);margin-top:5px">'+esc(sx.t)+'</div>'+
+      '<div style="font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:4px">'+esc(sx.focus)+'</div></div>';
+    SOLO_V2.forEach(function(x,i){
+      const se=v2Session(x.tag);
+      body+='<div onclick="openSoloSets('+i+')" style="border-top:1px solid var(--border);padding:14px 0;cursor:pointer">'+
+        '<div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">'+
+          '<span style="font-size:15px;color:var(--text-hi)">'+esc(x.t)+'</span>'+
+          '<span style="font-size:10px;color:var(--text-dim);white-space:nowrap">'+se.full+'m · '+se.cutM+'m in 60</span></div>'+
+        '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">'+esc(x.focus)+'</div>'+
+        '<div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(v2LevelLabel(x))+' · kit · '+esc(x.kit||'none')+'</div></div>';
+    });
+    b.innerHTML='<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSoloSets()">← Back</button></div>'+
+      '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1;margin-top:12px">SOLO SESSIONS</div>'+
+      '<div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">33.3 m pool · 60 to 90 min</div>'+
+      '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(mode)+'</div>'+
+      '<div style="margin-top:18px">'+body+'</div>';
+    return;
+  }
+  const x=SOLO_V2[_soloIdx];
+  const se=v2Session(x.tag);
+  let lines='',num=0;
+  se.lines.forEach(function(l,i){
+    if(l.cut){
+      lines+='<div style="font-size:10px;color:var(--gold);letter-spacing:0.08em;padding:9px 0 7px;border-top:1px dashed rgba(232,234,240,0.25)">60 MINUTES · STOP HERE IF YOU STARTED LATE · '+se.cutM+'m</div>';
+      return;
+    }
+    num++;
+    let bt='1px solid rgba(232,234,240,0.06)';
+    if(!i)bt='none';
+    lines+='<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:'+bt+'">'+
+      '<span style="color:var(--text-dim);font-size:11px;width:14px;flex:none">'+num+'</span>'+
+      '<span style="flex:1;font-size:13px;line-height:1.7;color:var(--text)">'+esc(l.t)+'</span></div>';
+  });
+  let lvBlock='';
+  if(x.levels){
+    const lv=soloLevel(x.tag),cl=v2CleanCount(x);
+    let up='';
+    if(lv<SOLO_LEVEL_MAX&&cl>=2)up='<button class="wec-log-btn" style="width:100%;margin-top:10px" onclick="soloLevelUp(\''+x.tag+'\')">Ready for level '+(lv+1)+'</button>';
+    lvBlock='<div style="border-top:1px solid var(--border);padding:12px 0;margin-top:14px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline">'+
+        '<span style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">'+esc(v2LevelLabel(x))+'</span>'+
+        '<span style="font-size:9px;color:var(--text-faint)" onclick="soloLevelDown(\''+x.tag+'\')">step back</span></div>'+
+      '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">'+cl+' clean session'+(cl===1?'':'s')+' at this level · two moves you up. A level adds a rep, never less rest.</div>'+up+'</div>';
+  }else{
+    let flyRow='';
+    if(x.tag==='v2base'){
+      const fs=flyStage();
+      flyRow='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px">'+
+        '<span style="font-size:11px;color:var(--text-dim)">Butterfly stage '+fs.n+' of '+FLY_STAGES.length+' · '+esc(fs.label)+'</span>'+
+        '<span style="font-size:9px;color:var(--text-faint)"><span onclick="flyStepBack()">step back</span> &nbsp;·&nbsp; <span onclick="flyAdvance()">next stage</span></span></div>'+
+        '<div style="font-size:10px;color:var(--text-faint);margin-top:3px">Move on when the fly in this stage has held together twice.</div>';
+    }
+    lvBlock='<div style="border-top:1px solid var(--border);padding:12px 0;margin-top:14px">'+
+      '<div style="font-size:11px;color:var(--text-dim)">No level on this one. Its main set is sized from the week\'s volume target and grows as the season does.</div>'+flyRow+'</div>';
+  }
+  b.innerHTML='<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="openSoloSets()">← All sessions</button></div>'+
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">'+esc(x.t.toUpperCase())+'</div>'+
+    '<div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">'+se.full+'m · '+esc(x.focus)+'</div>'+
+    '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-top:4px">'+esc(seasonLine())+'</div>'+
+    '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(mode)+' · kit · '+esc(x.kit||'none')+'</div>'+
+    '<div style="font-size:12px;line-height:1.75;color:var(--text-dim);margin:16px 0 4px">'+esc(x.why)+'</div>'+
+    '<div style="margin-top:14px">'+lines+'</div>'+lvBlock+
+    '<button class="wec-log-btn" style="width:100%;margin-top:18px" onclick="logSoloSetV2('+_soloIdx+',false)">LOG THE FULL SESSION · '+se.full+'m</button>'+
+    '<button class="wec-log-btn" style="width:100%;margin-top:8px;opacity:0.7" onclick="logSoloSetV2('+_soloIdx+',true)">LOG · CUT AT 60 MIN · '+se.cutM+'m</button>';
+}
+function logSoloSetV2(i,cut){
+  const x=SOLO_V2[i];
+  if(!x)return;
+  const se=v2Session(x.tag);
+  closeSoloSets();
+  closePoolCard();
+  openSwimPractice(cut?60:90,'Solo · '+x.t+' · '+(cut?se.cutM:se.full)+'m');
+  if(swimDraft){swimDraft.total=se.reps;swimDraft.splitD=se.mainD;renderSwimPractice();}
+}
+function v2SetPresets(){
+  return SOLO_V2.map(function(x){return {label:x.t,text:'Solo · '+x.t+' · '+v2Session(x.tag).full+'m'};});
+}
+
+// ── Logging · what the form gains ────────────────────────────────────────────
+// Kicks and breakout off the wall, the course a timed swim was swum in, and — with
+// the watch — the splits of the main set. Free and fly stroke counts are unchanged.
+function v2SwimFormExtra(d){
+  const step=function(label,id,val,fn){
+    return '<div class="wec-lbl">'+label+'</div>'+
+      '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 16px">'+
+        '<button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="'+fn+'(-1)">−</button>'+
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:22px;font-weight:700;min-width:54px;text-align:center"><span id="'+id+'">'+(val||'—')+'</span></div>'+
+        '<button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="'+fn+'(1)">+</button></div>';
+  };
+  let out=step('Dolphin kicks off the wall (what you held)','swimKicks',d.kicks,'swimKickStep')+
+    step('Breakout · metres from the wall (the flags are 5) — skip if you cannot tell','swimBreakout',d.breakout,'swimBreakoutStep');
+  if(HAS_WATCH){
+    out+='<div class="wec-lbl">Main set splits (from the watch)</div>'+
+      '<input type="text" class="wec-inp" id="swimSplits" value="'+esc(d.splitsRaw||'')+'" placeholder="one time per rep · 92 93 1:35" oninput="swimDraft.splitsRaw=this.value" style="width:100%;text-align:left;margin:6px 0 16px">';
+  }
+  return out;
+}
+function v2SwimFormTimed(d){
+  const cur=d.course||v2DefaultCourse(d);
+  let chips='';
+  ['25 m','50 m','33 m'].forEach(function(c){
+    let st='color:var(--text-dim)';
+    if(cur===c)st='background:rgba(232,234,240,0.12);color:var(--text)';
+    chips+='<button class="sil-toggle-btn" style="flex:1;text-align:center;'+st+'" onclick="swimSetCourse(\''+c+'\')">'+c+' pool</button>';
+  });
+  let out='<div style="display:flex;gap:4px;margin:-8px 0 16px">'+chips+'</div>';
+  if(SWIM_HAS_STROKE_PROP){
+    let sc='';
+    ['Free','Fly'].forEach(function(s){
+      let st='color:var(--text-dim)';
+      if((d.stroke||'Free')===s)st='background:rgba(232,234,240,0.12);color:var(--text)';
+      sc+='<button class="sil-toggle-btn" style="flex:1;text-align:center;'+st+'" onclick="swimSetStroke(\''+s+'\')">'+s+'</button>';
+    });
+    out+='<div style="display:flex;gap:4px;margin:-8px 0 16px">'+sc+'</div>';
+  }
+  return out;
+}
+function v2DefaultCourse(d){return (d.set||'').indexOf('Solo · ')===0?'33 m':'25 m';}
+function swimKickStep(dir){
+  const d=swimDraft;if(!d)return;
+  d.kicks=Math.max(0,Math.min(20,(d.kicks||0)+dir));
+  const el=document.getElementById('swimKicks');if(el)el.textContent=d.kicks||'—';
+}
+function swimBreakoutStep(dir){
+  const d=swimDraft;if(!d)return;
+  d.breakout=Math.max(0,Math.min(15,(d.breakout||0)+dir));
+  const el=document.getElementById('swimBreakout');if(el)el.textContent=d.breakout||'—';
+}
+function v2KeepTyped(){
+  const inp=document.getElementById('swimTime');
+  if(inp&&swimDraft)swimDraft.timedRaw=inp.value;
+}
+function swimSetCourse(c){if(!swimDraft)return;v2KeepTyped();swimDraft.course=c;renderSwimPractice();}
+function swimSetStroke(s){if(!swimDraft)return;v2KeepTyped();swimDraft.stroke=s;renderSwimPractice();}
+function v2SwimSaveProps(d,props){
+  if(d.kicks>0)props.Kicks={number:d.kicks};
+  if(d.breakout>0)props.Breakout={number:d.breakout};
+  if(props['Timed Distance']){
+    props.Course={select:{name:d.course||v2DefaultCourse(d)}};
+    if(SWIM_HAS_STROKE_PROP)props['Timed Stroke']={select:{name:d.stroke||'Free'}};
+  }
+  const raw=String(d.splitsRaw||'').trim();
+  if(raw)props.Splits={rich_text:richChunks((d.splitD||100)+': '+raw)};
+}
+
+// ── Strength benchmarks ──────────────────────────────────────────────────────
+// What each rank means for a sprinter, in terms that scale with him rather than in
+// absolute kilos on a machine: the pull-up ladder, the heavy lower lift as a multiple
+// of bodyweight, and a broad jump. Eight tiers, the same names as the muscle ranks.
+// Platinum is roughly where strength stops being what holds a 49.9 back; the tiers
+// above it are there because the ladder does not end at the goal.
+const SPRINT_BENCH=[
+  {k:'pull', label:'Pull-up',tiers:['30 kg assist × 6','10 kg assist × 6','bodyweight × 5','bodyweight × 10','+10 kg × 5','+20 kg × 5','+30 kg × 5','+40 kg × 5']},
+  {k:'lower',label:'Trap bar or Smith squat × 4',tiers:['0.75 × bodyweight','1.0 ×','1.25 ×','1.5 ×','1.75 ×','2.0 ×','2.25 ×','2.5 ×']},
+  {k:'jump', label:'Broad jump',tiers:['190 cm','205 cm','220 cm','235 cm','250 cm','262 cm','274 cm','285 cm']},
+];
+const SPRINT_LOWER_X=[0.75,1,1.25,1.5,1.75,2,2.25,2.5];
+// −1 = not on the ladder yet. Reads the most recent logged set of each lift.
+function benchTier(k){
+  const ls=state.lastSets||{};
+  if(k==='pull'){
+    const w=ls['Weighted Pull-ups'],b=ls['Pull-ups'],a=ls['Assisted Pull-ups'];
+    let idx=-1;
+    if(a&&a.reps>=6&&a.weight<=30)idx=0;
+    if(a&&a.reps>=6&&a.weight<=10)idx=1;
+    if(b&&b.reps>=5)idx=Math.max(idx,2);
+    if(b&&b.reps>=10)idx=Math.max(idx,3);
+    if(w&&w.reps>=5&&w.weight>=10)idx=Math.max(idx,Math.min(7,3+Math.floor(w.weight/10)));
+    return idx;
+  }
+  if(k==='lower'){
+    let bw=70;
+    try{const wl=weightLatest();if(wl&&wl.kg)bw=wl.kg;}catch(_){}
+    let kg=0;
+    ['Trap Bar Deadlift','Smith Machine Squat'].forEach(function(n){
+      const s=ls[n];
+      if(s&&s.reps>=4&&s.weight>kg)kg=s.weight;
+    });
+    let idx=-1;
+    SPRINT_LOWER_X.forEach(function(x,i){if(kg>=x*bw)idx=i;});
+    return idx;
+  }
+  return null;   // the jump is measured with a tape, not logged
+}
+function sprintBenchHTML(){
+  let rows='';
+  SPRINT_BENCH.forEach(function(bn){
+    const idx=benchTier(bn.k);
+    let now='measure it monthly',next=bn.tiers[0],col='var(--text-dim)';
+    if(idx!==null){
+      if(idx<0)now='not on the ladder yet';
+      else{now=TIER_NAMES[idx]+' · '+bn.tiers[idx];col=TIER_COLORS[TIER_NAMES[idx]]||col;}
+      if(idx+1<bn.tiers.length)next=TIER_NAMES[idx+1]+' at '+bn.tiers[idx+1];
+      else next='top of the ladder';
+    }else next=bn.tiers.map(function(t,i){return TIER_NAMES[i].slice(0,3)+' '+t.replace(' cm','');}).join(' · ');
+    rows+='<div style="padding:7px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px"><span style="color:var(--text)">'+esc(bn.label)+'</span><span style="color:'+col+'">'+esc(now)+'</span></div>'+
+      '<div style="font-size:10px;color:var(--text-faint);margin-top:2px">'+(idx===null?'':'next · ')+esc(next)+'</div></div>';
+  });
+  return '<div style="border-top:1px solid var(--border);padding:14px 0 6px;margin-top:6px">'+
+    '<div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Sprint benchmarks</div>'+rows+
+    '<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:8px">Log the assist as the weight on Assisted Pull-ups and the added kilos on Weighted Pull-ups. Platinum is where strength stops being the limit for a sub-50 100.</div></div>';
+}
+
+// ── 速, 技, 力 · recalibrated ────────────────────────────────────────────────
+// 速 used to be weekly metres against 25 km, which is a distance swimmer's number
+// and said nothing about a 100. Now 100 means the goal times, swum on the planned
+// volume: half of it is where his best 50 and 100 sit between where he started
+// (28.5 and 65.0 short course) and the goals, the rest is volume against this
+// week's target, sets finished and the underwater. With no timed swim on record
+// it cannot pass 60 — volume alone is not speed.
+const V2_START_T={free100:65.0,free50:28.5};
+function v2TimeScore(){
+  const st=v2LadderState();
+  const parts=[];
+  ['free100','free50'].forEach(function(k){
+    const s=st[k];
+    if(!s.best)return;
+    parts.push(Math.max(0,Math.min(1,(V2_START_T[k]-s.best.sec)/(V2_START_T[k]-s.goal))));
+  });
+  if(HAS_WATCH){
+    const p=v2LoggedPace('v2pace');
+    if(p)parts.push(Math.max(0,Math.min(1,(V2_START_T.free100+2-p)/(V2_START_T.free100-st.free100.goal))));
+  }
+  if(!parts.length)return null;
+  return parts.reduce(function(a,b){return a+b;},0)/parts.length;
+}
+function hinaSpeedV2(){
+  const since=hinaDaysBack(28);
+  const list=(state.swimPractices||[]).filter(function(p){return p.date&&p.date>=since;});
+  if(!list.length)return 0;
+  let m=0,doneSum=0,totSum=0;
+  list.forEach(function(p){
+    m+=v2PracticeMetres(p);
+    if(p.total){doneSum+=Math.min(p.done||0,p.total);totSum+=p.total;}
+  });
+  let target=0;
+  for(let w=0;w<4;w++)target+=seasonWeek(hinaDaysBack(7*w)).km*1000;
+  const vol=Math.max(0,Math.min(1,m/Math.max(1,target)));
+  let completion=1;
+  if(totSum)completion=0.6+0.4*(doneSum/totSum);
+  const work=0.7*vol*completion+0.3*uwScore();
+  const ts=v2TimeScore();
+  if(ts==null)return hinaClamp(60*work);
+  return hinaClamp(100*(0.5*ts+0.5*work));
+}
+// 技 — his stroke count already sat past the top of the old 34→24 scale, so it had
+// stopped moving. Re-anchored to 24 poor, 13 excellent per 33 m, with the
+// underwater as a third of it.
+function hinaTechV2(){
+  let cues=0;
+  try{cues=cueOwnedList().length/SWIM_CUES.length;}catch(_){cues=0;}
+  const t=v2StrokeTarget();
+  let count=0;
+  if(t)count=Math.max(0,Math.min(1,(24-t)/11));
+  return hinaClamp(100*(0.4*cues+0.3*count+0.3*uwScore()));
+}
+// 力 — half the old machine ladder, half the sprint benchmarks, pitched at Platinum:
+// ten bodyweight pull-ups and one and a half times bodyweight on the heavy lift.
+function hinaPowerV2(base){
+  let sum=0;
+  ['pull','lower'].forEach(function(k){
+    const idx=benchTier(k);
+    if(idx!=null&&idx>=0)sum+=Math.min(1,(idx+1)/4);
+  });
+  return hinaClamp(0.5*base+0.5*100*sum/2);
+}
+// The old peaks were set on the old scales. Carried over, their 40% floor would hold
+// 速 and 技 up at numbers the new formulas never produced. Reset once, on first open.
+function v2ResetPeaks(){
+  if(!V2_DATE_ON||!state.hina||!state.hina.talent||state.hina.v2)return;
+  if(!state.hina.peak)state.hina.peak={};
+  state.hina.peak.speed=0;
+  state.hina.peak.tech=0;
+  state.hina.v2=TRAINING_V2_START;
+  saveHina();
+}
+
+// ── Garmin · import through intervals.icu ────────────────────────────────────
+// OFF. Nothing here runs unless HAS_WATCH is true, and the endpoint itself answers
+// "not configured" until an API key is set on the server. Garmin syncs to
+// intervals.icu, which keeps the original FIT file; /api/intervals fetches that
+// file, decodes it and returns plain lengths and strength sets.
+// Written against the FIT profile, not against a real file from his watch — the
+// first real swim and the first real gym session have to be checked by hand before
+// this is trusted (see garminInspect).
+const GARMIN_CFG='garmin_sync';
+// Garmin's exercise categories → the library's names. Empty on purpose: the ids a
+// FR265 actually writes are read from the first real file, not guessed. An unmapped
+// set is never written to the log; it is listed for review instead.
+const GARMIN_EXERCISE_MAP={};
+async function garminFetch(qs){
+  if(!HAS_WATCH)throw new Error('watch import is off');
+  const r=await fetch('/api/intervals?'+qs);
+  const j=await r.json();
+  if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+// Lengths → one Swim Practices row. Garmin counts the strokes of the watch arm only,
+// so its count is doubled to match the both-arms count he logs by hand.
+function garminSwimRow(act,fit){
+  const active=(fit.lengths||[]).filter(function(l){return l.active&&l.seconds>0;});
+  const poolM=fit.poolLength||SOLO_POOL_M;
+  const free=active.filter(function(l){return l.stroke===0&&l.strokes>0;}).map(function(l){return l.strokes*2;}).sort(function(a,b){return a-b;});
+  const fly=active.filter(function(l){return l.stroke===3&&l.strokes>0;}).map(function(l){return l.strokes;}).sort(function(a,b){return a-b;});
+  const median=function(a){return a.length?a[Math.floor(a.length/2)]:0;};
+  const date=String(act.start_date_local||'').slice(0,10);
+  const metres=Math.round(active.length*poolM);
+  const minutes=Math.round((fit.elapsed||act.elapsed_time||0)/60);
+  const props={
+    Name:{title:[{text:{content:date+' practice'}}]},
+    Date:{date:{start:date}},
+    Minutes:{number:minutes},
+    Remembered:{checkbox:false},
+    Source:{select:{name:'Garmin'}},
+    'Garmin Id':{rich_text:richChunks(String(act.id))},
+    Course:{select:{name:Math.abs(poolM-25)<0.5?'25 m':(Math.abs(poolM-50)<0.5?'50 m':'33 m')}},
+    Notes:{rich_text:richChunks('Imported from the watch · '+metres+' m in '+active.length+' lengths')},
+    Splits:{rich_text:richChunks(Math.round(poolM)+': '+active.slice(0,120).map(function(l){return l.seconds.toFixed(1);}).join(' '))},
+  };
+  if(median(free))props.Strokes={number:median(free)};
+  if(median(fly))props['Fly Strokes']={number:median(fly)};
+  return {props:props,metres:metres,minutes:minutes,date:date};
+}
+async function garminSync(){
+  if(!HAS_WATCH)return {skipped:'HAS_WATCH is off'};
+  const seen=new Set((state.swimPractices||[]).map(function(p){return p.garminId;}).filter(Boolean));
+  const acts=await garminFetch('op=list&oldest='+hinaDaysBack(14));
+  const out={swims:0,strength:[],unmapped:[]};
+  for(const act of acts){
+    if(act.type==='Swim'){
+      if(seen.has(String(act.id)))continue;
+      const fit=await garminFetch('op=fit&id='+encodeURIComponent(act.id));
+      const row=garminSwimRow(act,fit);
+      const page=await nCreate(SWIM_PRACTICES_DB,row.props);
+      state.swimPractices=[toSwimPractice(page)].concat(state.swimPractices||[]);
+      out.swims++;
+    }else if(act.type==='WeightTraining'){
+      const fit=await garminFetch('op=fit&id='+encodeURIComponent(act.id));
+      (fit.sets||[]).filter(function(s){return s.active;}).forEach(function(s){
+        const name=GARMIN_EXERCISE_MAP[s.category+':'+s.subtype];
+        if(name)out.strength.push({name:name,reps:s.reps,weight:s.weight,date:String(act.start_date_local||'').slice(0,10)});
+        else out.unmapped.push(s.category+':'+s.subtype);
+      });
+    }
+  }
+  // Strength sets are returned for review, not written: until GARMIN_EXERCISE_MAP has
+  // been filled from a real file there is nothing safe to log them as.
+  state.garminLast=out;
+  return out;
+}
+// First step once the watch exists: garminInspect() in the console prints what the
+// newest activity's FIT file really contains, before anything is imported.
+async function garminInspect(){
+  const acts=await garminFetch('op=list&oldest='+hinaDaysBack(7));
+  if(!acts.length)return 'no activities in the last week';
+  const fit=await garminFetch('op=fit&id='+encodeURIComponent(acts[0].id)+'&raw=1');
+  console.log(acts[0],fit);
+  return fit;
+}
+// The solo session as a planned workout for the watch. intervals.icu forwards planned
+// swims to Garmin Connect only if the description names the pool length.
+function v2WorkoutText(tag,ds){
+  const se=v2Session(tag,ds);
+  const out=[];
+  se.lines.forEach(function(l){if(!l.cut)out.push('- '+l.t);});
+  out.push('');
+  out.push('pool length: '+SOLO_POOL_M+'m');
+  return {name:se.x.t,description:out.join('\n'),metres:se.full};
+}
+async function garminPushPlan(tag,ds){
+  if(!HAS_WATCH)return {skipped:'HAS_WATCH is off'};
+  const w=v2WorkoutText(tag,ds);
+  const r=await fetch('/api/intervals?op=plan',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({date:ds||localToday(),name:w.name,description:w.description})});
+  return r.json();
+}
+// ══════════════════════════════════════════════════════════════════════════════
 
 // Which days an exercise belongs to, read off the split rather than the Day property
 // in Notion. That property was set for the old Push/Pull/Legs days and is empty on most
@@ -8401,6 +9516,7 @@ function renderSessionPlan(){
         ${rows}</div>`;
     });
   }
+  if(TRAIN_V2&&p&&p.blocks.length>2)body+=sprintBenchHTML();
   const label=(WORKOUT_WEEK.find(w=>w.abbr===abbr)||{}).label||abbr;
   b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSessionPlan()">← Back</button></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">
@@ -9010,6 +10126,13 @@ const HINA_PARAMS=[
   {k:'focus', ch:'凝', en:'Focus',     win:14, src:'study plan kept'},
   {k:'calm',  ch:'心', en:'Calm',      win:14, src:'sleep, rest'},
 ];
+if(TRAIN_V2){
+  HINA_PARAMS.forEach(function(p){
+    if(p.k==='speed')p.src='times against the ladder + volume against the week + underwater';
+    if(p.k==='tech')p.src='cues owned + stroke count + underwater';
+    if(p.k==='power')p.src='PR ladder + sprint benchmarks';
+  });
+}
 function hinaClamp(v){return Math.max(0,Math.min(100,Math.round(v)));}
 function hinaDaysBack(n){
   const d=new Date(localToday()+'T12:00:00');
@@ -9029,6 +10152,8 @@ const SWIM_M_PER_MIN=22;
 // (15m sprints, the fly ladder stage), so a fly session is never scored as near zero.
 function soloPracticeMetres(setText){
   if(!setText||setText.indexOf('Solo \u00b7 ')!==0)return 0;
+  const v2m=/\u00b7 (\d{3,5})m$/.exec(setText);   // a v2 session carries its own metres
+  if(v2m)return parseInt(v2m[1]);
   const name=setText.slice('Solo \u00b7 '.length);
   const x=SOLO_SETS.find(function(v){return v.t===name;});
   if(!x)return 0;
@@ -9042,6 +10167,7 @@ function soloPracticeMetres(setText){
   return Math.max(m,x.total||0);
 }
 function hinaSpeed(){
+  if(TRAIN_V2)return hinaSpeedV2();
   const since=hinaDaysBack(28);
   const list=(state.swimPractices||[]).filter(p=>p.date&&p.date>=since);
   if(!list.length)return 0;
@@ -9073,6 +10199,11 @@ function hinaSpeed(){
 const HINA_POWER_MUSCLES=['Latissimus Dorsi','Rhomboids','Triceps','Posterior Deltoid'];
 const HINA_POWER_TIER=11;
 function hinaPower(){
+  const base=hinaPowerBase();
+  if(TRAIN_V2)return hinaPowerV2(base);
+  return base;
+}
+function hinaPowerBase(){
   const prs=state.prs||{};
   let n=0,sum=0;
   HINA_POWER_MUSCLES.forEach(mu=>{
@@ -9091,6 +10222,7 @@ function hinaPower(){
 // 技 — the one that does not fade. Cues owned are permanent, and a stroke count
 // is a motor pattern, not fitness.
 function hinaTech(){
+  if(TRAIN_V2)return hinaTechV2();
   let cues=0;
   try{cues=cueOwnedList().length/SWIM_CUES.length;}catch(_){cues=0;}
   const t=strokeTarget();
@@ -9152,6 +10284,7 @@ function hinaRaw(){
 // never the building — which is what makes a wrecked November survivable.
 const HINA_FLOOR=0.4;
 function hinaCurrent(){
+  v2ResetPeaks();
   const raw=hinaRaw();
   const peak=(state.hina&&state.hina.peak)||{};
   const out={};
@@ -10408,7 +11541,7 @@ function recapRowHTML(){
 const SWIM_SCALES=['Full','By 50s','By 25s'];
 let swimDraft=null;
 
-const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds']),strokes:g.num(q.Strokes),flyStrokes:g.num(q['Fly Strokes'])};};
+const toSwimPractice=p=>{const q=p.properties;return{id:p.id,date:g.date(q.Date),minutes:g.num(q.Minutes),set:g.text(q['Main Set']),done:g.num(q['Reps Done']),total:g.num(q['Reps Total']),scaled:g.select(q.Scaled),remembered:g.checkbox(q.Remembered),notes:g.text(q.Notes),focus:g.text(q.Focus),focusDone:g.checkbox(q['Focus Done']),timedDistance:g.num(q['Timed Distance']),timedSeconds:g.num(q['Timed Seconds']),strokes:g.num(q.Strokes),flyStrokes:g.num(q['Fly Strokes']),kicks:g.num(q.Kicks),breakout:g.num(q.Breakout),course:g.select(q.Course),splits:g.text(q.Splits),garminId:g.text(q['Garmin Id']),timedStroke:g.select(q['Timed Stroke'])};};
 async function loadSwimPractices(){
   try{
     const p=await nQuery(SWIM_PRACTICES_DB,null,[{property:'Date',direction:'descending'}]);
@@ -10526,7 +11659,12 @@ function swimBests(){
   (state.swimPractices||[]).forEach(p=>{
     if(!p.timedDistance||!p.timedSeconds)return;
     const d=p.timedDistance;
-    if(!best[d]||p.timedSeconds<best[d].sec)best[d]={sec:p.timedSeconds,date:p.date};
+    // A row that says which pool it was swum in is brought back to 25 m first; a
+    // 33 m time converts to nothing. Rows without a course are 25 m, as they always were.
+    if(p.timedStroke==='Fly')return;   // fly has its own ladder; this is the freestyle list
+    let sec=p.timedSeconds;
+    if(p.course){sec=v2ScmSeconds(p);if(sec==null)return;}
+    if(!best[d]||sec<best[d].sec)best[d]={sec:sec,date:p.date};
   });
   return best;
 }
@@ -10535,7 +11673,7 @@ function openSwimPractice(minutes,presetSet){
   if(document.getElementById('swimPage'))return;
   const last=latestRememberedSwim();
   const set=presetSet||(last?last.set:'');
-  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:'',strokes:0,flyStrokes:0};
+  swimDraft={minutes:minutes||0,set,total:swimSetTotal(set)||(last&&last.total)||8,done:0,scaled:'Full',notes:'',focus:swimFocusFor(localToday()).t,focusDone:false,timedDist:null,timedRaw:'',strokes:0,flyStrokes:0,kicks:0,breakout:0,course:null,stroke:'Free',splitsRaw:'',splitD:0};
   const el=document.createElement('div');el.id='swimPage';el.className='rival-page';
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
     <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSwimPractice()">Skip — not a practice</button></div>
@@ -10554,7 +11692,7 @@ function openSwimPractice(minutes,presetSet){
 // Typing a main set on a wet phone is the worst part of logging a swim. Offer the solo
 // sessions and the sets already in the log — coach repeats sets constantly.
 function swimSetPresets(){
-  const out=SOLO_SETS.map(x=>({label:x.t,text:'Solo · '+x.t}));
+  const out=TRAIN_V2?v2SetPresets():SOLO_SETS.map(x=>({label:x.t,text:'Solo · '+x.t}));
   const seen=new Set(out.map(o=>o.text.toLowerCase()));
   (state.swimPractices||[]).forEach(p=>{
     const t=(p.set||'').trim();
@@ -10593,6 +11731,8 @@ function renderSwimPractice(){
     if(d.scaled===s)st='background:rgba(232,234,240,0.12);color:var(--text)';
     chips+=`<button class="sil-toggle-btn" style="flex:1;text-align:center;${st}" onclick="swimSetScaled('${s}')">${s}</button>`;
   });
+  let v2Extra='',v2Timed='';
+  if(TRAIN_V2){v2Extra=v2SwimFormExtra(d);v2Timed=v2SwimFormTimed(d);}
   b.innerHTML=`<div style="font-size:18px;font-weight:800;letter-spacing:0.12em;margin:18px 0 4px">SWIM PRACTICE</div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:18px">${d.minutes} min logged · now just the main set</div>
     <div class="wec-lbl">Main set</div>
@@ -10618,10 +11758,10 @@ function renderSwimPractice(){
       <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;min-width:54px;text-align:center"><span id="swimFlyStrokes">${d.flyStrokes||'—'}</span></div>
       <button class="wec-log-btn" style="width:auto;margin:0;padding:8px 18px" onclick="swimFlyStrokeStep(1)">+</button>
     </div>
-    <div class="wec-lbl">Timed swim (optional)</div>
+    ${v2Extra}<div class="wec-lbl">Timed swim (optional)</div>
     <div style="display:flex;gap:4px;margin:6px 0 8px">${distChips}</div>
     <input type="text" class="wec-inp" id="swimTime" value="${esc(d.timedRaw)}" placeholder="29.2 or 1:45.3" oninput="swimDraft.timedRaw=this.value" style="width:100%;text-align:left;margin-bottom:16px">
-    <div class="wec-lbl">This week's focus</div>
+    ${v2Timed}<div class="wec-lbl">This week's focus</div>
     <div onclick="swimToggleFocus()" style="display:flex;align-items:center;gap:10px;margin:6px 0 16px;cursor:pointer">
       <span style="width:18px;height:18px;border-radius:3px;border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${d.focusDone?'✓':''}</span>
       <span style="font-size:11px;color:var(--text)">${esc(d.focus||'')}</span>
@@ -10705,6 +11845,7 @@ async function saveSwimPractice(remembered){
     props.Scaled={select:{name:d.scaled}};
     if(d.notes.trim())props.Notes={rich_text:richChunks(d.notes.trim())};
   }
+  if(TRAIN_V2)v2SwimSaveProps(d,props);
   try{
     const page=await nCreate(SWIM_PRACTICES_DB,props);
     state.swimPractices=[toSwimPractice(page),...(state.swimPractices||[])];
