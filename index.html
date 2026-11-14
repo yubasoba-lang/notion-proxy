@@ -5359,6 +5359,7 @@ async function refresh(force=true){
       }
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
+    if(!skip)setTimeout(()=>{planAskSoon();},1500);   // a day left unticked? ask once per launch
     if(!skip)saveHomeSnapshot();   // next launch starts from this
   }
   // Replay queued offline writes BEFORE reloading, so a pending tick isn't clobbered by stale data.
@@ -7789,20 +7790,46 @@ function renderSoloSets(){
 }
 function closeSoloSets(){document.getElementById('soloSetsPage')?.remove();_soloIdx=null;}
 // ── Study plan ───────────────────────────────────────────────────────────────
-// The catch-up plan lives in study_plan.json at the repo root, fetched at runtime so
-// regenerating the file needs no code change. Completion state is a separate thing and
-// is ours: it syncs through an AppConfig row, the same key/value pattern the lecture
-// progress uses, and mirrors to localStorage so the tab paints before the network.
+// The plan lives in study_plan.json at the repo root, fetched at runtime so
+// regenerating the file needs no code change. It is never rewritten from here.
+// Completion state is ours: it syncs through an AppConfig row, the same key/value
+// pattern the lecture progress uses, and mirrors to localStorage so the tab paints
+// before the network.
+//
+// 14 Nov 2026 — the plan rearranges itself. Ticking was switched off because unticked
+// tasks piled into an Overdue list that only grew. Now there is no overdue list:
+// unfinished topics from past days are laid back out over the days that are left, and
+// when they no longer fit before the exam the plan says so and offers choices instead
+// of cramming. Nothing here guesses: a day counts from ticks, or from the one-tap
+// answer (Did it all / Floor only / Nothing) the app asks for a day left unticked.
+//
+// The layout is never stored. planLayout() recomputes it from study_plan.json + ticks +
+// choices every time, so the original plan is always intact and Reset is just "forget
+// the choices". The choices live under one reserved key (PLAN_OV) in the same blob as
+// the ticks.
 const PLAN_CACHE_KEY='grind-study-plan-v1';
 const PLAN_DONE_KEY='grind-plan-done-v1';
 const PLAN_STATE_CFG='study_plan_state';
-// 14 Nov 2026: ticking is switched off. Nothing had been ticked since 20 Oct, so every
-// past task sat in an Overdue list that only grew, the progress bars read 0%, and 凝 on
-// the Hina screen was stuck at 0 — the plan looked impossible even on days the work
-// got done. The plan is now a read-only guide to what to study today. Tick state is
-// still loaded and saved untouched, so setting this back to true restores everything.
-const PLAN_TICKS=false;
+const PLAN_TICKS=true;
 const PLAN_SUBJECT_ORDER=['anki','micro','pharm','patho','pathophys','immuno','rest','ecg','german'];
+const PLAN_OV='_reflow';
+// Nothing dated before the 14 Nov replan is carried forward: that plan restarts
+// Section II at II.1 on the 15th, so carrying the old days would duplicate topics.
+const PLAN_EPOCH='2026-11-15';
+// Only single numbered topics (Micro II.14) count toward this; blurt, cram and review
+// blocks count toward the day's minutes only.
+const PLAN_MICRO_CAP=3;
+// Exam-prep days, as days before each exam: 15 Nov / 23–24 Nov / 11–13 Dec / 15–16 Dec.
+// They take no catch-up unless it is chosen in the fit options, and the block moves
+// with its exam when the exam date is moved.
+const PLAN_PREP_N={'2026-11-16|pharm':1,'2026-11-25|patho':2,'2026-12-14|micro':3,'2026-12-17|pharm':2};
+// Blocks that belong to their day and never move.
+const PLAN_FIXED_RE=/blurt|cram|recall|out loud|full run|weak spots|light/i;
+// A numbered topic in a series: "Micro II.14", "Pharm A7".
+const PLAN_SERIES_RE=/^(Micro (?:I|II|III|IV|V)|Pharm A)\.?(\d+)$/;
+let _planStateLive=false;
+function planAddDays(ds,n){return localDay(new Date(new Date(ds+'T12:00:00').getTime()+n*86400000));}
+function planDiffDays(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);}
 async function loadStudyPlan(){
   try{
     const r=await fetch('/study_plan.json?v='+Date.now(),{cache:'no-store'});
@@ -7817,15 +7844,88 @@ async function loadStudyPlan(){
     }
   }
 }
+// ── Merging two copies of the state ──────────────────────────────────────────
+// The state is one blob, so a plain save is last-write-wins: a tab left open on the
+// laptop would write its old copy over ticks made on the phone. Every record carries
+// the time it last changed; merging keeps, per task and per choice, whichever side
+// changed it most recently. Nothing is ever deleted — an untick is a record too — so
+// "absent on one side" always means "that side has not heard yet".
+function planRecAt(r){if(!r)return '';return r.at||r.doneAt||'';}
+function planMergeMap(a,b){
+  const out={};
+  const A=a||{},B=b||{};
+  Object.keys(A).forEach(k=>{out[k]=A[k];});
+  Object.keys(B).forEach(k=>{
+    if(!(k in out)){out[k]=B[k];return;}
+    if(planRecAt(B[k])>planRecAt(out[k]))out[k]=B[k];
+  });
+  return out;
+}
+function planMerge(local,remote){
+  const L=local||{},R=remote||{};
+  const out={};
+  const ids={};
+  Object.keys(L).forEach(k=>{ids[k]=1;});
+  Object.keys(R).forEach(k=>{ids[k]=1;});
+  Object.keys(ids).forEach(id=>{
+    if(id===PLAN_OV)return;
+    const a=L[id],b=R[id];
+    if(a===undefined){out[id]=b;return;}
+    if(b===undefined){out[id]=a;return;}
+    if(planRecAt(b)>planRecAt(a)){out[id]=b;}else{out[id]=a;}
+  });
+  const lo=L[PLAN_OV],ro=R[PLAN_OV];
+  if(lo||ro){
+    const a=lo||{},b=ro||{};
+    const o={v:1};
+    ['fix','pulled','dropped','exams','extra','open'].forEach(n=>{
+      const m=planMergeMap(a[n],b[n]);
+      if(Object.keys(m).length)o[n]=m;
+    });
+    const ra=(a.resetAt||'')>(b.resetAt||'')?(a.resetAt||''):(b.resetAt||'');
+    if(ra)o.resetAt=ra;
+    const la=a.last,lb=b.last;
+    if(la&&lb){o.last=planRecAt(lb)>planRecAt(la)?lb:la;}
+    else if(la||lb){o.last=la||lb;}
+    out[PLAN_OV]=o;
+  }
+  return out;
+}
+function planParseState(txt){
+  const s=String(txt||'').trim();
+  if(!s)return {};
+  const j=JSON.parse(s);
+  if(!j||typeof j!=='object'||Array.isArray(j))throw new Error('plan state is not an object');
+  return j;
+}
+function planLocalCopy(){
+  let c={};
+  try{const s=localStorage.getItem(PLAN_DONE_KEY);if(s)c=JSON.parse(s)||{};}catch(_){c={};}
+  return planMerge(state.planDone||{},c);
+}
 async function loadPlanState(){
   try{
     const rows=await appConfigRows(PLAN_STATE_CFG);
+    const local=planLocalCopy();
     if(rows.length){
       state.planStatePageId=rows[0].id;
-      try{state.planDone=JSON.parse(g.text(rows[0].properties.Value))||{};}catch(_){state.planDone={};}
+      let remote=null;
+      try{remote=planParseState(g.text(rows[0].properties.Value));}catch(_){remote=null;}
+      if(remote){
+        // Local changes that never reached Notion (a save that failed offline) survive
+        // the reload, and go up with the next save.
+        state.planDone=planMerge(local,remote);
+        _planStateLive=true;
+        if(JSON.stringify(state.planDone)!==JSON.stringify(remote))savePlanState();
+      }else{
+        // An unreadable row is left alone: keep what this device has and do not save
+        // over it until a read succeeds.
+        state.planDone=local;
+      }
     }else{
       state.planStatePageId=null;
-      try{const c=localStorage.getItem(PLAN_DONE_KEY);state.planDone=c?JSON.parse(c):{};}catch(_){state.planDone={};}
+      state.planDone=local;
+      _planStateLive=true;
     }
     try{localStorage.setItem(PLAN_DONE_KEY,JSON.stringify(state.planDone));}catch(_){}
   }catch(e){
@@ -7833,85 +7933,621 @@ async function loadPlanState(){
     try{const c=localStorage.getItem(PLAN_DONE_KEY);if(c&&!Object.keys(state.planDone||{}).length)state.planDone=JSON.parse(c);}catch(_){}
   }
 }
-let _planSaveTimer=null;
+let _planSaveTimer=null,_planSaving=false,_planSaveAgain=false;
 function savePlanState(){
   try{localStorage.setItem(PLAN_DONE_KEY,JSON.stringify(state.planDone||{}));}catch(_){}
   clearTimeout(_planSaveTimer);
-  _planSaveTimer=setTimeout(async()=>{
-    try{
-      const json=JSON.stringify(state.planDone||{});
+  _planSaveTimer=setTimeout(planSyncNow,900);
+}
+// Read the row again, merge, then write. A stale tab therefore adds its changes to
+// whatever the other device saved instead of replacing it.
+async function planSyncNow(){
+  if(_planSaving){_planSaveAgain=true;return;}
+  _planSaving=true;
+  try{
+    appConfigInvalidate();
+    const rows=await appConfigRows(PLAN_STATE_CFG);
+    let remote={};
+    if(rows.length){
+      state.planStatePageId=rows[0].id;
+      remote=planParseState(g.text(rows[0].properties.Value));   // throws → nothing is written
+    }else{
+      state.planStatePageId=null;
+    }
+    const before=JSON.stringify(state.planDone||{});
+    const merged=planMerge(state.planDone||{},remote);
+    const json=JSON.stringify(merged);
+    state.planDone=merged;
+    _planStateLive=true;
+    try{localStorage.setItem(PLAN_DONE_KEY,json);}catch(_){}
+    if(json!==JSON.stringify(remote)){
       const rich=richChunks(json);
       if(state.planStatePageId){
         await nPatch(state.planStatePageId,{Value:{rich_text:rich}});
       }else{
-        appConfigInvalidate();
         const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:PLAN_STATE_CFG}}]},Value:{rich_text:rich}});
         state.planStatePageId=page.id;
+        appConfigInvalidate();
       }
-    }catch(e){warn('savePlanState',e);showToast('Plan save failed — will retry');}
-  },900);
+    }
+    if(json!==before)planRerender();   // the other device's ticks just arrived
+  }catch(e){warn('savePlanState',e);showToast('Plan save failed — will retry');}
+  _planSaving=false;
+  if(_planSaveAgain){_planSaveAgain=false;savePlanState();}
 }
-// A pushed task belongs to the day it was pushed to, not the day it was written for.
+// ── Reading the state ────────────────────────────────────────────────────────
+// Old tick records ({done,doneAt}, some with movedTo) load and count exactly as before.
+// movedTo is kept on the record but no longer places anything: the layout does that.
 function planMovedTo(id){const r=(state.planDone||{})[id];return r&&r.movedTo?r.movedTo:null;}
 function planIsDone(id){const r=(state.planDone||{})[id];return !!(r&&r.done);}
-function planAllTasks(){
-  const out=[];
-  ((state.studyPlan||{}).days||[]).forEach(d=>d.tasks.forEach(t=>out.push({...t,planDate:d.date,day:d})));
+// The day a task was done ON. A tick made later for an earlier day carries that day.
+function planDoneDay(id){
+  const r=(state.planDone||{})[id];
+  if(!r||!r.done)return null;
+  if(r.day)return r.day;
+  if(r.doneAt)return localDay(new Date(r.doneAt))||'0000-00-00';
+  return '0000-00-00';
+}
+function planOvRaw(){return ((state.planDone||{})[PLAN_OV])||{};}
+// The choices in force: tombstones dropped, and everything from before the last reset.
+// One-tap day answers are completion data, like ticks, so a reset does not clear them.
+function planLiveOv(){
+  const o=planOvRaw();
+  const ra=o.resetAt||'';
+  const live=(name,val)=>{
+    const out={};
+    const m=o[name]||{};
+    Object.keys(m).forEach(k=>{
+      const e=m[k];
+      if(!e||e.off)return;
+      if((e.at||'')<=ra)return;
+      out[k]=val(e);
+    });
+    return out;
+  };
+  return {
+    pulled:live('pulled',e=>e.to),
+    dropped:live('dropped',()=>true),
+    exams:live('exams',e=>e.date),
+    extra:live('extra',e=>e.n||2),
+    open:live('open',()=>true)
+  };
+}
+function planFixMap(){
+  const m=planOvRaw().fix||{};
+  const out={};
+  Object.keys(m).forEach(k=>{if(m[k]&&!m[k].off&&m[k].k)out[k]=m[k].k;});
   return out;
 }
-function planTasksOn(ds){
-  return planAllTasks().filter(t=>(planMovedTo(t.id)||t.planDate)===ds);
+function planOvSet(name,key,entry){
+  if(!state.planDone)state.planDone={};
+  const o={...(state.planDone[PLAN_OV]||{v:1})};
+  o[name]={...(o[name]||{})};
+  o[name][key]={...entry,at:new Date().toISOString()};
+  state.planDone[PLAN_OV]=o;
 }
-function planOverdue(){
-  if(!PLAN_TICKS)return [];
+// ── The plan, indexed once per loaded file ───────────────────────────────────
+let _planIx=null,_planIxSrc=null;
+function planIndex(){
+  const plan=state.studyPlan;
+  if(!plan||!Array.isArray(plan.days))return null;
+  if(_planIxSrc===plan&&_planIx)return _planIx;
+  const allExams=(plan.exams||[]).map(e=>({key:e.date+'|'+e.subject,subject:e.subject,orig:e.date,title:e.title,target:e.target||'',prep:PLAN_PREP_N[e.date+'|'+e.subject]||0}));
+  allExams.sort((a,b)=>a.orig.localeCompare(b.orig));
+  const hasTask={};
+  plan.days.forEach(d=>(d.tasks||[]).forEach(t=>{if(t.kind==='exam')hasTask[d.date+'|'+t.subject]=true;}));
+  // Only exams that sit in the plan's days as an exam task are deadlines for it.
+  const exams=allExams.filter(e=>hasTask[e.key]);
+  const examByKey={};
+  exams.forEach(e=>{examByKey[e.key]=e;});
+  const tasks=[],byId={},days=[],meta={};
+  let cap=0;
+  plan.days.forEach(d=>{
+    days.push(d.date);meta[d.date]=d;
+    let tot=0;
+    (d.tasks||[]).forEach((t,i)=>{
+      const est=t.est_minutes||0;
+      if(t.kind==='study')tot+=est;
+      const title=t.title||'';
+      let tier='floor';
+      if(/TARGET/.test(t.detail||''))tier='target';
+      const m=PLAN_SERIES_RE.exec(title);
+      let examKey=null;
+      if(t.kind==='exam'){if(examByKey[d.date+'|'+t.subject])examKey=d.date+'|'+t.subject;}
+      else{const ex=exams.find(e=>e.subject===t.subject&&e.orig>d.date);if(ex)examKey=ex.key;}
+      const fixed=t.kind!=='study'||t.subject==='anki'||!est||PLAN_FIXED_RE.test(title)||d.date<PLAN_EPOCH||!examKey;
+      // A fixed block inside an exam's prep window rides with that exam if it is moved.
+      let block=null;
+      if(t.kind==='exam'){block=examKey;}
+      else if(fixed&&t.subject!=='anki'){
+        const ex=exams.find(e=>e.subject===t.subject&&e.prep&&d.date<e.orig&&d.date>=planAddDays(e.orig,-e.prep));
+        if(ex)block=ex.key;
+      }
+      const o={id:t.id,subject:t.subject,kind:t.kind,title,detail:t.detail||'',est,est_minutes:est,orig:d.date,planDate:d.date,idx:i,tier,
+        series:m?m[1]:null,num:m?parseInt(m[2],10):i,group:m?m[1]:'~'+t.subject,fixed,examKey,block};
+      tasks.push(o);byId[o.id]=o;
+    });
+    if(tot>cap)cap=tot;
+  });
+  _planIx={tasks,byId,days,meta,cap,exams,allExams,examByKey};
+  _planIxSrc=plan;
+  return _planIx;
+}
+function planAllTasks(){const ix=planIndex();return ix?ix.tasks:[];}
+// ── The reflow ───────────────────────────────────────────────────────────────
+// planLayout(D) answers "on the morning of day D, where does everything sit?".
+// Rules, in the order they bite:
+//   · Exams, Anki and the blurt/cram/recall blocks never move (a missed Anki day is
+//     gone, not rescheduled).
+//   · Each series (Micro II, Micro III, Pharm A) keeps its numbered order. Its topics
+//     fill the places the plan already has for that series from D onward — floor
+//     places before target places — so a missed topic takes the next place and the
+//     rest slide one along. No day grows by sliding.
+//   · If the series no longer fits in its own places, catch-up places open on the
+//     earliest days that can take one: at most one catch-up task a day (two where it
+//     was allowed in the fit options), never on an exam day or a prep day, never past
+//     3 micro topics, never past the heaviest day in the original plan (ix.cap).
+//   · Whatever still has no place before the day of the exam is NOT placed. It is
+//     returned as unfit, and the Today screen asks what to do.
+//   · If a series has more places than topics (work was pulled forward), the latest
+//     target places are the ones released.
+// Ticks made ON day D do not change the layout of D — otherwise ticking a topic would
+// slide the next one into its place and today would never end.
+let _planMemo={},_planMemoPlan=null,_planMemoDone=null,_planMemoVer=-1,_planVer=0;
+function planBump(){_planVer++;}
+function planLayout(D,ovIn){
+  const ix=planIndex();
+  if(!ix)return null;
+  if(_planMemoPlan!==state.studyPlan||_planMemoDone!==state.planDone||_planMemoVer!==_planVer){
+    _planMemo={};_planMemoPlan=state.studyPlan;_planMemoDone=state.planDone;_planMemoVer=_planVer;
+  }
+  if(!ovIn&&_planMemo[D])return _planMemo[D];
+  const ov=ovIn||planLiveOv();
+  const exDate={},lastDay={};
+  ix.exams.forEach(e=>{exDate[e.key]=ov.exams[e.key]||e.orig;lastDay[e.key]=planAddDays(exDate[e.key],-1);});
+  const blocked={},examDay={},prepDay={};
+  ix.exams.forEach(e=>{
+    examDay[exDate[e.key]]=e.key;blocked[exDate[e.key]]=true;
+    for(let k=1;k<=e.prep;k++){
+      const p=planAddDays(exDate[e.key],-k);
+      prepDay[p]=e.key;
+      if(!ov.open[p])blocked[p]=true;
+    }
+  });
+  const load={},micro={},extraUsed={},items={},place={},kindOf={};
+  const daySet={};
+  ix.days.forEach(d=>{daySet[d]=true;});
+  const add=(d,id,tier,kind)=>{(items[d]=items[d]||[]).push({id,tier,kind});place[id]=d;kindOf[id]=kind;daySet[d]=true;};
+  const groups={};
+  ix.tasks.forEach(t=>{
+    if(t.fixed){
+      if(ov.dropped[t.id])return;
+      let d=t.orig;
+      if(t.block){
+        const e0=ix.examByKey[t.block].orig;
+        if(exDate[t.block]!==e0)d=planAddDays(t.orig,planDiffDays(e0,exDate[t.block]));
+      }
+      add(d,t.id,null,'fixed');
+      if(t.kind==='study')load[d]=(load[d]||0)+t.est;
+      return;
+    }
+    if(!groups[t.group])groups[t.group]={key:t.group,series:!!t.series,subject:t.subject,examKey:t.examKey,all:[],queue:[],slots:[],freed:[],est:0};
+    groups[t.group].all.push(t);
+  });
+  // The calendar: the plan's own days, plus every day up to a moved exam.
+  const planLast=ix.days[ix.days.length-1];
+  let maxDay=planLast;
+  Object.keys(exDate).forEach(k=>{if(exDate[k]>maxDay)maxDay=exDate[k];});
+  for(let d=planLast;d<maxDay;){d=planAddDays(d,1);daySet[d]=true;}
+  const dayList=Object.keys(daySet).sort();
+  const unfit=[],expired=[];
+  const glist=Object.keys(groups).map(k=>groups[k]);
+  glist.forEach(g=>{
+    g.last=lastDay[g.examKey];
+    g.isMicro=g.series&&g.subject==='micro';
+    g.all.forEach(t=>{
+      if(t.est>g.est)g.est=t.est;
+      if(ov.dropped[t.id])return;
+      const dd=planDoneDay(t.id);
+      if(dd&&dd<D){place[t.id]=dd;kindOf[t.id]='done';return;}
+      if(g.last<D){expired.push(t.id);return;}       // its exam has been sat
+      if(ov.pulled[t.id]===D){
+        // Brought into D by hand. It sits on D whatever the caps say — that was the
+        // point. Until it is ticked its own place stays reserved, so nothing else
+        // moves; ticking it releases the place and the series slides earlier.
+        add(D,t.id,'pulled','pull');
+        load[D]=(load[D]||0)+t.est;
+        if(g.isMicro)micro[D]=(micro[D]||0)+1;
+        if(dd===D)return;
+        g.queue.push({t,hold:true});
+        return;
+      }
+      g.queue.push({t,hold:false});
+    });
+    if(g.series){
+      g.all.forEach(t=>{if(t.orig>=D&&t.orig<=g.last)g.slots.push({d:t.orig,tier:t.tier,idx:t.idx});});
+    }else{
+      // Not a numbered series (the pathology blocks): each keeps its own day; only the
+      // missed ones look for a catch-up place.
+      const stay=[],carry=[];
+      g.queue.forEach(q=>{if(q.t.orig>=D&&q.t.orig<=g.last&&!q.hold)stay.push(q);else if(!q.hold)carry.push(q);});
+      stay.forEach(q=>{add(q.t.orig,q.t.id,q.t.tier,'slot');load[q.t.orig]=(load[q.t.orig]||0)+q.t.est;});
+      g.queue=carry;
+    }
+  });
+  const rank={floor:0,target:1,extra:2};
+  const slotSort=(a,b)=>a.d.localeCompare(b.d)||(rank[a.tier]-rank[b.tier])||(a.idx-b.idx);
+  // Pass 1 — every series claims the places the plan already gave it.
+  glist.forEach(g=>{
+    if(!g.series)return;
+    g.slots.sort(slotSort);
+    let surplus=g.slots.length-g.queue.length;
+    ['target','floor'].forEach(tier=>{
+      for(let i=g.slots.length-1;i>=0&&surplus>0;i--){
+        if(g.slots[i].tier!==tier)continue;
+        g.freed.push(g.slots[i]);g.slots.splice(i,1);surplus--;
+      }
+    });
+    g.slots=g.slots.filter(s=>{
+      if((load[s.d]||0)+g.est>ix.cap){return false;}
+      load[s.d]=(load[s.d]||0)+g.est;
+      if(g.isMicro)micro[s.d]=(micro[s.d]||0)+1;
+      return true;
+    });
+  });
+  // Pass 2 — catch-up places, nearest exam first, earliest day first.
+  const canTake=(g,d,est)=>{
+    if(d<D||d>g.last)return false;
+    if(blocked[d])return false;
+    if((extraUsed[d]||0)>=(ov.extra[d]||1))return false;
+    if((load[d]||0)+est>ix.cap)return false;
+    if(g.isMicro&&(micro[d]||0)>=PLAN_MICRO_CAP)return false;
+    return true;
+  };
+  const take=(g,d,est)=>{
+    extraUsed[d]=(extraUsed[d]||0)+1;
+    load[d]=(load[d]||0)+est;
+    if(g.isMicro)micro[d]=(micro[d]||0)+1;
+  };
+  glist.sort((a,b)=>(a.last||'').localeCompare(b.last||'')||a.all[0].orig.localeCompare(b.all[0].orig)||a.key.localeCompare(b.key));
+  glist.forEach(g=>{
+    if(g.last<D)return;
+    if(g.series){
+      let need=g.queue.length-g.slots.length;
+      for(let i=0;i<dayList.length&&need>0;i++){
+        const d=dayList[i];
+        while(need>0&&canTake(g,d,g.est)){take(g,d,g.est);g.slots.push({d,tier:'extra',idx:999});need--;}
+      }
+      g.slots.sort(slotSort);
+      g.queue.forEach((q,i)=>{
+        const s=g.slots[i];
+        if(q.hold)return;                       // sits on D; its place stays empty
+        if(!s){unfit.push(q.t.id);return;}
+        add(s.d,q.t.id,s.tier,s.tier==='extra'?'extra':'slot');
+      });
+    }else{
+      g.queue.forEach(q=>{
+        let put=null;
+        for(let i=0;i<dayList.length;i++){if(canTake(g,dayList[i],q.t.est)){put=dayList[i];break;}}
+        if(!put){unfit.push(q.t.id);return;}
+        take(g,put,q.t.est);
+        add(put,q.t.id,'extra','extra');
+      });
+    }
+  });
+  // A task ticked on D belongs to D, whatever a later choice did to the layout.
+  ix.tasks.forEach(t=>{
+    if(t.fixed||planDoneDay(t.id)!==D)return;
+    if(place[t.id]===D)return;
+    const was=place[t.id];
+    if(was&&items[was])items[was]=items[was].filter(x=>x.id!==t.id);
+    const ui=unfit.indexOf(t.id);
+    if(ui>=0)unfit.splice(ui,1);
+    add(D,t.id,'extra','extra');
+  });
+  // Fit, per exam: how many of the days left carry more than the floor, out of how
+  // many could.
+  const fit={};
+  ix.exams.forEach(e=>{fit[e.key]={key:e.key,date:exDate[e.key],used:{},avail:{},unfit:[],left:0};});
+  glist.forEach(g=>{
+    const f=fit[g.examKey];
+    if(!f||g.last<D)return;
+    f.left+=g.queue.filter(q=>!q.hold).length;
+    g.freed.forEach(s=>{if(s.tier==='target')f.avail[s.d]=true;});
+  });
+  Object.keys(items).forEach(d=>{
+    if(d<D)return;
+    items[d].forEach(it=>{
+      if(it.kind!=='slot'&&it.kind!=='extra')return;
+      if(it.tier!=='target'&&it.tier!=='extra')return;
+      const f=fit[ix.byId[it.id].examKey];
+      if(f){f.used[d]=true;f.avail[d]=true;}
+    });
+  });
+  unfit.forEach(id=>{const f=fit[ix.byId[id].examKey];if(f)f.unfit.push(id);});
+  Object.keys(fit).forEach(k=>{
+    const f=fit[k];
+    f.n=Object.keys(f.used).length;
+    f.m=Object.keys(f.avail).length;
+  });
+  const L={D,dayList,items,place,kindOf,unfit,expired,load,micro,extraUsed,exDate,lastDay,blocked,examDay,prepDay,fit,cap:ix.cap};
+  if(!ovIn)_planMemo[D]=L;
+  return L;
+}
+// What a given day holds. A past day is read from the layout of ITS OWN morning, so
+// it shows what was actually asked of that day; today and later come from today's.
+function planItemsOn(ds,L){
+  const ix=planIndex();
+  if(!ix)return [];
   const today=localToday();
-  return planAllTasks()
-    .filter(t=>t.kind==='study'&&!planIsDone(t.id)&&(planMovedTo(t.id)||t.planDate)<today)
-    .sort((a,b)=>((planMovedTo(a.id)||a.planDate)).localeCompare(planMovedTo(b.id)||b.planDate));
+  const lay=L||planLayout(ds<today?ds:today);
+  if(!lay)return [];
+  const out=(lay.items[ds]||[]).map(it=>({id:it.id,tier:it.tier,kind:it.kind,t:ix.byId[it.id]}));
+  const so=k=>{const i=PLAN_SUBJECT_ORDER.indexOf(k);return i<0?99:i;};
+  out.sort((a,b)=>(so(a.t.subject)-so(b.t.subject))||a.t.group.localeCompare(b.t.group)||((a.t.series?a.t.num:0)-(b.t.series?b.t.num:0))||a.t.orig.localeCompare(b.t.orig)||(a.t.idx-b.t.idx));
+  return out;
 }
+function planTasksOn(ds){return planItemsOn(ds).map(it=>it.t);}
 function planMinutesLeft(ds){
-  return planTasksOn(ds).reduce((a,t)=>a+((t.kind==='study'&&!planIsDone(t.id))?(t.est_minutes||0):0),0);
+  return planItemsOn(ds).reduce((a,it)=>a+((it.t.kind==='study'&&!planIsDone(it.id))?it.t.est:0),0);
 }
-function planDayMeta(ds){return ((state.studyPlan||{}).days||[]).find(d=>d.date===ds)||null;}
+function planDayMeta(ds){const ix=planIndex();return ix?(ix.meta[ds]||null):null;}
+// Every exam in the plan file, on the date it is now set to.
+function planExams(){
+  const ix=planIndex();
+  if(!ix)return [];
+  const ov=planLiveOv();
+  return ix.allExams.map(e=>({...e,date:ov.exams[e.key]||e.orig,moved:!!(ov.exams[e.key]&&ov.exams[e.key]!==e.orig)})).sort((a,b)=>a.date.localeCompare(b.date));
+}
 function planNextExam(){
   const today=localToday();
-  return (((state.studyPlan||{}).exams)||[]).filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0]||null;
+  return planExams().filter(e=>e.date>=today)[0]||null;
 }
 function planDaysUntil(ds){
   return Math.round((new Date(ds+'T12:00:00')-new Date(localToday()+'T12:00:00'))/86400000);
 }
-// Progress toward one exam: study tasks in that subject, from the plan's first day up to
-// the exam. Counts the work the exam is made of, not every task in the window.
+// Progress toward one exam: the study tasks that exam is made of.
 function planExamProgress(ex){
-  const tasks=planAllTasks().filter(t=>t.kind==='study'&&t.subject===ex.subject&&t.planDate<=ex.date);
+  const tasks=planAllTasks().filter(t=>t.kind==='study'&&t.subject!=='anki'&&t.examKey===ex.key);
   const done=tasks.filter(t=>planIsDone(t.id)).length;
   return {done,total:tasks.length,pct:tasks.length?Math.round(100*done/tasks.length):0};
 }
-function planToggle(id){
+// Past days nobody has accounted for: nothing ticked on them and no one-tap answer.
+// Oldest first, because the answer for one day decides what the next day held.
+function planPendingDays(){
+  const ix=planIndex();
+  if(!ix)return [];
+  const today=localToday();
+  const fix=planFixMap();
+  const doneDays={};
+  Object.keys(state.planDone||{}).forEach(id=>{
+    if(id===PLAN_OV)return;
+    const dd=planDoneDay(id);
+    if(dd)doneDays[dd]=true;
+  });
+  const out=[];
+  ix.days.forEach(d=>{
+    if(d<PLAN_EPOCH||d>=today)return;
+    if(fix[d]||doneDays[d])return;
+    if(planItemsOn(d).some(it=>it.t.kind==='study'&&it.t.est))out.push(d);
+  });
+  return out;
+}
+function planIsFloorItem(it){return it.tier!=='target'&&it.tier!=='extra'&&it.tier!=='pulled';}
+// ── Changing the state ───────────────────────────────────────────────────────
+let _planDayOpen=null,_planFitOpen=null;
+function planRerender(){
+  planBump();
+  try{renderPlan();}catch(e){warn('renderPlan',e);}
+  if(_planDayOpen&&document.getElementById('planDayPage'))planOpenDay(_planDayOpen);
+  if(_planFitOpen&&document.getElementById('planFitPage'))planOpenFit(_planFitOpen);
+  if(document.getElementById('planAskSheet'))planAskRender();
+}
+function planChanged(){
+  planBump();
+  savePlanState();
+  planRerender();
+}
+function planSetDone(id,on,day){
   if(!state.planDone)state.planDone={};
   const cur=state.planDone[id]||{};
-  if(cur.done){state.planDone[id]={...cur,done:false,doneAt:null};}
-  else{state.planDone[id]={...cur,done:true,doneAt:new Date().toISOString()};}
-  savePlanState();
-  renderPlan();
+  const now=new Date().toISOString();
+  let rec;
+  if(on){
+    rec={done:true,doneAt:now};
+    if(day&&day!==localDay(new Date(now)))rec.day=day;
+  }else{
+    rec={done:false,doneAt:null,at:now};
+  }
+  if(cur.movedTo)rec.movedTo=cur.movedTo;
+  state.planDone[id]=rec;
 }
-function planPush(id){
-  if(!state.planDone)state.planDone={};
-  const t=planAllTasks().find(x=>x.id===id);
+function planToggle(id,day){
+  const today=localToday();
+  const d=day||today;
+  if(d>today)return;
+  planSetDone(id,!planIsDone(id),d);
+  planChanged();
+}
+// The one-tap answer for a day left unticked: all of it, the floor, or nothing.
+function planFixDay(ds,k){
+  if(ds>=localToday())return;
+  const its=planItemsOn(ds).filter(it=>it.t.kind==='study');
+  its.forEach(it=>{
+    const want=(k==='all')||(k==='floor'&&planIsFloorItem(it));
+    const has=planIsDone(it.id);
+    if(want&&!has)planSetDone(it.id,true,ds);
+    if(!want&&has&&planDoneDay(it.id)===ds)planSetDone(it.id,false,ds);
+  });
+  planOvSet('fix',ds,{k});
+  planChanged();
+  const lab={all:'all of it',floor:'the floor',none:'nothing'}[k];
+  showToast(planDayLabel(ds,true)+': '+lab,2000);
+}
+// "Do next topic now": bring the next unfinished topic of a series into today.
+function planNextInSeries(group){
+  const ix=planIndex();
+  if(!ix)return null;
+  const today=localToday();
+  const L=planLayout(today);
+  const ov=planLiveOv();
+  const c=ix.tasks.filter(t=>!t.fixed&&t.group===group&&!planIsDone(t.id)&&!ov.dropped[t.id]&&L.expired.indexOf(t.id)<0&&L.place[t.id]!==today)
+    .sort((a,b)=>a.orig.localeCompare(b.orig)||(a.idx-b.idx));
+  return c[0]||null;
+}
+function planPull(group){
+  const t=planNextInSeries(group);
   if(!t)return;
-  const from=planMovedTo(id)||t.planDate;
-  const next=localDay(new Date(new Date(from+'T12:00:00').getTime()+86400000));
-  state.planDone[id]={...(state.planDone[id]||{}),movedTo:next};
-  savePlanState();
-  showToast('Pushed to '+next,2000);
-  renderPlan();
+  planOvSet('pulled',t.id,{to:localToday()});
+  planChanged();
+  showToast(t.title+' is on today',2000);
 }
+function planUnpull(id){
+  planOvSet('pulled',id,{off:true});
+  planChanged();
+}
+function planDrop(id,openDay){
+  planOvSet('dropped',id,{});
+  if(openDay){planOvSet('open',openDay,{});planOvSet('extra',openDay,{n:2});}
+  planChanged();
+}
+function planRestore(id){planOvSet('dropped',id,{off:true});planChanged();}
+function planAllowExtra(days){
+  days.forEach(d=>planOvSet('extra',d,{n:2}));
+  planChanged();
+}
+function planOpenPrep(days){
+  days.forEach(d=>planOvSet('open',d,{}));
+  planChanged();
+}
+function planUndoDay(name,d){planOvSet(name,d,{off:true});planChanged();}
+function planMoveExam(key,date){
+  const ix=planIndex();
+  if(!ix||!ix.examByKey[key]||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return;
+  if(date===ix.examByKey[key].orig)planOvSet('exams',key,{off:true});
+  else planOvSet('exams',key,{date});
+  planChanged();
+}
+function planReset(){
+  if(!confirm('Reset to the original plan? Dropped tasks, moved exams, extra catch-up days and pulled topics are cleared. Your ticks stay.'))return;
+  if(!state.planDone)state.planDone={};
+  const o={...(state.planDone[PLAN_OV]||{v:1})};
+  o.resetAt=new Date().toISOString();
+  state.planDone[PLAN_OV]=o;
+  planChanged();
+  showToast('Back to the original plan',2000);
+}
+// ── What moved ───────────────────────────────────────────────────────────────
+// The layout is recomputed, not stored, so "what moved" needs the previous answer to
+// compare against. Only the departures from the original are kept (id → day, or 'x'
+// for no place), which is a few hundred bytes.
+function planMovedMap(L){
+  const ix=planIndex();
+  const out={};
+  ix.tasks.forEach(t=>{
+    if(t.fixed&&!t.block)return;
+    if(L.kindOf[t.id]==='done'||L.expired.indexOf(t.id)>=0)return;
+    if(L.unfit.indexOf(t.id)>=0){out[t.id]='x';return;}
+    const p=L.place[t.id];
+    if(p&&p!==t.orig)out[t.id]=p;
+  });
+  return out;
+}
+function planStableJSON(o){const k=Object.keys(o).sort();const out={};k.forEach(x=>{out[x]=o[x];});return JSON.stringify(out);}
+function planTrackMoves(){
+  const ix=planIndex();
+  if(!ix)return;
+  const today=localToday();
+  const L=planLayout(today);
+  const cur=planMovedMap(L);
+  const last=planOvRaw().last||{};
+  const prev=last.layout||{};
+  if(planStableJSON(cur)===planStableJSON(prev))return;
+  const ov=planLiveOv();
+  const moves=[];
+  const ids={};
+  Object.keys(cur).forEach(k=>{ids[k]=1;});
+  Object.keys(prev).forEach(k=>{ids[k]=1;});
+  Object.keys(ids).sort().forEach(id=>{
+    const t=ix.byId[id];
+    if(!t||ov.dropped[id])return;
+    if(planIsDone(id)&&planDoneDay(id)<today)return;
+    if(L.expired.indexOf(id)>=0)return;
+    const a=prev[id]||t.orig,b=cur[id]||t.orig;
+    if(a!==b)moves.push([id,a,b]);
+  });
+  if(!state.planDone)state.planDone={};
+  const o={...(state.planDone[PLAN_OV]||{v:1})};
+  const rec={layout:cur,at:new Date().toISOString()};
+  if(moves.length){rec.moves=moves.slice(0,80);rec.seen=false;}
+  else{rec.moves=last.moves||[];rec.seen=last.seen!==false;}
+  o.last=rec;
+  state.planDone[PLAN_OV]=o;
+  planBump();
+  // Never save from a copy that has not been checked against Notion this session.
+  if(_planStateLive)savePlanState();
+  else{try{localStorage.setItem(PLAN_DONE_KEY,JSON.stringify(state.planDone));}catch(_){}}
+}
+function planDismissMoves(){
+  const last=planOvRaw().last;
+  if(!last)return;
+  const o={...state.planDone[PLAN_OV]};
+  o.last={...last,seen:true,at:new Date().toISOString()};
+  state.planDone[PLAN_OV]=o;
+  planChanged();
+}
+function planDayLabel(ds,long){
+  const d=new Date(ds+'T12:00:00');
+  const gap=planDaysUntil(ds);
+  if(!long&&gap>=0&&gap<7)return d.toLocaleDateString('en-GB',{weekday:'short'});
+  return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+}
+// [[id,from,to]…] → ["Micro II.4 → Thu", "Pharm A9–A22: 14 topics later (last now Wed 9 Dec)"]
+function planMoveLines(moves){
+  const ix=planIndex();
+  if(!ix)return [];
+  const by={},order=[];
+  moves.forEach(m=>{
+    const t=ix.byId[m[0]];
+    if(!t)return;
+    if(!by[t.group]){by[t.group]=[];order.push(t.group);}
+    by[t.group].push({t,from:m[1],to:m[2]});
+  });
+  const one=x=>{
+    if(x.to==='x')return x.t.title+' → no room';
+    return x.t.title+' → '+planDayLabel(x.to);
+  };
+  const lines=[];
+  order.forEach(gk=>{
+    const ms=by[gk].sort((a,b)=>(a.t.num-b.t.num)||a.t.orig.localeCompare(b.t.orig));
+    const placed=ms.filter(x=>x.to!=='x');
+    if(ms[0].t.series&&placed.length>3){
+      const later=placed.filter(x=>x.from==='x'||x.to>x.from).length;
+      let dir='moved';
+      if(later===placed.length)dir='later';
+      if(later===0)dir='earlier';
+      let lastTo=placed[0].to;
+      placed.forEach(x=>{if(x.to>lastTo)lastTo=x.to;});
+      const sep=gk==='Pharm A'?'':'.';
+      lines.push(gk+sep+placed[0].t.num+'–'+placed[placed.length-1].t.num+': '+placed.length+' topics '+dir+' (last now '+planDayLabel(lastTo,true)+')');
+      ms.filter(x=>x.to==='x').forEach(x=>lines.push(one(x)));
+    }else{
+      ms.forEach(x=>lines.push(one(x)));
+    }
+  });
+  return lines;
+}
+// ── Screens ──────────────────────────────────────────────────────────────────
 let planSubTab='today';
 function setPlanSubTab(v){planSubTab=v;renderPlan();}
-function planCheckboxHTML(t){
-  const done=planIsDone(t.id);
-  const mins=t.est_minutes?`<span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${t.est_minutes}m</span>`:'';
-  const pushBtn=(t.kind==='study')?`<button class="sil-toggle-btn" style="padding:3px 7px;font-size:8px" onclick="event.stopPropagation();planPush('${t.id}')">→ TMRW</button>`:'';
+function planChip(txt,strong){
+  const col=strong?'var(--text-hi)':'var(--text-dim)';
+  return '<span style="display:inline-block;font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:'+col+';border:1px solid var(--border);border-radius:2px;padding:1px 4px;margin:3px 5px 0 0">'+esc(txt)+'</span>';
+}
+// One task row. `it` is {id,tier,kind,t}; `ds` the day it is shown on; `mode` is
+// 'tick' (today and past days) or 'read' (days still to come).
+function planRowHTML(it,ds,mode){
+  const t=it.t;
   if(t.kind==='exam'){
     return `<div style="border-left:2px solid var(--text-hi);padding:8px 0 8px 10px;margin:8px 0">
       <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim)">Exam</div>
@@ -7922,26 +8558,47 @@ function planCheckboxHTML(t){
     return `<div style="padding:10px 0"><div style="font-size:14px;color:var(--text-hi)">${esc(t.title)}</div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${esc(t.detail||'')}</div></div>`;
   }
-  const titleCol=done?'var(--text-dim)':'var(--text)';
-  const strike=done?'text-decoration:line-through':'';
+  const done=planIsDone(t.id);
+  let mins='';
+  if(t.est)mins='<span style="font-size:10px;color:var(--text-dim);white-space:nowrap">'+t.est+'m</span>';
+  let chips='';
+  if(!t.fixed){
+    if(it.tier==='floor')chips+=planChip('Floor');
+    if(it.tier==='target')chips+=planChip('Target');
+    if(it.tier==='extra')chips+=planChip('Catch-up',true);
+    if(it.tier==='pulled')chips+=planChip('Pulled ahead',true);
+    if(t.orig!==ds){
+      let w='from ';
+      if(t.orig>ds)w='was ';
+      chips+=planChip(w+planDayLabel(t.orig,true));
+    }
+  }else if(t.orig!==ds){
+    chips+=planChip('was '+planDayLabel(t.orig,true));
+  }
   let detailHTML='';
   if(t.detail)detailHTML='<span style="display:block;font-size:10px;line-height:1.6;color:var(--text-dim);margin-top:2px">'+esc(t.detail)+'</span>';
-  if(!PLAN_TICKS){
+  let chipHTML='';
+  if(chips)chipHTML='<span style="display:block">'+chips+'</span>';
+  if(mode!=='tick'){
     return `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">
     <span style="flex:1;min-width:0">
       <span style="display:block;font-size:13px;line-height:1.5;color:var(--text)">${esc(t.title)}</span>
-      ${detailHTML}
+      ${chipHTML}${detailHTML}
     </span>
     <span style="display:flex;align-items:center;gap:6px;flex:none">${mins}</span>
   </div>`;
   }
+  let titleCol='var(--text)',strike='',mark='';
+  if(done){titleCol='var(--text-dim)';strike='text-decoration:line-through';mark='✓';}
+  let back='';
+  if(it.kind==='pull'&&!done)back='<button class="sil-toggle-btn" style="padding:3px 7px;font-size:8px" onclick="event.stopPropagation();planUnpull(\''+t.id+'\')">Put back</button>';
   return `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid rgba(232,234,240,0.06)">
-    <span onclick="planToggle('${t.id}')" style="width:18px;height:18px;flex:none;margin-top:1px;border-radius:3px;border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-hi);cursor:pointer">${done?'✓':''}</span>
-    <span style="flex:1;min-width:0" onclick="planToggle('${t.id}')">
+    <span onclick="planToggle('${t.id}','${ds}')" style="width:18px;height:18px;flex:none;margin-top:1px;border-radius:3px;border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-hi);cursor:pointer">${mark}</span>
+    <span style="flex:1;min-width:0" onclick="planToggle('${t.id}','${ds}')">
       <span style="display:block;font-size:13px;line-height:1.5;color:${titleCol};${strike}">${esc(t.title)}</span>
-      ${detailHTML}
+      ${chipHTML}${detailHTML}
     </span>
-    <span style="display:flex;align-items:center;gap:6px;flex:none">${mins}${pushBtn}</span>
+    <span style="display:flex;align-items:center;gap:6px;flex:none">${mins}${back}</span>
   </div>`;
 }
 function planSection(label,inner,extra){
@@ -7952,18 +8609,61 @@ function planSection(label,inner,extra){
     </div>
     <div style="margin-top:6px">${inner}</div></div>`;
 }
-function planHeaderLine(tasks,doneN,totalN,left){
-  if(PLAN_TICKS){
-    let l='nothing left';
-    if(left)l=Math.floor(left/60)+'h '+(left%60)+'m left';
-    return doneN+'/'+totalN+' done · '+l;
-  }
-  const tot=tasks.reduce((a,t)=>a+(t.kind==='study'?(t.est_minutes||0):0),0);
-  if(!tot)return 'nothing planned';
-  return 'about '+Math.floor(tot/60)+'h '+(tot%60)+'m planned';
+function planHeaderLine(items){
+  const st=items.filter(it=>it.t.kind==='study');
+  if(!st.length)return 'nothing planned';
+  const doneN=st.filter(it=>planIsDone(it.id)).length;
+  const left=st.reduce((a,it)=>a+(planIsDone(it.id)?0:it.t.est),0);
+  let l='nothing left';
+  if(left)l=Math.floor(left/60)+'h '+(left%60)+'m left';
+  return doneN+'/'+st.length+' done · '+l;
+}
+// The three buttons for a day left unticked.
+function planAskHTML(ds,more){
+  const its=planItemsOn(ds).filter(it=>it.t.kind==='study');
+  const names=its.map(it=>it.t.title).join(' · ');
+  let moreLine='';
+  if(more>0)moreLine='<div style="font-size:10px;color:var(--text-dim);margin-top:8px">'+more+' more '+(more===1?'day':'days')+' after this one</div>';
+  const btn=(k,l)=>'<button class="sil-toggle-btn" style="flex:1;text-align:center;padding:9px 4px" onclick="planFixDay(\''+ds+'\',\''+k+'\')">'+l+'</button>';
+  return `<div style="border:1px solid var(--border-hi);border-radius:4px;padding:12px;margin:10px 0">
+    <div style="font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-dim)">Nothing ticked</div>
+    <div style="font-size:14px;color:var(--text-hi);margin-top:3px">${esc(planDayLabel(ds,true))} — what happened?</div>
+    <div style="font-size:10px;line-height:1.6;color:var(--text-dim);margin-top:4px">${esc(names)}</div>
+    <div style="display:flex;gap:6px;margin-top:10px">${btn('all','Did it all')}${btn('floor','Floor only')}${btn('none','Nothing')}</div>
+    ${moreLine}
+  </div>`;
+}
+function planFitLineHTML(){
+  const ix=planIndex();
+  if(!ix)return '';
+  const today=localToday();
+  const L=planLayout(today);
+  const subs=(state.studyPlan||{}).subjects||{};
+  let html='';
+  ix.exams.forEach(e=>{
+    const f=L.fit[e.key];
+    if(!f||f.date<today)return;
+    if(!f.left&&!f.unfit.length)return;
+    const name=(subs[e.subject]||e.subject)+' · '+new Date(f.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    let msg='',col='var(--text-dim)';
+    if(f.unfit.length){
+      msg=f.unfit.length+' '+(f.unfit.length===1?'task does':'tasks do')+' not fit before the exam — choose what gives';
+      col='var(--red-hi)';
+    }else if(f.m){
+      msg='fits if you hit the target on '+f.n+' of '+f.m+' days';
+      if(f.n===f.m)col='var(--text)';
+    }else{
+      msg='fits at the floor';
+    }
+    html+=`<div onclick="planOpenFit('${e.key}')" style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(232,234,240,0.06);cursor:pointer">
+      <span style="font-size:11px;color:var(--text-dim);white-space:nowrap">${esc(name)}</span>
+      <span style="font-size:11px;color:${col};text-align:right">${esc(msg)} ›</span></div>`;
+  });
+  return html;
 }
 function renderPlanToday(){
   const today=localToday();
+  const ix=planIndex();
   const meta=planDayMeta(today);
   const plan=state.studyPlan||{};
   const subs=plan.subjects||{};
@@ -7982,69 +8682,95 @@ function renderPlanToday(){
         <div style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">${dleft===1?'day':'days'}</div>
       </div></div>`;
   }
-  const od=planOverdue();
-  if(od.length){
-    let rows='';
-    od.forEach(t=>{
-      rows+=`<div style="opacity:0.95">${planCheckboxHTML(t)}
-        <div style="font-size:9px;color:var(--text-faint);margin:-4px 0 4px 28px">was ${esc(planMovedTo(t.id)||t.planDate)}</div></div>`;
-    });
-    html+=planSection('Overdue · '+od.length,rows);
+  const pend=planPendingDays();
+  if(pend.length)html+=planAskHTML(pend[0],pend.length-1);
+  const last=planOvRaw().last;
+  if(last&&last.seen===false&&(last.moves||[]).length){
+    const lines=planMoveLines(last.moves).map(l=>'<div style="font-size:11px;line-height:1.7;color:var(--text)">'+esc(l)+'</div>').join('');
+    html+=planSection('Moved',lines,'<button class="sil-toggle-btn" style="padding:3px 7px;font-size:8px" onclick="planDismissMoves()">OK</button>');
   }
-  if(!meta){
-    html+=planSection('Today','<div style="font-size:12px;color:var(--text-dim)">No plan for today — the plan runs 13 Oct to 25 Nov.</div>');
+  html+=planFitLineHTML();
+  const items=planItemsOn(today);
+  if(!items.length){
+    html+=planSection('Today','<div style="font-size:12px;color:var(--text-dim)">Nothing planned for today.</div>');
     return html;
   }
-  const tasks=planTasksOn(today);
-  const left=planMinutesLeft(today);
-  const doneN=tasks.filter(t=>t.kind==='study'&&planIsDone(t.id)).length;
-  const totalN=tasks.filter(t=>t.kind==='study').length;
   const groups={};
-  tasks.forEach(t=>{(groups[t.subject]=groups[t.subject]||[]).push(t);});
+  items.forEach(it=>{(groups[it.t.subject]=groups[it.t.subject]||[]).push(it);});
   let body='';
-  PLAN_SUBJECT_ORDER.forEach(k=>{
-    if(!groups[k])return;
+  const keys=PLAN_SUBJECT_ORDER.filter(k=>groups[k]).concat(Object.keys(groups).filter(k=>!PLAN_SUBJECT_ORDER.includes(k)));
+  keys.forEach(k=>{
     let rows='';
-    groups[k].forEach(t=>{rows+=planCheckboxHTML(t);});
+    groups[k].forEach(it=>{rows+=planRowHTML(it,today,'tick');});
     body+=`<div style="margin-bottom:14px">
       <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim)">${esc(subs[k]||k)}</div>
       ${rows}</div>`;
   });
-  Object.keys(groups).filter(k=>!PLAN_SUBJECT_ORDER.includes(k)).forEach(k=>{
-    let rows='';groups[k].forEach(t=>{rows+=planCheckboxHTML(t);});
-    body+=`<div style="margin-bottom:14px"><div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim)">${esc(k)}</div>${rows}</div>`;
+  // Getting ahead: the next unfinished topic of each series, one tap from today.
+  let pulls='';
+  const seen={};
+  ix.tasks.forEach(t=>{
+    if(t.fixed||!t.series||seen[t.group])return;
+    seen[t.group]=true;
+    const nx=planNextInSeries(t.group);
+    if(nx)pulls+='<button class="sil-toggle-btn" style="padding:6px 9px;font-size:9px;margin:0 6px 6px 0" onclick="planPull(\''+t.group+'\')">＋ '+esc(nx.title)+'</button>';
   });
-  const swim=(meta.tags||[]).includes('swim')?' · 🏊':'';
-  const hol=(meta.tags||[]).includes('holiday')?' · holiday':'';
+  let swim='',hol='',wk='';
+  if(meta){
+    if((meta.tags||[]).includes('swim'))swim=' · 🏊';
+    if((meta.tags||[]).includes('holiday'))hol=' · holiday';
+    wk=' · week '+meta.semester_week;
+  }
   const d=new Date(today+'T12:00:00');
   html=`<div style="padding-top:4px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:0.05em;color:var(--text-hi);line-height:1">${esc(d.toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase())}</div>
-    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(d.toLocaleDateString('en-GB',{day:'numeric',month:'long'}))} · week ${meta.semester_week}${swim}${hol}</div>
-    <div style="font-size:11px;color:var(--text-dim);margin-top:8px">${planHeaderLine(tasks,doneN,totalN,left)}</div>
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(d.toLocaleDateString('en-GB',{day:'numeric',month:'long'}))}${wk}${swim}${hol}</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:8px">${planHeaderLine(items)}</div>
   </div>`+html+planSection('Today',body);
+  if(pulls)html+=planSection('Do next topic now','<div style="font-size:10px;line-height:1.6;color:var(--text-dim);margin-bottom:8px">Brings the next topic into today. Tick it and the rest of that series moves earlier.</div>'+pulls);
   return html;
 }
 function renderPlanWeek(){
-  const plan=state.studyPlan||{};
+  const ix=planIndex();
   const today=localToday();
-  const byWeek={};
-  (plan.days||[]).forEach(d=>{(byWeek[d.semester_week]=byWeek[d.semester_week]||[]).push(d);});
+  const L=planLayout(today);
+  const pend={};
+  planPendingDays().forEach(d=>{pend[d]=true;});
+  const byWeek={},order=[];
+  let lastWk='';
+  L.dayList.forEach(d=>{
+    const m=ix.meta[d];
+    if(m)lastWk=String(m.semester_week);
+    if(!byWeek[lastWk]){byWeek[lastWk]=[];order.push(lastWk);}
+    byWeek[lastWk].push(d);
+  });
   let html='';
-  Object.keys(byWeek).sort((a,b)=>a-b).forEach(w=>{
+  order.forEach(w=>{
     let rows='';
-    byWeek[w].forEach(d=>{
-      const st=d.tasks.filter(t=>t.kind==='study');
-      const done=st.filter(t=>planIsDone(t.id)).length;
-      const isExam=(d.tags||[]).includes('exam');
-      const isRest=d.tasks.some(t=>t.kind==='rest');
-      const isToday=d.date===today;
-      const dd=new Date(d.date+'T12:00:00');
-      let right=st.length?`${done}/${st.length}`:'—';
-      if(!PLAN_TICKS&&st.length){const m=st.reduce((a,t)=>a+(t.est_minutes||0),0);right=Math.floor(m/60)+'h'+(m%60?' '+(m%60)+'m':'');}
+    byWeek[w].forEach(ds=>{
+      const items=planItemsOn(ds);
+      const st=items.filter(it=>it.t.kind==='study');
+      const exam=items.find(it=>it.t.kind==='exam');
+      const isRest=items.some(it=>it.t.kind==='rest');
+      const isToday=ds===today;
+      const dd=new Date(ds+'T12:00:00');
+      let right='—';
+      if(st.length){
+        if(ds<=today){right=st.filter(it=>planIsDone(it.id)).length+'/'+st.length;}
+        else{const m=st.reduce((a,it)=>a+it.t.est,0);right=Math.floor(m/60)+'h';if(m%60)right+=' '+(m%60)+'m';}
+      }
       if(isRest)right='off';
-      rows+=`<div onclick="planOpenDay('${d.date}')" style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid rgba(232,234,240,0.06);cursor:pointer">
-        <span style="width:52px;flex:none;font-size:10px;color:${isToday?'var(--text-hi)':'var(--text-dim)'}">${esc(dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric'}))}</span>
-        <span style="flex:1;min-width:0;font-size:12px;color:${isExam?'var(--text-hi)':(isRest?'var(--text-dim)':'var(--text)')}">${isExam?esc(d.tasks.find(t=>t.kind==='exam').title):(isRest?'Day off':esc(st.slice(0,2).map(t=>t.title).join(' · ')))}</span>
+      if(pend[ds])right='?';
+      let mid='',midCol='var(--text)';
+      if(exam){mid=esc(exam.t.title);midCol='var(--text-hi)';}
+      else if(isRest){mid='Day off';midCol='var(--text-dim)';}
+      else{mid=esc(st.filter(it=>it.t.subject!=='anki').slice(0,3).map(it=>it.t.title).join(' · ')||st.slice(0,1).map(it=>it.t.title).join(''));}
+      if(ds<today&&!exam)midCol='var(--text-dim)';
+      let dayCol='var(--text-dim)';
+      if(isToday)dayCol='var(--text-hi)';
+      rows+=`<div onclick="planOpenDay('${ds}')" style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid rgba(232,234,240,0.06);cursor:pointer">
+        <span style="width:52px;flex:none;font-size:10px;color:${dayCol}">${esc(dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric'}))}</span>
+        <span style="flex:1;min-width:0;font-size:12px;color:${midCol}">${mid}</span>
         <span style="flex:none;font-size:10px;color:var(--text-dim);font-variant-numeric:tabular-nums">${right}</span>
       </div>`;
     });
@@ -8053,39 +8779,189 @@ function renderPlanWeek(){
   return html;
 }
 function planOpenDay(ds){
+  const today=localToday();
   const meta=planDayMeta(ds);
-  if(!meta)return;
-  if(document.getElementById('planDayPage'))document.getElementById('planDayPage').remove();
-  const el=document.createElement('div');el.id='planDayPage';el.className='rival-page';
-  const subs=(state.studyPlan||{}).subjects||{};
+  const items=planItemsOn(ds);
+  let el=document.getElementById('planDayPage');
+  if(!el){el=document.createElement('div');el.id='planDayPage';el.className='rival-page';document.body.appendChild(el);}
+  _planDayOpen=ds;
+  let mode='read';
+  if(ds<=today)mode='tick';
   let rows='';
-  meta.tasks.forEach(t=>{rows+=planCheckboxHTML(t);});
+  items.forEach(it=>{rows+=planRowHTML(it,ds,mode);});
+  if(!rows)rows='<div style="font-size:12px;color:var(--text-dim)">Nothing on this day.</div>';
+  let ask='';
+  if(ds<today&&ds>=PLAN_EPOCH&&items.some(it=>it.t.kind==='study')){
+    const fx=planFixMap()[ds];
+    let said='Set the whole day in one tap:';
+    if(fx)said='You said: '+({all:'did it all',floor:'floor only',none:'nothing'}[fx])+'. Change it:';
+    const btn=(k,l)=>'<button class="sil-toggle-btn" style="flex:1;text-align:center;padding:8px 4px" onclick="planFixDay(\''+ds+'\',\''+k+'\')">'+l+'</button>';
+    ask='<div style="margin-top:18px;font-size:10px;color:var(--text-dim)">'+said+'</div><div style="display:flex;gap:6px;margin-top:8px">'+btn('all','Did it all')+btn('floor','Floor only')+btn('none','Nothing')+'</div>';
+  }
+  let note='';
+  if(ds>today)note='<div style="font-size:10px;color:var(--text-dim);margin-top:8px">Where things sit as of today. It rearranges if a day is missed.</div>';
+  let wk='',swim='';
+  if(meta){wk=' · week '+meta.semester_week;if((meta.tags||[]).includes('swim'))swim=' · 🏊';}
   const d=new Date(ds+'T12:00:00');
   el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
-    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="document.getElementById('planDayPage').remove()">← Back</button></div>
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="planCloseDay()">← Back</button></div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">${esc(d.toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase())}</div>
-    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(d.toLocaleDateString('en-GB',{day:'numeric',month:'long'}))} · week ${meta.semester_week}${(meta.tags||[]).includes('swim')?' · 🏊':''}</div>
-    <div style="margin-top:16px">${rows}</div></div>`;
-  document.body.appendChild(el);
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(d.toLocaleDateString('en-GB',{day:'numeric',month:'long'}))}${wk}${swim}</div>
+    ${note}
+    <div style="margin-top:16px">${rows}</div>${ask}</div>`;
 }
+function planCloseDay(){_planDayOpen=null;document.getElementById('planDayPage')?.remove();}
 function renderPlanExams(){
-  const plan=state.studyPlan||{};
   let html='';
-  (plan.exams||[]).forEach(ex=>{
+  planExams().forEach(ex=>{
     const pr=planExamProgress(ex);
     const dl=planDaysUntil(ex.date);
     const past=dl<0;
-    html+=`<div style="border-top:1px solid var(--border);padding:13px 0;opacity:${past?'0.45':'1'}">
+    let when=dl+'d';
+    if(past)when='done';
+    let op='1';
+    if(past)op='0.45';
+    let sub=esc(ex.target||'');
+    if(pr.total)sub+=' · '+pr.done+'/'+pr.total+' tasks';
+    if(ex.moved)sub+=' · moved from '+esc(planDayLabel(ex.orig,true));
+    let bar='';
+    if(pr.total)bar='<div style="height:3px;background:var(--border)"><div style="height:100%;width:'+pr.pct+'%;background:var(--text)"></div></div>';
+    html+=`<div style="border-top:1px solid var(--border);padding:13px 0;opacity:${op}">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
         <span style="font-size:13px;color:var(--text-hi)">${esc(ex.title)}</span>
-        <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${past?'done':dl+'d'}</span>
+        <span style="font-size:10px;color:var(--text-dim);white-space:nowrap">${when}</span>
       </div>
-      <div style="font-size:10px;color:var(--text-dim);margin:3px 0 7px">${esc(ex.target||'')}${PLAN_TICKS?' · '+pr.done+'/'+pr.total+' tasks':''}</div>
-      ${PLAN_TICKS?'<div style="height:3px;background:var(--border)"><div style="height:100%;width:'+pr.pct+'%;background:var(--text)"></div></div>':''}
+      <div style="font-size:10px;color:var(--text-dim);margin:3px 0 7px">${sub}</div>
+      ${bar}
     </div>`;
   });
   return html;
 }
+// ── Fit options ──────────────────────────────────────────────────────────────
+// Every option is tried on a copy of the choices first, so each button says what it
+// would leave unplaced before it is pressed.
+function planTry(mut){
+  const ov=planLiveOv();
+  const c={pulled:{...ov.pulled},dropped:{...ov.dropped},exams:{...ov.exams},extra:{...ov.extra},open:{...ov.open}};
+  mut(c);
+  return planLayout(localToday(),c);
+}
+function planLeftText(n){
+  if(!n)return 'everything fits';
+  return 'leaves '+n+' without a place';
+}
+let _planFitDate='';
+function planFitTryDate(key,val){_planFitDate=val||'';planOpenFit(key);}
+function planOpenFit(key){
+  const ix=planIndex();
+  if(!ix||!ix.examByKey[key])return;
+  if(_planFitOpen!==key)_planFitDate='';
+  _planFitOpen=key;
+  const today=localToday();
+  const L=planLayout(today);
+  const ov=planLiveOv();
+  const e=ix.examByKey[key];
+  const f=L.fit[key];
+  const countUnfit=LL=>LL.fit[key].unfit.length;
+  const row=(txt,sub,btn)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(232,234,240,0.06)">
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:12px;line-height:1.5;color:var(--text)">${txt}</span>
+      <span style="display:block;font-size:10px;color:var(--text-dim);margin-top:2px">${sub}</span></span>${btn}</div>`;
+  const button=(label,js)=>'<button class="sil-toggle-btn" style="flex:none;padding:6px 9px;font-size:9px" onclick="'+js+'">'+label+'</button>';
+  const dlist=ds=>ds.map(d=>planDayLabel(d,true)).join(', ');
+  let status='';
+  if(f.unfit.length){
+    status='<div style="font-size:13px;line-height:1.6;color:var(--text-hi);margin-top:14px">'+f.unfit.length+' '+(f.unfit.length===1?'task has':'tasks have')+' no place before '+esc(planDayLabel(f.date,true))+'.</div>'
+      +'<div style="font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:6px">'+esc(f.unfit.map(id=>ix.byId[id].title).join(' · '))+'</div>'
+      +'<div style="font-size:10px;line-height:1.6;color:var(--text-dim);margin-top:8px">They are not squeezed in. Pick what gives — each choice says what it would leave.</div>';
+  }else if(f.m){
+    status='<div style="font-size:13px;line-height:1.6;color:var(--text-hi);margin-top:14px">Fits if you hit the target on '+f.n+' of '+f.m+' days.</div>';
+  }else{
+    status='<div style="font-size:13px;line-height:1.6;color:var(--text-hi);margin-top:14px">Fits at the floor.</div>';
+  }
+  let opts='';
+  if(f.unfit.length){
+    // 1 — a second catch-up task on the days that can take one
+    const days=L.dayList.filter(d=>d>=today&&d<=L.lastDay[key]&&!L.blocked[d]);
+    const T1=planTry(c=>{days.forEach(d=>{if(!c.extra[d])c.extra[d]=2;});});
+    const used=days.filter(d=>(T1.extraUsed[d]||0)>(ov.extra[d]||1));
+    if(used.length&&countUnfit(T1)<f.unfit.length){
+      opts+=row('Take a second catch-up task on '+used.length+' '+(used.length===1?'day':'days'),esc(dlist(used))+' — '+planLeftText(countUnfit(T1)),button('Allow','planAllowExtra('+JSON.stringify(used).replace(/"/g,'&quot;')+')'));
+    }else{
+      opts+=row('Take a second catch-up task on more days','No day before the exam has room for one inside your caps.','');
+    }
+    // 1b — the prep days
+    const preps=L.dayList.filter(d=>d>=today&&L.prepDay[d]===key&&L.blocked[d]);
+    if(preps.length){
+      const T2=planTry(c=>{preps.forEach(d=>{c.open[d]=true;});});
+      opts+=row('Use the prep days for catch-up',esc(dlist(preps))+' — '+planLeftText(countUnfit(T2)),button('Allow','planOpenPrep('+JSON.stringify(preps).replace(/"/g,'&quot;')+')'));
+    }
+    // 2 — drop something. The cram blocks first: they are the lowest-priority minutes.
+    ix.tasks.forEach(t=>{
+      if(!t.fixed||t.kind!=='study'||t.subject!==e.subject||!/cram/i.test(t.title)||ov.dropped[t.id])return;
+      const d=L.place[t.id];
+      if(!d||d<today||d>L.lastDay[key])return;
+      const T3=planTry(c=>{c.dropped[t.id]=true;c.open[d]=true;c.extra[d]=2;});
+      opts+=row('Drop “'+esc(t.title)+'”',t.est+' min on '+esc(planDayLabel(d,true))+', freed for topics — '+planLeftText(countUnfit(T3)),button('Drop','planDrop(\''+t.id+'\',\''+d+'\')'));
+    });
+    f.unfit.slice().reverse().slice(0,6).forEach(id=>{
+      const T4=planTry(c=>{c.dropped[id]=true;});
+      opts+=row('Drop '+esc(ix.byId[id].title),'Leave it out of the plan — '+planLeftText(countUnfit(T4)),button('Drop','planDrop(\''+id+'\',\'\')'));
+    });
+  }
+  // 3 — move the exam (always offered: every winter date is a choice)
+  let dateRes='';
+  if(_planFitDate&&/^\d{4}-\d{2}-\d{2}$/.test(_planFitDate)){
+    const T5=planTry(c=>{c.exams[key]=_planFitDate;});
+    let total=0;
+    Object.keys(T5.fit).forEach(k=>{total+=T5.fit[k].unfit.length;});
+    let txt='On '+planDayLabel(_planFitDate,true)+': '+planLeftText(total)+' across the whole plan.';
+    if(_planFitDate<=today)txt='That date has passed.';
+    dateRes='<div style="font-size:10px;color:var(--text-dim);margin-top:6px">'+esc(txt)+'</div>';
+    if(_planFitDate>today)dateRes+='<div style="margin-top:8px">'+button('Move the exam to '+esc(planDayLabel(_planFitDate,true)),'planMoveExam(\''+key+'\',\''+_planFitDate+'\')')+'</div>';
+  }
+  opts+=`<div style="padding:10px 0;border-top:1px solid rgba(232,234,240,0.06)">
+      <div style="font-size:12px;color:var(--text)">Move the exam</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Now ${esc(planDayLabel(f.date,true))}. Its prep days move with it.</div>
+      <input type="date" value="${esc(_planFitDate||f.date)}" onchange="planFitTryDate('${key}',this.value)" style="margin-top:8px;background:transparent;color:var(--text);border:1px solid var(--border-hi);border-radius:3px;padding:6px 8px;font:inherit;font-size:12px">
+      ${dateRes}</div>`;
+  // What is in force, each with its undo
+  let active='';
+  Object.keys(ov.exams).forEach(k=>{
+    const x=ix.examByKey[k];
+    if(!x||ov.exams[k]===x.orig)return;
+    active+=row(esc(x.title),'moved to '+esc(planDayLabel(ov.exams[k],true))+' from '+esc(planDayLabel(x.orig,true)),button('Undo','planMoveExam(\''+k+'\',\''+x.orig+'\')'));
+  });
+  Object.keys(ov.dropped).forEach(id=>{
+    const t=ix.byId[id];
+    if(t)active+=row('Dropped: '+esc(t.title),'was '+esc(planDayLabel(t.orig,true)),button('Restore','planRestore(\''+id+'\')'));
+  });
+  Object.keys(ov.extra).sort().forEach(d=>{
+    if(d>=today)active+=row('Second catch-up task allowed',esc(planDayLabel(d,true)),button('Undo','planUndoDay(\'extra\',\''+d+'\')'));
+  });
+  Object.keys(ov.open).sort().forEach(d=>{
+    if(d>=today)active+=row('Prep day open for catch-up',esc(planDayLabel(d,true)),button('Undo','planUndoDay(\'open\',\''+d+'\')'));
+  });
+  // Everything that is not where the original plan put it
+  const mm=planMovedMap(L);
+  const allMoves=Object.keys(mm).sort().map(id=>[id,ix.byId[id].orig,mm[id]]);
+  let movedHTML='<div style="font-size:11px;color:var(--text-dim)">Nothing has moved. This is the original plan.</div>';
+  if(allMoves.length)movedHTML=planMoveLines(allMoves).map(l=>'<div style="font-size:11px;line-height:1.7;color:var(--text)">'+esc(l)+'</div>').join('');
+  let el=document.getElementById('planFitPage');
+  if(!el){el=document.createElement('div');el.id='planFitPage';el.className='rival-page';document.body.appendChild(el);}
+  let activeHTML='';
+  if(active)activeHTML=planSection('Your choices',active);
+  el.innerHTML=`<div class="rival-page-inner" style="padding:0 16px 40px">
+    <div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="planCloseFit()">← Back</button></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.05em;color:var(--text-hi);line-height:1;margin-top:12px">DOES IT FIT</div>
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">${esc(e.title)}</div>
+    ${status}
+    ${planSection('Options',opts)}
+    ${activeHTML}
+    ${planSection('Moved from the original plan',movedHTML)}
+    <div style="margin-top:26px;text-align:center"><button class="sil-toggle-btn" onclick="planReset()">Reset to the original plan</button></div>
+  </div>`;
+}
+function planCloseFit(){_planFitOpen=null;_planFitDate='';document.getElementById('planFitPage')?.remove();}
 function planOpenRules(){
   const rules=((state.studyPlan||{}).rules)||[];
   if(document.getElementById('planRulesPage'))return;
@@ -8101,23 +8977,57 @@ function planOpenRules(){
 function renderPlan(){
   const el=document.getElementById('tab-plan');
   if(!el)return;
-  if(!state.studyPlan){
+  if(!state.studyPlan||!planIndex()){
     el.innerHTML='<div style="padding:28px 16px;font-size:12px;color:var(--text-dim)">Loading the plan…</div>';
     return;
   }
+  if(!state.planDone)state.planDone={};
+  try{planTrackMoves();}catch(e){warn('planTrackMoves',e);}
   const tabs=[['today','Today'],['week','Plan'],['exams','Exams']]
     .map(([k,l])=>`<button class="sil-toggle-btn${planSubTab===k?' active':''}" onclick="setPlanSubTab('${k}')" style="flex:1;text-align:center">${l}</button>`).join('');
   let body='';
   if(planSubTab==='today')body=renderPlanToday();
   else if(planSubTab==='week')body=renderPlanWeek();
   else body=renderPlanExams();
+  let first='';
+  const ix=planIndex();
+  if(ix.exams.length)first=ix.exams[ix.exams.length-1].key;
+  const nx=ix.exams.map(e=>e.key).find(k=>(planLiveOv().exams[k]||ix.examByKey[k].orig)>=localToday());
+  if(nx)first=nx;
   el.innerHTML=`<div style="padding:10px 16px 40px">
     <div style="display:flex;gap:4px;margin-bottom:12px">${tabs}</div>
     ${body}
     <div style="margin-top:26px;text-align:center">
       <button class="sil-toggle-btn" onclick="planOpenRules()">Rules</button>
+      <button class="sil-toggle-btn" onclick="planOpenFit('${first}')">Changes · Reset</button>
     </div>
   </div>`;
+}
+// Opening the app with a day unaccounted for: ask, once per launch, wherever you are.
+let _planAsked=false;
+function planAskRender(){
+  const el=document.getElementById('planAskSheet');
+  if(!el)return;
+  const pend=planPendingDays();
+  if(!pend.length){el.remove();return;}
+  el.innerHTML='<div style="max-width:520px;margin:0 auto">'+planAskHTML(pend[0],pend.length-1)
+    +'<div style="text-align:center"><button class="sil-toggle-btn" style="padding:6px 12px" onclick="document.getElementById(\'planAskSheet\').remove()">Later</button></div></div>';
+}
+async function planAskSoon(){
+  if(_planAsked)return;
+  _planAsked=true;
+  try{
+    if(!state.studyPlan)await loadStudyPlan();
+    if(!_planStateLive)await loadPlanState();
+    if(!planIndex()||currentTab==='plan')return;
+    if(!planPendingDays().length)return;
+    if(document.getElementById('planAskSheet'))return;
+    const el=document.createElement('div');
+    el.id='planAskSheet';
+    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:900;background:var(--bg,#0b0c10);border-top:1px solid var(--border-hi);padding:6px 16px calc(14px + env(safe-area-inset-bottom))';
+    document.body.appendChild(el);
+    planAskRender();
+  }catch(e){warn('planAskSoon',e);}
 }
 function logSoloSet(i){
   if(TRAIN_V2){logSoloSetV2(i,false);return;}
@@ -10276,31 +11186,18 @@ function hinaCond(){
 }
 // 凝 — the study plan, kept or not. Nothing else in the app measures attention.
 function hinaFocus(){
-  if(!PLAN_TICKS){
-    // With ticking off, focus is read from what was actually studied: the share of the
-    // last 14 days with at least one completed pomodoro session. Twelve of fourteen is
-    // full marks, so a rest day or two never costs anything.
-    const since=hinaDaysBack(14),today=localToday();
-    const days=new Set();
-    (state.sessions||[]).forEach(x=>{
-      if(x.complete!=='Done'||!x.started)return;
-      const ds=localDay(new Date(x.started));
-      if(ds>=since&&ds<=today)days.add(ds);
-    });
-    return hinaClamp(100*Math.min(1,days.size/12));
-  }
+  // Focus is read from what was actually studied: the share of the last 14 days with
+  // at least one completed pomodoro session. Twelve of fourteen is full marks, so a
+  // rest day or two never costs anything. It stays on this measure now that plan
+  // ticking is back on — a forgotten tick should not cost her anything.
   const since=hinaDaysBack(14),today=localToday();
-  let due=0,done=0;
-  try{
-    planAllTasks().forEach(t=>{
-      const d=planMovedTo(t.id)||t.planDate;
-      if(!d||d<since||d>today)return;
-      due++;
-      if(planIsDone(t.id))done++;
-    });
-  }catch(_){return 0;}
-  if(!due)return 0;
-  return hinaClamp(100*done/due);
+  const days=new Set();
+  (state.sessions||[]).forEach(x=>{
+    if(x.complete!=='Done'||!x.started)return;
+    const ds=localDay(new Date(x.started));
+    if(ds>=since&&ds<=today)days.add(ds);
+  });
+  return hinaClamp(100*Math.min(1,days.size/12));
 }
 // 心 — recovery over a fortnight. Sleep leads on the evidence; rest saturates,
 // because three or four in fourteen is most of the benefit and grinding it is not
