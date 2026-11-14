@@ -751,6 +751,12 @@ body.ls-rot #lsTimer .ls-sub { font-size: 13px; }
 /* ── Pomo Flash Overlay ── */
 .pomo-flash-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.93); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 8200; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
 .pomo-flash-overlay.visible { opacity: 1; pointer-events: all; }
+/* 14 Nov 2026: the end-of-phase flash now stays up until it is tapped and pulses, so a
+   phase that ends while you are not looking is still waiting for you when you look. */
+.pomo-flash-overlay.alarm { animation: pf-alarm 1.6s ease-in-out infinite; }
+.pomo-flash-overlay.alarm .pf-bar-wrap { display: none; }
+.pomo-flash-overlay.alarm .pf-tap { font-size: 13px; opacity: 0.9; letter-spacing: 0.2em; }
+@keyframes pf-alarm { 0%,100% { background: rgba(0,0,0,0.93); } 50% { background: rgba(120,92,20,0.93); } }
 .pf-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .pf-dot { position: absolute; border-radius: 50%; animation: pf-fly 1.8s ease forwards; }
 @keyframes pf-fly { 0% { transform: translateY(60vh) scale(1) rotate(0deg); opacity: 1; } 80% { opacity: 0.7; } 100% { transform: translateY(-25vh) scale(0.4) rotate(540deg); opacity: 0; } }
@@ -2516,9 +2522,25 @@ const POMO_WORK=25*60*1000,POMO_SHORT=5*60*1000,POMO_LONG=15*60*1000;
 // the countdown sat at 0:00 while the count kept climbing. The overlay markup and CSS
 // (#pomoFlashOverlay, .pf-*) were still in place; these drive them.
 let _pomoFlashTimer=null;
+let _pomoAlarmRepeat=null,_pomoAlarmEndedAt=0;
+// Keep the screen awake while a pomodoro or break is counting down. A locked phone
+// suspends the page, so the phase could end with no sound and no flash at all.
+let _pomoWake=null;
+async function pomoWakeSync(){
+  try{
+    const want=pomoMode&&!!pomoPhaseEnd&&!document.hidden;
+    if(want&&!_pomoWake&&navigator.wakeLock){
+      _pomoWake=await navigator.wakeLock.request('screen');
+      _pomoWake.addEventListener('release',()=>{_pomoWake=null;});
+    }else if(!want&&_pomoWake){
+      const w=_pomoWake;_pomoWake=null;await w.release();
+    }
+  }catch(e){_pomoWake=null;}
+}
+document.addEventListener('visibilitychange',()=>{pomoWakeSync();});
 let _pendingQualityId=null;   // session to rate once the pomo-complete flash closes
 function playBell(){playChime([784,988,1319],0.14,1.2);}
-function showPomoFlash(kind){
+function showPomoFlash(kind,endedAt){
   const ov=document.getElementById('pomoFlashOverlay');
   if(!ov)return;
   const isBreak=kind==='break';
@@ -2533,6 +2555,10 @@ function showPomoFlash(kind){
   }else{
     playChime([659,523],0.1,0.6);
   }
+  // Noticed late (screen off, another app): say how long ago it ended.
+  _pomoAlarmEndedAt=endedAt||Date.now();
+  const lateMin=Math.floor((Date.now()-_pomoAlarmEndedAt)/60000);
+  if(lateMin>=1)sub+=' · ended '+lateMin+' min ago';
   document.getElementById('pfEyebrow').textContent=eyebrow;
   document.getElementById('pfGlyph').textContent=glyph;
   document.getElementById('pfSub').textContent=sub;
@@ -2559,15 +2585,26 @@ function showPomoFlash(kind){
       pc.appendChild(d);
     }
   }
-  ov.classList.add('visible');
+  ov.classList.add('visible','alarm');
   if(isBreak)flashTitle('✓ Pomodoro done — break');
   else flashTitle('Break over');
-  clearTimeout(_pomoFlashTimer);
-  _pomoFlashTimer=setTimeout(closePomoFlash,3200);
+  clearTimeout(_pomoFlashTimer);_pomoFlashTimer=null;
+  // No auto-close any more: it pulses and re-chimes every 10 s until tapped, for up to
+  // three minutes, then keeps pulsing silently.
+  clearInterval(_pomoAlarmRepeat);
+  let rings=0;
+  _pomoAlarmRepeat=setInterval(()=>{
+    rings++;
+    if(rings>18||!ov.classList.contains('visible')){clearInterval(_pomoAlarmRepeat);_pomoAlarmRepeat=null;return;}
+    try{if(isBreak)playBell();else playChime([659,523],0.1,0.6);}catch(e){}
+    try{if(navigator.vibrate)navigator.vibrate([300,150,300]);}catch(e){}
+  },10000);
+  try{if(navigator.vibrate)navigator.vibrate([300,150,300]);}catch(e){}
 }
 function closePomoFlash(){
   clearTimeout(_pomoFlashTimer);_pomoFlashTimer=null;
-  document.getElementById('pomoFlashOverlay')?.classList.remove('visible');
+  clearInterval(_pomoAlarmRepeat);_pomoAlarmRepeat=null;
+  document.getElementById('pomoFlashOverlay')?.classList.remove('visible','alarm');
   // Ask how the pomodoro went once the flash is out of the way.
   if(_pendingQualityId){const id=_pendingQualityId;_pendingQualityId=null;showQualityPicker(id);}
 }
@@ -2672,6 +2709,7 @@ setInterval(()=>{if(document.body.classList.contains('ls-on'))lsTimerPaint();},1
 function startTimer(){
   if(timerInterval)clearInterval(timerInterval);
   lsTimerSync();
+  pomoWakeSync();
   timerInterval=setInterval(()=>{
     lsTimerSync();
     lsTimerPaint();
@@ -2739,7 +2777,7 @@ function startTimer(){
         renderHome();
         if(currentTab==='study')renderStudyLog();
         // Cues last, and never allowed to block the phase change above.
-        try{if(soundEnabled)playBell();showPomoFlash('break');}
+        try{if(soundEnabled)playBell();showPomoFlash('break',endedAt);}
         catch(e){
           warn('pomoEnd.cue',e);
           // No flash means closePomoFlash never runs — ask for the rating directly.
@@ -2752,11 +2790,12 @@ function startTimer(){
         // on the same subject, so a set of pomodoros runs unattended until the daily goal.
         // It still stops on its own at the goal, and still stops if there is no subject
         // to resume (nothing has been started this session), which is the old behaviour.
+        const breakEndedAt=pomoPhaseEnd;
         pomoPhase='work';pomoPhaseEnd=null;
         const goalLeft=pomoCount<pomoGoal;
         if(goalLeft&&lastSubject&&!state.activeSession){
           savePomoPersist();
-          try{showPomoFlash('work');}catch(e){warn('breakEnd.cue',e);}
+          try{showPomoFlash('work',breakEndedAt);}catch(e){warn('breakEnd.cue',e);}
           // startSession sets the work phase end and restarts this interval itself.
           startSession(lastSubject).catch(e=>{
             warn('breakEnd.autoStart',e);
@@ -2768,7 +2807,8 @@ function startTimer(){
           savePomoPersist();
           renderHome();
           if(currentTab==='study')renderStudyLog();
-          try{showPomoFlash('work');}catch(e){warn('breakEnd.cue',e);}
+          pomoWakeSync();
+          try{showPomoFlash('work',breakEndedAt);}catch(e){warn('breakEnd.cue',e);}
         }
       }
     }
@@ -2859,13 +2899,22 @@ async function startSession(subject){
 
 async function stopSession(){
   if(pomoMode&&!state.activeSession&&pomoPhaseEnd){
-    // Skip break
+    // Skip break. This used to stop the timer dead, so skipping a break ended the whole
+    // run. Now it goes straight into the next work phase on the same subject, and only
+    // falls back to stopping when there is no subject to resume.
     clearInterval(timerInterval);timerInterval=null;
     pomoPhase='work';pomoPhaseEnd=null;
-    savePomoPersist();renderHome();return;
+    savePomoPersist();
+    if(lastSubject){
+      try{await startSession(lastSubject);}catch(e){warn('skipBreak.start',e);renderHome();}
+      showToast('Break skipped — next pomodoro started',2000);
+      return;
+    }
+    pomoWakeSync();renderHome();return;
   }
   if(!state.activeSession)return;
   clearInterval(timerInterval);timerInterval=null;
+  setTimeout(pomoWakeSync,0);
   const doneTime=new Date().toISOString();
   const dur=Date.now()-new Date(state.activeSession.startedAt).getTime();
   const id=state.activeSession.id;
@@ -2886,6 +2935,7 @@ async function stopSession(){
 function setPomoMode(on){
   pomoMode=!!on;
   if(!pomoMode){pomoPhase='work';pomoPhaseEnd=null;clearInterval(timerInterval);timerInterval=null;savePomoPersist();}
+  pomoWakeSync();
   renderHome();
 }
 
