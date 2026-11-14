@@ -7828,7 +7828,9 @@ const PLAN_PREP_N={'2026-11-16|pharm':1,'2026-11-25|patho':2,'2026-12-14|micro':
 const PLAN_NO_CATCHUP=['2026-11-21'];
 const PLAN_FIXED_RE=/blurt|cram|recall|out loud|full run|weak spots|light/i;
 // A numbered topic in a series: "Micro II.14", "Pharm A7".
-const PLAN_SERIES_RE=/^(Micro (?:I|II|III|IV|V)|Pharm A)\.?(\d+)$/;
+// Pharm C (topic list C) and Pharm CC (core concept groups) added 14 Nov 2026. CC must
+// come before C in the alternation so 'Pharm CC3' is not read as series 'Pharm C'.
+const PLAN_SERIES_RE=/^(Micro (?:I|II|III|IV|V)|Pharm CC|Pharm C|Pharm A)\.?(\d+)$/;
 let _planStateLive=false;
 function planAddDays(ds,n){return localDay(new Date(new Date(ds+'T12:00:00').getTime()+n*86400000));}
 function planDiffDays(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);}
@@ -8531,7 +8533,7 @@ function planMoveLines(moves){
       if(later===0)dir='earlier';
       let lastTo=placed[0].to;
       placed.forEach(x=>{if(x.to>lastTo)lastTo=x.to;});
-      const sep=gk==='Pharm A'?'':'.';
+      const sep=gk.indexOf('Pharm')===0?'':'.';
       lines.push(gk+sep+placed[0].t.num+'–'+placed[placed.length-1].t.num+': '+placed.length+' topics '+dir+' (last now '+planDayLabel(lastTo,true)+')');
       ms.filter(x=>x.to==='x').forEach(x=>lines.push(one(x)));
     }else{
