@@ -9981,7 +9981,8 @@ function cpRow(name,target,now){
 // The Home row: the next checkpoint and how far off it is; tap to see every line of it
 // against where he is now. Never allowed to break Home, hence the catch.
 function cpHomeHTML(){
-  if(!TRAIN_V2)return '';
+  // Not gated on TRAIN_V2: he looked for it on 15 Nov and could not find it. The pool
+  // card's goal lines and the sprint benchmarks still arrive with v2 on 22 Nov.
   try{
     const c=cpNext(),day=localToday();
     const wk=Math.max(0,Math.ceil(v2DaysBetween(day,c.d)/7));
@@ -10005,7 +10006,9 @@ function cpHomeHTML(){
       if(held||bo){uwNow=held+' kicks held';if(bo)uwNow+=' · '+bo+' m';}
       body+=cpRow('Underwater',uw,uwNow);
       const sw=seasonWeek(),wm=v2WeekMetres();
-      body+=cpRow('Volume',c.km+' km a week',(wm.m/1000).toFixed(1)+' of '+sw.km.toFixed(1)+' km this week');
+      let volNow=(wm.m/1000).toFixed(1)+' of '+sw.km.toFixed(1)+' km this week';
+      if(sw.pre)volNow='the weekly target starts on 22 Nov';
+      body+=cpRow('Volume',c.km+' km a week',volNow);
       const av=weightWeekAvg();
       body+=cpRow('Weight',c.kg+' kg',av?'weekly average '+av.kg+' kg · goal line today '+weightGoalAt()+' kg':'no reading yet · log one in Body');
       body+=cpRow('Pull-up',c.pull,'');
