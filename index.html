@@ -3269,6 +3269,7 @@ async function loadPRs(){
     //   lastSets — most recent logged set per exercise, for prefill + overload nudge
     //   volume   — per-muscle tonnage (sets×reps×kg) bucketed by ISO week, for the volume view
     const lastSets={};
+    const liftDays={};   // adaptive loop: the last few sessions per exercise, one entry a day
     const volume={};
     const co2Hist=[];   // CO2 tables: hold seconds live in Reps, rounds in Sets
     const cutoff28=localDay(new Date(Date.now()-28*86400000));
@@ -3287,6 +3288,9 @@ async function loadPRs(){
       if(!isSecondary&&date&&baseName){
         const prev=lastSets[baseName];
         if(!prev||date>prev.date)lastSets[baseName]={sets,reps,weight,date};
+        const ld=liftDays[baseName]||(liftDays[baseName]={});
+        const cur=ld[date];
+        if(!cur||weight>cur.weight||(weight===cur.weight&&reps>cur.reps))ld[date]={sets,reps,weight,date};
         if(baseName===CO2_EXERCISE)co2Hist.push({date,hold:reps,rounds:sets});
       }
 
@@ -3315,6 +3319,9 @@ async function loadPRs(){
     });
     state.prs=prs;
     state.lastSets=lastSets;
+    const liftHist={};
+    Object.keys(liftDays).forEach(n=>{liftHist[n]=Object.values(liftDays[n]).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);});
+    state.liftHist=liftHist;
     state.volume=volume;
     state.co2Sessions=co2Hist.sort((a,b)=>a.date.localeCompare(b.date));
   }catch(e){warn('loadPRs',e);state.prs={};state.lastSets={};state.volume={};}
@@ -5409,6 +5416,7 @@ async function refresh(force=true){
       }
     }
     evaluateTitle();_markTabLoaded('home');renderHome();
+    adaptBoot();   // adaptive loop: the checks row, after 22 Nov only
     if(!skip)setTimeout(()=>{planAskSoon();},1500);   // a day left unticked? ask once per launch
     if(!skip)saveHomeSnapshot();   // next launch starts from this
   }
@@ -5430,7 +5438,7 @@ async function refresh(force=true){
     if(!skip)await Promise.all([loadSwimPractices(),loadPRs(),loadSessions()].map(x=>Promise.resolve(x).catch(e=>warn('hinaLoad',e))));
     _markTabLoaded('hina');renderHina();
   }
-  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();}
+  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();adaptBoot();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(!skip&&currentTab!=='home')saveTabSnapshot(currentTab);   // next launch opens this tab instantly
@@ -5884,12 +5892,12 @@ function renderHome(){
   let html;
   if(window.innerWidth>=900){
     html=`<div class="home-desktop-grid">
-      <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}</div>
+      <div class="home-col-full">${streakRow}${catchupCardHTML()}${adaptHomeHTML()}${todayLine}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
       <div class="home-col-right">${reviewCard}${examCard}${planCard}${cpHomeHTML()}${proteinRowHTML()}${hinaHomeHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+cpHomeHTML()+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
+    html=streakRow+catchupCardHTML()+adaptHomeHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+cpHomeHTML()+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -7497,7 +7505,14 @@ const FLY_STAGES=[
 ];
 const FLY_STAGE_CFG='swim_fly_stage';
 function flyStage(){
-  const n=(state.flyStage&&state.flyStage.stage)||1;
+  let n=(state.flyStage&&state.flyStage.stage)||1;
+  // Adaptive loop: each time the shoulder guard lets fly back in, it restarts one stage
+  // lower. Moving the stage by hand afterwards starts from there.
+  if(ADAPT_ON){
+    const since=(state.flyStage&&state.flyStage.since)||'';
+    adaptNow().flyBack.forEach(function(d){if(d>since)n--;});
+    if(n<1)n=1;
+  }
   return FLY_STAGES.find(x=>x.n===n)||FLY_STAGES[0];
 }
 async function loadFlyStage(){
@@ -7693,6 +7708,7 @@ function suggestSoloSet(){
 let _soloIdx=null;
 function openSoloSets(i){
   _soloIdx=(i==null?null:i);
+  adaptBoot();
   if(!state.flyStage){
     try{const c=localStorage.getItem(FLY_STAGE_CFG);if(c)state.flyStage=JSON.parse(c);}catch(_){}
     if(!state.flyStage)state.flyStage={stage:1};
@@ -10192,11 +10208,25 @@ function v2Budget(tag,ds){
   const s=seasonWeek(ds);
   let floorSum=0;
   Object.keys(V2_FLOOR).forEach(function(k){floorSum+=V2_FLOOR[k];});
-  const extra=Math.max(0,s.km*1000-2*V2_CLUB_M-floorSum);
+  // The adaptive loop moves a session inside the season, never outside it: a hold
+  // keeps last week's size, an earned step borrows next week's target (not in a
+  // deload, a taper or an exam hold), a step back takes a tenth off.
+  let km=s.km,mult=1;
+  const ad=adaptNow();
+  if(ad!==ADAPT_OFF&&!s.pre){
+    const day=ds||localToday();
+    const v=ad.vol[tag]||0;
+    if(ad.hold[tag]){
+      const pw=seasonWeek(v2AddDays(day,-7));
+      if(!pw.pre&&!pw.deload&&!pw.taper&&pw.km<km)km=pw.km;
+    }else if(v>0&&!s.deload&&!s.taper&&!s.hold)km=adaptNextKm(day,s);
+    if(v<0)mult=1+0.1*v;
+  }
+  const extra=Math.max(0,km*1000-2*V2_CLUB_M-floorSum);
   // A deload or taper week goes under the floor on purpose: the warm-up and the easy
   // swimming shrink, the main set does not.
   const ease=(s.deload||s.taper)?0.85:1;
-  return Math.min(3400,Math.round((V2_FLOOR[tag]+extra*V2_SHARE[tag])*ease/50)*50);
+  return Math.min(3400,Math.round((V2_FLOOR[tag]+extra*V2_SHARE[tag])*ease*mult/50)*50);
 }
 function v2Clock(sec){
   const s=Math.round(sec);
@@ -10313,7 +10343,9 @@ function v2UwBlock(light){
 }
 // The full session as data. cut:true marks the 60-minute line.
 function v2Spec(tag,ds){
-  const lv=soloLevel(tag);
+  const ad=adaptNow();
+  if(adaptEasyOn(ds||localToday()))return adaptEasySpec();
+  const lv=v2Level(tag);
   const s=seasonWeek(ds);
   const budget=v2Budget(tag,ds);
   const light=!!(s.deload||s.taper);
@@ -10326,6 +10358,8 @@ function v2Spec(tag,ds){
     main=[{head:(5+Math.min(lv,5))+' × 15 m',n:5+Math.min(lv,5),d:33,what:'max speed from a push, then easy to the wall',full:true,rest:90,main:true,note:'stop the block when one comes back slower'},
           {n:3+Math.floor(lv/2),d:33,what:'free at 50 pace',rest:75,pace:'p50',target:true,note:'the breakout is part of the rep'},
           {head:'4 × 15 m',n:4,d:33,what:'max fly from a push, then easy free to the wall',full:true,rest:90}];
+    // Shoulder guard: the fly sprints become easy kick, same metres.
+    if(ad.guard.on)main[2]={n:4,d:33,what:'kick on your front, easy — in place of the fly sprints',rest:20};
     const room=budget-sum(pre)-sum(main)-200;
     const n66=Math.max(2,Math.min(6,Math.round(room/66)));
     post=[{n:n66,d:66,what:'easy free',rest:15,pace:'easy',count:true},{d:200,what:'easy, some of it backstroke'}];
@@ -10354,10 +10388,16 @@ function v2Spec(tag,ds){
           {raw:'FLY · stage '+st.n+' · '+st.label,m:0}]
       .concat(st.lines.map(function(l,i){return {raw:l,m:i?0:st.fly};}))
       .concat([{d:light?200:300,what:'easy'}]);
+    // Shoulder guard: the fly ladder becomes easy free of the same length.
+    if(ad.guard.on)post=[post[0],{n:Math.max(2,Math.round(st.fly/66)),d:66,what:'easy free, long strokes — in place of the fly',rest:15,pace:'easy'},{d:light?200:300,what:'easy'}];
     let n=Math.max(3,Math.min(24,Math.round((budget-sum(pre)-sum(post))/100)));
     if(n>=12&&n%2===0)main=[{n:n/2,d:200,what:'free',count:true,rest:20,pace:'cruise',target:true,main:true,note:'even pace, same count the whole way'}];
     else main=[{n:n,d:100,what:'free',count:true,rest:15,pace:'cruise',target:true,main:true,note:'same count every one. Leave on the interval'}];
   }
+  // Rest on the aerobic main sets moves a breath (3 s) at a time, floor three breaths.
+  // Sprint and race-pace rest is never cut: a level adds a rep, never less rest.
+  const rs=ad.rest[tag]||0;
+  if(rs&&(tag==='v2aer'||tag==='v2base'))main.forEach(function(it){if(it.pace==='cruise'&&!it.full&&it.rest)it.rest=Math.max(9,it.rest+3*rs);});
   return pre.concat(main,[{cut:true}],post);
 }
 function v2Session(tag,ds){
@@ -10397,7 +10437,7 @@ function v2LevelLabel(x){
   if(!x.levels)return seasonLine();
   const st=v2LadderState();
   const next=x.tag==='v2speed'?st.free50.next:st.free100.next;
-  return 'Level '+soloLevel(x.tag)+' of '+SOLO_LEVEL_MAX+' · working toward '+fmtSwimTime(next);
+  return 'Level '+v2Level(x.tag)+' of '+SOLO_LEVEL_MAX+' · working toward '+fmtSwimTime(next);
 }
 function renderSoloSetsV2(){
   const b=document.getElementById('soloBody');
@@ -10428,7 +10468,7 @@ function renderSoloSetsV2(){
       '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1;margin-top:12px">SOLO SESSIONS</div>'+
       '<div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">33.3 m pool · 60 to 90 min</div>'+
       '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(mode)+'</div>'+
-      '<div style="margin-top:18px">'+body+'</div>';
+      '<div style="margin-top:18px">'+adaptEasyHTML()+body+adaptLogHTML()+'</div>';
     return;
   }
   const x=SOLO_V2[_soloIdx];
@@ -10448,14 +10488,14 @@ function renderSoloSetsV2(){
   });
   let lvBlock='';
   if(x.levels){
-    const lv=soloLevel(x.tag),cl=v2CleanCount(x);
+    const lv=v2Level(x.tag),cl=v2CleanCount(x);
     let up='';
-    if(lv<SOLO_LEVEL_MAX&&cl>=2)up='<button class="wec-log-btn" style="width:100%;margin-top:10px" onclick="soloLevelUp(\''+x.tag+'\')">Ready for level '+(lv+1)+'</button>';
+    if(!ADAPT_ON&&lv<SOLO_LEVEL_MAX&&cl>=2)up='<button class="wec-log-btn" style="width:100%;margin-top:10px" onclick="soloLevelUp(\''+x.tag+'\')">Ready for level '+(lv+1)+'</button>';
     lvBlock='<div style="border-top:1px solid var(--border);padding:12px 0;margin-top:14px">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline">'+
         '<span style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">'+esc(v2LevelLabel(x))+'</span>'+
-        '<span style="font-size:9px;color:var(--text-faint)" onclick="soloLevelDown(\''+x.tag+'\')">step back</span></div>'+
-      '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">'+cl+' clean session'+(cl===1?'':'s')+' at this level · two moves you up. A level adds a rep, never less rest.</div>'+up+'</div>';
+        '<span style="font-size:9px;color:var(--text-faint)" onclick="'+(ADAPT_ON?'adaptLevelDown':'soloLevelDown')+'(\''+x.tag+'\')">step back</span></div>'+
+      '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">'+(ADAPT_ON?'The level moves by itself: two sessions in a row completed at effort 3 or under take it up, two hard ones take it back.':cl+' clean session'+(cl===1?'':'s')+' at this level · two moves you up.')+' A level adds a rep, never less rest.</div>'+up+'</div>';
   }else{
     let flyRow='';
     if(x.tag==='v2base'){
@@ -10473,6 +10513,7 @@ function renderSoloSetsV2(){
     '<div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">'+se.full+'m · '+esc(x.focus)+'</div>'+
     '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-top:4px">'+esc(seasonLine())+'</div>'+
     '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(mode)+' · kit · '+esc(x.kit||'none')+'</div>'+
+    adaptLinesHTML(adaptSwimLines(x.tag))+(adaptEasyOn(localToday())?adaptEasyHTML():'')+
     '<div style="font-size:12px;line-height:1.75;color:var(--text-dim);margin:16px 0 4px">'+esc(x.why)+'</div>'+
     '<div style="margin-top:14px">'+lines+'</div>'+lvBlock+
     '<button class="wec-log-btn" style="width:100%;margin-top:18px" onclick="logSoloSetV2('+_soloIdx+',false)">LOG THE FULL SESSION · '+se.full+'m</button>'+
@@ -10696,6 +10737,708 @@ function v2ResetPeaks(){
   saveHina();
 }
 
+// ── Adaptive loop ────────────────────────────────────────────────────────────
+// Every solo set and gym session follows how the previous ones went. The only new
+// input is a three-row check after a swim or a lift: effort 1–5, completed
+// yes / partly / no, shoulder 0–3. Everything else is read from what is already
+// logged. The checks live in ONE AppConfig row (train_checks) — no new Notion
+// properties — and nothing else is stored: adaptCompute() replays the checks from
+// 22 Nov and returns where volume, rest, levels, the shoulder guard and the easy day
+// stand, so two devices cannot drift apart and the rules can be tested offline.
+// It works inside the season: a deload, a taper and an exam hold all outrank it.
+// Off before 22 Nov, and off in the ?preview=v2 view (a check saved there would be a
+// real row), so ADAPT_ON follows the date and not TRAIN_V2.
+const ADAPT_CFG='train_checks';
+const ADAPT_ON=V2_DATE_ON;
+const ADAPT_DISMISS_KEY='grind-check-dismissed';
+const ADAPT_TAGS=['v2speed','v2aer','v2pace','v2base'];
+const ADAPT_TAG_NAME={v2speed:'speed',v2aer:'aerobic',v2pace:'100-pace',v2base:'base'};
+const ADAPT_OFF={vol:{},rest:{},hold:{},lv:{},note:{},guard:{on:false,since:'',why:''},flyBack:[],easies:[],log:[]};
+// Pulled while the shoulder guard is on. null drops the line; a pair swaps it. There
+// is no floor crunch in the exercise library, so the plate crunch is dropped rather
+// than swapped. Cuff work, pull-ups and pulldowns stay (his call, 15 Nov 2026).
+const ADAPT_SHOULDER_SWAP={'Machine Shoulder Press':null,'Overhead Plate Crunch':null,'Cable Overhead Tricep Extension':['Cable Tricep Rope Pushdowns','3 × 12']};
+const ADAPT_NO_PROGRESS=/Jumps|Pogo Hops|Carries|Swimming/;
+let _adaptVer=0,_adaptKey='',_adaptVal=null,_adaptBooted=false;
+function adaptBump(){_adaptVer++;}
+function adaptData(){
+  if(!state.trainChecks){
+    try{const c=localStorage.getItem(ADAPT_CFG);if(c)state.trainChecks=JSON.parse(c);}catch(_){}
+    if(!state.trainChecks)state.trainChecks={v:1,c:[],o:[],m:[]};
+  }
+  const t=state.trainChecks;
+  if(!Array.isArray(t.c))t.c=[];
+  if(!Array.isArray(t.o))t.o=[];
+  if(!Array.isArray(t.m))t.m=[];
+  return t;
+}
+// Union of two copies, the first one winning where both hold the same check.
+function adaptMerge(a,b){
+  const out={v:1,c:[],o:[],m:[]},seen={};
+  [a,b].forEach(function(src){
+    if(!src)return;
+    (src.c||[]).forEach(function(x){
+      if(!x||!x.d)return;
+      const k=x.d+'|'+x.k+'|'+x.s;
+      if(seen[k])return;
+      seen[k]=1;out.c.push(x);
+    });
+    (src.o||[]).forEach(function(d){if(out.o.indexOf(d)<0)out.o.push(d);});
+    (src.m||[]).forEach(function(x){
+      if(!x)return;
+      const k='m|'+x.t+'|'+x.s;
+      if(seen[k])return;
+      seen[k]=1;out.m.push(x);
+    });
+  });
+  out.c.sort(function(x,y){if(x.d!==y.d)return x.d<y.d?-1:1;return (x.t||0)-(y.t||0);});
+  out.o.sort();
+  out.m.sort(function(x,y){return (x.t||0)-(y.t||0);});
+  return out;
+}
+function adaptCount(t){return t?((t.c||[]).length+(t.o||[]).length+(t.m||[]).length):0;}
+// g.text() reads only the first 1900-character chunk; this row outgrows one chunk.
+function adaptRowJSON(row){
+  try{
+    const rt=(row.properties&&row.properties.Value&&row.properties.Value.rich_text)||[];
+    const s=rt.map(function(r){return r.plain_text!=null?r.plain_text:((r.text&&r.text.content)||'');}).join('');
+    return s?JSON.parse(s):null;
+  }catch(_){return null;}
+}
+async function loadTrainChecks(){
+  const local=adaptData();
+  try{
+    const rows=await appConfigRows(ADAPT_CFG);
+    let remote=null;
+    if(rows.length){state.trainChecksPageId=rows[0].id;remote=adaptRowJSON(rows[0]);}
+    else state.trainChecksPageId=null;
+    state.trainChecks=adaptMerge(local,remote);
+    adaptBump();
+    try{localStorage.setItem(ADAPT_CFG,JSON.stringify(state.trainChecks));}catch(_){}
+    // A check answered while offline is on this phone only: send it now.
+    if(adaptCount(state.trainChecks)>adaptCount(remote))await saveTrainChecks();
+  }catch(e){warn('loadTrainChecks',e);}
+}
+async function saveTrainChecks(){
+  try{localStorage.setItem(ADAPT_CFG,JSON.stringify(adaptData()));}catch(_){}
+  try{
+    appConfigInvalidate();
+    const rows=await appConfigRows(ADAPT_CFG);
+    if(rows.length){
+      state.trainChecksPageId=rows[0].id;
+      state.trainChecks=adaptMerge(adaptData(),adaptRowJSON(rows[0]));
+      adaptBump();
+      try{localStorage.setItem(ADAPT_CFG,JSON.stringify(state.trainChecks));}catch(_){}
+    }
+    const rich=richChunks(JSON.stringify(state.trainChecks));
+    if(rows.length)await nPatch(rows[0].id,{Value:{rich_text:rich}});
+    else{
+      const page=await nCreate(DB.appConfig,{Key:{title:[{text:{content:ADAPT_CFG}}]},Value:{rich_text:rich}});
+      state.trainChecksPageId=page.id;
+      appConfigInvalidate();
+    }
+  }catch(e){warn('saveTrainChecks',e);showToast('Check kept on this phone — it will sync next time',3000);}
+}
+function adaptBoot(){
+  if(!ADAPT_ON||_adaptBooted)return;
+  _adaptBooted=true;
+  const jobs=[loadTrainChecks()];
+  if(!state.swimPractices)jobs.push(loadSwimPractices());
+  Promise.all(jobs.map(function(j){return Promise.resolve(j).catch(function(e){warn('adaptBoot',e);});})).then(function(){
+    adaptBump();
+    adaptRerender();
+  });
+}
+function adaptRerender(){
+  try{
+    if(currentTab==='home')renderHome();
+    if(currentTab==='workout')renderWorkout();
+    if(document.getElementById('soloBody'))renderSoloSets();
+    if(document.getElementById('sessionPlanPage'))renderSessionPlan();
+  }catch(e){warn('adaptRerender',e);}
+}
+function adaptDayName(ds){return new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'});}
+function adaptPDate(p){return p&&p.date?String(p.date).slice(0,10):'';}
+function adaptPracticeOn(d,practices){
+  for(let i=0;i<practices.length;i++){if(adaptPDate(practices[i])===d&&v2IsSolo(practices[i]))return practices[i];}
+  return null;
+}
+// The stroke target as it stood before that day: best of the five solo counts before it.
+function adaptStrokeTargetBefore(d,practices){
+  const vals=practices.filter(function(p){return p.strokes>0&&v2IsSolo(p)&&adaptPDate(p)&&adaptPDate(p)<d;})
+    .sort(function(a,b){return adaptPDate(a)<adaptPDate(b)?1:-1;}).slice(0,5).map(function(p){return p.strokes;});
+  if(!vals.length)return null;
+  return Math.min.apply(null,vals);
+}
+// Watch only. Hand-typed main-set splits that fade more than 3% from the first rep to
+// the last make the session a hard one whatever effort was tapped. Imported rows hold
+// every length of the practice, which says nothing about fade, so they are skipped.
+function adaptSplitFade(p){
+  if(!HAS_WATCH||!p||!p.splits||p.garminId)return false;
+  const m=/^\s*\d+\s*:\s+(.*)$/.exec(String(p.splits));
+  if(!m)return false;
+  const ts=m[1].split(/[\s,]+/).map(parseSwimTime).filter(function(v){return v!=null;});
+  if(ts.length<3)return false;
+  return (ts[ts.length-1]-ts[0])/ts[0]>0.03;
+}
+// Watch only, and not built: heart rate and HRV are not in anything the import reads
+// yet. Both return "no opinion" until a real file from his watch has been looked at.
+function adaptHrEasy(p){return null;}
+function adaptHrvVote(ds){return 0;}
+// easy · ok · hard · fail
+function adaptClass(x,practices){
+  if(x.c==='n')return 'fail';
+  if(x.c==='p'||x.e>=4)return 'hard';
+  let cls=x.e<=2?'easy':'ok';
+  if(x.k==='swim'){
+    const p=adaptPracticeOn(x.d,practices);
+    if(p){
+      // "Easy" with the stroke count two or more over target was not easy swimming.
+      if(cls==='easy'&&p.strokes>0){
+        const tg=adaptStrokeTargetBefore(x.d,practices);
+        if(tg&&p.strokes>=tg+2)cls='ok';
+      }
+      if(cls==='ok'&&adaptHrEasy(p)===true)cls='easy';
+      if(adaptSplitFade(p))cls='hard';
+    }
+  }
+  return cls;
+}
+// The next week's volume target that is a real step up: not a deload, not a taper.
+function adaptNextKm(day,s){
+  for(let i=1;i<=2;i++){
+    const n=seasonWeek(v2AddDays(day,7*i));
+    if(n.deload||n.taper)continue;
+    if(n.km>s.km)return n.km;
+    return s.km;
+  }
+  return s.km;
+}
+function adaptIsSoloOrGym(d){
+  const abbr=WEEK_ABBR[new Date(d+'T12:00:00').getDay()];
+  if(SOLO_DAY_ROLE[abbr])return true;
+  const p=SESSION_PLAN[abbr];
+  return !!(p&&p.blocks.length>2);
+}
+// Where an easy day may go: the next solo swim or gym day, never a club practice,
+// never inside a deload or taper or in the two days before a deload, and not within
+// seven days of an easy day that stood.
+function adaptEasyDate(D,easies){
+  for(let i=1;i<=4;i++){
+    const d=v2AddDays(D,i);
+    if(!adaptIsSoloOrGym(d))continue;
+    const s=seasonWeek(d);
+    if(s.deload||s.taper)return null;
+    if(seasonWeek(v2AddDays(d,1)).deload||seasonWeek(v2AddDays(d,2)).deload)return null;
+    for(let j=0;j<easies.length;j++){
+      if(!easies[j].overridden&&v2DaysBetween(easies[j].date,d)<7)return null;
+    }
+    return d;
+  }
+  return null;
+}
+function adaptClampLv(n){return Math.min(SOLO_LEVEL_MAX,Math.max(1,n));}
+function adaptCompute(data,today){
+  const start=TRAINING_V2_START;
+  const practices=state.swimPractices||[];
+  const out={vol:{},rest:{},hold:{},lv:{},note:{},guard:{on:false,since:'',why:''},flyBack:[],easies:[],log:[]};
+  const checks=((data&&data.c)||[]).filter(function(x){return x&&x.d>=start&&x.d<=today&&x.e>=1;})
+    .slice().sort(function(x,y){if(x.d!==y.d)return x.d<y.d?-1:1;return (x.t||0)-(y.t||0);});
+  const overrides=((data&&data.o)||[]).filter(function(d){return d>=start;}).slice().sort();
+
+  // 1 · Shoulder guard. On after a single 3, or 2+ twice in a row. Off after 0–1 twice in a row.
+  let on=false,prevSh=null;
+  checks.forEach(function(x){
+    if(x.sh==null)return;
+    if(!on){
+      let why='';
+      if(x.sh>=3)why='shoulder 3 after '+adaptDayName(x.d)+'\'s session';
+      else if(x.sh>=2&&prevSh!=null&&prevSh>=2)why='shoulder 2+ twice in a row';
+      if(why){
+        on=true;
+        out.guard={on:true,since:x.d,why:why};
+        out.log.push({d:x.d,t:'Fly and overhead pressing removed — '+why});
+      }
+    }else if(x.sh<=1&&prevSh!=null&&prevSh<=1){
+      on=false;
+      out.guard={on:false,since:'',why:''};
+      out.flyBack.push(x.d);
+      out.log.push({d:x.d,t:'Fly and overhead pressing back — shoulder 0–1 twice in a row. Fly restarts one stage lower'});
+    }
+    prevSh=x.sh;
+  });
+
+  // 2 · Fatigue guard. Effort averaged per training day; three days running at 4+,
+  // or two running with a 5, puts an easy day on the next solo swim or gym day.
+  const days={};
+  checks.forEach(function(x){
+    const g2=days[x.d]||(days[x.d]={sum:0,n:0,max:0});
+    g2.sum+=x.e;g2.n++;if(x.e>g2.max)g2.max=x.e;
+  });
+  Object.keys(days).forEach(function(d){if(adaptHrvVote(d)>0){days[d].sum+=4;days[d].n++;}});
+  const dayList=Object.keys(days).sort();
+  let resetAfter='',minD='',lastEasy='';
+  dayList.forEach(function(D,i){
+    if(D<minD)return;
+    if(lastEasy&&lastEasy>D)return;
+    const win=dayList.slice(0,i+1).filter(function(d){return d>resetAfter;}).slice(-3);
+    let why='';
+    if(win.length===3&&v2DaysBetween(win[0],D)<=5){
+      let mean=0;
+      win.forEach(function(d){mean+=days[d].sum/days[d].n;});
+      if(mean/3>=4)why='effort 4+ three training days running';
+    }
+    if(!why&&win.length>=2){
+      const a=win[win.length-2];
+      if(days[a].max>=5&&days[D].max>=5&&v2DaysBetween(a,D)<=3)why='effort 5 two training days in a row';
+    }
+    if(!why)return;
+    const date=adaptEasyDate(D,out.easies);
+    if(!date)return;
+    // One override per seven days. An easy day inside seven days of the last override is binding.
+    const prior=overrides.filter(function(o){return o<date&&v2DaysBetween(o,date)<7;});
+    const binding=prior.length>0;
+    const overridden=!binding&&overrides.indexOf(date)>=0;
+    out.easies.push({date:date,trigger:D,why:why,binding:binding,overridden:overridden,prior:prior.length?prior[prior.length-1]:''});
+    out.log.push({d:D,t:'Easy day on '+adaptDayName(date)+' — '+why});
+    if(overridden){minD=date;out.log.push({d:date,t:'Easy day overridden — the plan was kept'});}
+    else resetAfter=D;
+    lastEasy=date;
+  });
+  const easySet={};
+  out.easies.forEach(function(e){if(!e.overridden)easySet[e.date]=1;});
+
+  // 3 · Each solo session, judged on its own last two checks since it last moved.
+  let oldest='';
+  const anyDates={};
+  practices.forEach(function(p){
+    const d=adaptPDate(p);
+    if(!d)return;
+    anyDates[d]=1;
+    if(!oldest||d<oldest)oldest=d;
+  });
+  ADAPT_TAGS.forEach(function(tag){
+    const name=ADAPT_TAG_NAME[tag];
+    const level=tag==='v2speed'||tag==='v2pace';
+    const ev=[];
+    const weeksWith={};
+    checks.forEach(function(x){
+      if(x.k!=='swim'||x.s!==tag)return;
+      weeksWith[v2WeekStart(x.d)]=1;
+      // An easy day, a deload and a taper are lighter on purpose: no evidence either way.
+      if(easySet[x.d])return;
+      const s=seasonWeek(x.d);
+      if(s.deload||s.taper)return;
+      ev.push({d:x.d,t:x.t||0,cls:adaptClass(x,practices)});
+    });
+    // A solo day that passed with no swim logged and no session of this kind that week.
+    if(oldest){
+      let d=oldest>start?oldest:start;
+      for(let guardN=0;d<today&&guardN<800;guardN++,d=v2AddDays(d,1)){
+        if(SOLO_DAY_ROLE[WEEK_ABBR[new Date(d+'T12:00:00').getDay()]]!==tag)continue;
+        if(anyDates[d]||easySet[d]||weeksWith[v2WeekStart(d)])continue;
+        const s=seasonWeek(d);
+        if(s.deload||s.taper)continue;
+        ev.push({d:d,t:0,cls:'missed'});
+      }
+    }
+    ((data&&data.m)||[]).forEach(function(m){if(m&&m.s===tag&&m.d>=start&&m.d<=today)ev.push({d:m.d,t:m.t||0,cls:'manual',n:m.n||0});});
+    ev.sort(function(x,y){if(x.d!==y.d)return x.d<y.d?-1:1;return x.t-y.t;});
+    const base=soloLevel(tag);
+    let vol=0,rest=0,lv=0,win=[];
+    const good=function(c){if(level)return c==='easy'||c==='ok';return c==='easy';};
+    const bad=function(c){return c==='hard'||c==='fail';};
+    ev.forEach(function(e){
+      if(e.cls==='manual'){
+        if(level)lv=adaptClampLv(base+lv+e.n)-base;
+        win=[];
+        return;
+      }
+      win.push(e);
+      const a=win.length>1?win[win.length-2]:null;
+      let move=0;
+      if(e.cls==='fail')move=-1;
+      else if(a&&good(a.cls)&&good(e.cls))move=1;
+      else if(a&&bad(a.cls)&&bad(e.cls))move=-1;
+      if(!move)return;
+      win=[];
+      const whyBack=e.cls==='fail'?'the last '+name+' session was not completed':'last two '+name+' sessions were hard';
+      let line='';
+      if(level){
+        const cur=adaptClampLv(base+lv),nxt=adaptClampLv(cur+move);
+        if(nxt===cur)return;
+        lv+=nxt-cur;
+        if(move>0)line='Level '+nxt+' on the '+name+' day — last two sessions were clean at effort 3 or under';
+        else line='Back to level '+nxt+' on the '+name+' day — '+whyBack;
+      }else if(move>0){
+        const s=seasonWeek(e.d);
+        if(vol<0||(vol<1&&!s.hold&&adaptNextKm(e.d,s)>s.km)){
+          vol++;
+          let what='Some metres back';
+          if(vol===0)what='Volume back to plan';
+          if(vol>0)what='One week ahead on volume';
+          line=what+' on the '+name+' day — last two '+name+' sets were easy';
+        }else if(rest>-2){
+          rest--;
+          line='Rest cut by 1 breath — last two '+name+' sets were easy';
+        }else return;
+      }else{
+        if(vol>-2){
+          vol--;
+          let what='A tenth fewer metres';
+          if(vol===0)what='Volume back to plan';
+          if(vol===-2)what='A fifth fewer metres';
+          line=what+' on the '+name+' day — '+whyBack;
+        }else if(rest<2){
+          rest++;
+          line='Rest up by 1 breath — '+whyBack;
+        }else return;
+      }
+      out.log.push({d:e.d,t:line});
+      out.note[tag]={d:e.d,t:line};
+    });
+    out.vol[tag]=vol;out.rest[tag]=rest;out.lv[tag]=lv;
+    const last=win.length?win[win.length-1]:null;
+    if(last&&last.cls==='hard')out.hold[tag]='Held at last week\'s size — the last '+name+' session was hard';
+    if(last&&last.cls==='missed')out.hold[tag]='Held at last week\'s size — '+adaptDayName(last.d)+'\'s '+name+' session was missed';
+  });
+  out.log.sort(function(a,b){if(a.d===b.d)return 0;return a.d<b.d?-1:1;});
+  return out;
+}
+function adaptNow(){
+  if(!ADAPT_ON)return ADAPT_OFF;
+  const today=localToday();
+  const sl=(state.soloLevels&&state.soloLevels.lv)||{};
+  const key=_adaptVer+'|'+today+'|'+(state.swimPractices||[]).length+'|'+(sl.v2speed||1)+'|'+(sl.v2pace||1);
+  if(key!==_adaptKey||!_adaptVal){_adaptVal=adaptCompute(adaptData(),today);_adaptKey=key;}
+  return _adaptVal;
+}
+// The easy day standing on that date, if any.
+function adaptEasyOn(ds){
+  const es=adaptNow().easies;
+  for(let i=0;i<es.length;i++){if(es[i].date===ds&&!es[i].overridden)return es[i];}
+  return null;
+}
+function v2Level(tag){return adaptClampLv(soloLevel(tag)+(adaptNow().lv[tag]||0));}
+// The easy version of any solo session: the 60-minute shape, nothing fast, nothing timed.
+function adaptEasySpec(){
+  return [{d:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(v2UwBlock(true),[
+    {n:8,d:100,what:'easy free',count:true,rest:20,pace:'easy',main:true,note:'easy day — nothing fast, nothing timed'},
+    {d:200,what:'easy, some of it backstroke'}]);
+}
+function adaptLevelDown(tag){
+  if(v2Level(tag)<=1){showToast('Already at level 1');return;}
+  adaptData().m.push({d:localToday(),s:tag,n:-1,t:Date.now()});
+  adaptBump();
+  saveTrainChecks();
+  renderSoloSets();
+}
+function adaptOverride(ds){
+  const e=adaptNow().easies.find(function(x){return x.date===ds;});
+  if(!e||e.overridden)return;
+  if(e.binding){showToast('This one is binding — one override per 7 days',3500);return;}
+  const t=adaptData();
+  if(t.o.indexOf(ds)<0)t.o.push(ds);
+  adaptBump();
+  saveTrainChecks();
+  showToast('Plan kept. The next easy day inside 7 days is binding',3500);
+  adaptRerender();
+}
+function adaptShortDay(ds){return adaptDayName(ds)+' '+parseInt(ds.slice(8,10));}
+// The easy-day notice, with its one-tap override or the reason there is none.
+function adaptEasyHTML(){
+  if(!ADAPT_ON)return '';
+  const today=localToday();
+  const es=adaptNow().easies;
+  let e=null;
+  for(let i=0;i<es.length;i++){if(es[i].date>=today){e=es[i];break;}}
+  if(!e)return '';
+  const when=e.date===today?'Today is an easy day':'Easy day on '+adaptDayName(e.date);
+  let tail;
+  if(e.overridden)tail='<div style="font-size:10px;color:var(--text-dim);margin-top:4px">Overridden — the plan is kept. Another easy day inside 7 days will be binding.</div>';
+  else if(e.binding)tail='<div style="font-size:10px;color:var(--text-dim);margin-top:4px">Binding — you overrode one on '+esc(adaptShortDay(e.prior))+', and it is one override per 7 days.</div>';
+  else tail='<button class="sil-toggle-btn" style="margin-top:8px;padding:4px 12px" onclick="adaptOverride(\''+e.date+'\')">I\'m fine — keep the plan</button>';
+  let head=when+' — '+e.why;
+  if(e.overridden)head='Easy day on '+adaptDayName(e.date)+' — '+e.why;
+  return '<div style="border:1px solid var(--border-hi);border-radius:4px;padding:10px 12px;margin:8px 0 10px">'+
+    '<div style="font-size:11px;color:var(--gold);line-height:1.6">'+esc(head)+'</div>'+
+    '<div style="font-size:10px;color:var(--text-dim);margin-top:3px">Swim: the 60-minute shape, nothing fast. Lift: two sets of each at the same weight, no jumps.</div>'+tail+'</div>';
+}
+// What changed on this solo session, one line each.
+function adaptSwimLines(tag){
+  if(!ADAPT_ON)return [];
+  const ad=adaptNow(),out=[],today=localToday();
+  if(ad.guard.on&&(tag==='v2speed'||tag==='v2base'))out.push('Fly removed — '+ad.guard.why);
+  if(adaptEasyOn(today))return out;
+  if(ad.hold[tag])out.push(ad.hold[tag]);
+  const n=ad.note[tag];
+  if(n&&v2DaysBetween(n.d,today)<=14)out.push(n.t);
+  return out;
+}
+function adaptLinesHTML(lines){
+  let h='';
+  lines.forEach(function(l){h+='<div style="font-size:11px;line-height:1.6;color:var(--gold);margin-top:6px">'+esc(l)+'</div>';});
+  return h;
+}
+function adaptLogHTML(){
+  if(!ADAPT_ON)return '';
+  const log=adaptNow().log.slice(-10).reverse();
+  if(!log.length)return '<div style="border-top:1px solid var(--border);padding:14px 0"><div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">Changes</div>'+
+    '<div style="font-size:11px;color:var(--text-dim);margin-top:5px;line-height:1.7">Nothing has changed yet. Sessions adapt once two of the same kind have a check.</div></div>';
+  let rows='';
+  log.forEach(function(l){
+    rows+='<div style="display:flex;gap:10px;align-items:baseline;padding:4px 0"><span style="font-size:10px;color:var(--text-faint);width:44px;flex:none">'+esc(parseInt(l.d.slice(8,10))+' '+CP_MONTHS[parseInt(l.d.slice(5,7))-1])+'</span>'+
+      '<span style="flex:1;font-size:11px;line-height:1.6;color:var(--text-dim)">'+esc(l.t)+'</span></div>';
+  });
+  return '<div style="border-top:1px solid var(--border);padding:14px 0"><div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Changes</div>'+rows+'</div>';
+}
+
+// ── Gym ──────────────────────────────────────────────────────────────────────
+// Reps first, then load, and never a number the stack might not have: the line says
+// "one more rep" or "go up a step" and the weight box keeps what was lifted last.
+function adaptAbbrDate(abbr){
+  const today=localToday();
+  for(let i=0;i<7;i++){
+    const d=v2AddDays(today,i);
+    if(WEEK_ABBR[new Date(d+'T12:00:00').getDay()]===abbr)return d;
+  }
+  return today;
+}
+// The session as it should be done that day: shoulder guard and easy day applied.
+function adaptPlan(abbr){
+  const p=SESSION_PLAN[abbr];
+  if(!p||!ADAPT_ON)return p;
+  const ad=adaptNow();
+  const easy=adaptEasyOn(adaptAbbrDate(abbr));
+  if(!ad.guard.on&&!easy)return p;
+  const has={};
+  p.blocks.forEach(function(b){b.x.forEach(function(q){has[q[0]]=1;});});
+  const blocks=[];
+  p.blocks.forEach(function(b){
+    if(easy&&b.h==='Jumps')return;
+    const x=[];
+    b.x.forEach(function(pair){
+      let name=pair[0],pres=pair[1];
+      if(ad.guard.on&&Object.prototype.hasOwnProperty.call(ADAPT_SHOULDER_SWAP,name)){
+        const sub=ADAPT_SHOULDER_SWAP[name];
+        if(!sub||has[sub[0]])return;
+        name=sub[0];pres=sub[1];
+      }
+      if(easy&&name!=='Swimming')pres=pres.replace(/^(\d+)\s*×/,function(_,n){return Math.min(2,parseInt(n))+' ×';});
+      x.push([name,pres]);
+    });
+    if(x.length)blocks.push({h:b.h,x:x});
+  });
+  return {title:p.title,note:p.note,blocks:blocks};
+}
+function adaptLiftTag(abbr){
+  const p=SESSION_PLAN[abbr];
+  if(!p)return 'other';
+  const keys=Object.keys(V2_LIFT);
+  for(let i=0;i<keys.length;i++){if(V2_LIFT[keys[i]].title===p.title)return keys[i];}
+  return 'other';
+}
+// "3 × 12", "4 × 3–5", "3 × 10 light" → sets and a rep range. Holds in seconds and
+// carries in metres have no rep range and get no line.
+function adaptPres(text){
+  const m=/^(\d+)\s*×\s*(\d+)(?:\s*[–-]\s*(\d+))?\s*(s\b|m\b)?/.exec(text||'');
+  if(!m||m[4])return null;
+  const lo=parseInt(m[2]);
+  return {sets:parseInt(m[1]),lo:lo,hi:m[3]?parseInt(m[3]):lo+2,light:/light/i.test(text)};
+}
+function adaptGymCheckOn(ds){
+  const c=adaptData().c;
+  for(let i=c.length-1;i>=0;i--){if(c[i].k==='gym'&&c[i].d===ds)return c[i];}
+  return null;
+}
+function liftAdvice(name,pres,abbr){
+  if(!ADAPT_ON||ADAPT_NO_PROGRESS.test(name))return '';
+  const pr=adaptPres(pres);
+  if(!pr)return '';
+  const today=localToday();
+  const date=adaptAbbrDate(abbr);
+  if(adaptEasyOn(date))return 'Easy day — two sets, same weight as last time';
+  const h=((state.liftHist||{})[name]||[]).filter(function(r){return r.date<today;});
+  if(seasonWeek(date).deload){
+    if(h.length)return 'Deload week — same as last time';
+    return '';
+  }
+  if(!h.length)return 'First log — pick a weight that leaves two reps in hand';
+  const last=h[0],prev=h[1]||null,third=h[2]||null;
+  const chk=adaptGymCheckOn(last.date);
+  if(chk&&chk.c!=='y')return 'Same as last time — the last session was not finished';
+  if(chk&&chk.e>=5)return 'Same as last time — the last session was effort 5';
+  const assist=/^Assisted/.test(name);
+  if(last.weight>0&&!assist&&prev&&third&&prev.weight===last.weight&&third.weight<last.weight&&last.reps<pr.lo&&prev.reps<pr.lo)
+    return 'Back down a step — under '+pr.lo+' reps twice at this weight';
+  if(last.reps>=pr.hi){
+    if(pr.light)return 'Hold here — this one stays light on purpose';
+    if(assist)return 'One step less assist, back to '+pr.lo+' reps — '+last.reps+' reps last time';
+    if(!last.weight)return 'Top of the range — hold '+last.reps+' and slow the way down';
+    return 'Go up a step, back to '+pr.lo+' reps — '+last.reps+' reps last time';
+  }
+  if(prev&&!assist&&last.weight>prev.weight)return 'Hold this weight, build the reps — you went up last time';
+  if(prev&&assist&&last.weight<prev.weight)return 'Hold this assist, build the reps — you took a step off last time';
+  return 'One more rep than last time ('+(last.reps+1)+')';
+}
+// Top of the session page: what the loop changed about today's lift, and the check.
+function adaptSessionTopHTML(abbr){
+  if(!ADAPT_ON)return '';
+  const ad=adaptNow();
+  let h='';
+  const p=SESSION_PLAN[abbr];
+  if(ad.guard.on&&p){
+    let hit=false;
+    p.blocks.forEach(function(b){b.x.forEach(function(q){if(Object.prototype.hasOwnProperty.call(ADAPT_SHOULDER_SWAP,q[0]))hit=true;});});
+    if(hit)h+=adaptLinesHTML(['Overhead pressing removed — '+ad.guard.why]);
+  }
+  const e=adaptEasyOn(adaptAbbrDate(abbr));
+  if(e)h+=adaptLinesHTML([(e.date===localToday()?'Easy day':'Easy day on '+adaptDayName(e.date))+' — '+e.why]);
+  return h;
+}
+function adaptFinishHTML(abbr){
+  if(!ADAPT_ON||abbr!==WEEK_ABBR[new Date().getDay()])return '';
+  const today=localToday();
+  const names=(state.workoutNamesByDay||{})[today];
+  let lifted=false;
+  if(names)names.forEach(function(n){if(n!=='Swimming'&&n!==CO2_EXERCISE&&sessionDayMap()[n])lifted=true;});
+  if(!lifted)return '';
+  const c=adaptGymCheckOn(today);
+  if(c)return '<div onclick="openTrainCheck(\'gym\',\''+adaptLiftTag(abbr)+'\',\''+today+'\')" style="border-top:1px solid var(--border);padding:14px 0;margin-top:10px;font-size:11px;color:var(--text-dim);cursor:pointer">Session checked · effort '+c.e+' · shoulder '+c.sh+' · tap to change</div>';
+  return '<button class="wec-log-btn" style="width:100%;margin-top:18px" onclick="openTrainCheck(\'gym\',\''+adaptLiftTag(abbr)+'\',\''+today+'\')">FINISH SESSION · 5-SECOND CHECK</button>';
+}
+
+// ── The check ────────────────────────────────────────────────────────────────
+let _tc=null;
+function adaptSwimTag(set,course){
+  const t=String(set||'');
+  for(let i=0;i<SOLO_V2.length;i++){if(t.indexOf('Solo · '+SOLO_V2[i].t)===0)return SOLO_V2[i].tag;}
+  if(v2IsSolo({set:t,course:course||null}))return 'solo';
+  return 'club';
+}
+function openTrainCheck(kind,session,ds,done){
+  if(!ADAPT_ON)return;
+  const c=adaptData().c;
+  let prev=null;
+  for(let i=0;i<c.length;i++){if(c[i].d===ds&&c[i].k===kind&&c[i].s===session)prev=c[i];}
+  _tc={k:kind,s:session,d:ds,e:prev?prev.e:0,c:prev?prev.c:(done||'y'),sh:prev?prev.sh:null};
+  if(!document.getElementById('trainCheckSheet')){
+    const el=document.createElement('div');
+    el.id='trainCheckSheet';
+    el.style.cssText='position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.72);display:flex;align-items:flex-end;justify-content:center';
+    el.innerHTML='<div id="trainCheckBody" style="width:100%;max-width:430px;background:var(--bg-card);border-top:1px solid var(--border-hi);border-radius:6px 6px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))"></div>';
+    document.body.appendChild(el);
+  }
+  renderTrainCheck();
+}
+function tcSet(f,v){
+  if(!_tc)return;
+  _tc[f]=v;
+  renderTrainCheck();
+}
+function renderTrainCheck(){
+  const b=document.getElementById('trainCheckBody');
+  if(!b||!_tc)return;
+  const row=function(label,f,opts){
+    let chips='';
+    opts.forEach(function(o){
+      let st='color:var(--text-dim)';
+      if(_tc[f]===o[0])st='background:rgba(232,234,240,0.14);color:var(--text)';
+      let val=o[0];
+      if(typeof val==='string')val='\''+val+'\'';
+      chips+='<button class="sil-toggle-btn" style="flex:1;text-align:center;padding:9px 2px;'+st+'" onclick="tcSet(\''+f+'\','+val+')">'+o[1]+'</button>';
+    });
+    return '<div class="wec-lbl">'+label+'</div><div style="display:flex;gap:4px;margin:6px 0 14px">'+chips+'</div>';
+  };
+  let what='the lift';
+  if(_tc.k==='swim')what='the swim';
+  let when='';
+  if(_tc.d!==localToday())when=' · '+adaptDayName(_tc.d);
+  const ready=_tc.e>=1&&_tc.sh!=null;
+  b.innerHTML='<div style="font-size:16px;color:var(--text-hi);margin-bottom:3px">How was '+what+'?</div>'+
+    '<div style="font-size:10px;color:var(--text-dim);margin-bottom:16px">Three taps'+esc(when)+' · this is what the next session is built from</div>'+
+    row('Effort · 1 easy, 5 all out','e',[[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']])+
+    row('Completed','c',[['y','Yes'],['p','Partly'],['n','No']])+
+    row('Shoulder · 0 nothing, 1 aware of it, 2 sore, 3 painful','sh',[[0,'0'],[1,'1'],[2,'2'],[3,'3']])+
+    '<button class="wec-log-btn" style="width:100%;opacity:'+(ready?'1':'0.45')+'" onclick="saveTrainCheck()">SAVE</button>'+
+    '<button class="wec-log-btn" style="width:100%;margin-top:8px;opacity:0.6" onclick="closeTrainCheck()">Skip</button>';
+}
+function closeTrainCheck(){
+  const el=document.getElementById('trainCheckSheet');
+  if(el)el.remove();
+  _tc=null;
+}
+function saveTrainCheck(){
+  const tc=_tc;
+  if(!tc)return;
+  if(!(tc.e>=1)){showToast('Tap an effort, 1 to 5',2500);return;}
+  if(tc.sh==null){showToast('Tap a shoulder score, 0 to 3',2500);return;}
+  const before=adaptNow().log.length;
+  const t=adaptData();
+  t.c=t.c.filter(function(x){return !(x.d===tc.d&&x.k===tc.k&&x.s===tc.s);});
+  t.c.push({d:tc.d,k:tc.k,s:tc.s,e:tc.e,c:tc.c,sh:tc.sh,t:Date.now()});
+  adaptBump();
+  closeTrainCheck();
+  const log=adaptNow().log;
+  // Every change is said once, in one line, at the moment it happens.
+  if(log.length>before)showToast(log[log.length-1].t,6000);
+  else showToast('Check saved',2000);
+  saveTrainChecks();
+  adaptRerender();
+}
+function adaptDismissed(){try{return JSON.parse(localStorage.getItem(ADAPT_DISMISS_KEY)||'[]');}catch(_){return [];}}
+function adaptDismiss(key){
+  try{
+    const a=adaptDismissed();
+    if(a.indexOf(key)<0)a.push(key);
+    localStorage.setItem(ADAPT_DISMISS_KEY,JSON.stringify(a.slice(-30)));
+  }catch(e){warn('adaptDismiss',e);}
+  renderHome();
+}
+// A swim or lift from today or yesterday that has no check yet.
+function adaptPending(){
+  if(!ADAPT_ON)return null;
+  const today=localToday(),dis=adaptDismissed(),c=adaptData().c;
+  for(let i=0;i<=1;i++){
+    const ds=v2AddDays(today,-i);
+    if(ds<TRAINING_V2_START)continue;
+    const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
+    const has=function(k){return c.some(function(x){return x.d===ds&&x.k===k;});};
+    const p=(state.swimPractices||[]).find(function(q){return adaptPDate(q)===ds;});
+    if(p&&!has('swim')&&dis.indexOf(ds+'|swim')<0)return {ds:ds,k:'swim',s:adaptSwimTag(p.set,p.course)};
+    const names=(state.workoutNamesByDay||{})[ds];
+    let lifted=false;
+    if(names)names.forEach(function(n){if(n!=='Swimming'&&n!==CO2_EXERCISE&&sessionDayMap()[n])lifted=true;});
+    if(lifted&&!has('gym')&&dis.indexOf(ds+'|gym')<0)return {ds:ds,k:'gym',s:adaptLiftTag(abbr)};
+  }
+  return null;
+}
+function adaptHomeHTML(){
+  if(!ADAPT_ON)return '';
+  let h=adaptEasyHTML();
+  const ad=adaptNow();
+  if(ad.guard.on)h+='<div class="streak-row" style="margin:8px 0 10px"><span style="font-size:10px;letter-spacing:0.04em;color:var(--gold);line-height:1.6">Shoulder guard on — '+esc(ad.guard.why)+'. Fly and overhead pressing are out until two checks in a row read 0 or 1.</span></div>';
+  const pd=adaptPending();
+  if(pd){
+    let q='How was the lift';
+    if(pd.k==='swim')q='How was the swim';
+    if(pd.ds!==localToday())q+=' on '+adaptDayName(pd.ds);
+    h+='<div class="streak-row" style="justify-content:space-between;gap:10px;margin:8px 0 10px">'+
+      '<span style="font-size:10px;letter-spacing:0.06em;color:var(--text-dim)">'+esc(q)+'?</span>'+
+      '<span style="display:flex;gap:6px">'+
+        '<button class="sil-toggle-btn" style="padding:3px 12px" onclick="openTrainCheck(\''+pd.k+'\',\''+pd.s+'\',\''+pd.ds+'\')">Answer</button>'+
+        '<button class="sil-toggle-btn" style="padding:3px 12px" onclick="adaptDismiss(\''+pd.ds+'|'+pd.k+'\')">Skip</button>'+
+      '</span></div>';
+  }
+  return h;
+}
+function adaptAfterSwim(d,remembered){
+  if(!ADAPT_ON||!d)return;
+  let done='y';
+  if(remembered&&d.total&&d.done>0&&d.done<d.total)done='p';
+  openTrainCheck('swim',adaptSwimTag(d.set,d.course),localToday(),done);
+}
+
 // ── Garmin · import through intervals.icu ────────────────────────────────────
 // OFF. Nothing here runs unless HAS_WATCH is true, and the endpoint itself answers
 // "not configured" until an API key is set on the server. Garmin syncs to
@@ -10815,7 +11558,7 @@ function sessionDayMap(){
 function sessionDaysFor(name){return sessionDayMap()[name]||[];}
 // Swimming appears on the swim days, so the log sheet's "Today" group has it there too.
 function sessionSetsFor(name,abbr){
-  const p=SESSION_PLAN[abbr];
+  const p=adaptPlan(abbr);
   if(!p)return null;
   for(const b of p.blocks){for(const x of b.x){if(x[0]===name)return x[1];}}
   return null;
@@ -10845,7 +11588,7 @@ function renderSessionPlan(){
   const b=document.getElementById('sessionPlanBody');
   if(!b)return;
   const abbr=_planDayAbbr;
-  const p=SESSION_PLAN[abbr];
+  const p=adaptPlan(abbr);
   const wk=WORKOUT_WEEK.find(w=>w.abbr===abbr);
   let body='';
   if(!p){
@@ -10860,13 +11603,17 @@ function renderSessionPlan(){
         rows+=`<div onclick="logFromPlan('${esc(pair[0]).replace(/'/g,"\\'")}')" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12px;line-height:2;cursor:pointer;padding:2px 0">
           <span style="color:${done?'var(--text-dim)':'var(--text)'}">${done?'✓ ':''}${esc(pair[0])}</span>
           <span style="color:var(--text-dim);font-variant-numeric:tabular-nums;white-space:nowrap">${esc(pair[1])}</span></div>`;
+        const adv=liftAdvice(pair[0],pair[1],abbr);
+        if(adv)rows+='<div style="font-size:10px;line-height:1.5;color:var(--gold);margin:-3px 0 5px">'+esc(adv)+'</div>';
       });
       body+=`<div style="border-top:1px solid var(--border);padding:14px 0 6px;margin-top:6px">
         <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">${esc(bl.h)}</div>
         ${rows}</div>`;
     });
   }
+  if(p)body+=adaptFinishHTML(abbr);
   if(TRAIN_V2&&p&&p.blocks.length>2)body+=sprintBenchHTML();
+  const adTop=adaptSessionTopHTML(abbr);
   const label=(WORKOUT_WEEK.find(w=>w.abbr===abbr)||{}).label||abbr;
   b.innerHTML=`<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeSessionPlan()">← Back</button></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">
@@ -10879,7 +11626,7 @@ function renderSessionPlan(){
         <button class="sil-toggle-btn" onclick="sessionPlanStep(1)">→</button>
       </div>
     </div>
-    ${p&&p.note?`<div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-top:14px">${esc(p.note)}</div>`:''}
+    ${p&&p.note?`<div style="font-size:11px;color:var(--text-dim);line-height:1.7;margin-top:14px">${esc(p.note)}</div>`:''}${adTop}
     <div style="margin-top:10px">${body}</div>`;
 }
 // Tap a line in the session to log it: opens the usual sheet with the exercise
@@ -10917,6 +11664,9 @@ async function logFromPlan(name){
   const pres=planPrescription(sessionSetsFor(name,_planDayAbbr))||{};
   const last=state.lastSets?.[name]||null;
   const cardio=ex.category==='Cardio';
+  const advTxt=liftAdvice(name,sessionSetsFor(name,_planDayAbbr)||'',_planDayAbbr);
+  let advLine='';
+  if(advTxt)advLine='<div style="font-size:11px;color:var(--gold);margin:-8px 0 16px">'+esc(advTxt)+'</div>';
   let lastLine='first time logging this';
   if(last){
     lastLine=cardio?`Last: ${last.reps} min · ${last.date}`:`Last: ${last.sets}×${last.reps} @ ${last.weight}kg · ${last.date}`;
@@ -10940,6 +11690,7 @@ async function logFromPlan(name){
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg-card);border-top:1px solid var(--border-hi);border-radius:6px 6px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom))">
     <div style="font-size:16px;color:var(--text-hi);margin-bottom:3px">${esc(ex.name)}</div>
     <div style="font-size:10px;color:var(--text-dim);margin-bottom:16px">${esc(sessionSetsFor(name,_planDayAbbr)||'')} · ${esc(lastLine)}</div>
+    ${advLine}
     <div style="display:flex;gap:10px;margin-bottom:18px">${fields}</div>
     <button class="wec-log-btn" id="plLogBtn" style="width:100%" onclick="submitPlanLog()">LOG</button>
     <button class="wec-log-btn" style="width:100%;margin-top:8px;opacity:0.6" onclick="closePlanLog()">Cancel</button>
@@ -13204,6 +13955,7 @@ async function saveSwimPractice(remembered){
     state.swimPractices=[toSwimPractice(page),...(state.swimPractices||[])];
     showToast(remembered?'Main set logged':'Practice logged',2500);
     closeSwimPractice();
+    adaptAfterSwim(d,remembered);
   }catch(e){
     warn('saveSwimPractice',e);
     showToast('Failed: '+e.message,4000);
@@ -14754,7 +15506,7 @@ setTimeout(()=>{try{openToNow();}catch(e){warn('openToNow',e);}},0);
 const TAB_SNAP_KEY='grind-tab-snap-v1';
 const TAB_SNAP_FIELDS={
   tasks:['tasks','templates','todayQuests','penalties','lockdowns','xpDebts','ztd'],
-  workout:['exercises','bodyStats','swimPractices','prs','lastSets','volume'],
+  workout:['exercises','bodyStats','swimPractices','prs','lastSets','liftHist','volume'],
   exams:['exams','topicProgress','topicProgressPageId','lectures','lecturesPageId'],
   plan:['studyPlan','planDone','planStatePageId'],
   journal:['journals','entries'],
