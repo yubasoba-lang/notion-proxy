@@ -5886,10 +5886,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${todayLine}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${reviewCard}${examCard}${planCard}${proteinRowHTML()}${hinaHomeHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
+      <div class="home-col-right">${reviewCard}${examCard}${planCard}${cpHomeHTML()}${proteinRowHTML()}${hinaHomeHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
+    html=streakRow+catchupCardHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+cpHomeHTML()+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -9775,7 +9775,35 @@ const SEASON=[
   {k:'base', label:'Base 2', from:'2027-05-10',to:'2027-08-01',km:[16,22],lactate:false},
   {k:'build',label:'Build 2',from:'2027-08-02',to:'2027-10-31',km:[22,25],lactate:true},
   {k:'race', label:'Race 2', from:'2027-11-01',to:'2027-11-21',km:[20,12],lactate:true,taper:true},
+  // Year two (added 15 Nov 2026 with the two-year plan). Dates are estimates; the
+  // race phases sit on a spring meet and on MEFOB 2028, neither of which has a date yet.
+  {k:'base', label:'Base 3', from:'2027-11-22',to:'2028-02-06',km:[20,22],lactate:false},
+  {k:'build',label:'Build 3',from:'2028-02-07',to:'2028-04-16',km:[22,26],lactate:true},
+  {k:'race', label:'Race 3', from:'2028-04-17',to:'2028-05-07',km:[20,12],lactate:true,taper:true},
+  {k:'base', label:'Base 4', from:'2028-05-08',to:'2028-07-30',km:[20,28],lactate:false},
+  {k:'build',label:'Build 4',from:'2028-07-31',to:'2028-10-29',km:[26,22],lactate:true},
+  {k:'race', label:'Race 4', from:'2028-10-30',to:'2028-11-19',km:[20,12],lactate:true,taper:true},
 ];
+// Exam holds: weeks where the volume ramp is capped whatever the phase says, because
+// a failed comprehensive costs a year and a slow month costs three weeks. After a hold
+// the target climbs back 2.5 km a week instead of jumping to where the ramp had got to.
+// The 2027 dates are an estimate of the summer exam period — move them when it is known.
+const EXAM_HOLDS=[
+  {from:'2026-11-22',to:'2026-12-20',km:11,why:'December exams'},
+  {from:'2027-05-24',to:'2027-07-11',km:15,why:'summer exams'},
+];
+const EXAM_HOLD_BACK_KM=2.5;
+function seasonHold(day){
+  for(let i=0;i<EXAM_HOLDS.length;i++){
+    const h=EXAM_HOLDS[i];
+    if(day>=h.from&&day<=h.to)return {km:h.km,why:h.why,back:false};
+    if(day>h.to){
+      const w=Math.floor((v2DaysBetween(h.to,day)-1)/7)+1;
+      if(w<=6)return {km:h.km+EXAM_HOLD_BACK_KM*w,why:h.why,back:true};
+    }
+  }
+  return null;
+}
 const SEASON_LONG_KM=30;
 const SEASON_BASELINE_KM=10;
 function v2DaysBetween(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);}
@@ -9803,7 +9831,10 @@ function seasonWeek(ds){
   if(of>1)km=ph.km[0]+(ph.km[1]-ph.km[0])*i/(of-1);
   const deload=!ph.taper&&(no+1)%4===0;
   if(deload)km*=0.8;
-  return {k:ph.k,label:ph.label,km:Math.round(km*10)/10,week:i+1,of:of,deload:deload,lactate:!!ph.lactate,taper:!!ph.taper,no:no};
+  let hold='';
+  const hd=seasonHold(day);
+  if(hd&&!ph.taper&&km>hd.km){km=hd.km;if(!hd.back)hold=hd.why;}
+  return {k:ph.k,label:ph.label,km:Math.round(km*10)/10,week:i+1,of:of,deload:deload,lactate:!!ph.lactate,taper:!!ph.taper,no:no,hold:hold};
 }
 // Metres in one logged practice. A v2 solo session writes its own metres into the
 // set text ("… · 1700m") because its size depends on the week it was swum in and
@@ -9837,7 +9868,163 @@ function seasonLine(){
   if(s.of)t+=' · week '+s.week+' of '+s.of;
   if(s.deload)t+=' · deload';
   if(s.taper)t+=' · taper';
+  if(s.hold)t+=' · exam hold';
   return t;
+}
+
+// ── Two-year checkpoints ─────────────────────────────────────────────────────
+// The dated goal line from the two-year plan (15 Nov 2026, the steeper version he
+// asked for): where the 50 and 100, the underwater, the weekly volume, his weight and
+// the two strength benchmarks should be at each meet or semester end. Swim times are
+// 25 m. Dates after Feb 2027 are estimates. Weight runs on past the last row: 85–90 kg
+// is his long-term figure, 82–83 is what two years can add.
+const CP_START={d:'2026-11-15',kg:70};
+const CHECKPOINTS=[
+  {d:'2027-02-07',label:'End of semester 5',f50:27.9,kicks:6,brk:7,km:15,kg:73,pull:'first bodyweight pull-up',lowerX:1.0,med:'Micro II and Pharm I passed in December, nothing carried into spring'},
+  {d:'2027-05-09',label:'Spring meet',f50:26.4,f100:57.4,kicks:7,brk:9,km:20,kg:75.5,pull:'bodyweight × 6',lowerX:1.3,med:'25 Apr: half the pathology list done, every slide seen'},
+  {d:'2027-09-01',label:'End of summer',brk:10,km:22,kg:77,pull:'bodyweight × 10',lowerX:1.5,med:'No exam left from years 1–3'},
+  {d:'2027-11-21',label:'MEFOB 2027',f50:24.9,f100:53.2,brk:10,km:22,kg:78,pull:'+5 kg × 5',lowerX:1.6,med:'Every block exam passed in its own block'},
+  {d:'2028-05-07',label:'Spring meet 2028',f50:24.4,f100:51.4,brk:10,km:25,kg:80.5,pull:'+10 kg × 5',lowerX:1.75,med:'All year-4 exams passed by June'},
+  {d:'2028-11-19',label:'MEFOB 2028',f50:23.9,f100:49.9,fly50:25.9,brk:10,km:22,kg:82.5,pull:'+15 kg × 5',lowerX:1.75,med:'No exam in the taper week'},
+];
+const CP_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function cpMonth(ds){return CP_MONTHS[parseInt(ds.slice(5,7))-1]+' '+ds.slice(0,4);}
+function cpDay(ds){return parseInt(ds.slice(8,10))+' '+cpMonth(ds);}
+function cpNext(ds){
+  const day=ds||localToday();
+  for(let i=0;i<CHECKPOINTS.length;i++){if(CHECKPOINTS[i].d>=day)return CHECKPOINTS[i];}
+  return CHECKPOINTS[CHECKPOINTS.length-1];
+}
+// One line under a ladder: what the goal line asks for next, and whether the best
+// time on record is ahead of it or behind it. '' for a ladder with fewer than two
+// dated checkpoints (the 50 fly has only its final one).
+const CP_LADDER_KEY={free50:'f50',free100:'f100',fly50:'fly50'};
+function cpLadderLine(lad,st){
+  const key=CP_LADDER_KEY[lad.k];
+  const cps=CHECKPOINTS.filter(function(c){return c[key]>0;});
+  if(cps.length<2)return '';
+  const day=localToday();
+  let prev=null,next=null;
+  cps.forEach(function(c){if(c.d<day)prev=c;else if(!next)next=c;});
+  const best=st&&st.best?st.best.sec:null;
+  let nextTxt='';
+  if(next)nextTxt=fmtSwimTime(next[key])+' by '+cpMonth(next.d);
+  if(prev&&(best===null||best>prev[key])){
+    let t='behind the goal line · '+fmtSwimTime(prev[key])+' was due '+cpMonth(prev.d);
+    if(next)t+=' · next '+nextTxt;
+    return t;
+  }
+  if(!next)return 'goal line finished';
+  if(best!==null&&best<=next[key])return 'ahead of the goal line · '+fmtSwimTime(next[key])+' is not due until '+cpMonth(next.d);
+  const wk=Math.max(0,Math.ceil(v2DaysBetween(day,next.d)/7));
+  return 'goal line · '+nextTxt+' · '+wk+' week'+(wk===1?'':'s')+' away';
+}
+// Weight the goal line asks for on a given day: straight lines between the checkpoints.
+function weightGoalAt(ds){
+  const day=ds||localToday();
+  let a=CP_START;
+  if(day<=a.d)return a.kg;
+  for(let i=0;i<CHECKPOINTS.length;i++){
+    const b=CHECKPOINTS[i];
+    if(day<=b.d){
+      const span=Math.max(1,v2DaysBetween(a.d,b.d));
+      return Math.round(10*(a.kg+(b.kg-a.kg)*v2DaysBetween(a.d,day)/span))/10;
+    }
+    a=b;
+  }
+  return a.kg;
+}
+// Mean of the readings in the seven days up to the latest one — a single morning
+// can be a kilo off, the week is not.
+function weightWeekAvg(){
+  const now=weightLatest();
+  if(!now)return null;
+  const cut=v2AddDays(now.date,-6);
+  const vals=weightSorted().filter(function(x){return x.date>=cut;}).map(function(x){return x.kg;});
+  return {kg:Math.round(10*vals.reduce(function(a,b){return a+b;},0)/vals.length)/10,n:vals.length,date:now.date};
+}
+function weightGoalLineHTML(){
+  const nx=cpNext();
+  const goal=weightGoalAt();
+  let t='goal line today · '+goal+'kg · '+nx.kg+'kg by '+cpMonth(nx.d);
+  const av=weightWeekAvg();
+  if(av&&v2DaysBetween(av.date,localToday())<=14){
+    const diff=Math.round(10*(av.kg-goal))/10;
+    if(diff<=-0.5)t+=' · you are '+Math.abs(diff)+'kg under it — eat more';
+    else if(diff>=1.5)t+=' · '+diff+'kg over it — slow down, not all of that is muscle';
+    else t+=' · on the line';
+  }
+  return '<div style="font-size:11px;color:var(--text-dim);margin-top:6px">'+esc(t)+'</div>';
+}
+// Days since a timed 50 free that can be compared (not the 33 m pool). null = never.
+function cpDaysSinceTimed50(){
+  let last='';
+  (state.swimPractices||[]).forEach(function(p){
+    if(p.timedDistance!==50||!p.timedSeconds||p.course==='33 m'||!p.date)return;
+    if(p.date>last)last=p.date;
+  });
+  if(!last)return null;
+  return v2DaysBetween(last,localToday());
+}
+const CP_OPEN_KEY='grind-cp-open';
+function cpIsOpen(){try{return localStorage.getItem(CP_OPEN_KEY)==='1';}catch(_){return false;}}
+function cpToggle(){
+  try{localStorage.setItem(CP_OPEN_KEY,cpIsOpen()?'0':'1');}catch(_){}
+  const el=document.getElementById('cpHome');
+  if(el)el.outerHTML=cpHomeHTML();
+}
+function cpRow(name,target,now){
+  return '<div style="padding:7px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px"><span style="color:var(--text-dim)">'+esc(name)+'</span><span style="color:var(--text-hi);text-align:right">'+esc(target)+'</span></div>'+
+    (now?'<div style="font-size:10px;color:var(--text-faint);margin-top:2px;text-align:right">'+esc(now)+'</div>':'')+'</div>';
+}
+// The Home row: the next checkpoint and how far off it is; tap to see every line of it
+// against where he is now. Never allowed to break Home, hence the catch.
+function cpHomeHTML(){
+  if(!TRAIN_V2)return '';
+  try{
+    const c=cpNext(),day=localToday();
+    const wk=Math.max(0,Math.ceil(v2DaysBetween(day,c.d)/7));
+    let when=cpDay(c.d)+' · '+wk+' week'+(wk===1?'':'s');
+    if(c.d<day)when=cpDay(c.d)+' · passed';
+    const since=cpDaysSinceTimed50();
+    let nudge='';
+    if(since===null)nudge='No timed 50 on record. Ask the coach for one — nothing here can be checked without it.';
+    else if(since>31)nudge='No timed 50 in '+since+' days. One a month keeps the goal line honest.';
+    let body='';
+    if(cpIsOpen()){
+      const st=v2LadderState();
+      const b50=st.free50.best,b100=st.free100.best;
+      if(c.f50)body+=cpRow('50 free',fmtSwimTime(c.f50),b50?'best '+fmtSwimTime(b50.sec):'no timed 50 yet');
+      if(c.f100)body+=cpRow('100 free',fmtSwimTime(c.f100),b100?'best '+fmtSwimTime(b100.sec):'no timed 100 yet');
+      if(c.fly50)body+=cpRow('50 fly',fmtSwimTime(c.fly50),'');
+      let uw=c.brk+' m off the wall';
+      if(c.kicks)uw=c.kicks+' kicks · '+uw;
+      const held=uwHeldKicks(),bo=uwBreakoutBest();
+      let uwNow='nothing logged yet';
+      if(held||bo){uwNow=held+' kicks held';if(bo)uwNow+=' · '+bo+' m';}
+      body+=cpRow('Underwater',uw,uwNow);
+      const sw=seasonWeek(),wm=v2WeekMetres();
+      body+=cpRow('Volume',c.km+' km a week',(wm.m/1000).toFixed(1)+' of '+sw.km.toFixed(1)+' km this week');
+      const av=weightWeekAvg();
+      body+=cpRow('Weight',c.kg+' kg',av?'weekly average '+av.kg+' kg · goal line today '+weightGoalAt()+' kg':'no reading yet · log one in Body');
+      body+=cpRow('Pull-up',c.pull,'');
+      let bw=CP_START.kg;
+      if(av)bw=av.kg;
+      body+=cpRow('Trap bar or Smith squat × 4',c.lowerX+' × bodyweight · '+Math.round(c.lowerX*c.kg)+' kg',Math.round(c.lowerX*bw)+' kg at the weight you are now');
+      body+=cpRow('Exams',c.med,'');
+      const sl=sleepAvg(7);
+      body+=cpRow('Sleep','7 h 45 average',sl===null?'nothing logged this week':sl+' h average, last 7 days');
+    }
+    return '<div id="cpHome" class="flat-sec" style="cursor:pointer" onclick="cpToggle()">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="flex:1">'+
+        '<div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Next checkpoint</div>'+
+        '<div style="font-size:15px;color:var(--text-hi)">'+esc(c.label)+'</div>'+
+        '<div style="font-size:11px;color:var(--text-dim);margin-top:3px">'+esc(when)+'</div>'+
+        (nudge?'<div style="font-size:10px;line-height:1.6;color:var(--gold);margin-top:6px">'+esc(nudge)+'</div>':'')+
+      '</div><span style="font-size:18px;color:var(--text-faint)">'+(cpIsOpen()?'⌄':'›')+'</span></div>'+
+      (body?'<div style="margin-top:10px">'+body+'</div>':'')+'</div>';
+  }catch(e){return '';}
 }
 
 // ── Goals and the checkpoint ladder ──────────────────────────────────────────
@@ -9910,12 +10097,20 @@ function v2LadderHTML(){
         '<span style="font-size:13px;color:var(--text-hi)">'+esc(lad.label)+(lad.main?' · main':'')+'</span>'+
         '<span style="font-size:10px;color:var(--text-dim)">goal '+fmtSwimTime(s.goal)+'</span></div>'+
       '<div style="font-size:11px;line-height:1.7;color:var(--text);margin-top:3px">'+esc(line)+'</div>'+
+      cpLadderLineHTML(lad,s)+
       '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;margin-top:3px">'+dots+'</div></div>';
   });
   const a=st.free50.best,b=st.free100.best;
   let ratio='';
   if(a&&b)ratio='<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:8px">Your 100 is '+(b.sec/a.sec).toFixed(2)+' × your 50. About 2.1 is where it should sit — anything above that is the back half, not a lack of speed.</div>';
-  return rows+ratio+'<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:8px">25 m pool times. The next rung is for '+SWIM_LADDER_NEXT_BY+'; the ones after it carry no date yet. First rungs are placeholders until the MEFOB times are in.</div>';
+  return rows+ratio+'<div style="font-size:10px;line-height:1.7;color:var(--text-faint);margin-top:8px">25 m pool times. The goal line under each ladder is the dated one, from the two-year plan. First rungs are placeholders until the MEFOB times are in.</div>';
+}
+function cpLadderLineHTML(lad,s){
+  const t=cpLadderLine(lad,s);
+  if(!t)return '';
+  let col='var(--text-dim)';
+  if(t.indexOf('behind')===0)col='var(--gold)';
+  return '<div style="font-size:10px;line-height:1.7;color:'+col+';margin-top:2px">'+esc(t)+'</div>';
 }
 // Replaces the old single-target section on the pool card.
 function v2TargetHTML(){
@@ -9926,6 +10121,7 @@ function v2TargetHTML(){
   let note='Volume climbs from what you swim now, a little each week. '+SEASON_LONG_KM+' km a week is the long-term figure, not this season\'s.';
   if(s.deload)note='Deload week: a fifth less on purpose, and Thursday is a full rest day.';
   if(s.taper)note='Taper: less swimming, the same speed. Add nothing.';
+  if(s.hold)note='Exam hold ('+s.hold+'): the volume target is capped until they are done, then climbs back a little each week.';
   return '<div class="rival-section-label">Season · '+esc(seasonLine())+'</div>'+
     '<div style="display:flex;align-items:flex-end;gap:10px;margin:8px 0 4px">'+
       '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:36px;color:var(--text-hi);line-height:1">'+(wm.m/1000).toFixed(1)+'</span>'+
@@ -10409,6 +10605,11 @@ function sprintBenchHTML(){
       if(idx+1<bn.tiers.length)next=TIER_NAMES[idx+1]+' at '+bn.tiers[idx+1];
       else next='top of the ladder';
     }else next=bn.tiers.map(function(t,i){return TIER_NAMES[i].slice(0,3)+' '+t.replace(' cm','');}).join(' · ');
+    const cpn=cpNext();
+    let cpTxt='';
+    if(bn.k==='pull')cpTxt=cpn.pull+' by '+cpMonth(cpn.d);
+    if(bn.k==='lower')cpTxt=cpn.lowerX+' × bodyweight ('+Math.round(cpn.lowerX*cpn.kg)+' kg) by '+cpMonth(cpn.d);
+    if(cpTxt)next+=' · checkpoint · '+cpTxt;
     rows+='<div style="padding:7px 0;border-top:1px solid rgba(232,234,240,0.06)">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;font-size:12px"><span style="color:var(--text)">'+esc(bn.label)+'</span><span style="color:'+col+'">'+esc(now)+'</span></div>'+
       '<div style="font-size:10px;color:var(--text-faint);margin-top:2px">'+(idx===null?'':'next · ')+esc(next)+'</div></div>';
@@ -12364,6 +12565,8 @@ function weightBodyHTML(){
   if(now){big=String(now.kg);sub=now.date;}
   let rangeLine='';
   if(rng)rangeLine='<div style="font-size:11px;color:var(--text-dim);margin-top:8px">athletic range at '+h+'cm · '+rng.lo+'–'+rng.hi+'kg</div>';
+  let goalLine='';
+  try{goalLine=weightGoalLineHTML();}catch(_){}
   const hVal=h?String(h):'';
   let wPh='70';
   if(now)wPh=String(now.kg);
@@ -12372,6 +12575,7 @@ function weightBodyHTML(){
       <span style="font-size:13px;color:var(--text-dim)">kg · ${esc(sub)}</span>
     </div>
     <div style="font-size:11px;color:var(--text-dim);margin-top:6px">${esc(weightVerdict())}</div>
+    ${goalLine}
     ${rangeLine}
     <div style="margin:14px 0 4px;min-height:34px">${bars}</div>
     <div style="font-size:10px;color:var(--text-faint);margin-bottom:14px">last ${l.length} readings</div>
