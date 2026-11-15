@@ -9137,13 +9137,39 @@ function widgetSnapBuild(){
   const exams=planExams().filter(e=>e.date>=today).map(e=>({s:e.subject,t:String(e.title||'').split(' — ')[0],d:e.date}));
   // A streak is only as good as the log behind it. If that log is not loaded on this
   // tab, keep the last number written rather than a zero.
-  const prev=(widgetSnapPrev().streaks)||{};
+  const last=widgetSnapPrev();
+  const prev=last.streaks||{};
   const keep=v=>(typeof v==='number'?v:null);
   let w=keep(prev.w),m=keep(prev.m),sw=keep(prev.sw);
   if(state.workoutDaysLoaded||state.streaks)w=displayedWorkoutStreak();
   if((state.sessions||[]).length)m=getUserStudyStreak();
   if(state.workoutDaysLoaded)sw=swimsLast7();
-  return {v:1,date:today,tz:userTimezone,tasks,fit,exams,streaks:{w,m,sw}};
+  const out={v:1,date:today,tz:userTimezone,tasks,fit,exams,streaks:{w,m,sw}};
+  // Swim distance for the last eight weeks, oldest first, with each week's target once
+  // the season plan is running — the chart on the large widget. Same sums as the pool
+  // card (v2WeekMetres, seasonWeek). Without the practice log, the last one saved stays.
+  let swim=last.swim||null;
+  if((state.swimPractices||[]).length){
+    const d=[],km=[],t=[];
+    // Each week runs to the day before the next one starts, so Sunday 22 Nov — day one
+    // of the rebuild, counted with the week after it — is not also counted in the week
+    // before.
+    let cur=v2WeekStart(today),end=v2WeekMetres(cur).to;
+    for(let i=0;i<8;i++){
+      let mtr=0;
+      state.swimPractices.forEach(p=>{if(p.date&&p.date>=cur&&p.date<=end)mtr+=v2PracticeMetres(p);});
+      d.unshift(cur);
+      km.unshift(Math.round(mtr/100)/10);
+      let tg=null;
+      if(cur>=TRAINING_V2_START)tg=seasonWeek(cur).km;
+      t.unshift(tg);
+      end=v2AddDays(cur,-1);
+      cur=v2WeekStart(end);
+    }
+    swim={d,km,t};
+  }
+  if(swim)out.swim=swim;
+  return out;
 }
 function widgetSnapSoon(){
   if(_wsTimer)return;                       // not reset by later calls: a busy screen still saves
@@ -9153,15 +9179,21 @@ async function widgetSnapNow(){
   _wsTimer=null;
   if(_wsSaving){_wsAgain=true;return;}
   if(!_planStateLive||!state.studyPlan)return;
-  let snap=null;
-  try{snap=widgetSnapBuild();}catch(e){warn('widgetSnap',e);return;}
-  if(!snap)return;
-  const sig=JSON.stringify(snap);
-  // Same as what this device last saw in Notion. Re-checked against the row itself every
-  // half hour in case the other device has written since.
-  if(sig===_wsSig&&Date.now()-_wsSigAt<1800000)return;
   _wsSaving=true;
-  try{
+  try{await widgetSnapWrite();}catch(e){warn('widgetSnap',e);}
+  _wsSaving=false;
+  if(_wsAgain){_wsAgain=false;widgetSnapSoon();}
+}
+async function widgetSnapWrite(){
+    // The swim chart needs the practice log, which only the pool tabs load. One read,
+    // once per launch.
+    if(!state.swimPractices)await loadSwimPractices();
+    const snap=widgetSnapBuild();
+    if(!snap)return;
+    const sig=JSON.stringify(snap);
+    // Same as what this device last saw in Notion. Re-checked against the row itself
+    // every half hour in case the other device has written since.
+    if(sig===_wsSig&&Date.now()-_wsSigAt<1800000)return;
     const rows=await appConfigRows(WIDGET_CFG);
     let remoteSig='';
     if(rows.length){
@@ -9179,9 +9211,6 @@ async function widgetSnapNow(){
     }
     _wsSig=sig;_wsSigAt=Date.now();
     try{localStorage.setItem(WIDGET_SNAP_KEY,sig);}catch(_){}
-  }catch(e){warn('widgetSnap',e);}
-  _wsSaving=false;
-  if(_wsAgain){_wsAgain=false;widgetSnapSoon();}
 }
 function logSoloSet(i){
   if(TRAIN_V2){logSoloSetV2(i,false);return;}
