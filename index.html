@@ -9145,28 +9145,27 @@ function widgetSnapBuild(){
   if((state.sessions||[]).length)m=getUserStudyStreak();
   if(state.workoutDaysLoaded)sw=swimsLast7();
   const out={v:1,date:today,tz:userTimezone,tasks,fit,exams,streaks:{w,m,sw}};
-  // Swim distance for the last eight weeks, oldest first, with each week's target once
-  // the season plan is running — the chart on the large widget. Same sums as the pool
-  // card (v2WeekMetres, seasonWeek). Without the practice log, the last one saved stays.
-  let swim=last.swim||null;
+  // Swim distance for each day of this week, Monday to Sunday, and the week's target from
+  // the season plan — the chart on the large widget. He asked for a plain Monday week
+  // here, so Sunday 22 Nov sits in the week it ends (the pool card folds it into week
+  // one). Distances are the pool card's own (v2PracticeMetres). Without the practice
+  // log, the last one saved stays if it is for the same week.
+  const dow=new Date(today+'T12:00:00').getDay();
+  const mon=v2AddDays(today,-((dow+6)%7));
+  let swim=null;
+  if(last.swim&&last.swim.k==='day'&&last.swim.d&&last.swim.d[0]===mon)swim=last.swim;
   if((state.swimPractices||[]).length){
-    const d=[],km=[],t=[];
-    // Each week runs to the day before the next one starts, so Sunday 22 Nov — day one
-    // of the rebuild, counted with the week after it — is not also counted in the week
-    // before.
-    let cur=v2WeekStart(today),end=v2WeekMetres(cur).to;
-    for(let i=0;i<8;i++){
+    const d=[],km=[];
+    let tot=0;
+    for(let i=0;i<7;i++){
+      const ds=v2AddDays(mon,i);
       let mtr=0;
-      state.swimPractices.forEach(p=>{if(p.date&&p.date>=cur&&p.date<=end)mtr+=v2PracticeMetres(p);});
-      d.unshift(cur);
-      km.unshift(Math.round(mtr/100)/10);
-      let tg=null;
-      if(cur>=TRAINING_V2_START)tg=seasonWeek(cur).km;
-      t.unshift(tg);
-      end=v2AddDays(cur,-1);
-      cur=v2WeekStart(end);
+      state.swimPractices.forEach(p=>{if(p.date&&String(p.date).slice(0,10)===ds)mtr+=v2PracticeMetres(p);});
+      d.push(ds);
+      km.push(Math.round(mtr/100)/10);
+      tot+=mtr;
     }
-    swim={d,km,t};
+    swim={k:'day',d,km,sum:Math.round(tot/100)/10,t:seasonWeek(mon).km};
   }
   if(swim)out.swim=swim;
   return out;
