@@ -9117,6 +9117,29 @@ function widgetSnapPrev(){
   try{const c=localStorage.getItem(WIDGET_SNAP_KEY);if(c)return JSON.parse(c)||{};}catch(_){}
   return {};
 }
+// The metres the plan sets for one day's swim — the set written for that day. From the
+// rebuild (22 Nov): a club day is V2_CLUB_M, a solo day is that day's session as it is
+// written for that week (v2Session), a gym-only day is 0. Before it there is no set per
+// day, so every day the old week has a swim on counts as one ordinary 2 km practice.
+function widgetSwimPlanned(ds){
+  const abbr=WEEK_ABBR[new Date(ds+'T12:00:00').getDay()];
+  if(ds<TRAINING_V2_START){
+    const w=WORKOUT_WEEK.find(x=>x.abbr===abbr);
+    if(w&&/swim/i.test(w.sub))return V2_CLUB_M;
+    return 0;
+  }
+  const tag=SOLO_DAY_ROLE[abbr];
+  if(tag){
+    let m=0;
+    try{m=v2Session(tag,ds).full;}catch(_){m=0;}
+    if(!m)m=v2Budget(tag,ds);
+    return m;
+  }
+  const wk=POOL_MORNINGS_ONLY?WORKOUT_WEEK_V2_POOL_AM:WORKOUT_WEEK_V2_NORMAL;
+  const w=wk.find(x=>x.abbr===abbr);
+  if(w&&/club/i.test(w.sub))return V2_CLUB_M;
+  return 0;
+}
 function widgetSnapBuild(){
   const ix=planIndex();
   if(!ix)return null;
@@ -9145,8 +9168,9 @@ function widgetSnapBuild(){
   if((state.sessions||[]).length)m=getUserStudyStreak();
   if(state.workoutDaysLoaded)sw=swimsLast7();
   const out={v:1,date:today,tz:userTimezone,tasks,fit,exams,streaks:{w,m,sw}};
-  // Swim distance for each day of this week, Monday to Sunday, and the week's target from
-  // the season plan — the chart on the large widget. He asked for a plain Monday week
+  // Swim distance for each day of this week, Monday to Sunday, beside what the plan set
+  // for that day; the week's goal is the sum of those sets — the chart on the large
+  // widget. He asked for a plain Monday week
   // here, so Sunday 22 Nov sits in the week it ends (the pool card folds it into week
   // one). Distances are the pool card's own (v2PracticeMetres). Without the practice
   // log, the last one saved stays if it is for the same week.
@@ -9155,8 +9179,8 @@ function widgetSnapBuild(){
   let swim=null;
   if(last.swim&&last.swim.k==='day'&&last.swim.d&&last.swim.d[0]===mon)swim=last.swim;
   if((state.swimPractices||[]).length){
-    const d=[],km=[];
-    let tot=0;
+    const d=[],km=[],pl=[];
+    let tot=0,goal=0;
     for(let i=0;i<7;i++){
       const ds=v2AddDays(mon,i);
       let mtr=0;
@@ -9164,8 +9188,11 @@ function widgetSnapBuild(){
       d.push(ds);
       km.push(Math.round(mtr/100)/10);
       tot+=mtr;
+      const pm=widgetSwimPlanned(ds);
+      pl.push(Math.round(pm/100)/10);
+      goal+=pm;
     }
-    swim={k:'day',d,km,sum:Math.round(tot/100)/10,t:seasonWeek(mon).km};
+    swim={k:'day',d,km,p:pl,sum:Math.round(tot/100)/10,t:Math.round(goal/100)/10};
   }
   if(swim)out.swim=swim;
   return out;
