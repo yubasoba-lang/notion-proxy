@@ -5897,6 +5897,7 @@ function renderHome(){
   if(_scroll)_scroll.scrollTop=_scrollTop;
   const _newStreakSig=s?`${displayedWorkoutStreak()}|${displayedMindStreak()}|${swimsLast7()}`:'';
   if(_newStreakSig!==renderHome._lastStreakSig){
+    widgetSnapSoon();   // the widget shows these three numbers
     renderHome._lastStreakSig=_newStreakSig;
     document.querySelectorAll('.streak-num:not(.loading)').forEach(el=>{const v=parseInt(el.textContent)||0;if(v>0)countUp(el,v);});
   }
@@ -8688,17 +8689,29 @@ function planAskHTML(ds,more){
     ${moreLine}
   </div>`;
 }
-function planFitLineHTML(){
+// The fit of each exam still ahead that has work left: n of m target days, or how many
+// tasks have no place. One source for the Today line and the widget snapshot.
+function planFitRows(){
   const ix=planIndex();
-  if(!ix)return '';
+  if(!ix)return [];
   const today=localToday();
   const L=planLayout(today);
-  const subs=(state.studyPlan||{}).subjects||{};
-  let html='';
+  const out=[];
   ix.exams.forEach(e=>{
     const f=L.fit[e.key];
     if(!f||f.date<today)return;
     if(!f.left&&!f.unfit.length)return;
+    out.push({e,f});
+  });
+  return out;
+}
+function planFitLineHTML(){
+  const ix=planIndex();
+  if(!ix)return '';
+  const subs=(state.studyPlan||{}).subjects||{};
+  let html='';
+  planFitRows().forEach(row=>{
+    const e=row.e,f=row.f;
     const name=(subs[e.subject]||e.subject)+' · '+new Date(f.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
     let msg='',col='var(--text-dim)';
     if(f.unfit.length){
@@ -9057,6 +9070,7 @@ function renderPlan(){
       <button class="sil-toggle-btn" onclick="planOpenFit('${first}')">Changes · Reset</button>
     </div>
   </div>`;
+  widgetSnapSoon();
 }
 // Opening the app with a day unaccounted for: ask, once per launch, wherever you are.
 let _planAsked=false;
@@ -9074,6 +9088,7 @@ async function planAskSoon(){
   try{
     if(!state.studyPlan)await loadStudyPlan();
     if(!_planStateLive)await loadPlanState();
+    widgetSnapSoon();   // opening GRIND on any tab refreshes the home-screen widget
     if(!planIndex()||currentTab==='plan')return;
     if(!planPendingDays().length)return;
     if(document.getElementById('planAskSheet'))return;
@@ -9083,6 +9098,90 @@ async function planAskSoon(){
     document.body.appendChild(el);
     planAskRender();
   }catch(e){warn('planAskSoon',e);}
+}
+// ── Widget snapshot ──────────────────────────────────────────────────────────
+// The Scriptable widgets (home screen and lock screen) cannot run the reflow, and should
+// not: one copy of that logic is enough. So whenever Today is drawn, the answer — today's
+// tasks as laid out, their ticks and tiers, the fit of each exam, the exam dates and the
+// three streak numbers — is saved as one small AppConfig row the widget reads through
+// the proxy. Countdowns are NOT stored: the widget works them out from the dates, so a
+// snapshot never shows yesterday's "30d".
+// Written at most once per WIDGET_SNAP_WAIT, and only when the content differs from the
+// row in Notion. Never from a copy of the plan state that has not been checked against
+// Notion this session — a stale tab must not put old ticks on the lock screen.
+const WIDGET_CFG='widget_snapshot';
+const WIDGET_SNAP_KEY='grind-widget-snap-v1';
+const WIDGET_SNAP_WAIT=4000;
+let _wsTimer=null,_wsSaving=false,_wsAgain=false,_wsSig=null,_wsSigAt=0;
+function widgetSnapPrev(){
+  try{const c=localStorage.getItem(WIDGET_SNAP_KEY);if(c)return JSON.parse(c)||{};}catch(_){}
+  return {};
+}
+function widgetSnapBuild(){
+  const ix=planIndex();
+  if(!ix)return null;
+  const today=localToday();
+  const tasks=planItemsOn(today).map(it=>{
+    const t=it.t;
+    const o={t:t.title,s:t.subject};
+    if(t.kind!=='study'){o.k=t.kind;return o;}
+    let tier='floor';                       // what "Floor only" would tick: floor + fixed blocks
+    if(it.tier==='target')tier='target';
+    if(it.tier==='extra')tier='extra';
+    if(it.tier==='pulled')tier='pulled';
+    o.r=tier;
+    if(planIsDone(it.id))o.d=1;
+    return o;
+  });
+  const fit=planFitRows().map(row=>({s:row.e.subject,d:row.f.date,n:row.f.n,m:row.f.m,u:row.f.unfit.length}));
+  const exams=planExams().filter(e=>e.date>=today).map(e=>({s:e.subject,t:String(e.title||'').split(' — ')[0],d:e.date}));
+  // A streak is only as good as the log behind it. If that log is not loaded on this
+  // tab, keep the last number written rather than a zero.
+  const prev=(widgetSnapPrev().streaks)||{};
+  const keep=v=>(typeof v==='number'?v:null);
+  let w=keep(prev.w),m=keep(prev.m),sw=keep(prev.sw);
+  if(state.workoutDaysLoaded||state.streaks)w=displayedWorkoutStreak();
+  if((state.sessions||[]).length)m=getUserStudyStreak();
+  if(state.workoutDaysLoaded)sw=swimsLast7();
+  return {v:1,date:today,tz:userTimezone,tasks,fit,exams,streaks:{w,m,sw}};
+}
+function widgetSnapSoon(){
+  if(_wsTimer)return;                       // not reset by later calls: a busy screen still saves
+  _wsTimer=setTimeout(widgetSnapNow,WIDGET_SNAP_WAIT);
+}
+async function widgetSnapNow(){
+  _wsTimer=null;
+  if(_wsSaving){_wsAgain=true;return;}
+  if(!_planStateLive||!state.studyPlan)return;
+  let snap=null;
+  try{snap=widgetSnapBuild();}catch(e){warn('widgetSnap',e);return;}
+  if(!snap)return;
+  const sig=JSON.stringify(snap);
+  // Same as what this device last saw in Notion. Re-checked against the row itself every
+  // half hour in case the other device has written since.
+  if(sig===_wsSig&&Date.now()-_wsSigAt<1800000)return;
+  _wsSaving=true;
+  try{
+    const rows=await appConfigRows(WIDGET_CFG);
+    let remoteSig='';
+    if(rows.length){
+      try{
+        const r=JSON.parse((rows[0].properties.Value.rich_text||[]).map(x=>x.plain_text||'').join(''));
+        delete r.at;
+        remoteSig=JSON.stringify(r);
+      }catch(_){remoteSig='';}
+    }
+    if(remoteSig!==sig){
+      const out={...snap,at:new Date().toISOString()};
+      let pid=null;
+      if(rows.length)pid=rows[0].id;
+      await appConfigUpsert(WIDGET_CFG,pid,JSON.stringify(out));
+    }
+    _wsSig=sig;_wsSigAt=Date.now();
+    try{localStorage.setItem(WIDGET_SNAP_KEY,sig);}catch(_){}
+  }catch(e){warn('widgetSnap',e);}
+  _wsSaving=false;
+  if(_wsAgain){_wsAgain=false;widgetSnapSoon();}
 }
 function logSoloSet(i){
   if(TRAIN_V2){logSoloSetV2(i,false);return;}
