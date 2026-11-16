@@ -3153,7 +3153,11 @@ window.addEventListener('online',()=>{flushWriteQueue();});
 
 const g={
   title:v=>v?.title?.[0]?.plain_text??'',
-  text:v=>v?.rich_text?.[0]?.plain_text??'',
+  // 16 Nov 2026: reads every chunk, not just the first. Long values are saved split into
+  // 1,900-character chunks by richChunks(), and reading only chunk one made any record
+  // past that size parse as empty — and the next save would then overwrite it. Joining
+  // is also right for short values, which are a single chunk anyway.
+  text:v=>richAll(v),
   select:v=>v?.select?.name??null,
   checkbox:v=>v?.checkbox??false,
   date:v=>v?.date?.start??null,
@@ -5079,7 +5083,7 @@ function isDateInBreak(ds){return (state.breakPeriods||[]).some(p=>p.start&&ds>=
 async function loadBreakPeriods(){
   try{
     const page=await nFetch(`/pages/${BREAKS_CONFIG_ID}`);
-    const raw=page.properties?.Value?.rich_text?.[0]?.plain_text||'[]';
+    const raw=richAll(page.properties?.Value)||'[]';
     state.breakPeriods=JSON.parse(raw);
   }catch(e){state.breakPeriods=[];}
 }
