@@ -3746,7 +3746,7 @@ const DAY_PLAN={
 };
 if(POOL_MORNINGS_ONLY)Object.assign(DAY_PLAN,POOL_AM_PLAN);
 
-const PLAN_DOT={wake:'rgba(232,234,240,0.35)',meal:'#c8824a',together:'#d98fb0',class:'#8B8B9B',study:'var(--gold)',swim:'#5aa9d6',breath:'#5aa9d6',gym:'#6fbf73',cardio:'#6fbf73',travel:'rgba(232,234,240,0.35)',cook:'#c8824a',sleep:'#6b6b9b'};
+const PLAN_DOT={core:'#6fbf73',wake:'rgba(232,234,240,0.35)',meal:'#c8824a',together:'#d98fb0',class:'#8B8B9B',study:'var(--gold)',swim:'#5aa9d6',breath:'#5aa9d6',gym:'#6fbf73',cardio:'#6fbf73',travel:'rgba(232,234,240,0.35)',cook:'#c8824a',sleep:'#6b6b9b'};
 let planViewAbbr=null;
 
 function planMin(t){const p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
@@ -3917,6 +3917,17 @@ function renderDayPlan(){
         tapAttr=' onclick="openCO2()"';
         cursor='pointer';
         bits.push('tap to start');
+      }
+    }
+    if(it.k==='core'){
+      const names=(state.workoutNamesByDay||{})[ds];
+      if(names&&names.has('Core Circuit')){
+        doneMark=' <span style="color:var(--gold);font-size:10px;letter-spacing:0.06em">✓ done</span>';
+        op='1';
+      }else if(isToday){
+        tapAttr=' onclick="_planDayAbbr=WEEK_ABBR[new Date().getDay()];logFromPlan(\'Core Circuit\')"';
+        cursor='pointer';
+        bits.push('tap to log');
       }
     }
     if(it.k==='swim'){
@@ -9739,20 +9750,20 @@ const V2_LIFT={
     {h:'Main',x:[['Lat Pulldown','4 × 6 heavy — chase bodyweight'],['Cable Seated Row','4 × 8'],['Chest-Supported Dumbbell Row','3 × 10']]},
     {h:'Arms',x:[['Cable Tricep Rope Pushdowns','3 × 12 — elbow extension finishes the pull']]},
     {h:'Shoulder',x:[['Cable Archer Pull','3 × 12'],['Cable External Rotation','3 × 15 each, light']]},
-    {h:'Core',x:[['Hanging Leg Raises','3 × 12'],['Suitcase Carries','3 × 40m']]},
+    {h:'Core',x:[['Hanging Leg Raises','3 × 12'],['Suitcase Carries','3 × 40m'],['Pallof Press','3 × 10 each side, hips stay square — the stroke turns, the hips do not']]},
   ]},
   lower:{title:'Lower · power',note:'Jumps first, while fresh · full rest between jump sets, every one as high or as far as you can · then one heavy lift moved fast. Two clear days before weekend volleyball. Every fourth week this day is rest.',blocks:[
     {h:'Jumps',x:[['Box Jumps','4 × 4, step down'],['Broad Jumps','4 × 4, stick the landing'],['Pogo Hops','3 × 12, stiff ankles, quick off the floor']]},
     {h:'Main lift · pick one',x:[['Trap Bar Deadlift','4 × 4 heavy, fast on the way up'],['Smith Machine Squat','4 × 5 heavy — if there is no trap bar']]},
     {h:'Strength',x:[['Bulgarian Split Squat','3 × 6 each'],['Dumbbell Romanian Deadlift','3 × 8'],['Hip Thrust','3 × 8'],['Calf Raise Machine','3 × 12 heavy']]},
-    {h:'Core',x:[['Ab roller','3 × 8'],['Dead Bug','3 × 10 each']]},
+    {h:'Core',x:[['Ab roller','3 × 8'],['Dead Bug','3 × 10 each'],['Superman Hold','3 × 20s — the up-beat of the dolphin kick']]},
     {h:'If the rack is taken',x:[['Leg Press','4 × 6 heavy'],['Leg Extension','3 × 12'],['Hamstring Curl Machine','3 × 12']]},
   ]},
   press:{title:'Pull and press',note:'After the morning swim · pull leads, pressing second, the shoulder press stays light. Moderate, not heavy: Monday is a club swim.',blocks:[
     {h:'Pull',x:[['Assisted Pull-ups','3 × 6–8, second go at these this week'],['Lat Pulldown','3 × 10, lighter than the Pull day']]},
     {h:'Press',x:[['Incline Dumbbell Press','3 × 8'],['Pectoral Fly','3 × 12'],['Machine Shoulder Press','3 × 10 light']]},
     {h:'Arms',x:[['Cable Overhead Tricep Extension','3 × 12'],['Tricep Pushdown (Machine)','3 × 12']]},
-    {h:'Core',x:[['Overhead Plate Crunch','3 × 15'],['Plank Hip Dips','3 × 30s each']]},
+    {h:'Core',x:[['Flutter Kicks','3 × 30s, straight legs, kick from the hips'],['Plank Hip Dips','3 × 30s each']]},
   ]},
   upper:{title:'Upper · light',note:'After the morning swim · the lightest lift of the week on purpose, because Saturday is also volleyball. Rear delts, cuff, arms, core — no legs, no jumps, nothing heavy. Forty-five minutes.',blocks:[
     {h:'Shoulder',x:[['Face Pulls','3 × 15'],['Machine Rear Delt Fly','3 × 15'],['Cable Lateral Raises','3 × 15 light'],['Cable 90/90 External Rotation','3 × 12 light']]},
@@ -9762,7 +9773,12 @@ const V2_LIFT={
     {h:'Core',x:[['Hollow Body Hold','3 × 30s'],['DB Russian Twists','3 × 20']]},
   ]},
 };
-function v2Swim(title,note,min){return {title:title,note:note,blocks:[{h:'Pool',x:[['Swimming',(min||90)+' min']]}]};}
+// Core on every training day (his ask, 16 Nov 2026): the four lifts end with a core
+// block, and the swim-only days get a ten-minute circuit at home in the evening,
+// logged as one exercise. Rounds are its sets.
+const CORE_CIRCUIT='Core Circuit';
+const CORE_CIRCUIT_TEXT='2 × 4 moves — dead bug 10 each side, side plank 30s each side, Superman hold 20s, hollow body hold 30s';
+function v2Swim(title,note,min){return {title:title,note:note,blocks:[{h:'Pool',x:[['Swimming',(min||90)+' min']]},{h:'Core · at home, evening',x:[[CORE_CIRCUIT,CORE_CIRCUIT_TEXT]]}]};}
 function v2SwimThenLift(lift,swimNote){
   const L=V2_LIFT[lift];
   return {title:L.title,note:swimNote+' '+L.note,blocks:[V2_POOL_BLOCK].concat(L.blocks)};
@@ -9784,6 +9800,22 @@ const SESSION_PLAN_V2=POOL_MORNINGS_ONLY?{
   Sat:v2SwimThenLift('upper','Solo swim 08:00 — the 100 pace session.'),
   Sun:v2SwimThenLift('press','Solo swim 08:00 — base, kick and fly.'),
 };
+// Ten minutes of core five minutes after dinner ends, on each swim-only day. Wednesday
+// and Friday's CO2 table starts as it ends.
+function v2HM(t,add){const m=parseInt(t.slice(0,2))*60+parseInt(t.slice(3,5))+add;return (m<600?'0':'')+Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60);}
+function v2WithCore(list){
+  if(!list||list.some(function(it){return it.k==='core';}))return list;
+  const i=list.findIndex(function(it){return it.k==='together'&&/Dinner/.test(it.l)&&it.e;});
+  if(i<0)return list;
+  const st=v2HM(list[i].e,5);
+  const out=list.slice();
+  out.splice(i+1,0,{t:st,e:v2HM(st,10),k:'core',l:'Core · 10 min',n:'at home — dead bug, side plank, Superman, hollow hold'});
+  return out;
+}
+Object.keys(SESSION_PLAN_V2).forEach(function(abbr){
+  const p=SESSION_PLAN_V2[abbr];
+  if(p&&p.blocks.some(function(b){return b.x.some(function(x){return x[0]===CORE_CIRCUIT;});}))DAY_PLAN_V2[abbr]=v2WithCore(DAY_PLAN_V2[abbr]||DAY_PLAN[abbr]);
+});
 // The switch itself. The three plan objects are mutated in place so every reader of
 // WORKOUT_WEEK, DAY_PLAN and SESSION_PLAN — there are about fifteen — follows without
 // being touched. Before the start date this is skipped and nothing above is used.
@@ -10783,7 +10815,7 @@ const ADAPT_OFF={vol:{},rest:{},hold:{},lv:{},note:{},guard:{on:false,since:'',w
 // is no floor crunch in the exercise library, so the plate crunch is dropped rather
 // than swapped. Cuff work, pull-ups and pulldowns stay (his call, 15 Nov 2026).
 const ADAPT_SHOULDER_SWAP={'Machine Shoulder Press':null,'Overhead Plate Crunch':null,'Cable Overhead Tricep Extension':['Cable Tricep Rope Pushdowns','3 × 12']};
-const ADAPT_NO_PROGRESS=/Jumps|Pogo Hops|Carries|Swimming/;
+const ADAPT_NO_PROGRESS=/Jumps|Pogo Hops|Carries|Swimming|Core Circuit/;
 let _adaptVer=0,_adaptKey='',_adaptVal=null,_adaptBooted=false;
 function adaptBump(){_adaptVer++;}
 function adaptData(){
@@ -11385,7 +11417,7 @@ function adaptFinishHTML(abbr){
   const today=localToday();
   const names=(state.workoutNamesByDay||{})[today];
   let lifted=false;
-  if(names)names.forEach(function(n){if(n!=='Swimming'&&n!==CO2_EXERCISE&&sessionDayMap()[n])lifted=true;});
+  if(names)names.forEach(function(n){if(n!=='Swimming'&&n!==CO2_EXERCISE&&n!=='Core Circuit'&&sessionDayMap()[n])lifted=true;});
   if(!lifted)return '';
   const c=adaptGymCheckOn(today);
   if(c)return '<div onclick="openTrainCheck(\'gym\',\''+adaptLiftTag(abbr)+'\',\''+today+'\')" style="border-top:1px solid var(--border);padding:14px 0;margin-top:10px;font-size:11px;color:var(--text-dim);cursor:pointer">Session checked · effort '+c.e+' · shoulder '+c.sh+' · tap to change</div>';
@@ -11492,7 +11524,7 @@ function adaptPending(){
     if(p&&!has('swim')&&dis.indexOf(ds+'|swim')<0)return {ds:ds,k:'swim',s:adaptSwimTag(p.set,p.course)};
     const names=(state.workoutNamesByDay||{})[ds];
     let lifted=false;
-    if(names)names.forEach(function(n){if(n!=='Swimming'&&n!==CO2_EXERCISE&&sessionDayMap()[n])lifted=true;});
+    if(names)names.forEach(function(n){if(n!=='Swimming'&&n!==CO2_EXERCISE&&n!=='Core Circuit'&&sessionDayMap()[n])lifted=true;});
     if(lifted&&!has('gym')&&dis.indexOf(ds+'|gym')<0)return {ds:ds,k:'gym',s:adaptLiftTag(abbr)};
   }
   return null;
@@ -15489,7 +15521,7 @@ function studyHeatmapHTML(){
         if(h>=4)a=0.85;else if(h>=2)a=0.55;else if(h>=1)a=0.34;else if(h>0)a=0.18;
         const names=nb[ds]||new Set();
         const swim=names.has('Swimming');
-        const gym=[...names].some(n=>n!=='Swimming'&&n!=='CO2 Table');
+        const gym=[...names].some(n=>n!=='Swimming'&&n!=='CO2 Table'&&n!=='Core Circuit');
         data[ds]={h,subs:[...(subs[ds]||[])],swim,gym};
         let dots='';
         if(swim)dots+='<span style="position:absolute;left:1px;bottom:1px;width:3px;height:3px;border-radius:50%;background:#5aa9d6"></span>';
