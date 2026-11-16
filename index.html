@@ -3275,6 +3275,7 @@ async function loadPRs(){
     //   lastSets — most recent logged set per exercise, for prefill + overload nudge
     //   volume   — per-muscle tonnage (sets×reps×kg) bucketed by ISO week, for the volume view
     const lastSets={};
+    const assistBest={};  // least assist logged for 5+ reps, per assisted exercise
     const liftDays={};   // adaptive loop: the last few sessions per exercise, one entry a day
     const volume={};
     const co2Hist=[];   // CO2 tables: hold seconds live in Reps, rounds in Sets
@@ -3296,7 +3297,10 @@ async function loadPRs(){
         if(!prev||date>prev.date)lastSets[baseName]={sets,reps,weight,date};
         const ld=liftDays[baseName]||(liftDays[baseName]={});
         const cur=ld[date];
-        if(!cur||weight>cur.weight||(weight===cur.weight&&reps>cur.reps))ld[date]={sets,reps,weight,date};
+        // An assisted day's best set is the one with the LEAST assist.
+        const better=isAssisted(baseName)?(weight<cur?.weight||(weight===cur?.weight&&reps>cur?.reps)):(weight>cur?.weight||(weight===cur?.weight&&reps>cur?.reps));
+        if(!cur||better)ld[date]={sets,reps,weight,date};
+        if(isAssisted(baseName)&&reps>=5&&(assistBest[baseName]==null||weight<assistBest[baseName]))assistBest[baseName]=weight;
         if(baseName===CO2_EXERCISE)co2Hist.push({date,hold:reps,rounds:sets});
       }
 
@@ -3305,8 +3309,9 @@ async function loadPRs(){
         const statRel=props['Muscle Stat']?.relation;
         const statId=Array.isArray(statRel)&&statRel.length?statRel[0].id:null;
         if(statId){
-          // secondary rows count half, mirroring the XP multiplier
-          const tonnage=sets*reps*weight*(isSecondary?0.5:1);
+          // secondary rows count half, mirroring the XP multiplier. Assist is not load:
+          // an assisted set counts its sets and no tonnage, like the other bodyweight moves.
+          const tonnage=isAssisted(baseName)?0:sets*reps*weight*(isSecondary?0.5:1);
           if(!volume[statId])volume[statId]={tonnage:0,sets:0,days:new Set()};
           volume[statId].tonnage+=tonnage;
           volume[statId].sets+=sets*(isSecondary?0.5:1);
@@ -3315,6 +3320,7 @@ async function loadPRs(){
       }
 
       if(!muscle)return;
+      if(isAssisted(baseName))return;   // assist is not a weight lifted
       const def=PR_THRESHOLDS[muscle];
       if(!def)return;
       if(def.strict&&baseName!==def.exercise)return;
@@ -3325,6 +3331,7 @@ async function loadPRs(){
     });
     state.prs=prs;
     state.lastSets=lastSets;
+    state.assistBest=assistBest;
     const liftHist={};
     Object.keys(liftDays).forEach(n=>{liftHist[n]=Object.values(liftDays[n]).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);});
     state.liftHist=liftHist;
@@ -3333,6 +3340,10 @@ async function loadPRs(){
   }catch(e){warn('loadPRs',e);state.prs={};state.lastSets={};state.volume={};}
 }
 
+// On an assisted exercise the logged weight is the machine's ASSIST, so a lower number
+// is the progress (16 Nov 2026: more assist had been scoring as a Lats PR). Nothing that
+// reads Weight (kg) as load may read these rows that way.
+function isAssisted(name){return /^Assisted/.test(String(name||''));}
 // Progressive overload rule: if the last session hit its rep target across all sets,
 // suggest the next increment. Deliberately conservative — small jumps, isolation
 // movements step slower than compounds since the absolute loads are lower.
@@ -9795,15 +9806,19 @@ const SEASON=[
   {k:'build',label:'Build',  from:'2027-02-08',to:'2027-04-18',km:[15,20],lactate:true},
   {k:'race', label:'Race',   from:'2027-04-19',to:'2027-05-09',km:[15,10],lactate:true,taper:true},
   {k:'base', label:'Base 2', from:'2027-05-10',to:'2027-08-01',km:[16,22],lactate:false},
-  {k:'build',label:'Build 2',from:'2027-08-02',to:'2027-10-31',km:[22,25],lactate:true},
+  // Held at 22 into MEFOB 2027: "22 km of quality. More only if you swim 4 km per
+  // session by then" (two-year plan). It ramped to 25 before 16 Nov 2026.
+  {k:'build',label:'Build 2',from:'2027-08-02',to:'2027-10-31',km:[22,22],lactate:true},
   {k:'race', label:'Race 2', from:'2027-11-01',to:'2027-11-21',km:[20,12],lactate:true,taper:true},
   // Year two (added 15 Nov 2026 with the two-year plan). Dates are estimates; the
   // race phases sit on a spring meet and on MEFOB 2028, neither of which has a date yet.
   {k:'base', label:'Base 3', from:'2027-11-22',to:'2028-02-06',km:[20,22],lactate:false},
   {k:'build',label:'Build 3',from:'2028-02-07',to:'2028-04-16',km:[22,26],lactate:true},
   {k:'race', label:'Race 3', from:'2028-04-17',to:'2028-05-07',km:[20,12],lactate:true,taper:true},
-  {k:'base', label:'Base 4', from:'2028-05-08',to:'2028-07-30',km:[20,28],lactate:false},
-  {k:'build',label:'Build 4',from:'2028-07-31',to:'2028-10-29',km:[26,22],lactate:true},
+  // July 2028 is the plan's one block of 28–30 km for three to four weeks; Aug–Oct
+  // is 22–24, all fast. (Were 20→28 and 26→22 before 16 Nov 2026.)
+  {k:'base', label:'Base 4', from:'2028-05-08',to:'2028-07-30',km:[20,30],lactate:false},
+  {k:'build',label:'Build 4',from:'2028-07-31',to:'2028-10-29',km:[24,22],lactate:true},
   {k:'race', label:'Race 4', from:'2028-10-30',to:'2028-11-19',km:[20,12],lactate:true,taper:true},
 ];
 // Exam holds: weeks where the volume ramp is capped whatever the phase says, because
@@ -9902,12 +9917,12 @@ function seasonLine(){
 // is his long-term figure, 82–83 is what two years can add.
 const CP_START={d:'2026-11-15',kg:70};
 const CHECKPOINTS=[
-  {d:'2027-02-07',label:'End of semester 5',f50:27.9,kicks:6,brk:7,km:15,kg:73,pull:'first bodyweight pull-up',lowerX:1.0,med:'Micro II and Pharm I passed in December, nothing carried into spring'},
-  {d:'2027-05-09',label:'Spring meet',f50:26.4,f100:57.4,kicks:7,brk:9,km:20,kg:75.5,pull:'bodyweight × 6',lowerX:1.3,med:'25 Apr: half the pathology list done, every slide seen'},
-  {d:'2027-09-01',label:'End of summer',brk:10,km:22,kg:77,pull:'bodyweight × 10',lowerX:1.5,med:'No exam left from years 1–3'},
-  {d:'2027-11-21',label:'MEFOB 2027',f50:24.9,f100:53.2,brk:10,km:22,kg:78,pull:'+5 kg × 5',lowerX:1.6,med:'Every block exam passed in its own block'},
-  {d:'2028-05-07',label:'Spring meet 2028',f50:24.4,f100:51.4,brk:10,km:25,kg:80.5,pull:'+10 kg × 5',lowerX:1.75,med:'All year-4 exams passed by June'},
-  {d:'2028-11-19',label:'MEFOB 2028',f50:23.9,f100:49.9,fly50:25.9,brk:10,km:22,kg:82.5,pull:'+15 kg × 5',lowerX:1.75,med:'No exam in the taper week'},
+  {d:'2027-02-07',label:'End of semester 5',f50:27.9,kicks:6,brk:7,km:15,kg:73,pull:'first bodyweight pull-up',pd8:57,lowerX:1.0,med:'Micro II and Pharm I passed in December, nothing carried into spring'},
+  {d:'2027-05-09',label:'Spring meet',f50:26.4,f100:57.4,kicks:7,brk:9,km:20,kg:75.5,pull:'bodyweight × 6',pd8:65,lowerX:1.3,med:'25 Apr: half the pathology list done, every slide seen'},
+  {d:'2027-09-01',label:'End of summer',brk:10,km:22,kg:77,pull:'bodyweight × 10',pd8:70,lowerX:1.5,med:'No exam left from years 1–3'},
+  {d:'2027-11-21',label:'MEFOB 2027',f50:24.9,f100:53.2,brk:10,km:22,kg:78,pull:'+5 kg × 5',pd8:74,lowerX:1.6,med:'Every block exam passed in its own block'},
+  {d:'2028-05-07',label:'Spring meet 2028',f50:24.4,f100:51.4,brk:10,km:25,kg:80.5,pull:'+10 kg × 5',pd8:80,lowerX:1.75,med:'All year-4 exams passed by June'},
+  {d:'2028-11-19',label:'MEFOB 2028',f50:23.9,f100:49.9,fly50:25.9,brk:10,km:22,kg:82.5,pull:'+15 kg × 5',pd8:80,lowerX:1.75,med:'No exam in the taper week'},
 ];
 const CP_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function cpMonth(ds){return CP_MONTHS[parseInt(ds.slice(5,7))-1]+' '+ds.slice(0,4);}
@@ -10036,6 +10051,10 @@ function cpHomeHTML(){
       body+=cpRow('Pull-up',c.pull,'');
       let bw=CP_START.kg;
       if(av)bw=av.kg;
+      if(c.pd8){
+        const lp=(state.lastSets||{})['Lat Pulldown'];
+        body+=cpRow('Lat Pulldown × 8',c.pd8+' kg',lp?'last: '+lp.weight+' kg × '+lp.reps:'');
+      }
       body+=cpRow('Trap bar or Smith squat × 4',c.lowerX+' × bodyweight · '+Math.round(c.lowerX*c.kg)+' kg',Math.round(c.lowerX*bw)+' kg at the weight you are now');
       body+=cpRow('Exams',c.med,'');
       const sl=sleepAvg(7);
@@ -10350,7 +10369,7 @@ function v2UwBlock(light){
 // The full session as data. cut:true marks the 60-minute line.
 function v2Spec(tag,ds){
   const ad=adaptNow();
-  if(adaptEasyOn(ds||localToday()))return adaptEasySpec();
+  if(adaptEasySwimOn(ds||localToday(),tag))return adaptEasySpec();
   const lv=v2Level(tag);
   const s=seasonWeek(ds);
   const budget=v2Budget(tag,ds);
@@ -10519,7 +10538,7 @@ function renderSoloSetsV2(){
     '<div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">'+se.full+'m · '+esc(x.focus)+'</div>'+
     '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-top:4px">'+esc(seasonLine())+'</div>'+
     '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(mode)+' · kit · '+esc(x.kit||'none')+'</div>'+
-    adaptLinesHTML(adaptSwimLines(x.tag))+(adaptEasyOn(localToday())?adaptEasyHTML():'')+
+    adaptLinesHTML(adaptSwimLines(x.tag))+(adaptEasySwimOn(localToday(),x.tag)?adaptEasyHTML():'')+
     '<div style="font-size:12px;line-height:1.75;color:var(--text-dim);margin:16px 0 4px">'+esc(x.why)+'</div>'+
     '<div style="margin-top:14px">'+lines+'</div>'+lvBlock+
     '<button class="wec-log-btn" style="width:100%;margin-top:18px" onclick="logSoloSetV2('+_soloIdx+',false)">LOG THE FULL SESSION · '+se.full+'m</button>'+
@@ -10927,19 +10946,33 @@ function adaptNextKm(day,s){
   }
   return s.km;
 }
-function adaptIsSoloOrGym(d){
+// The two-year plan's cut order (rule 2 of "Five rules for bad weeks"): aerobic swims
+// first, then the light upper lift, then pull-and-press — never the underwater block,
+// the speed session, pull-ups or cuff work. So only these sessions can be the easy
+// one; the speed and race-pace swims, the Pull day and the Lower day never are, and on
+// an eased lift the pull-ups and the cuff and upper-back work keep their full sets.
+// (His call, 16 Nov 2026. Before that the easy day took the next solo or gym day.)
+const ADAPT_EASY_SWIMS=['v2aer','v2base'];
+const ADAPT_EASY_LIFTS=['upper','press'];
+const ADAPT_EASY_KEEP=/Pull-ups|External Rotation|Face Pulls|Rear Delt|Archer/;
+// What on day d an easy day would make easier: {swim: tag or null, lift: key or null}.
+function adaptEasyParts(d){
   const abbr=WEEK_ABBR[new Date(d+'T12:00:00').getDay()];
-  if(SOLO_DAY_ROLE[abbr])return true;
-  const p=SESSION_PLAN[abbr];
-  return !!(p&&p.blocks.length>2);
+  const role=SOLO_DAY_ROLE[abbr];
+  const lift=adaptLiftTag(abbr);
+  return {swim:ADAPT_EASY_SWIMS.indexOf(role)>=0?role:null,lift:ADAPT_EASY_LIFTS.indexOf(lift)>=0?lift:null};
 }
-// Where an easy day may go: the next solo swim or gym day, never a club practice,
-// never inside a deload or taper or in the two days before a deload, and not within
-// seven days of an easy day that stood.
+function adaptEasyEligible(d){
+  const p=adaptEasyParts(d);
+  return !!(p.swim||p.lift);
+}
+// Where an easy day may go: the next day that has an aerobic or base swim or the light
+// Upper or Pull-and-press lift, never inside a deload or taper or in the two days
+// before a deload, and not within seven days of an easy day that stood.
 function adaptEasyDate(D,easies){
-  for(let i=1;i<=4;i++){
+  for(let i=1;i<=5;i++){
     const d=v2AddDays(D,i);
-    if(!adaptIsSoloOrGym(d))continue;
+    if(!adaptEasyEligible(d))continue;
     const s=seasonWeek(d);
     if(s.deload||s.taper)return null;
     if(seasonWeek(v2AddDays(d,1)).deload||seasonWeek(v2AddDays(d,2)).deload)return null;
@@ -11019,7 +11052,8 @@ function adaptCompute(data,today){
     lastEasy=date;
   });
   const easySet={};
-  out.easies.forEach(function(e){if(!e.overridden)easySet[e.date]=1;});
+  // date → the swim it eased (or true when only the lift was eased)
+  out.easies.forEach(function(e){if(!e.overridden)easySet[e.date]=adaptEasyParts(e.date).swim||true;});
 
   // 3 · Each solo session, judged on its own last two checks since it last moved.
   let oldest='';
@@ -11039,7 +11073,7 @@ function adaptCompute(data,today){
       if(x.k!=='swim'||x.s!==tag)return;
       weeksWith[v2WeekStart(x.d)]=1;
       // An easy day, a deload and a taper are lighter on purpose: no evidence either way.
-      if(easySet[x.d])return;
+      if(easySet[x.d]===tag)return;
       const s=seasonWeek(x.d);
       if(s.deload||s.taper)return;
       ev.push({d:x.d,t:x.t||0,cls:adaptClass(x,practices,x.s==='v2speed'||x.s==='v2pace')});
@@ -11049,7 +11083,7 @@ function adaptCompute(data,today){
       let d=oldest>start?oldest:start;
       for(let guardN=0;d<today&&guardN<800;guardN++,d=v2AddDays(d,1)){
         if(SOLO_DAY_ROLE[WEEK_ABBR[new Date(d+'T12:00:00').getDay()]]!==tag)continue;
-        if(anyDates[d]||easySet[d]||weeksWith[v2WeekStart(d)])continue;
+        if(anyDates[d]||easySet[d]===tag||weeksWith[v2WeekStart(d)])continue;
         const s=seasonWeek(d);
         if(s.deload||s.taper)continue;
         ev.push({d:d,t:0,cls:'missed'});
@@ -11132,10 +11166,20 @@ function adaptEasyOn(ds){
   for(let i=0;i<es.length;i++){if(es[i].date===ds&&!es[i].overridden)return es[i];}
   return null;
 }
+// Is THIS swim the easy one on that day? Only an aerobic or base swim ever is.
+function adaptEasySwimOn(ds,tag){
+  return !!(adaptEasyOn(ds)&&adaptEasyParts(ds).swim===tag);
+}
+// Is the lift on this weekday the easy one, the next time that weekday comes round?
+function adaptEasyLiftOn(abbr){
+  const d=adaptAbbrDate(abbr);
+  return !!(adaptEasyOn(d)&&adaptEasyParts(d).lift);
+}
 function v2Level(tag){return adaptClampLv(soloLevel(tag)+(adaptNow().lv[tag]||0));}
-// The easy version of any solo session: the 60-minute shape, nothing fast, nothing timed.
+// The easy version of the aerobic or base swim: the 60-minute shape, nothing timed —
+// and the underwater block whole, because the plan never cuts it.
 function adaptEasySpec(){
-  return [{d:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(v2UwBlock(true),[
+  return [{d:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(v2UwBlock(false),[
     {n:8,d:100,what:'easy free',count:true,rest:20,pace:'easy',main:true,note:'easy day — nothing fast, nothing timed'},
     {d:200,what:'easy, some of it backstroke'}]);
 }
@@ -11173,16 +11217,21 @@ function adaptEasyHTML(){
   else tail='<button class="sil-toggle-btn" style="margin-top:8px;padding:4px 12px" onclick="adaptOverride(\''+e.date+'\')">I\'m fine — keep the plan</button>';
   let head=when+' — '+e.why;
   if(e.overridden)head='Easy day on '+adaptDayName(e.date)+' — '+e.why;
+  const parts=adaptEasyParts(e.date);
+  let what='';
+  if(parts.swim)what+='Swim: the '+ADAPT_TAG_NAME[parts.swim]+' session at the 60-minute shape, nothing timed — the underwater block stays whole. ';
+  if(parts.lift)what+='Lift: '+V2_LIFT[parts.lift].title+' at two sets, same weight — pull-ups and cuff work keep their full sets. ';
+  what+='Speed, Pull and Lower days are never the easy day.';
   return '<div style="border:1px solid var(--border-hi);border-radius:4px;padding:10px 12px;margin:8px 0 10px">'+
     '<div style="font-size:11px;color:var(--gold);line-height:1.6">'+esc(head)+'</div>'+
-    '<div style="font-size:10px;color:var(--text-dim);margin-top:3px">Swim: the 60-minute shape, nothing fast. Lift: two sets of each at the same weight, no jumps.</div>'+tail+'</div>';
+    '<div style="font-size:10px;color:var(--text-dim);margin-top:3px">'+esc(what)+'</div>'+tail+'</div>';
 }
 // What changed on this solo session, one line each.
 function adaptSwimLines(tag){
   if(!ADAPT_ON)return [];
   const ad=adaptNow(),out=[],today=localToday();
   if(ad.guard.on&&(tag==='v2speed'||tag==='v2base'))out.push('Fly removed — '+ad.guard.why);
-  if(adaptEasyOn(today))return out;
+  if(adaptEasySwimOn(today,tag))return out;
   if(ad.hold[tag])out.push(ad.hold[tag]);
   const n=ad.note[tag];
   if(n&&v2DaysBetween(n.d,today)<=14)out.push(n.t);
@@ -11222,7 +11271,7 @@ function adaptPlan(abbr){
   const p=SESSION_PLAN[abbr];
   if(!p||!ADAPT_ON)return p;
   const ad=adaptNow();
-  const easy=adaptEasyOn(adaptAbbrDate(abbr));
+  const easy=adaptEasyLiftOn(abbr);
   if(!ad.guard.on&&!easy)return p;
   const has={};
   p.blocks.forEach(function(b){b.x.forEach(function(q){has[q[0]]=1;});});
@@ -11237,7 +11286,7 @@ function adaptPlan(abbr){
         if(!sub||has[sub[0]])return;
         name=sub[0];pres=sub[1];
       }
-      if(easy&&name!=='Swimming')pres=pres.replace(/^(\d+)\s*×/,function(_,n){return Math.min(2,parseInt(n))+' ×';});
+      if(easy&&name!=='Swimming'&&!ADAPT_EASY_KEEP.test(name))pres=pres.replace(/^(\d+)\s*×/,function(_,n){return Math.min(2,parseInt(n))+' ×';});
       x.push([name,pres]);
     });
     if(x.length)blocks.push({h:b.h,x:x});
@@ -11266,22 +11315,31 @@ function adaptGymCheckOn(ds){
 }
 function liftAdvice(name,pres,abbr){
   if(!ADAPT_ON||ADAPT_NO_PROGRESS.test(name))return '';
+  if(name==='Pull-ups')return adaptPullupAdvice(abbr);
   const pr=adaptPres(pres);
   if(!pr)return '';
   const today=localToday();
   const date=adaptAbbrDate(abbr);
-  if(adaptEasyOn(date))return 'Easy day — two sets, same weight as last time';
+  if(adaptEasyLiftOn(abbr)&&!ADAPT_EASY_KEEP.test(name))return 'Easy day — two sets, same weight as last time';
   const h=((state.liftHist||{})[name]||[]).filter(function(r){return r.date<today;});
   if(seasonWeek(date).deload){
     if(h.length)return 'Deload week — same as last time';
     return '';
   }
-  if(!h.length)return 'First log — pick a weight that leaves two reps in hand';
+  const assist=isAssisted(name);
+  if(!h.length){
+    if(assist)return 'First log — pick the assist that leaves two reps in hand';
+    return 'First log — pick a weight that leaves two reps in hand';
+  }
   const last=h[0],prev=h[1]||null,third=h[2]||null;
   const chk=adaptGymCheckOn(last.date);
   if(chk&&chk.c!=='y')return 'Same as last time — the last session was not finished';
   if(chk&&chk.e>=5)return 'Same as last time — the last session was effort 5';
-  const assist=/^Assisted/.test(name);
+  // The ladder from the two-year plan: assist comes off until 6 clean at 10 kg or less,
+  // then bodyweight pull-ups; at 8 bodyweight reps, weight goes on.
+  if(assist&&last.weight<=10&&last.reps>=6)return 'Move to bodyweight pull-ups — '+last.reps+' clean with only '+last.weight+' kg of assist';
+  if(assist&&prev&&third&&prev.weight===last.weight&&third.weight>last.weight&&last.reps<pr.lo&&prev.reps<pr.lo)
+    return 'Add one step of assist back — under '+pr.lo+' reps twice at this assist';
   if(last.weight>0&&!assist&&prev&&third&&prev.weight===last.weight&&third.weight<last.weight&&last.reps<pr.lo&&prev.reps<pr.lo)
     return 'Back down a step — under '+pr.lo+' reps twice at this weight';
   if(last.reps>=pr.hi){
@@ -11292,6 +11350,19 @@ function liftAdvice(name,pres,abbr){
   }
   if(prev&&!assist&&last.weight>prev.weight)return 'Hold this weight, build the reps — you went up last time';
   if(prev&&assist&&last.weight<prev.weight)return 'Hold this assist, build the reps — you took a step off last time';
+  return 'One more rep than last time ('+(last.reps+1)+')';
+}
+// Bodyweight pull-ups: reps until 8, then the weighted ones.
+function adaptPullupAdvice(abbr){
+  const today=localToday();
+  const date=adaptAbbrDate(abbr);
+  const h=((state.liftHist||{})['Pull-ups']||[]).filter(function(r){return r.date<today;});
+  if(!h.length)return '';
+  if(seasonWeek(date).deload)return 'Deload week — same as last time';
+  const last=h[0];
+  const chk=adaptGymCheckOn(last.date);
+  if(chk&&(chk.c!=='y'||chk.e>=5))return 'Same as last time';
+  if(last.reps>=8)return 'Bodyweight gives '+last.reps+' — move to weighted pull-ups';
   return 'One more rep than last time ('+(last.reps+1)+')';
 }
 // Top of the session page: what the loop changed about today's lift, and the check.
@@ -11306,7 +11377,7 @@ function adaptSessionTopHTML(abbr){
     if(hit)h+=adaptLinesHTML(['Overhead pressing removed — '+ad.guard.why]);
   }
   const e=adaptEasyOn(adaptAbbrDate(abbr));
-  if(e)h+=adaptLinesHTML([(e.date===localToday()?'Easy day':'Easy day on '+adaptDayName(e.date))+' — '+e.why]);
+  if(e&&adaptEasyLiftOn(abbr))h+=adaptLinesHTML([(e.date===localToday()?'Easy day':'Easy day on '+adaptDayName(e.date))+' — '+e.why+'. Pull-ups and cuff work stay at full sets']);
   return h;
 }
 function adaptFinishHTML(abbr){
@@ -11473,8 +11544,7 @@ const FC_SUBJ_LABEL={micro:'Microbiology',pharm:'Pharmacology',patho:'Pathology'
 // Estimated one-rep max (Epley) puts a rep gained and a plate added on the same line.
 // Targets come from the two-year plan's last checkpoint and scale with bodyweight.
 const FC_LIFTS=[
-  {k:'pull',label:'Pull-ups',names:['Assisted Pull-ups','Pull-ups','Weighted Pull-ups'],goalT:'+15 kg × 5',goal:function(bw){return (bw+15)*(1+5/30);}},
-  {k:'lat',label:'Lat Pulldown',names:['Lat Pulldown'],goalT:'bodyweight × 6',goal:function(bw){return bw*(1+6/30);}},
+  {k:'lat',label:'Lat Pulldown × 8',names:['Lat Pulldown'],per8:true,goalT:'',goal:null},
   {k:'lower',label:'Lower main lift (trap bar or Smith squat)',names:['Trap Bar Deadlift','Smith Machine Squat'],goalT:'1.75 × bodyweight × 4',goal:function(bw){return 1.75*bw*(1+4/30);}},
   {k:'row',label:'Cable Seated Row',names:['Cable Seated Row'],goalT:'',goal:null},
   {k:'inc',label:'Incline Dumbbell Press',names:['Incline Dumbbell Press'],goalT:'',goal:null},
@@ -11857,10 +11927,113 @@ function fcLiftPts(def){
   });
   return Object.keys(byDay).sort().map(function(d){return {x:fcX(d),y:fcR1(byDay[d])};});
 }
+// ── Pull-ups, in the plan's terms ───────────────────────────────────────────
+// The weight logged on Assisted Pull-ups is the ASSIST, so the measure that goes down
+// as he gets stronger is "how much assist one clean rep needs". Every set — assisted,
+// bodyweight or weighted — is turned into that one number: below zero is weight added.
+// Zero is the first bodyweight pull-up, the plan's Feb 2027 checkpoint.
+const FC_PULL_NAMES=['Assisted Pull-ups','Pull-ups','Weighted Pull-ups'];
+function fcPullOneRep(bw,name,reps,weight){
+  let load=bw;
+  if(name==='Assisted Pull-ups')load=bw-weight;
+  else if(name==='Weighted Pull-ups')load=bw+weight;
+  if(!(load>0)||!(reps>=1)||reps>15)return null;
+  // Epley one-rep max, then back to the assist (or added weight) that max would lift once.
+  return bw-load*(1+reps/30)*30/31;
+}
+function fcPullPts(){
+  const bw=fcBodyweight(),byDay={};
+  (state.fcLiftRows||[]).forEach(function(r){
+    if(FC_PULL_NAMES.indexOf(r.name)<0)return;
+    const a=fcPullOneRep(bw,r.name,r.reps,r.weight);
+    if(a==null)return;
+    if(byDay[r.date]==null||a<byDay[r.date])byDay[r.date]=a;   // the day's best is the least assist
+  });
+  return Object.keys(byDay).sort().map(function(d){return {x:fcX(d),y:fcR1(byDay[d])};});
+}
+// A checkpoint's pull-up text as the same number: "first bodyweight pull-up" is 0,
+// "bodyweight × 6" and "+10 kg × 5" are what that many reps at that load would need.
+function fcPullTarget(txt,bw){
+  const t=String(txt||'');
+  if(/first bodyweight/i.test(t))return 0;
+  let m=/^bodyweight × (\d+)/i.exec(t);
+  if(m)return fcR1(bw-bw*(30+parseInt(m[1]))/31);
+  m=/^\+(\d+(?:\.\d+)?) kg × (\d+)/.exec(t);
+  if(m)return fcR1(bw-(bw+parseFloat(m[1]))*(30+parseInt(m[2]))/31);
+  return null;
+}
+function fcAssistText(v){
+  const r=Math.round(v);
+  if(r>0)return r+' kg assist';
+  if(r===0)return 'bodyweight';
+  return '+'+(-r)+' kg';
+}
+function fcPullOutHTML(){
+  const bw=fcBodyweight(),pts=fcPullPts(),fit=fcFit(pts);
+  let h=fcH('Pull-ups')+fcChip(fcTierChip(fit,'session'),fit.tier);
+  h+=fcChart({pts:pts,tier:fit.tier,reach:fit.reach,goal:0,x1:fcX('2028-12-31'),proj:function(x){return fcAt(fit,x,null);},fmt:fcAssistText});
+  h+=fcP('Measured as the assist one clean rep needs, so the line going DOWN is progress. Zero is your first bodyweight pull-up; below zero is weight added. The weight you log on Assisted Pull-ups is the assist — the number you want to see fall.',true);
+  const ls=((state.liftHist||{})['Assisted Pull-ups']||[])[0];
+  if(fit.tier==='none'){
+    if(!fit.n)h+=fcP('No pull-up sets logged yet.');
+    else h+=fcP(fit.n+' session'+(fit.n===1?'':'s')+' logged — three over more than a week are needed.');
+  }else{
+    let now='Now: one clean rep would need about '+fcAssistText(fit.yl)+'.';
+    if(ls)now='Last: '+ls.reps+' reps with '+ls.weight+' kg of assist — about the same as one rep with '+fcAssistText(fit.yl)+'.';
+    h+=fcP(now+' An estimate from sets of '+(ls?ls.reps:'several')+' reps; sets of 5 give a better one.');
+    h+=fcP('Assist coming off at somewhere between '+Math.abs(fcR1(fit.bHi*30))+' and '+Math.abs(fcR1(fit.bLo*30))+' kg a month'+(fit.tier==='line'?', most likely '+Math.abs(fcR1(fit.b*30)):'')+'.'+(fit.bHi>0?' The slow edge of that range is assist going back on.':''));
+    h+=fcP('First bodyweight pull-up: '+fcWhenText(fcWhen(fit,0,null,-1))+'.');
+  }
+  const rows=[];
+  CHECKPOINTS.forEach(function(c){
+    if(!c.pull||c.d<localToday())return;
+    const tg=fcPullTarget(c.pull,bw);
+    if(tg==null)return;
+    const v=fcAt(fit,fcX(c.d),null);
+    let cell='—';
+    if(v)cell=fcAssistText(v.hi)+' to '+fcAssistText(v.lo);
+    else if(fit.tier!=='none')cell='too far out';
+    rows.push([cpMonth(c.d)+' · '+c.pull,fcAssistText(tg),cell]);
+  });
+  h+=fcRows(['Goal line','Same as one rep at','At your rate'],rows);
+  return h;
+}
+// Lat Pulldown is set in the plan as a weight for 8 reps (57 → 80 kg), so it is shown
+// in those units: each day's best set turned into "what you could do for 8".
+function fcPd8Pts(){
+  return fcLiftPts(FC_LIFTS[0]).map(function(p){return {x:p.x,y:fcR1(p.y*30/38)};});
+}
+function fcPd8OutHTML(){
+  const pts=fcPd8Pts(),fit=fcFit(pts),today=localToday();
+  const next=CHECKPOINTS.filter(function(c){return c.pd8&&c.d>=today;})[0]||null;
+  let h=fcH('Lat Pulldown × 8')+fcChip(fcTierChip(fit,'session'),fit.tier);
+  h+=fcChart({pts:pts,tier:fit.tier,reach:fit.reach,goal:next?next.pd8:null,x1:fcX('2028-12-31'),proj:function(x){return fcAt(fit,x,null);},fmt:function(v){return Math.round(v)+' kg';}});
+  h+=fcP('Each day\'s best set as the weight you could do for 8 reps, which is how the two-year plan sets this lift.',true);
+  if(fit.tier==='none'){
+    if(!fit.n)h+=fcP('Nothing logged for this lift yet.');
+    else h+=fcP(fit.n+' session'+(fit.n===1?'':'s')+' logged — three over more than a week are needed.');
+  }else{
+    h+=fcP('Now about '+Math.round(fit.yl)+' kg × 8. Rate so far: somewhere between '+fcSigned(fit.bLo*30)+' and '+fcSigned(fit.bHi*30)+' kg a month'+(fit.tier==='line'?', most likely '+fcSigned(fit.b*30):'')+'.');
+    if(next)h+=fcP(next.pd8+' kg × 8 ('+next.label+', '+cpMonth(next.d)+'): '+fcWhenText(fcWhen(fit,next.pd8,null))+'.');
+  }
+  const rows=[];
+  CHECKPOINTS.forEach(function(c){
+    if(!c.pd8||c.d<today)return;
+    const v=fcAt(fit,fcX(c.d),null);
+    let cell='—';
+    if(v)cell=Math.round(v.lo)+' – '+Math.round(v.hi)+' kg';
+    else if(fit.tier!=='none')cell='too far out';
+    rows.push([cpMonth(c.d),c.pd8+' kg',cell]);
+  });
+  h+=fcRows(['By','Goal line','At your rate'],rows);
+  return h;
+}
 function fcLiftOutHTML(){
   const bw=fcBodyweight();
-  let h=fcP('Estimated one-rep max from each day\'s best set, so a rep gained and a step up the stack land on the same line. Targets are the two-year plan\'s and scale with bodyweight ('+bw+' kg now).',true);
+  let h=fcPullOutHTML()+fcPd8OutHTML();
+  h+=fcP('Estimated one-rep max from each day\'s best set, so a rep gained and a step up the stack land on the same line. Targets are the two-year plan\'s and scale with bodyweight ('+bw+' kg now).',true);
   FC_LIFTS.forEach(function(def){
+    if(def.per8)return;
     const pts=fcLiftPts(def),fit=fcFit(pts);
     const goal=def.goal?fcR1(def.goal(bw)):null;
     h+=fcH(def.label)+fcChip(fcTierChip(fit,'session'),fit.tier);
@@ -14728,7 +14901,13 @@ async function logExerciseFromTab(id){
     // Check PR
     const prMuscle=exercise.primaryMuscle;
     const prDef=PR_THRESHOLDS[prMuscle];
-    if(prDef&&prMuscle&&!(prDef.strict&&exercise.name!==prDef.exercise)){
+    const ab=state.assistBest||(state.assistBest={});
+    if(isAssisted(exercise.name)){
+      // Less assist than ever before, for 5 clean or more, is the record here.
+      if(reps>=5&&ab[exercise.name]!=null&&weight<ab[exercise.name])showToast('Least assist yet — '+weight+' kg × '+reps+' (was '+ab[exercise.name]+' kg)',5000);
+      else showToast(`Logged ${exercise.name} — ${n} muscle entr${n===1?'y':'ies'}`,3000);
+      if(reps>=5&&(ab[exercise.name]==null||weight<ab[exercise.name]))ab[exercise.name]=weight;
+    }else if(prDef&&prMuscle&&!(prDef.strict&&exercise.name!==prDef.exercise)){
       const value=prDef.isReps?reps:weight;
       const minOk=prDef.isReps?(reps>=prDef.thresholds[0]):(reps>=prDef.minReps);
       const prev=state.prs?.[prMuscle]??0;
@@ -14807,7 +14986,11 @@ function renderWorkout(){
       const prDef=PR_THRESHOLDS[prMuscle];
       // A strict PR belongs to one exercise — don't show it as the PB on the muscle's other cards.
       const prVal=prMuscle&&state.prs?.[prMuscle]!=null&&!(prDef?.strict&&e.name!==prDef.exercise)?state.prs[prMuscle]:null;
-      const pbStr=prVal!=null?(prDef?.isReps?`PB  ${prVal} reps`:`PB  ${prVal}kg`):'';
+      let pbStr=prVal!=null?(prDef?.isReps?`PB  ${prVal} reps`:`PB  ${prVal}kg`):'';
+      if(isAssisted(e.name)){
+        const lb=(state.assistBest||{})[e.name];
+        pbStr=lb!=null?'LEAST ASSIST  '+lb+'kg · lower is better':'';
+      }
       // Prefill from the last logged session so you never retype what you already did.
       const last=state.lastSets?.[e.name]||null;
       // 14 Nov 2026: the weight box used to be prefilled with last weight + 1.25/2.5 kg
@@ -16178,7 +16361,7 @@ setTimeout(()=>{try{openToNow();}catch(e){warn('openToNow',e);}},0);
 const TAB_SNAP_KEY='grind-tab-snap-v1';
 const TAB_SNAP_FIELDS={
   tasks:['tasks','templates','todayQuests','penalties','lockdowns','xpDebts','ztd'],
-  workout:['exercises','bodyStats','swimPractices','prs','lastSets','liftHist','volume'],
+  workout:['exercises','bodyStats','swimPractices','prs','lastSets','liftHist','assistBest','volume'],
   exams:['exams','topicProgress','topicProgressPageId','lectures','lecturesPageId'],
   plan:['studyPlan','planDone','planStatePageId'],
   journal:['journals','entries'],
