@@ -21,7 +21,7 @@ const SEMESTER_END = "20261212T000000Z";      // last teaching week ends Fri 11 
 // lifts, the trip to the pool and the CO2 table carry on through the exam period, to
 // the end of the Base phase (Sun 7 Feb 2027). Move this when the next phase is planned.
 const TRAINING_END = "20270207T225959Z";
-const isTraining = it => /^(Swim practice|Gym · |Leave for the pool|Pool to |CO2 table)/.test(it.l);
+const isTraining = it => /^(Swim practice|Gym · |Leave for the pool|Pool to |CO2 table|Core · )/.test(it.l);
 const untilFor = it => (isTraining(it) ? TRAINING_END : SEMESTER_END);
 const EXAMS_DB = "21463a0b4e7c802ebea5c74d09c69b8e";
 
@@ -183,6 +183,7 @@ const PLAN_V2_POOL_AM = {
     {t:"15:00",e:"15:15",l:"Study room to campus",n:"One station",alarm:10},
     {t:"15:15",e:"17:45",l:"Pharmacology I",alarm:15,n:"Two blocks, 15 min gap at 16:45"},
     {t:"18:30",e:"19:30",l:"Dinner together",alarm:10},
+    {t:"19:35",e:"19:45",l:"Core · 10 min",n:"At home — dead bug, side plank, Superman, hollow hold",alarm:5},
     {t:"20:00",e:"21:45",l:"Study room",n:"Early night — Tuesday swim starts 06:15",alarm:10},
   ],
   Tue:[
@@ -204,6 +205,7 @@ const PLAN_V2_POOL_AM = {
     {t:"17:30",e:"19:00",l:"Clinical ECG practical",alarm:15},
     {t:"19:00",e:"19:40",l:"Travel home",n:"40 min",alarm:0},
     {t:"19:45",e:"20:30",l:"Dinner together",alarm:10},
+    {t:"20:35",e:"20:45",l:"Core · 10 min",n:"At home — dead bug, side plank, Superman, hollow hold",alarm:5},
     {t:"20:45",e:"21:00",l:"CO2 table",n:"Sitting down, at home",alarm:10},
     {t:"21:00",e:"22:00",l:"Study room",alarm:10},
   ],
@@ -224,6 +226,7 @@ const PLAN_V2_POOL_AM = {
     {t:"13:15",e:"15:00",l:"Study room",alarm:10},
     {t:"15:15",e:"18:00",l:"Study room",n:"17:00 peak",alarm:10},
     {t:"19:00",e:"20:00",l:"Dinner together",alarm:10},
+    {t:"20:05",e:"20:15",l:"Core · 10 min",n:"At home — dead bug, side plank, Superman, hollow hold",alarm:5},
     {t:"20:15",e:"20:30",l:"CO2 table",n:"Sitting down, at home",alarm:10},
     {t:"20:30",e:"22:00",l:"Study room",alarm:10},
   ],
@@ -240,6 +243,7 @@ const PLAN_V2_NORMAL = {
     {t:"15:00",e:"15:15",l:"Study room to campus",n:"One station",alarm:10},
     {t:"15:15",e:"17:45",l:"Pharmacology I",alarm:15,n:"Two blocks, 15 min gap at 16:45"},
     {t:"18:30",e:"19:30",l:"Dinner together",alarm:10},
+    {t:"19:35",e:"19:45",l:"Core · 10 min",n:"At home — dead bug, side plank, Superman, hollow hold",alarm:5},
     {t:"20:00",e:"22:30",l:"Study room",n:"22:00 peak",alarm:10},
   ],
   Wed:[
@@ -251,6 +255,7 @@ const PLAN_V2_NORMAL = {
     {t:"17:30",e:"19:00",l:"Clinical ECG practical",alarm:15},
     {t:"19:00",e:"19:40",l:"Travel home",n:"40 min",alarm:0},
     {t:"19:45",e:"20:30",l:"Dinner together",alarm:10},
+    {t:"20:35",e:"20:45",l:"Core · 10 min",n:"At home — dead bug, side plank, Superman, hollow hold",alarm:5},
     {t:"20:45",e:"21:00",l:"CO2 table",n:"Sitting down, at home",alarm:10},
     {t:"21:00",e:"22:00",l:"Study room",alarm:10},
   ],
