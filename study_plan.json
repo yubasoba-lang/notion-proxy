@@ -22,7 +22,7 @@
   {
    "date": "2026-11-16",
    "subject": "pharm",
-   "title": "Pharm MT2 — A10–A22 (oral)",
+   "title": "Pharm MT2 — A10–A22 (oral) — 80%",
    "target": "Pass"
   },
   {
@@ -40,7 +40,7 @@
   {
    "date": "2026-12-17",
    "subject": "pharm",
-   "title": "Pharmacology semifinal — oral: drugs, core concept, A, C (18th if a slot opens)",
+   "title": "Pharmacology semifinal — oral: core concept + one A + one C (drug recognition waived; 18th if a slot opens)",
    "target": "Pass"
   },
   {
@@ -61,7 +61,7 @@
   "Anything marked TARGET is for good days. If it is skipped it slides to the next good day. Never do three to catch up — that is how the old plan broke.",
   "Anki due reviews every day, all decks. That is the review of the midterm material — do not re-read old notes until the blurt days in December.",
   "Micro final Monday 14 Dec, so everything micro is done by Sunday the 13th. There is no exam-week buffer before it.",
-  "Pharm semifinal is oral: drug recognition (waived only with 19+ on BOTH midterms), then one core concept, one A topic and one C topic. A blank on any one of them fails it.",
+  "Pharm semifinal is oral: drug recognition is WAIVED (MT1 19 with attendance, MT2 24). One core concept, one A topic, one C topic — a blank on any one fails it. Breadth beats depth: every topic needs at least mechanism, a prototype drug, main use and the key side effect. A1–A9 (MT1, 50%) get 40 min each; A10–A22 (MT2, 80%) get 20-min blurt-first passes.",
   "List C overlaps micro: penicillins, cephalosporins, aminoglycosides, macrolides, antituberculotics, antivirals, antifungals. Learn each once, for both exams.",
   "Pathophysiology is out of the plan until after the December exams.",
   "Every winter date is yours to choose. Pathophys and genetics/immunology are January."
@@ -580,8 +580,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A1",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -630,8 +630,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A2",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -680,8 +680,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A3",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -730,8 +730,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A4",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -815,8 +815,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A5",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -857,8 +857,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A6",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -908,8 +908,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A7",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -950,8 +950,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A8",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     }
    ]
   },
@@ -1000,8 +1000,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A9",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+     "est_minutes": 40
     },
     {
      "id": "2026-11-26-06",
@@ -1066,8 +1066,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A10",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-11-27-06",
@@ -1133,8 +1133,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A11",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-11-28-06",
@@ -1200,8 +1200,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A12",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-11-29-06",
@@ -1266,8 +1266,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A13",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-11-30-06",
@@ -1333,8 +1333,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A14",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-01-06",
@@ -1399,8 +1399,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A15",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-02-06",
@@ -1465,8 +1465,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A16",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-03-06",
@@ -1531,8 +1531,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A17",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-04-06",
@@ -1598,8 +1598,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A18",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-05-06",
@@ -1665,8 +1665,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A19",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-06-06",
@@ -1731,8 +1731,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A20",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-07-06",
@@ -1790,8 +1790,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A21",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-08-06",
@@ -1848,8 +1848,8 @@
      "subject": "pharm",
      "kind": "study",
      "title": "Pharm A22",
-     "detail": "One topic: the class boxes (prototype, mechanism, uses, side effects, contraindications, the rest as 'like the prototype, except'), then say the oral outline out loud. FLOOR",
-     "est_minutes": 30
+     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+     "est_minutes": 20
     },
     {
      "id": "2026-12-09-06",
@@ -2138,7 +2138,7 @@
      "kind": "study",
      "title": "Pharm: A12–A22 out loud",
      "detail": "Same as yesterday",
-     "est_minutes": 80
+     "est_minutes": 60
     },
     {
      "id": "2026-12-16-03",
@@ -2171,7 +2171,7 @@
      "subject": "pharm",
      "kind": "exam",
      "title": "Pharmacology semifinal",
-     "detail": "Oral: drug recognition (unless waived), then one core concept, one topic from A, one from C. On the 18th instead if that slot opens",
+     "detail": "Oral. Drug recognition is WAIVED (19+ on both midterms). One core concept, one topic from A, one from C. A blank on any one fails it. On the 18th instead if that slot opens",
      "est_minutes": 0
     }
    ]
