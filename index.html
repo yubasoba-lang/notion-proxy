@@ -10495,7 +10495,7 @@ function renderSoloSetsV2(){
       '<div style="display:flex;justify-content:space-between;align-items:baseline">'+
         '<span style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim)">'+esc(v2LevelLabel(x))+'</span>'+
         '<span style="font-size:9px;color:var(--text-faint)" onclick="'+(ADAPT_ON?'adaptLevelDown':'soloLevelDown')+'(\''+x.tag+'\')">step back</span></div>'+
-      '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">'+(ADAPT_ON?'The level moves by itself: two sessions in a row completed at effort 3 or under take it up, two hard ones take it back.':cl+' clean session'+(cl===1?'':'s')+' at this level · two moves you up.')+' A level adds a rep, never less rest.</div>'+up+'</div>';
+      '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">'+(ADAPT_ON?'The level moves by itself: two sessions in a row completed at effort 3 or under take it up, two in a row at effort 5 or cut short take it back. Effort 4 holds.':cl+' clean session'+(cl===1?'':'s')+' at this level · two moves you up.')+' A level adds a rep, never less rest.</div>'+up+'</div>';
   }else{
     let flyRow='';
     if(x.tag==='v2base'){
@@ -10885,10 +10885,17 @@ function adaptSplitFade(p){
 // yet. Both return "no opinion" until a real file from his watch has been looked at.
 function adaptHrEasy(p){return null;}
 function adaptHrvVote(ds){return 0;}
-// easy · ok · hard · fail
-function adaptClass(x,practices){
+// easy · ok · steady · hard · fail
+// On the speed and 100-pace days effort 4 is what the session is supposed to cost, so
+// there it is "steady": it holds the level, never drops it and never raises it. Only
+// effort 5, or a session cut short, is hard on those days (his call, 16 Nov 2026).
+function adaptClass(x,practices,level){
   if(x.c==='n')return 'fail';
-  if(x.c==='p'||x.e>=4)return 'hard';
+  if(x.c==='p')return 'hard';
+  if(level){
+    if(x.e>=5)return 'hard';
+    if(x.e===4)return 'steady';
+  }else if(x.e>=4)return 'hard';
   let cls=x.e<=2?'easy':'ok';
   if(x.k==='swim'){
     const p=adaptPracticeOn(x.d,practices);
@@ -11029,7 +11036,7 @@ function adaptCompute(data,today){
       if(easySet[x.d])return;
       const s=seasonWeek(x.d);
       if(s.deload||s.taper)return;
-      ev.push({d:x.d,t:x.t||0,cls:adaptClass(x,practices)});
+      ev.push({d:x.d,t:x.t||0,cls:adaptClass(x,practices,x.s==='v2speed'||x.s==='v2pace')});
     });
     // A solo day that passed with no swim logged and no session of this kind that week.
     if(oldest){
@@ -11069,7 +11076,7 @@ function adaptCompute(data,today){
         if(nxt===cur)return;
         lv+=nxt-cur;
         if(move>0)line='Level '+nxt+' on the '+name+' day — last two sessions were clean at effort 3 or under';
-        else line='Back to level '+nxt+' on the '+name+' day — '+whyBack;
+        else line='Back to level '+nxt+' on the '+name+' day — '+(e.cls==='fail'?whyBack:'last two '+name+' sessions were effort 5 or cut short');
       }else if(move>0){
         const s=seasonWeek(e.d);
         if(vol<0||(vol<1&&!s.hold&&adaptNextKm(e.d,s)>s.km)){
