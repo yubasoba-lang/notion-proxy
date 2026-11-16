@@ -3060,6 +3060,12 @@ async function nQuery(dbId,filter,sorts){
 /* Notion rejects any single rich_text block over 2000 characters, so a growing
    JSON blob eventually 400s — which is exactly how the Tasks tab went blank once
    xp_debts reached 2036 chars. Split across blocks; Notion rejoins them on read. */
+// The whole of a rich_text property. g.text() returns the first chunk only, which is
+// right for short values and silently truncates long JSON written by richChunks().
+function richAll(v){
+  const rt=(v&&v.rich_text)||[];
+  return rt.map(function(r){return r.plain_text!=null?r.plain_text:((r.text&&r.text.content)||'');}).join('');
+}
 function richChunks(str){
   const s=String(str??'');
   if(!s)return [{text:{content:''}}];
@@ -5894,10 +5900,10 @@ function renderHome(){
     html=`<div class="home-desktop-grid">
       <div class="home-col-full">${streakRow}${catchupCardHTML()}${adaptHomeHTML()}${todayLine}</div>
       <div class="home-col-left">${timerWidget}${focusCard}${renderCalendar()}</div>
-      <div class="home-col-right">${reviewCard}${examCard}${planCard}${cpHomeHTML()}${proteinRowHTML()}${hinaHomeHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
+      <div class="home-col-right">${reviewCard}${examCard}${planCard}${cpHomeHTML()}${forecastHomeHTML()}${proteinRowHTML()}${hinaHomeHTML()}${recapRowHTML()}${shaderToggleHTML()}</div>
     </div>`;
   } else {
-    html=streakRow+catchupCardHTML()+adaptHomeHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+cpHomeHTML()+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
+    html=streakRow+catchupCardHTML()+adaptHomeHTML()+todayLine+reviewCard+examCard+timerWidget+focusCard+planCard+cpHomeHTML()+forecastHomeHTML()+proteinRowHTML()+hinaHomeHTML()+recapRowHTML()+shaderToggleHTML();
   }
   const _scroll=document.querySelector('.scroll');
   const _scrollTop=_scroll?_scroll.scrollTop:0;
@@ -11446,6 +11452,662 @@ function adaptAfterSwim(d,remembered){
   openTrainCheck('swim',adaptSwimTag(d.set,d.course),localToday(),done);
 }
 
+// ── Forecast ─────────────────────────────────────────────────────────────────
+// Where the current rate leads, from what is actually logged: swim times, bodyweight,
+// the main lifts and study hours. READ ONLY — nothing on this page writes to Notion;
+// the what-if sliders live in localStorage on this device.
+// The rule the whole page is built on: no fake precision.
+//   under 3 points (or under a week of them)  → no projection at all, only the goal
+//   3–7 points, or under six weeks            → a range, no line, labelled thin
+//   8+ points over six weeks or more          → a line, inside a range that widens
+// A goal date is always a window, or "not at the current rate". Never one day.
+const FC_KEY='grind-forecast-sliders';
+const FC_EPOCH='2026-01-01';
+const FC_HORIZON='2029-12-31';
+// Share of scale weight gained that is muscle in a steady surplus. An assumption, not
+// his data, and shown on the page as one.
+const FC_LEAN=[0.3,0.6];
+const FC_KCAL_PER_KG=7700;
+const FC_SUBJ={micro:['Medical Microbiology II'],pharm:['Pharmacology I'],patho:['Pathology I'],pathophys:['Clinical Pathophysiology I'],immuno:['Immunology II','Genetics']};
+const FC_SUBJ_LABEL={micro:'Microbiology',pharm:'Pharmacology',patho:'Pathology',pathophys:'Pathophysiology',immuno:'Genetics and immunology'};
+// Estimated one-rep max (Epley) puts a rep gained and a plate added on the same line.
+// Targets come from the two-year plan's last checkpoint and scale with bodyweight.
+const FC_LIFTS=[
+  {k:'pull',label:'Pull-ups',names:['Assisted Pull-ups','Pull-ups','Weighted Pull-ups'],goalT:'+15 kg × 5',goal:function(bw){return (bw+15)*(1+5/30);}},
+  {k:'lat',label:'Lat Pulldown',names:['Lat Pulldown'],goalT:'bodyweight × 6',goal:function(bw){return bw*(1+6/30);}},
+  {k:'lower',label:'Lower main lift (trap bar or Smith squat)',names:['Trap Bar Deadlift','Smith Machine Squat'],goalT:'1.75 × bodyweight × 4',goal:function(bw){return 1.75*bw*(1+4/30);}},
+  {k:'row',label:'Cable Seated Row',names:['Cable Seated Row'],goalT:'',goal:null},
+  {k:'inc',label:'Incline Dumbbell Press',names:['Incline Dumbbell Press'],goalT:'',goal:null},
+];
+function fcX(ds){return v2DaysBetween(FC_EPOCH,String(ds).slice(0,10));}
+function fcDate(x){return v2AddDays(FC_EPOCH,Math.round(x));}
+function fcQ(sorted,q){
+  if(!sorted.length)return 0;
+  const i=(sorted.length-1)*q,lo=Math.floor(i),hi=Math.ceil(i);
+  return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo);
+}
+function fcNum(a,b){return a-b;}
+// Robust fit (median of pairwise slopes), with a band that is never allowed to
+// collapse: a handful of points that happen to sit on a line are still a handful.
+function fcFit(pts){
+  const p=(pts||[]).filter(function(q){return q&&isFinite(q.x)&&isFinite(q.y);}).slice().sort(function(a,b){return a.x-b.x;});
+  const n=p.length;
+  const out={n:n,tier:'none',pts:p,span:n?p[n-1].x-p[0].x:0,need:Math.max(0,3-n)};
+  if(n<3||out.span<7)return out;
+  const sl=[];
+  // Only pairs at least a week apart: two sessions two days apart turn ordinary
+  // day-to-day noise into a slope of kilos a week.
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(p[j].x-p[i].x>=7)sl.push((p[j].y-p[i].y)/(p[j].x-p[i].x));}
+  if(!sl.length)return out;
+  sl.sort(fcNum);
+  const b=fcQ(sl,0.5);
+  const a=fcQ(p.map(function(q){return q.y-b*q.x;}).sort(fcNum),0.5);
+  const thin=n<8||out.span<42;
+  const ys=p.map(function(q){return q.y;}).sort(fcNum);
+  const yl=a+b*p[n-1].x;
+  let r=1.4826*fcQ(p.map(function(q){return Math.abs(q.y-(a+b*q.x));}).sort(fcNum),0.5);
+  r=Math.max(r,(ys[n-1]-ys[0])*0.05,Math.abs(yl)*0.004);
+  let bLo=fcQ(sl,thin?0.1:0.25),bHi=fcQ(sl,thin?0.9:0.75);
+  const k=(thin?0.5:0.25)*Math.abs(b)+(thin?1:0.5)*r/Math.max(30,out.span);
+  bLo=Math.min(bLo,b-k);bHi=Math.max(bHi,b+k);
+  if(thin)r*=1.5;
+  out.tier=thin?'thin':'line';
+  // How far ahead this much data can see: twice its own span when thin (at least four
+  // weeks), three times when it has earned a line (at least three months). Past that
+  // there is no projection, only "too far out to say".
+  out.reach=thin?Math.max(28,2*out.span):Math.max(91,3*out.span);
+  out.a=a;out.b=b;out.bLo=bLo;out.bHi=bHi;out.r=r;out.xl=p[n-1].x;out.yl=yl;
+  return out;
+}
+// mod: {mul, add} applied to the slope from the last point on — that is what a what-if is.
+function fcAt(fit,x,mod){
+  if(!fit||fit.tier==='none')return null;
+  const dx=x-fit.xl;
+  if(dx<=0){const c0=fit.a+fit.b*x;return {c:c0,lo:c0-fit.r,hi:c0+fit.r};}
+  if(dx>fit.reach)return null;
+  const mul=(mod&&mod.mul!=null)?mod.mul:1,add=(mod&&mod.add)||0;
+  const s=fit.b*mul+add,s1=fit.bLo*mul+add,s2=fit.bHi*mul+add;
+  return {c:fit.yl+s*dx,lo:fit.yl+Math.min(s1,s2)*dx-fit.r,hi:fit.yl+Math.max(s1,s2)*dx+fit.r};
+}
+// When the range reaches a goal: the earliest edge and the latest edge. dir says which
+// way is better (+1 heavier or stronger, −1 faster), so a goal already passed in the
+// good direction reads as reached rather than as out of reach.
+function fcWhen(fit,goal,mod,dir){
+  if(!fit||fit.tier==='none')return {state:'none'};
+  const up=(dir||1)>0;
+  if(up?fit.yl>=goal:fit.yl<=goal)return {state:'reached'};
+  const mul=(mod&&mod.mul!=null)?mod.mul:1,add=(mod&&mod.add)||0;
+  const s1=fit.bLo*mul+add,s2=fit.bHi*mul+add;
+  const fastS=up?Math.max(s1,s2):Math.min(s1,s2),slowS=up?Math.min(s1,s2):Math.max(s1,s2);
+  const xMax=fcX(FC_HORIZON);
+  const solve=function(s,edge){
+    const gap=goal-edge;
+    if(up?gap<=0:gap>=0)return fit.xl;
+    if(up?s<=0:s>=0)return null;
+    const x=fit.xl+gap/s;
+    return x>xMax?null:x;
+  };
+  const early=solve(fastS,up?fit.yl+fit.r:fit.yl-fit.r);
+  const late=solve(slowS,up?fit.yl-fit.r:fit.yl+fit.r);
+  if(early==null)return {state:'never'};
+  const reachX=fit.xl+fit.reach;
+  const sight=fcSight(fit);
+  if(early>reachX)return {state:'far',sight:sight};
+  if(late==null||late>reachX)return {state:'open',early:fcDate(early),sight:sight};
+  return {state:'window',early:fcDate(early),late:fcDate(late)};
+}
+// "about 6 weeks" / "about 5 months" — how far ahead the data can see.
+function fcSight(fit){
+  const wk=Math.round(fit.span/7);
+  const r=fit.reach;
+  let ahead='about '+Math.round(r/7)+' weeks';
+  if(r>=84)ahead='about '+Math.round(r/30.4)+' months';
+  return {weeks:Math.max(1,wk),ahead:ahead};
+}
+function fcWhenText(w){
+  if(w.state==='none')return 'Not enough data to put a date on it';
+  if(w.state==='reached')return 'Already there on the current trend';
+  if(w.state==='never')return 'Not at the current rate — even the fast edge of the range does not get there by '+FC_HORIZON.slice(0,4);
+  const wks=function(s){return s.weeks+' week'+(s.weeks===1?'':'s');};
+  if(w.state==='far')return 'Too far out to say: '+wks(w.sight)+' of data can see '+w.sight.ahead+' ahead, and it is not reached inside that';
+  const today=localToday();
+  const e=w.early<=today?'now':cpMonth(w.early);
+  if(w.state==='open')return 'From '+e+' at the earliest; no latest date — '+wks(w.sight)+' of data can only see '+w.sight.ahead+' ahead';
+  if(cpMonth(w.early)===cpMonth(w.late))return 'Around '+cpMonth(w.late);
+  return 'Between '+e+' and '+cpMonth(w.late);
+}
+function fcTierChip(fit,unit){
+  const u=unit||'point';
+  const pl=function(n){return n+' '+u+(n===1?'':'s');};
+  if(fit.tier==='none'){
+    if(fit.n>=3)return 'NOT ENOUGH DATA · '+pl(fit.n)+' inside one week';
+    return 'NOT ENOUGH DATA · '+pl(fit.n)+' · needs 3';
+  }
+  const wk=Math.max(1,Math.round(fit.span/7));
+  if(fit.tier==='thin')return 'THIN DATA · '+pl(fit.n)+' over '+wk+' week'+(wk===1?'':'s')+' · a range, not a line';
+  return 'TREND · '+pl(fit.n)+' over '+wk+' weeks';
+}
+function fcSliders(){
+  let s={};
+  try{s=JSON.parse(localStorage.getItem(FC_KEY)||'{}')||{};}catch(_){s={};}
+  return {swims:s.swims!=null?s.swims:null,kcal:s.kcal||0,study:s.study!=null?s.study:null};
+}
+function fcR1(v){return Math.round(v*10)/10;}
+function fcSigned(v){return (v>=0?'+':'−')+Math.abs(fcR1(v)).toFixed(1);}
+
+// ── A chart: points, the range, the line only when it has been earned, the goal dashed.
+// o: {pts:[{x,y}], proj:function(x)→{c,lo,hi}|null, tier, goal, x1, fmt, hollow:function(pt)}
+function fcChart(o){
+  const W=320,H=150,L=38,R=8,T=10,B=20;
+  const pts=o.pts||[];
+  const today=fcX(localToday());
+  let x0=pts.length?pts[0].x:today-30;
+  if(x0>today-14)x0=today-14;
+  const x1=Math.max(o.x1||today+180,today+30);
+  const samples=[];
+  if(o.proj&&o.tier&&o.tier!=='none'&&pts.length){
+    const xs=pts[pts.length-1].x;
+    const xe=Math.min(x1,xs+(o.reach||(x1-xs)));
+    for(let i=0;i<=24;i++){const x=xs+(xe-xs)*i/24;const v=o.proj(x);if(v)samples.push({x:x,c:v.c,lo:v.lo,hi:v.hi});}
+  }
+  let lo=Infinity,hi=-Infinity;
+  const see=function(v){if(v==null||!isFinite(v))return;if(v<lo)lo=v;if(v>hi)hi=v;};
+  pts.forEach(function(p){see(p.y);});
+  samples.forEach(function(s){see(s.lo);see(s.hi);});
+  if(o.goal!=null)see(o.goal);
+  if(!isFinite(lo)){lo=0;hi=1;}
+  if(hi-lo<1e-9){hi+=1;lo-=1;}
+  const pad=(hi-lo)*0.08;lo-=pad;hi+=pad;
+  const sx=function(x){return L+(W-L-R)*(x-x0)/(x1-x0);};
+  const sy=function(y){return T+(H-T-B)*(1-(y-lo)/(hi-lo));};
+  const f1=function(v){return (Math.round(v*10)/10).toFixed(1);};
+  const fmt=o.fmt||f1;
+  let g='';
+  if(samples.length){
+    let d='';
+    samples.forEach(function(s,i){d+=(i?'L':'M')+f1(sx(s.x))+' '+f1(sy(s.hi));});
+    for(let i=samples.length-1;i>=0;i--)d+='L'+f1(sx(samples[i].x))+' '+f1(sy(samples[i].lo));
+    g+='<path class="fc-band" d="'+d+'Z" fill="rgba(200,162,74,0.20)" stroke="none"/>';
+    if(o.tier==='line'){
+      let l='';
+      samples.forEach(function(s,i){l+=(i?'L':'M')+f1(sx(s.x))+' '+f1(sy(s.c));});
+      g+='<path class="fc-line" d="'+l+'" fill="none" stroke="#c8a24a" stroke-width="1.5"/>';
+    }
+  }
+  if(o.goal!=null){
+    g+='<line class="fc-goal" x1="'+L+'" x2="'+(W-R)+'" y1="'+f1(sy(o.goal))+'" y2="'+f1(sy(o.goal))+'" stroke="rgba(232,234,240,0.45)" stroke-width="1" stroke-dasharray="4 4"/>'+
+      '<text x="'+(W-R)+'" y="'+f1(sy(o.goal)-4)+'" text-anchor="end" font-size="9" fill="rgba(232,234,240,0.6)">goal '+esc(fmt(o.goal))+'</text>';
+  }
+  if(today>x0&&today<x1)g+='<line x1="'+f1(sx(today))+'" x2="'+f1(sx(today))+'" y1="'+T+'" y2="'+(H-B)+'" stroke="rgba(232,234,240,0.12)" stroke-width="1"/>';
+  pts.forEach(function(p){
+    const hol=o.hollow&&o.hollow(p);
+    g+='<circle class="fc-pt" cx="'+f1(sx(p.x))+'" cy="'+f1(sy(p.y))+'" r="2.6" fill="'+(hol?'none':'#e8eaf0')+'" stroke="#e8eaf0" stroke-width="1"/>';
+  });
+  g+='<text x="'+(L-4)+'" y="'+(T+8)+'" text-anchor="end" font-size="9" fill="rgba(232,234,240,0.5)">'+esc(fmt(hi-pad))+'</text>'+
+     '<text x="'+(L-4)+'" y="'+(H-B)+'" text-anchor="end" font-size="9" fill="rgba(232,234,240,0.5)">'+esc(fmt(lo+pad))+'</text>';
+  for(let i=0;i<=3;i++){
+    const x=x0+(x1-x0)*i/3,ds=fcDate(x);
+    let anchor='middle';
+    if(i===0)anchor='start';
+    if(i===3)anchor='end';
+    g+='<text x="'+f1(sx(x))+'" y="'+(H-6)+'" text-anchor="'+anchor+'" font-size="9" fill="rgba(232,234,240,0.5)">'+esc(CP_MONTHS[parseInt(ds.slice(5,7))-1]+' '+ds.slice(2,4))+'</text>';
+  }
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;margin:10px 0 4px" role="img">'+g+'</svg>';
+}
+function fcChip(t,tier){
+  let col='var(--text-dim)';
+  if(tier==='line')col='var(--gold)';
+  return '<div class="fc-chip" style="font-size:9px;font-weight:700;letter-spacing:0.14em;color:'+col+';margin-top:6px">'+esc(t)+'</div>';
+}
+function fcP(t,dim){return '<div style="font-size:11px;line-height:1.7;color:var(--'+(dim?'text-dim':'text')+');margin-top:4px">'+esc(t)+'</div>';}
+function fcH(t){return '<div style="font-size:14px;color:var(--text-hi);margin-top:18px">'+esc(t)+'</div>';}
+function fcRows(head,rows){
+  if(!rows.length)return '';
+  let h='<div style="display:flex;gap:8px;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-faint);margin-top:10px">';
+  head.forEach(function(c,i){h+='<span style="flex:'+(i?1:1.2)+';text-align:'+(i?'right':'left')+'">'+esc(c)+'</span>';});
+  h+='</div>';
+  rows.forEach(function(r){
+    h+='<div style="display:flex;gap:8px;font-size:11px;padding:4px 0;border-top:1px solid rgba(232,234,240,0.06)">';
+    r.forEach(function(c,i){h+='<span style="flex:'+(i?1:1.2)+';text-align:'+(i?'right':'left')+';color:var(--'+(i===0?'text-dim':'text')+')">'+esc(c)+'</span>';});
+    h+='</div>';
+  });
+  return h;
+}
+
+// ── Swimming ─────────────────────────────────────────────────────────────────
+// Fitted on the logarithm of the time: a steady percentage a month, which flattens in
+// seconds the way real improvement does, without assuming the goal can be reached.
+function fcSwimPts(dist){
+  const out=[];
+  (state.swimPractices||[]).forEach(function(p){
+    if(p.timedDistance!==dist||!p.date)return;
+    if(((SWIM_HAS_STROKE_PROP&&p.timedStroke)||'Free')!=='Free')return;
+    const sec=v2ScmSeconds(p);
+    if(sec==null||!(sec>0))return;
+    out.push({x:fcX(p.date),y:Math.log(sec),sec:sec,conv:p.course==='50 m'});
+  });
+  return out;
+}
+function fcSwimReady(){return fcSwimPts(50).length>=3&&fcSwimPts(100).length>=3;}
+function fcSwimsNow(){
+  const cut=v2AddDays(localToday(),-28);
+  const n=(state.swimPractices||[]).filter(function(p){return p.date&&String(p.date).slice(0,10)>cut;}).length;
+  return Math.max(1,Math.round(n/4*2)/2);
+}
+// What-if: rate of improvement taken to scale with the square root of weekly swims.
+// Only offered once both distances have three timed swims to fit a rate to.
+function fcSwimMod(){
+  const s=fcSliders();
+  if(!fcSwimReady()||s.swims==null)return null;
+  return {mul:Math.sqrt(s.swims/fcSwimsNow())};
+}
+function fcProxy(label,key,unit){
+  const pts=[];
+  (state.swimPractices||[]).forEach(function(p){if(p[key]>0&&p.date&&v2IsSolo(p))pts.push({x:fcX(p.date),y:p[key]});});
+  const fit=fcFit(pts);
+  if(fit.tier==='none')return fcP(label+': '+fit.n+' logged — needs 3 over a week or more before it is a trend.',true);
+  const first=fit.pts[0].y,last=fit.pts[fit.n-1].y,lo=fit.bLo*28,hi=fit.bHi*28;
+  let t=label+': '+first+' → '+last+' '+unit+' · changing by somewhere between '+fcSigned(lo)+' and '+fcSigned(hi)+' a month';
+  if(fit.tier==='thin')t+=' · thin data';
+  return fcP(t,true);
+}
+function fcSwimOutHTML(){
+  const mod=fcSwimMod();
+  let h='';
+  [{d:50,goal:23.9,key:'f50',label:'50 free · goal sub-24'},{d:100,goal:49.9,key:'f100',label:'100 free · goal sub-50'}].forEach(function(e){
+    const pts=fcSwimPts(e.d),fit=fcFit(pts);
+    h+=fcH(e.label)+fcChip(fcTierChip(fit,'timed swim'),fit.tier);
+    h+=fcChart({pts:pts.map(function(p){return {x:p.x,y:p.sec,conv:p.conv};}),tier:fit.tier,reach:fit.reach,goal:e.goal,x1:fcX('2028-12-31'),
+      proj:function(x){const v=fcAt(fit,x,mod);if(!v)return null;return {c:Math.exp(v.c),lo:Math.exp(v.lo),hi:Math.exp(v.hi)};},
+      fmt:function(v){return fmtSwimTime(Math.round(v*10)/10);},hollow:function(p){return p.conv;}});
+    if(fit.tier==='none'){
+      if(!fit.n)h+=fcP('No timed '+e.d+' is logged, so there is nothing to project from. The dashed line is the goal, not a forecast.');
+      else h+=fcP(fit.n+' timed '+e.d+(fit.n===1?'':'s')+' logged. Three, spread over more than a week, are the least a rate can be read from.');
+    }else{
+      const pm=function(s){return (Math.exp(s*30)-1)*100;};
+      h+=fcP('Rate so far: somewhere between '+fcSigned(pm(fit.bLo))+'% and '+fcSigned(pm(fit.bHi))+'% a month'+(fit.tier==='line'?', most likely '+fcSigned(pm(fit.b))+'%':'')+'.');
+      h+=fcP(fcWhenText(fcWhen(fit,Math.log(e.goal),mod,-1))+' for '+fmtSwimTime(e.goal)+'.');
+    }
+    const rows=[];
+    CHECKPOINTS.forEach(function(c){
+      if(!c[e.key]||c.d<localToday())return;
+      const v=fcAt(fit,fcX(c.d),mod);
+      let cell='—';
+      if(v)cell=fmtSwimTime(fcR1(Math.exp(v.lo)))+' – '+fmtSwimTime(fcR1(Math.exp(v.hi)));
+      else if(fit.tier!=='none')cell='too far out';
+      rows.push([cpMonth(c.d),fmtSwimTime(c[e.key]),cell]);
+    });
+    h+=fcRows(['By','Goal line','At your rate'],rows);
+  });
+  h+=fcH('Leading signs · 33 m pool');
+  h+=fcProxy('Strokes per length','strokes','strokes')+fcProxy('Breakout','breakout','m')+fcProxy('Dolphin kicks held','kicks','kicks');
+  h+=fcP('These are shown as their own trends. They are not turned into seconds: there are no timed swims yet to calibrate them against, and a made-up conversion would be a made-up forecast.',true);
+  return h;
+}
+function fcSwimSliderHTML(){
+  const ready=fcSwimReady(),s=fcSliders(),now=fcSwimsNow();
+  const n50=fcSwimPts(50).length,n100=fcSwimPts(100).length;
+  if(!ready){
+    return '<div id="fcSwimSlider" style="opacity:0.4;margin-top:16px"><div class="wec-lbl">What if · swims per week</div>'+
+      '<input type="range" min="3" max="8" step="1" value="6" disabled style="width:100%;margin-top:8px">'+
+      '<div style="font-size:10px;color:var(--text-dim);margin-top:4px">Needs timed swims — three per distance before a rate exists to move. You have '+n50+' for the 50 and '+n100+' for the 100.</div></div>';
+  }
+  const v=s.swims!=null?s.swims:Math.round(now);
+  return '<div id="fcSwimSlider" style="margin-top:16px"><div class="wec-lbl">What if · swims per week · <span id="fcVal-swims">'+v+'</span></div>'+
+    '<input type="range" min="3" max="8" step="1" value="'+v+'" oninput="fcSlide(\'swims\',this.value)" style="width:100%;margin-top:8px">'+
+    '<div style="font-size:10px;color:var(--text-dim);margin-top:4px">Assumption, not your data: the rate of improvement scales with the square root of weekly swims. You log about '+now+' a week now.</div></div>';
+}
+
+// ── Body ─────────────────────────────────────────────────────────────────────
+function fcBodyMod(){
+  const k=fcSliders().kcal;
+  if(!k)return null;
+  return {add:k/FC_KCAL_PER_KG};
+}
+function fcBodyOutHTML(){
+  const pts=weightSorted().map(function(w){return {x:fcX(w.date),y:w.kg};});
+  const fit=fcFit(pts),mod=fcBodyMod();
+  const goalKg=CP_START.kg+10;
+  let h=fcChip(fcTierChip(fit,'weigh-in'),fit.tier);
+  h+=fcChart({pts:pts,tier:fit.tier,reach:fit.reach,goal:goalKg,x1:fcX('2028-12-31'),proj:function(x){return fcAt(fit,x,mod);},fmt:function(v){return fcR1(v).toFixed(1)+' kg';}});
+  if(fit.tier==='none'){
+    h+=fcP(fit.n+' weigh-in'+(fit.n===1?'':'s')+' logged. Three, spread over more than a week, are the least a rate can be read from. The dashed line is '+goalKg+' kg, ten above your '+CP_START.kg+' kg start.');
+  }else{
+    const add=mod?mod.add*7:0;
+    let t='Rate so far: somewhere between '+fcSigned(fit.bLo*7+add)+' and '+fcSigned(fit.bHi*7+add)+' kg a week';
+    if(fit.tier==='line')t+=', most likely '+fcSigned(fit.b*7+add);
+    h+=fcP(t+(mod?' (with the what-if added).':'.'));
+    h+=fcP('+10 kg on the scale ('+goalKg+' kg): '+fcWhenText(fcWhen(fit,goalKg,mod))+'.');
+    const m1=fcWhen(fit,CP_START.kg+10/FC_LEAN[1],mod),m2=fcWhen(fit,CP_START.kg+10/FC_LEAN[0],mod);
+    let mt='not by '+FC_HORIZON.slice(0,4)+' at this rate';
+    if(m1.state==='far')mt=fcWhenText(m1).replace(/^Too/,'too');
+    if(m1.state==='reached')mt='the scale has already risen that far, though not all of it can be muscle';
+    if(m1.state==='window'||m1.state==='open'){
+      mt='from '+cpMonth(m1.early)+' at the very earliest';
+      if(m2.state==='window')mt+=', '+cpMonth(m2.late)+' at the latest';
+      else mt+=', with no latest date this much data can give';
+    }
+    h+=fcP('+10 kg of muscle: '+mt+'. The scale cannot see muscle; this assumes '+Math.round(FC_LEAN[0]*100)+'–'+Math.round(FC_LEAN[1]*100)+'% of what you gain is muscle, which is an assumption and not a measurement.');
+  }
+  const rows=[];
+  CHECKPOINTS.forEach(function(c){
+    if(!c.kg||c.d<localToday())return;
+    const v=fcAt(fit,fcX(c.d),mod);
+    let cell='—';
+    if(v)cell=fcR1(v.lo).toFixed(1)+' – '+fcR1(v.hi).toFixed(1)+' kg';
+    else if(fit.tier!=='none')cell='too far out';
+    rows.push([cpMonth(c.d),c.kg+' kg',cell]);
+  });
+  h+=fcRows(['By','Goal line','At your rate'],rows);
+  return h;
+}
+function fcBodySliderHTML(){
+  const k=fcSliders().kcal;
+  return '<div style="margin-top:16px"><div class="wec-lbl">What if · extra calories a day · <span id="fcVal-kcal">'+k+'</span></div>'+
+    '<input type="range" min="0" max="600" step="50" value="'+k+'" oninput="fcSlide(\'kcal\',this.value)" style="width:100%;margin-top:8px">'+
+    '<div style="font-size:10px;color:var(--text-dim);margin-top:4px">Assumption, not your data: '+FC_KCAL_PER_KG+' kcal eaten above what you eat now is one kilo on the scale.</div></div>';
+}
+
+// ── Strength ─────────────────────────────────────────────────────────────────
+function fcBodyweight(){
+  const w=weightLatest();
+  return w?w.kg:CP_START.kg;
+}
+// One point per lift per day, from the Workout Log rows the app already fetches.
+async function fcLoadLifts(){
+  const pages=await fetchWorkoutLog();
+  state.fcLiftRows=fcLiftRows(pages);
+}
+function fcLiftRows(pages){
+  const out=[];
+  (pages||[]).forEach(function(p){
+    const q=p.properties||{};
+    const name=(q.Name&&q.Name.title&&q.Name.title[0]&&q.Name.title[0].plain_text)||'';
+    if(!name||name.indexOf(' (2°)')>=0)return;
+    const date=q.Date&&q.Date.date&&q.Date.date.start?String(q.Date.date.start).slice(0,10):'';
+    const reps=(q.Reps&&q.Reps.number)||0,weight=(q['Weight (kg)']&&q['Weight (kg)'].number)||0;
+    if(date)out.push({name:name,date:date,reps:reps,weight:weight});
+  });
+  return out;
+}
+function fcLiftPts(def){
+  const bw=fcBodyweight(),byDay={};
+  // Trap bar and Smith squat are different lifts: the one with more logs is the series.
+  let names=def.names;
+  if(def.k==='lower'){
+    const cnt={};
+    (state.fcLiftRows||[]).forEach(function(r){if(names.indexOf(r.name)>=0)cnt[r.name]=(cnt[r.name]||0)+1;});
+    let best=names[0];
+    names.forEach(function(n){if((cnt[n]||0)>(cnt[best]||0))best=n;});
+    names=[best];
+  }
+  (state.fcLiftRows||[]).forEach(function(r){
+    if(names.indexOf(r.name)<0)return;
+    // Epley is not trustworthy past about 15 reps; those sets say nothing about strength.
+    if(!(r.reps>=1)||r.reps>15)return;
+    let load=r.weight;
+    if(def.k==='pull'){
+      if(r.name==='Assisted Pull-ups')load=bw-r.weight;
+      else if(r.name==='Pull-ups')load=bw;
+      else load=bw+r.weight;
+    }
+    if(!(load>0))return;
+    const e=load*(1+r.reps/30);
+    if(!byDay[r.date]||e>byDay[r.date])byDay[r.date]=e;
+  });
+  return Object.keys(byDay).sort().map(function(d){return {x:fcX(d),y:fcR1(byDay[d])};});
+}
+function fcLiftOutHTML(){
+  const bw=fcBodyweight();
+  let h=fcP('Estimated one-rep max from each day\'s best set, so a rep gained and a step up the stack land on the same line. Targets are the two-year plan\'s and scale with bodyweight ('+bw+' kg now).',true);
+  FC_LIFTS.forEach(function(def){
+    const pts=fcLiftPts(def),fit=fcFit(pts);
+    const goal=def.goal?fcR1(def.goal(bw)):null;
+    h+=fcH(def.label)+fcChip(fcTierChip(fit,'session'),fit.tier);
+    h+=fcChart({pts:pts,tier:fit.tier,reach:fit.reach,goal:goal,x1:fcX('2028-12-31'),proj:function(x){return fcAt(fit,x,null);},fmt:function(v){return Math.round(v)+' kg';}});
+    if(fit.tier==='none'){
+      if(!fit.n)h+=fcP('Nothing logged for this lift yet.');
+      else h+=fcP(fit.n+' session'+(fit.n===1?'':'s')+' logged — three over more than a week are needed.');
+    }else{
+      h+=fcP('Now about '+Math.round(fit.yl)+' kg. Rate so far: somewhere between '+fcSigned(fit.bLo*30)+' and '+fcSigned(fit.bHi*30)+' kg a month'+(fit.tier==='line'?', most likely '+fcSigned(fit.b*30):'')+'.');
+      if(goal!=null)h+=fcP(def.goalT+' (about '+Math.round(goal)+' kg estimated max): '+fcWhenText(fcWhen(fit,goal,null))+'.');
+      else h+=fcP('No target is set for this lift, so there is no date to give.',true);
+    }
+  });
+  return h;
+}
+
+// ── Study ────────────────────────────────────────────────────────────────────
+function fcMonday(ds){
+  const dow=new Date(ds+'T12:00:00').getDay();
+  return v2AddDays(ds,-((dow+6)%7));
+}
+// The last n complete weeks, oldest first. Weeks before the first session ever logged
+// are left out: an empty week before the log existed is not a week of no study.
+function fcWeeks(n){
+  const thisMon=fcMonday(localToday());
+  const by={};
+  let first='';
+  (state.sessions||[]).forEach(function(s){
+    if(s.complete!=='Done'||!s.started||!s.done)return;
+    const h=sessionH(s);
+    if(!(h>0))return;
+    const d=localDay(s.started),w=fcMonday(d);
+    if(!first||w<first)first=w;
+    const g2=by[w]||(by[w]={total:0,by:{}});
+    g2.total+=h;
+    const sub=s.subject||'Other';
+    g2.by[sub]=(g2.by[sub]||0)+h;
+  });
+  const out=[];
+  for(let i=n;i>=1;i--){
+    const w=v2AddDays(thisMon,-7*i);
+    if(!first||w<first)continue;
+    out.push({from:w,total:by[w]?by[w].total:0,by:by[w]?by[w].by:{}});
+  }
+  return out;
+}
+// A subject's weeks start at the first week it was studied: before the semester it
+// did not exist, and counting those as empty weeks drags every range to zero.
+function fcTypical(weeks,subjects){
+  let from=0;
+  if(subjects){
+    from=weeks.length;
+    for(let i=0;i<weeks.length;i++){
+      if(subjects.some(function(s){return (weeks[i].by[s]||0)>0;})){from=i;break;}
+    }
+  }
+  const vals=weeks.slice(from).map(function(w){
+    if(!subjects)return w.total;
+    let t=0;
+    subjects.forEach(function(s){t+=w.by[s]||0;});
+    return t;
+  });
+  const s12=vals.slice().sort(fcNum),s4=vals.slice(-4).sort(fcNum);
+  return {lo:fcQ(s12,0.25),hi:fcQ(s12,0.75),mid:fcQ(s4,0.5),n:vals.length};
+}
+function fcStudyTier(weeks){
+  const n=weeks.filter(function(w){return w.total>0;}).length;
+  if(n<3)return {tier:'none',n:n};
+  if(n<8)return {tier:'thin',n:n};
+  return {tier:'line',n:n};
+}
+// Hours of plan left before each coming exam: undone, undropped study tasks. If the
+// plan tab has not loaded its ticks on this device, the copy read (read-only) from
+// AppConfig stands in for the length of this calculation and is then put back.
+function fcExams(){
+  const keep=state.planDone;
+  if(!Object.keys(keep||{}).length&&state.fcPlanDone)state.planDone=state.fcPlanDone;
+  try{return fcExamsIn();}finally{state.planDone=keep;}
+}
+function fcTicksKnown(){return Object.keys(state.planDone||{}).length>0||!!state.fcPlanDone;}
+function fcExamsIn(){
+  const today=localToday();
+  let dropped={};
+  try{dropped=planLiveOv().dropped||{};}catch(_){dropped={};}
+  const out=[];
+  planExams().forEach(function(ex){
+    if(ex.date<today)return;
+    let min=0,n=0;
+    planAllTasks().forEach(function(t){
+      if(t.kind!=='study'||t.subject==='anki'||t.examKey!==ex.key||planIsDone(t.id)||dropped[t.id])return;
+      min+=t.est||0;n++;
+    });
+    if(!n)return;
+    const days=v2DaysBetween(today,ex.date);
+    out.push({key:ex.key,subject:ex.subject,title:ex.title,date:ex.date,hours:min/60,tasks:n,days:days,weeks:Math.max(1,days)/7});
+  });
+  return out;
+}
+function fcStudyOutHTML(){
+  const weeks=fcWeeks(12),tier=fcStudyTier(weeks),all=fcTypical(weeks,null),s=fcSliders();
+  let chip='NOT ENOUGH DATA · '+tier.n+' week'+(tier.n===1?'':'s')+' with study logged in the last 12 · needs 3';
+  if(tier.tier==='thin')chip='THIN DATA · '+tier.n+' weeks with study logged in the last 12 · a range, not a line';
+  if(tier.tier==='line')chip='TYPICAL WEEK · '+tier.n+' weeks with study logged in the last 12';
+  let h=fcChip(chip,tier.tier);
+  // Weekly totals as bars: the shape of these weeks is the point, there is no trend line to draw.
+  let mx=1;
+  weeks.forEach(function(w){if(w.total>mx)mx=w.total;});
+  let bars='';
+  weeks.forEach(function(w,i){
+    const bh=Math.round(60*w.total/mx);
+    bars+='<rect class="fc-bar" x="'+(10+i*25)+'" y="'+(70-bh)+'" width="18" height="'+Math.max(1,bh)+'" fill="rgba(232,234,240,'+(w.total?'0.55':'0.15')+')"/>';
+  });
+  h+='<svg viewBox="0 0 320 84" width="100%" style="display:block;margin:10px 0 4px" role="img">'+bars+
+    '<text x="10" y="82" font-size="9" fill="rgba(232,234,240,0.5)">last '+weeks.length+' full weeks · tallest '+fcR1(mx)+' h</text></svg>';
+  if(tier.tier==='none'){
+    h+=fcP('Too few logged weeks to call anything typical. Only timed pomodoro sessions are counted, so real hours are higher than this.');
+  }else{
+    h+=fcP('A usual week is somewhere between '+fcR1(all.lo)+' and '+fcR1(all.hi)+' hours; the last four ran at about '+fcR1(all.mid)+'. Your weeks swing too much for a trend line to mean anything, so this is a range and stays one.');
+  }
+  const rows=[];
+  Object.keys(FC_SUBJ).forEach(function(k){
+    const t=fcTypical(weeks,FC_SUBJ[k]);
+    if(t.n<3)rows.push([FC_SUBJ_LABEL[k],t.n?'only '+t.n+' wk':'none logged','—']);
+    else rows.push([FC_SUBJ_LABEL[k],fcR1(t.lo)+' – '+fcR1(t.hi)+' h',fcR1(t.mid)+' h']);
+  });
+  h+=fcRows(['Per week','Usual range','Last 4 weeks'],rows);
+  const exams=fcExams();
+  h+=fcH('Against the study plan');
+  if(!state.studyPlan)h+=fcP('The study plan has not loaded, so hours left per exam cannot be shown.',true);
+  else if(!exams.length)h+=fcP('No coming exam has plan tasks left.',true);
+  if(state.studyPlan&&!fcTicksKnown())h+=fcP('Your ticks have not loaded, so every task counts as not done and the hours left read high.',true);
+  let left=0;
+  exams.forEach(function(e){left+=e.hours;});
+  exams.forEach(function(e){
+    let r=fcTypical(weeks,FC_SUBJ[e.subject]||[]);
+    let how='at your usual pace';
+    if(s.study!=null){
+      const share=left>0?s.study*e.hours/left:0;
+      r={lo:share,hi:share,mid:share};
+      how='with '+s.study+' h a week shared by hours left';
+    }
+    const need=e.hours/e.weeks;
+    let needT='needs '+fcR1(need)+' h a week';
+    if(e.days<7)needT='needs '+fcR1(e.hours/Math.max(1,e.days))+' h a day';
+    if(e.days===0)needT='today';
+    h+='<div style="border-top:1px solid var(--border);padding:10px 0;margin-top:10px">'+
+      '<div style="font-size:12px;color:var(--text-hi)">'+esc(e.title)+'</div>'+
+      '<div style="font-size:10px;color:var(--text-dim);margin-top:3px">'+esc(cpDay(e.date))+' · '+fcR1(e.hours)+' h of plan left in '+e.tasks+' task'+(e.tasks===1?'':'s')+' · '+needT+'</div>';
+    let v;
+    if(e.days===0)v='The exam is today — these are the plan tasks not ticked off. Nothing to forecast.';
+    else if(e.days<7)v='Under a week to go: a weekly pace says nothing here. That is '+fcR1(e.hours/Math.max(1,e.days))+' h a day on the plan.';
+    else if(tier.tier==='none'&&s.study==null)v='Not enough logged weeks to say whether that is your pace.';
+    else if(s.study==null&&r.n<3)v='Not enough logged weeks on this subject to say whether that is your pace.';
+    else if(r.hi*e.weeks<e.hours)v='Short by about '+Math.round(e.hours-r.hi*e.weeks)+(r.hi!==r.lo?' to '+Math.round(e.hours-r.lo*e.weeks):'')+' hours '+how+' ('+fcR1(r.lo)+(r.hi!==r.lo?'–'+fcR1(r.hi):'')+' h a week on this subject).';
+    else if(r.lo*e.weeks>=e.hours)v='On pace '+how+': '+(r.hi!==r.lo?'even your slower weeks cover it':fcR1(r.lo)+' h a week covers it')+'.';
+    else v='Inside your usual range ('+fcR1(r.lo)+'–'+fcR1(r.hi)+' h a week on this subject) — it could go either way.';
+    h+='<div class="fc-verdict" style="font-size:11px;line-height:1.6;color:var(--gold);margin-top:5px">'+esc(v)+'</div></div>';
+  });
+  h+=fcP('Counted: completed pomodoro and free-timer sessions only. Study done off the timer is not here, and hours logged as "Other" are not credited to any subject.',true);
+  return h;
+}
+function fcStudySliderHTML(){
+  const s=fcSliders(),weeks=fcWeeks(12);
+  const def=Math.round(fcTypical(weeks,null).mid);
+  const v=s.study!=null?s.study:def;
+  return '<div style="margin-top:16px"><div class="wec-lbl">What if · study hours a week · <span id="fcVal-study">'+(s.study!=null?v:v+' (your last four weeks)')+'</span></div>'+
+    '<input type="range" min="0" max="60" step="1" value="'+v+'" oninput="fcSlide(\'study\',this.value)" style="width:100%;margin-top:8px">'+
+    '<div style="font-size:10px;color:var(--text-dim);margin-top:4px">Replaces your usual week, shared between the coming exams by hours of plan left. <span onclick="fcSlide(\'study\',null)" style="text-decoration:underline;cursor:pointer">Back to my real pace</span></div></div>';
+}
+
+// ── The page ─────────────────────────────────────────────────────────────────
+const FC_OUT={swims:['fcOut-swim',function(){return fcSwimOutHTML();}],kcal:['fcOut-body',function(){return fcBodyOutHTML();}],study:['fcOut-study',function(){return fcStudyOutHTML();}]};
+function fcSlide(key,val){
+  const s=fcSliders();
+  if(val===null)s[key]=null;
+  else s[key]=parseFloat(val)||0;
+  try{localStorage.setItem(FC_KEY,JSON.stringify(s));}catch(_){}
+  const lab=document.getElementById('fcVal-'+key);
+  if(lab&&val!==null)lab.textContent=String(s[key]);
+  if(val===null){renderForecast();return;}
+  const o=FC_OUT[key];
+  const el=o&&document.getElementById(o[0]);
+  if(el)el.innerHTML=o[1]();
+}
+function fcSection(title,sub,id,out,slider){
+  return '<div style="border-top:1px solid var(--border);padding:18px 0 6px;margin-top:18px">'+
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--text-hi);line-height:1">'+esc(title)+'</div>'+
+    '<div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-top:4px">'+esc(sub)+'</div>'+
+    '<div id="'+id+'">'+out+'</div>'+slider+'</div>';
+}
+function renderForecast(){
+  const b=document.getElementById('forecastBody');
+  if(!b)return;
+  const safe=function(f){try{return f();}catch(e){warn('forecast',e);return fcP('This part could not be drawn: '+e.message,true);}};
+  b.innerHTML='<div class="rival-page-header" style="padding-left:0;padding-right:0"><button class="rival-back" onclick="closeForecast()">← Back</button></div>'+
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1;margin-top:12px">FORECAST</div>'+
+    '<div style="font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:6px">Where the current rate leads, from what is logged. A shaded band is the honest range; a line appears only once there are enough points to earn one. Dates are windows, never a day.</div>'+
+    (state.fcLoading?'<div style="font-size:10px;color:var(--text-faint);margin-top:8px">Loading the logs…</div>':'')+
+    fcSection('Swimming','50 and 100 free · 25 m pool','fcOut-swim',safe(fcSwimOutHTML),safe(fcSwimSliderHTML))+
+    fcSection('Body','Bodyweight · toward +10 kg','fcOut-body',safe(fcBodyOutHTML),safe(fcBodySliderHTML))+
+    fcSection('Strength','The main lifts','fcOut-lift',safe(fcLiftOutHTML),'')+
+    fcSection('Study','Hours a week · against the plan','fcOut-study',safe(fcStudyOutHTML),safe(fcStudySliderHTML));
+}
+// The plan ticks, read and parsed but never written back or merged into state.planDone.
+async function fcLoadTicks(){
+  const rows=await appConfigRows(PLAN_STATE_CFG);
+  if(rows.length)state.fcPlanDone=planParseState(richAll(rows[0].properties.Value));
+}
+// Reads only. loadPlanState() is deliberately not called: it reconciles and can write.
+async function fcLoad(){
+  const jobs=[];
+  if(!state.swimPractices)jobs.push(loadSwimPractices());
+  if(!state.weightLog)jobs.push(loadWeightLog());
+  if(!(state.sessions||[]).length)jobs.push(loadSessions());
+  if(!state.studyPlan){
+    try{const c=localStorage.getItem(PLAN_CACHE_KEY);if(c)state.studyPlan=JSON.parse(c);}catch(_){}
+    if(!state.studyPlan)jobs.push(loadStudyPlan());
+  }
+  if(!Object.keys(state.planDone||{}).length){try{const c=localStorage.getItem(PLAN_DONE_KEY);if(c)state.planDone=JSON.parse(c);}catch(_){}}
+  if(!Object.keys(state.planDone||{}).length)jobs.push(fcLoadTicks());
+  jobs.push(fcLoadLifts());
+  await Promise.all(jobs.map(function(j){return Promise.resolve(j).catch(function(e){warn('fcLoad',e);});}));
+}
+function openForecast(){
+  if(!document.getElementById('forecastPage')){
+    const el=document.createElement('div');
+    el.id='forecastPage';el.className='rival-page';
+    el.innerHTML='<div class="rival-page-inner" style="padding:0 16px 40px"><div id="forecastBody"></div></div>';
+    document.body.appendChild(el);
+  }
+  state.fcLoading=true;
+  renderForecast();
+  fcLoad().then(function(){state.fcLoading=false;renderForecast();});
+}
+function closeForecast(){
+  const el=document.getElementById('forecastPage');
+  if(el)el.remove();
+}
+function forecastHomeHTML(){
+  return '<div id="fcHome" class="flat-sec" style="cursor:pointer" onclick="openForecast()">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="flex:1">'+
+      '<div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Forecast</div>'+
+      '<div style="font-size:15px;color:var(--text-hi)">Where the current rate leads</div>'+
+      '<div style="font-size:11px;color:var(--text-dim);margin-top:3px">Swim times · bodyweight · lifts · study hours</div>'+
+    '</div><span style="font-size:18px;color:var(--text-faint)">›</span></div></div>';
+}
+
 // ── Garmin · import through intervals.icu ────────────────────────────────────
 // OFF. Nothing here runs unless HAS_WATCH is true, and the endpoint itself answers
 // "not configured" until an API key is set on the server. Garmin syncs to
@@ -13244,7 +13906,10 @@ async function loadWeightLog(){
     const rows=await appConfigRows(WEIGHT_CFG);
     if(rows.length){
       state.weightLogPageId=rows[0].id;
-      try{state.weightLog=JSON.parse(g.text(rows[0].properties.Value))||{d:{},h:0};}catch(_){state.weightLog={d:{},h:0};}
+      // Every chunk, not g.text(): that reads only the first 1,900 characters, and the
+      // log passes that at about a hundred weigh-ins — after which JSON.parse failed and
+      // the whole log read as empty.
+      try{state.weightLog=JSON.parse(richAll(rows[0].properties.Value))||{d:{},h:0};}catch(_){state.weightLog={d:{},h:0};}
     }else{
       state.weightLogPageId=null;
       try{const c=localStorage.getItem(WEIGHT_KEY);state.weightLog=c?JSON.parse(c):{d:{},h:0};}catch(_){state.weightLog={d:{},h:0};}
