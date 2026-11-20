@@ -12965,6 +12965,8 @@ const PROTEIN_FOODS=[
   {id:'tuna',   t:'Tinned fish',          g:25, n:'one tin'},
   {id:'shake',  t:'Protein shake',        g:25, n:'1 scoop · 2 a day max'},
   {id:'turo',   t:'Túró',                 g:30, n:'250g tub'},
+  // Bakery pastry, ~120g: the túró filling carries most of it, the dough ~3g.
+  {id:'taska',  t:'Túrós táska',          g:9,  n:'one bakery pastry'},
   {id:'yogurt', t:'Greek yogurt',         g:15, n:'150g'},
 ];
 function proteinFood(id){return PROTEIN_FOODS.find(f=>f.id===id)||null;}
