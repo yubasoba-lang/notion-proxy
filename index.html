@@ -10248,11 +10248,11 @@ function uwScore(){
 const SOLO_V2=[
   {t:'Speed · underwater and sprints',tag:'v2speed',levels:true,focus:'Top speed and the first 15 metres',kit:'Fins for the kick lengths',
    why:'Speed is trained fresh or not at all. Every sprint is 15 metres and no further, from a push, with enough rest that the next one is as fast as the first — if you are still breathing hard, wait. The moment one comes back slower, the block is over. This is not a hard session and it should not feel like one.'},
-  {t:'Aerobic · technique',tag:'v2aer',focus:'Repeatable swimming at a count you can hold',kit:'Pull buoy · fins for the kick lengths',
+  {t:'Aerobic · technique',tag:'v2aer',focus:'Repeatable swimming at a count you can hold',kit:'Pull buoy · fins for the kick lengths · snorkel',
    why:'The day after the heavy pull session, so nothing here is fast. The job is to keep moving: leave on the interval, hold the stroke count, and do not stand at the wall. Standing at the wall is where your metres have been going.'},
-  {t:'Race pace · 100',tag:'v2pace',levels:true,focus:'The speed of the 100, and holding it on the way home',kit:'Fins for the kick lengths',
+  {t:'Race pace · 100',tag:'v2pace',levels:true,focus:'The speed of the 100, and holding it on the way home',kit:'Fins for the kick lengths · snorkel',
    why:'Your 100 is slower than your 50 says it should be, and this is the session that closes that. Broken 100s teach the pace with short breaks at the wall; in the build phase the lactate set teaches the last 35 metres. Go out controlled — the second half of every rep is the one being trained.'},
-  {t:'Base · kick and fly',tag:'v2base',focus:'The engine, the legs and the second stroke',kit:'Fins · pull buoy',
+  {t:'Base · kick and fly',tag:'v2base',focus:'The engine, the legs and the second stroke',kit:'Fins · pull buoy · snorkel',
    why:'The longest swim of the week and the one that grows. The main set gets a little bigger most weeks without you doing anything. Kick is here because a sprinter\'s legs are half the race, and fly is here because it is your second event and because dolphin kick is dolphin kick.'},
 ];
 // How this week's metres are shared out. Two club practices are counted at 2 km each
@@ -10420,14 +10420,16 @@ function v2Spec(tag,ds){
           {n:3+Math.floor(lv/2),d:33,what:'free at 50 pace',rest:75,pace:'p50',target:true,note:'the breakout is part of the rep'},
           {head:'4 × 15 m',n:4,d:33,what:'max fly from a push, then easy free to the wall',full:true,rest:90}];
     // Shoulder guard: the fly sprints become easy kick, same metres.
-    if(ad.guard.on)main[2]={n:4,d:33,what:'kick on your front, easy — in place of the fly sprints',rest:20};
+    if(ad.guard.on)main[2]={n:4,d:33,what:'flutter kick in streamline, easy, no board — in place of the fly sprints',rest:20};
     const room=budget-sum(pre)-sum(main)-200;
     const n66=Math.max(2,Math.min(6,Math.round(room/66)));
     post=[{n:n66,d:66,what:'easy free',rest:15,pace:'easy',count:true},{d:200,what:'easy, some of it backstroke'}];
     const extra=Math.floor((room-n66*66)/100);
     if(extra>=2)post.splice(1,0,{n:extra,d:100,what:'easy free, long strokes',rest:15,pace:'easy'});
   }else if(tag==='v2aer'){
-    pre=[{d:light?200:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw);
+    // No boards at the solo pool, so every flutter block is written board-free.
+    pre=[{d:light?200:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw,
+      [{n:light?4:6,d:33,what:'flutter kick on your side, bottom arm forward, roll to breathe, no board',rest:15,note:'switch sides each length'}]);
     post=[{n:budget>=1900?6:3,d:66,what:'pull buoy, long and relaxed',rest:15,pace:'cruise'},{d:200,what:'easy'}];
     const n=Math.max(4,Math.min(20,Math.round((budget-sum(pre)-sum(post))/100)));
     main=[{n:n,d:100,what:'free',count:true,rest:15,pace:'cruise',target:true,main:true,note:'same count every one. Go when the rest is up, not when you feel ready'}];
@@ -10439,13 +10441,16 @@ function v2Spec(tag,ds){
     if(s.lactate){
       main.push({n:Math.min(6,2+Math.floor(lv/3)),d:66,what:'all out, second length faster than the first',full:true,rest:180,note:'this is the last 35 metres of the 100. Stop when the stroke falls apart'});
     }
+    // Kick speed, after the main set so the hundreds are swum on fresh legs.
+    main.push({n:light?2:4,d:33,what:'fast flutter kick in streamline, no board, no fins',rest:30,note:'snorkel if you have one, otherwise breathe by lifting the chin. Small and fast from the hip'});
     post=[{d:200,what:'easy'}];
     const n=Math.min(14,Math.round((budget-sum(pre)-sum(main)-sum(post))/100));
     if(n>=2)post.unshift({n:n,d:100,what:'steady free',count:true,rest:15,pace:'cruise'});
   }else{
-    pre=[{d:budget>=2200?400:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw);
+    pre=[{d:budget>=2200?400:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw,
+      [{n:light?4:8,d:33,what:'flutter kick in streamline, no board, no fins',rest:20,note:'snorkel if you have one, otherwise roll to the side to breathe. This is the race kick'}]);
     const st=flyStage();
-    post=[{n:budget>=2300?8:4,d:66,what:'kick on your front, fins optional',rest:20},
+    post=[{n:budget>=2300?8:4,d:66,what:'flutter kick on your side, bottom arm forward, fins on, no board',rest:20},
           {raw:'FLY · stage '+st.n+' · '+st.label,m:0}]
       .concat(st.lines.map(function(l,i){return {raw:l,m:i?0:st.fly};}))
       .concat([{d:light?200:300,what:'easy'}]);
