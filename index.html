@@ -9839,9 +9839,11 @@ if(TRAIN_V2){
 // something the first year reaches. Phase edges are Mondays; exam weeks sit in Base.
 const SEASON=[
   {k:'base', label:'Base',   from:'2026-11-22',to:'2027-02-07',km:[10,15],lactate:false},
-  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-04-18',km:[15,20],lactate:true},
-  {k:'race', label:'Race',   from:'2027-04-19',to:'2027-05-09',km:[15,10],lactate:true,taper:true},
-  {k:'base', label:'Base 2', from:'2027-05-10',to:'2027-08-01',km:[16,22],lactate:false},
+  // The spring meet moved to Sat 17 Apr 2027 (was planned as 9 May), so build is seven
+  // weeks and the race phase ends on the meet weekend.
+  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-03-28',km:[15,20],lactate:true},
+  {k:'race', label:'Race',   from:'2027-03-29',to:'2027-04-18',km:[15,10],lactate:true,taper:true},
+  {k:'base', label:'Base 2', from:'2027-04-19',to:'2027-08-01',km:[16,22],lactate:false},
   // Held at 22 into MEFOB 2027: "22 km of quality. More only if you swim 4 km per
   // session by then" (two-year plan). It ramped to 25 before 16 Nov 2026.
   {k:'build',label:'Build 2',from:'2027-08-02',to:'2027-10-31',km:[22,22],lactate:true},
@@ -9952,12 +9954,15 @@ function seasonLine(){
 // 25 m. Dates after Feb 2027 are estimates. Weight runs on past the last row: 85–90 kg
 // is his long-term figure, 82–83 is what two years can add.
 const CP_START={d:'2026-11-15',kg:70};
+// Redrawn 23 Nov 2026 after MEFOB (27.59 LCM in briefs, 2 months back after 8 years
+// out): spring meet 17 Apr at 25.5 / sub-56 / sub-28 fly, the line then runs to the same
+// 2028 finish.
 const CHECKPOINTS=[
-  {d:'2027-02-07',label:'End of semester 5',f50:27.9,kicks:6,brk:7,km:15,kg:73,pull:'first bodyweight pull-up',pd8:57,lowerX:1.0,med:'Micro II and Pharm I passed in December, nothing carried into spring'},
-  {d:'2027-05-09',label:'Spring meet',f50:26.4,f100:57.4,kicks:7,brk:9,km:20,kg:75.5,pull:'bodyweight × 6',pd8:65,lowerX:1.3,med:'25 Apr: half the pathology list done, every slide seen'},
+  {d:'2027-02-07',label:'End of semester 5',f50:26.2,kicks:6,brk:7,km:15,kg:73,pull:'first bodyweight pull-up',pd8:57,lowerX:1.0,med:'Micro II and Pharm I passed in December, nothing carried into spring'},
+  {d:'2027-04-17',label:'Spring meet',f50:25.5,f100:55.9,fly50:27.9,kicks:7,brk:9,km:20,kg:75.5,pull:'bodyweight × 6',pd8:65,lowerX:1.3,med:'25 Apr: half the pathology list done, every slide seen'},
   {d:'2027-09-01',label:'End of summer',brk:10,km:22,kg:77,pull:'bodyweight × 10',pd8:70,lowerX:1.5,med:'No exam left from years 1–3'},
-  {d:'2027-11-21',label:'MEFOB 2027',f50:24.9,f100:53.2,brk:10,km:22,kg:78,pull:'+5 kg × 5',pd8:74,lowerX:1.6,med:'Every block exam passed in its own block'},
-  {d:'2028-05-07',label:'Spring meet 2028',f50:24.4,f100:51.4,brk:10,km:25,kg:80.5,pull:'+10 kg × 5',pd8:80,lowerX:1.75,med:'All year-4 exams passed by June'},
+  {d:'2027-11-21',label:'MEFOB 2027',f50:24.6,f100:53.0,fly50:26.9,brk:10,km:22,kg:78,pull:'+5 kg × 5',pd8:74,lowerX:1.6,med:'Every block exam passed in its own block'},
+  {d:'2028-05-07',label:'Spring meet 2028',f50:24.2,f100:51.2,fly50:26.4,brk:10,km:25,kg:80.5,pull:'+10 kg × 5',pd8:80,lowerX:1.75,med:'All year-4 exams passed by June'},
   {d:'2028-11-19',label:'MEFOB 2028',f50:23.9,f100:49.9,fly50:25.9,brk:10,km:22,kg:82.5,pull:'+15 kg × 5',pd8:80,lowerX:1.75,med:'No exam in the taper week'},
 ];
 const CP_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -14627,7 +14632,7 @@ function lcmEquiv(dist,sec){
 // 100 gets timed properly. A gap to it is only shown when there is a real 100 to
 // measure against, and how stale that reading is matters as much as the number —
 // timed swims happen when the coach runs one, which is every few months at best.
-const SWIM_GOAL={dist:100,scm:51,label:'sub 51'};
+const SWIM_GOAL={dist:100,scm:49.9,label:'sub 50'};
 function swimGoalState(){
   const b=swimBests()[SWIM_GOAL.dist];
   if(!b)return {has:false};
