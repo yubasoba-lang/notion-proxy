@@ -5,9 +5,11 @@
      GET /api/gates?g=games   games             a swim or gym session logged after the day's deadline
      GET /api/gates           all three, as JSON (for checking by hand)
 
-   With ?g= the answer is plain text: EMPTY when the apps may open, otherwise the
-   message to show ("🍗 42/60 g protein · 😴 log last night's sleep"). Any error
-   answers empty as well: a broken check must never lock the phone.
+   With ?g= the answer is plain text: the word "open" when the apps may open,
+   otherwise the message to show ("🍗 42/60 g protein · 😴 log last night's sleep").
+   Not empty: Shortcuts' "has any value" is true for an empty download, so the phone
+   tests "is not open". Any error answers "open" as well: a broken check must never
+   lock the phone.
 
    Where each fact comes from (the same rows GRIND writes):
      sleep    AppConfig "sleep_log"        {date: hours}, keyed by the morning's date
@@ -133,9 +135,9 @@ export default async function handler(req, res) {
     const out = evaluate(await loadFacts(now.date), now);
     if (!g) return res.status(200).json({ now, locked: out });
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    return res.status(200).send((out[g] || []).join(" · "));
+    return res.status(200).send((out[g] || []).join(" · ") || "open");
   } catch (e) {
     if (!g) return res.status(200).json({ error: e.message });
-    return res.status(200).send("");
+    return res.status(200).send("open");
   }
 }
