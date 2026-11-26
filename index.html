@@ -8371,8 +8371,24 @@ function planLayout(D,ovIn){
   unfit.forEach(id=>{const f=fit[ix.byId[id].examKey];if(f)f.unfit.push(id);});
   Object.keys(fit).forEach(k=>{
     const f=fit[k];
-    f.n=Object.keys(f.used).length;
-    f.m=Object.keys(f.avail).length;
+    // m = target days ahead. n = how many of them must actually be hit: a missed
+    // target topic needs a spare catch-up place before the exam, so every spare
+    // place left after the layout is one target day that can be skipped. (Counting
+    // only used/avail days made n equal m whenever the plan was behind.)
+    const tdays=Object.keys(f.used).length;
+    const gs=glist.filter(g=>g.series&&g.examKey===k&&g.last>=D);
+    // A missed day's topic can only move to a spare place on a LATER day, so pair
+    // each spare place with the earliest unpaired target day before it.
+    const tlist=Object.keys(f.used).sort();
+    let spare=0,skip=0,ti=0;
+    dayList.forEach(d=>{
+      if(d<D||!gs.some(g=>canTake(g,d,g.est)))return;
+      spare++;
+      if(ti<tlist.length&&tlist[ti]<d){skip++;ti++;}
+    });
+    f.spare=skip;
+    f.m=tdays;
+    f.n=tdays-skip;
   });
   const L={D,dayList,items,place,kindOf,unfit,expired,load,micro,extraUsed,exDate,lastDay,blocked,examDay,prepDay,fit,cap:ix.cap};
   if(!ovIn)_planMemo[D]=L;
@@ -8766,7 +8782,7 @@ function planFitLineHTML(){
       msg=f.unfit.length+' '+(f.unfit.length===1?'task does':'tasks do')+' not fit before the exam — choose what gives';
       col='var(--red-hi)';
     }else if(f.m){
-      msg='fits if you hit the target on '+f.n+' of '+f.m+' days';
+      msg=f.n?'fits if you hit the target on '+f.n+' of '+f.m+' days':'fits at the floor · '+f.spare+' spare places';
       if(f.n===f.m)col='var(--text)';
     }else{
       msg='fits at the floor';
@@ -8990,7 +9006,8 @@ function planOpenFit(key){
       +'<div style="font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:6px">'+esc(f.unfit.map(id=>ix.byId[id].title).join(' · '))+'</div>'
       +'<div style="font-size:10px;line-height:1.6;color:var(--text-dim);margin-top:8px">They are not squeezed in. Pick what gives — each choice says what it would leave.</div>';
   }else if(f.m){
-    status='<div style="font-size:13px;line-height:1.6;color:var(--text-hi);margin-top:14px">Fits if you hit the target on '+f.n+' of '+f.m+' days.</div>';
+    status='<div style="font-size:13px;line-height:1.6;color:var(--text-hi);margin-top:14px">'+(f.n?'Fits if you hit the target on '+f.n+' of '+f.m+' days.':'Fits at the floor.')+'</div>'
+      +'<div style="font-size:10px;line-height:1.6;color:var(--text-dim);margin-top:6px">'+f.m+' target days left, '+f.spare+' spare catch-up '+(f.spare===1?'place':'places')+' to absorb a missed one.</div>';
   }else{
     status='<div style="font-size:13px;line-height:1.6;color:var(--text-hi);margin-top:14px">Fits at the floor.</div>';
   }
