@@ -39,8 +39,8 @@ const PROTEIN_STEPS = [["14:00", 60], ["20:00", 120]];
 // club Mon/Fri 06:15, solo swims Tue/Wed/Sat/Sun mornings, Thursday gym 14:00.
 // null = no training gate that day.
 const TRAIN_DEADLINE = {
-  Mon: "10:00", Tue: "12:00", Wed: "12:00", Thu: "18:00",
-  Fri: "10:00", Sat: "12:00", Sun: "12:00",
+  Mon: "10:00", Tue: "20:00", Wed: "12:00", Thu: "20:00",   // Tue/Thu club 18:30-19:30 (26 Nov 2026)
+  Fri: "18:00", Sat: "12:00", Sun: "12:00",   // Fri gym Pull 15:00
 };
 
 export function nowParts(d = new Date()) {
