@@ -8110,11 +8110,19 @@ function planLiveOv(){
   };
   return {
     pulled:live('pulled',e=>e.to),
-    dropped:live('dropped',()=>true),
+    dropped:Object.assign(planAbsorbed(),live('dropped',()=>true)),
     exams:live('exams',e=>e.date),
     extra:live('extra',e=>e.n||2),
     open:live('open',()=>true)
   };
+}
+// Topics the plan file itself folds into another task ("absorbed": true). They act
+// exactly like a dropped topic: out of the queue, but their places stay with the
+// series so nothing else is pushed out.
+function planAbsorbed(){
+  const out={};
+  ((state.studyPlan||{}).days||[]).forEach(d=>(d.tasks||[]).forEach(t=>{if(t.absorbed)out[t.id]=true;}));
+  return out;
 }
 function planFixMap(){
   const m=planOvRaw().fix||{};
@@ -8428,7 +8436,8 @@ function planDaysUntil(ds){
 }
 // Progress toward one exam: the study tasks that exam is made of.
 function planExamProgress(ex){
-  const tasks=planAllTasks().filter(t=>t.kind==='study'&&t.subject!=='anki'&&t.examKey===ex.key);
+  const ab=planAbsorbed();
+  const tasks=planAllTasks().filter(t=>t.kind==='study'&&t.subject!=='anki'&&t.examKey===ex.key&&!ab[t.id]);
   const done=tasks.filter(t=>planIsDone(t.id)).length;
   return {done,total:tasks.length,pct:tasks.length?Math.round(100*done/tasks.length):0};
 }
