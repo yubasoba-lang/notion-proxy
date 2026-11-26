@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       if (!DAY.test(q.from || "") || !DAY.test(q.to || "")) throw new Error("from/to needed");
       const ev = await iv("/events?oldest=" + q.from + "&newest=" + q.to);
       return res.status(200).json((ev || []).filter(e => /^grind-/.test(e.external_id || ""))
-        .map(e => ({ id: e.id, date: e.start_date_local, name: e.name, external_id: e.external_id, description: e.description })));
+        .map(e => ({ id: e.id, date: e.start_date_local, name: e.name, external_id: e.external_id, description: e.description, steps: e.workout_doc ? e.workout_doc.steps : null, distance: e.distance || (e.workout_doc && e.workout_doc.distance) || null, pool: e.pool_length || null })));
     }
     if (req.method === "POST") {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
