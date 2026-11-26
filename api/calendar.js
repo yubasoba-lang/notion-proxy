@@ -34,7 +34,7 @@ const ANCHOR = { Mon:"20260907", Tue:"20260908", Wed:"20260909", Thu:"20260910",
 // first thing. PLAN below stays the normal week; POOL_AM_PLAN overlays the days that
 // changed, and Friday's gym and evening rules in ALTERNATING are filtered out while
 // this is on. Set to false when the pool reopens. Mirrors index.html.
-const POOL_MORNINGS_ONLY = true;
+const POOL_MORNINGS_ONLY = false;   // Mon/Fri 06:15 club ended; Tue/Thu 18:30 club back (26 Nov 2026)
 
 const PLAN = {
   Mon:[
