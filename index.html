@@ -7536,6 +7536,13 @@ const FLY_STAGES=[
           '100 easy free']},
 ];
 const FLY_STAGE_CFG='swim_fly_stage';
+// What one line of the fly ladder really swims: "6 × 33 …" is 198 m, a timed line
+// ("4 × 20s vertical kick") is none. Until 26 Nov 2026 the whole block was counted as
+// st.fly (the fly-stroke metres only), so the base session ran ~800 m past its size.
+function flyLineMetres(l){
+  const m=/(\d+)\s*×\s*(\d+)(s?)\b/.exec(String(l||''));
+  return m&&!m[3]?(+m[1])*(+m[2]):0;
+}
 function flyStage(){
   let n=(state.flyStage&&state.flyStage.stage)||1;
   // Adaptive loop: each time the shoulder guard lets fly back in, it restarts one stage
@@ -10507,10 +10514,10 @@ function v2Spec(tag,ds){
     const st=flyStage();
     post=[{n:budget>=2300?8:4,d:66,what:'flutter kick on your side, bottom arm forward, fins on, no board',rest:20},
           {raw:'FLY · stage '+st.n+' · '+st.label,m:0}]
-      .concat(st.lines.map(function(l,i){return {raw:l,m:i?0:st.fly};}))
+      .concat(st.lines.map(function(l){return {raw:l,m:flyLineMetres(l)};}))
       .concat([{d:light?200:300,what:'easy'}]);
     // Shoulder guard: the fly ladder becomes easy free of the same length.
-    if(ad.guard.on)post=[post[0],{n:Math.max(2,Math.round(st.fly/66)),d:66,what:'easy free, long strokes — in place of the fly',rest:15,pace:'easy'},{d:light?200:300,what:'easy'}];
+    if(ad.guard.on)post=[post[0],{n:Math.max(2,Math.round(st.lines.reduce(function(a,l){return a+flyLineMetres(l);},0)/66)),d:66,what:'easy free, long strokes — in place of the fly',rest:15,pace:'easy'},{d:light?200:300,what:'easy'}];
     let n=Math.max(3,Math.min(24,Math.round((budget-sum(pre)-sum(post))/100)));
     if(n>=12&&n%2===0)main=[{n:n/2,d:200,what:'free',count:true,rest:20,pace:'cruise',target:true,main:true,note:'even pace, same count the whole way'}];
     else main=[{n:n,d:100,what:'free',count:true,rest:15,pace:'cruise',target:true,main:true,note:'same count every one. Leave on the interval'}];
