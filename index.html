@@ -9855,10 +9855,10 @@ if(TRAIN_V2){
 // 30 km a week is his stated long-term figure; it is the far end of this table, not
 // something the first year reaches. Phase edges are Mondays; exam weeks sit in Base.
 const SEASON=[
-  {k:'base', label:'Base',   from:'2026-11-22',to:'2027-02-07',km:[10,15],lactate:false},
+  {k:'base', label:'Base',   from:'2026-11-22',to:'2027-02-07',km:[10,18],lactate:false},   // faster ramp, his choice 26 Nov 2026 (was 10→15)
   // The spring meet moved to Sat 17 Apr 2027 (was planned as 9 May), so build is seven
   // weeks and the race phase ends on the meet weekend.
-  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-03-28',km:[15,20],lactate:true},
+  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-03-28',km:[18,22],lactate:true},    // was 15→20 before 26 Nov 2026
   {k:'race', label:'Race',   from:'2027-03-29',to:'2027-04-18',km:[15,10],lactate:true,taper:true},
   {k:'base', label:'Base 2', from:'2027-04-19',to:'2027-08-01',km:[16,22],lactate:false},
   // Held at 22 into MEFOB 2027: "22 km of quality. More only if you swim 4 km per
