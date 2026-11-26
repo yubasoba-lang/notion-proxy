@@ -59,7 +59,21 @@ export default async function handler(req, res) {
       const list = (body.events || []).slice(0, 21).map(cleanEvent);
       if (!list.length) throw new Error("no events");
       const out = await iv("/events/bulk?upsert=true", { method: "POST", body: JSON.stringify(list) });
-      return res.status(200).json({ ok: true, n: (out || []).length });
+      // replace: {from,to} — GRIND's own swim workouts in that range that are not in
+      // this send are out of date (the week changed) and are deleted. Only grind-swim-*.
+      let removed = 0;
+      const rp = body.replace || {};
+      if (DAY.test(rp.from || "") && DAY.test(rp.to || "")) {
+        const keep = new Set(list.map(e => e.external_id));
+        const ev = await iv("/events?oldest=" + rp.from + "&newest=" + rp.to);
+        for (const e of ev || []) {
+          if (/^grind-swim-/.test(e.external_id || "") && !keep.has(e.external_id)) {
+            await iv("/events/" + e.id, { method: "DELETE" });
+            removed++;
+          }
+        }
+      }
+      return res.status(200).json({ ok: true, n: (out || []).length, removed });
     }
     return res.status(400).json({ error: "unknown request" });
   } catch (e) {
