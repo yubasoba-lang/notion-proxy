@@ -10512,12 +10512,16 @@ function v2Spec(tag,ds){
     pre=[{d:budget>=2200?400:300,what:'easy free, breathe every 3, 5 kicks off every wall'}].concat(uw,
       [{n:light?4:8,d:33,what:'flutter kick in streamline, no board, no fins',rest:20,note:'snorkel if you have one, otherwise roll to the side to breathe. This is the race kick'}]);
     const st=flyStage();
-    post=[{n:budget>=2300?8:4,d:66,what:'flutter kick on your side, bottom arm forward, fins on, no board',rest:20},
-          {raw:'FLY · stage '+st.n+' · '+st.label,m:0}]
-      .concat(st.lines.map(function(l){return {raw:l,m:flyLineMetres(l)};}))
+    // Three of the stage's drills a week, alternating halves (26 Nov 2026, his choice):
+    // the whole ladder took ~1 km and squeezed the free main set down to 3 × 100.
+    const half=Math.ceil(st.lines.length/2),odd=(seasonWeek(ds).no||0)%2===1;
+    const flyLines=st.lines.length>3?(odd?st.lines.slice(half):st.lines.slice(0,half)):st.lines;
+    post=[{n:4,d:66,what:'flutter kick on your side, bottom arm forward, fins on, no board',rest:20},
+          {raw:'FLY · stage '+st.n+' · '+st.label+' · drills '+(odd?half+1+'–'+st.lines.length:'1–'+half),m:0}]
+      .concat(flyLines.map(function(l){return {raw:l,m:flyLineMetres(l)};}))
       .concat([{d:light?200:300,what:'easy'}]);
     // Shoulder guard: the fly ladder becomes easy free of the same length.
-    if(ad.guard.on)post=[post[0],{n:Math.max(2,Math.round(st.lines.reduce(function(a,l){return a+flyLineMetres(l);},0)/66)),d:66,what:'easy free, long strokes — in place of the fly',rest:15,pace:'easy'},{d:light?200:300,what:'easy'}];
+    if(ad.guard.on)post=[post[0],{n:Math.max(2,Math.round(flyLines.reduce(function(a,l){return a+flyLineMetres(l);},0)/66)),d:66,what:'easy free, long strokes — in place of the fly',rest:15,pace:'easy'},{d:light?200:300,what:'easy'}];
     let n=Math.max(3,Math.min(24,Math.round((budget-sum(pre)-sum(post))/100)));
     if(n>=12&&n%2===0)main=[{n:n/2,d:200,what:'free',count:true,rest:20,pace:'cruise',target:true,main:true,note:'even pace, same count the whole way'}];
     else main=[{n:n,d:100,what:'free',count:true,rest:15,pace:'cruise',target:true,main:true,note:'same count every one. Leave on the interval'}];
