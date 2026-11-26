@@ -1,2180 +1,2220 @@
 {
- "schema_version": 1,
- "title": "Winter plan — 1 Nov to 17 Dec 2026",
- "timezone": "Europe/Budapest",
- "generated": "2026-11-14",
- "subjects": {
-  "anki": "Anki",
-  "micro": "Microbiology",
-  "pharm": "Pharmacology",
-  "pathophys": "Pathophysiology",
-  "patho": "Pathology",
-  "rest": "Rest",
-  "immuno": "Immunology + genetics"
- },
- "exams": [
-  {
-   "date": "2026-11-05",
-   "subject": "micro",
-   "title": "Micro MT2 — mycology IV 1–11 + DNA virology III 1–19",
-   "target": "50%"
+  "schema_version": 1,
+  "title": "Winter plan — 1 Nov to 17 Dec 2026",
+  "timezone": "Europe/Budapest",
+  "generated": "2026-11-14",
+  "subjects": {
+    "anki": "Anki",
+    "micro": "Microbiology",
+    "pharm": "Pharmacology",
+    "pathophys": "Pathophysiology",
+    "patho": "Pathology",
+    "rest": "Rest",
+    "immuno": "Immunology + genetics"
   },
-  {
-   "date": "2026-11-16",
-   "subject": "pharm",
-   "title": "Pharm MT2 — A10–A22 (oral) — 80%",
-   "target": "Pass"
-  },
-  {
-   "date": "2026-11-25",
-   "subject": "patho",
-   "title": "Pathology practical",
-   "target": "Pass — needed for the signature"
-  },
-  {
-   "date": "2026-12-14",
-   "subject": "micro",
-   "title": "Microbiology final — all 185 questions",
-   "target": "Pass"
-  },
-  {
-   "date": "2026-12-17",
-   "subject": "pharm",
-   "title": "Pharmacology semifinal — oral: core concept + one A + one C (drug recognition waived; 18th if a slot opens)",
-   "target": "Pass"
-  },
-  {
-   "date": "2027-01-13",
-   "subject": "pathophys",
-   "title": "Pathophysiology — January slot (date to confirm)",
-   "target": "Pass"
-  },
-  {
-   "date": "2027-01-28",
-   "subject": "immuno",
-   "title": "Genetics + immunology — late January slot (date to confirm)",
-   "target": "50% in BOTH halves"
-  }
- ],
- "rules": [
-  "THE DAILY FLOOR is what happens even on a bad day. Until 25 Nov: Anki + one Section II topic + one pharm topic (~1¼ h). From 26 Nov: Anki + one bacteria topic + one RNA virus topic + one pharm topic (~2 h).",
-  "Anything marked TARGET is for good days. If it is skipped it slides to the next good day. Never do three to catch up — that is how the old plan broke.",
-  "Anki due reviews every day, all decks. That is the review of the midterm material — do not re-read old notes until the blurt days in December.",
-  "Micro final Monday 14 Dec, so everything micro is done by Sunday the 13th. There is no exam-week buffer before it.",
-  "Pharm semifinal is oral: drug recognition is WAIVED (MT1 19 with attendance, MT2 24). One core concept, one A topic, one C topic — a blank on any one fails it. Breadth beats depth: every topic needs at least mechanism, a prototype drug, main use and the key side effect. A1–A9 (MT1, 50%) get 40 min each; A10–A22 (MT2, 80%) get 20-min blurt-first passes.",
-  "List C overlaps micro: penicillins, cephalosporins, aminoglycosides, macrolides, antituberculotics, antivirals, antifungals. Learn each once, for both exams.",
-  "Pathophysiology is out of the plan until after the December exams.",
-  "Every winter date is yours to choose. Pathophys and genetics/immunology are January."
- ],
- "days": [
-  {
-   "date": "2026-11-01",
-   "weekday": "Sunday",
-   "semester_week": 8,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
+  "exams": [
     {
-     "id": "2026-11-01-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
-     "est_minutes": 20
+      "date": "2026-11-05",
+      "subject": "micro",
+      "title": "Micro MT2 — mycology IV 1–11 + DNA virology III 1–19",
+      "target": "50%"
     },
     {
-     "id": "2026-11-01-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III 1–4",
-     "detail": "Short night — 06:15 practice tomorrow. Just the foundation: virus structure + viroid/prion (1), propagation and productive infection (2), latent and persistent infection (3), congenital infection (4). Everything else in virology leans on 1 and 2, so this is the right 80 minutes to spend. Stop by 22:15 whatever happens",
-     "est_minutes": 80
+      "date": "2026-11-16",
+      "subject": "pharm",
+      "title": "Pharm MT2 — A10–A22 (oral) — 80%",
+      "target": "Pass"
+    },
+    {
+      "date": "2026-11-25",
+      "subject": "patho",
+      "title": "Pathology practical",
+      "target": "Pass — needed for the signature"
+    },
+    {
+      "date": "2026-12-14",
+      "subject": "micro",
+      "title": "Microbiology final — all 185 questions",
+      "target": "Pass"
+    },
+    {
+      "date": "2026-12-17",
+      "subject": "pharm",
+      "title": "Pharmacology semifinal — oral: core concept + one A + one C (drug recognition waived; 18th if a slot opens)",
+      "target": "Pass"
+    },
+    {
+      "date": "2027-01-13",
+      "subject": "pathophys",
+      "title": "Pathophysiology — January slot (date to confirm)",
+      "target": "Pass"
+    },
+    {
+      "date": "2027-01-28",
+      "subject": "immuno",
+      "title": "Genetics + immunology — late January slot (date to confirm)",
+      "target": "50% in BOTH halves"
     }
-   ]
-  },
-  {
-   "date": "2026-11-02",
-   "weekday": "Monday",
-   "semester_week": 9,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
+  ],
+  "rules": [
+    "THE DAILY FLOOR is what happens even on a bad day. Until 25 Nov: Anki + one Section II topic + one pharm topic (~1¼ h). From 26 Nov: Anki + one bacteria topic + one RNA virus topic + one pharm topic (~2 h).",
+    "Anything marked TARGET is for good days. If it is skipped it slides to the next good day. Never do three to catch up — that is how the old plan broke.",
+    "Anki due reviews every day, all decks. That is the review of the midterm material — do not re-read old notes until the blurt days in December.",
+    "Micro final Monday 14 Dec, so everything micro is done by Sunday the 13th. There is no exam-week buffer before it.",
+    "Pharm semifinal is oral: drug recognition is WAIVED (MT1 19 with attendance, MT2 24). One core concept, one A topic, one C topic — a blank on any one fails it. Breadth beats depth: every topic needs at least mechanism, a prototype drug, main use and the key side effect. A1–A9 (MT1, 50%) get 40 min each; A10–A22 (MT2, 80%) get 20-min blurt-first passes.",
+    "List C overlaps micro: penicillins, cephalosporins, aminoglycosides, macrolides, antituberculotics, antivirals, antifungals. Learn each once, for both exams.",
+    "Pathophysiology is out of the plan until after the December exams.",
+    "Every winter date is yours to choose. Pathophys and genetics/immunology are January."
+  ],
+  "days": [
     {
-     "id": "2026-11-02-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
-     "est_minutes": 20
+      "date": "2026-11-01",
+      "weekday": "Sunday",
+      "semester_week": 8,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-01-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-01-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III 1–4",
+          "detail": "Short night — 06:15 practice tomorrow. Just the foundation: virus structure + viroid/prion (1), propagation and productive infection (2), latent and persistent infection (3), congenital infection (4). Everything else in virology leans on 1 and 2, so this is the right 80 minutes to spend. Stop by 22:15 whatever happens",
+          "est_minutes": 80
+        }
+      ]
     },
     {
-     "id": "2026-11-02-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III 5–14",
-     "detail": "Viral oncogenesis (5), host defence (6), pathogenicity and pathogenesis (7), chemoprophylaxis and treatment (8), vaccines (9–10), then the DNA viruses begin: adenovirus (11), HSV-1/2 (12), VZV (13), EBV (14). The virus topics are in Sketchy and move fast",
-     "est_minutes": 200
+      "date": "2026-11-02",
+      "weekday": "Monday",
+      "semester_week": 9,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-02-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-02-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III 5–14",
+          "detail": "Viral oncogenesis (5), host defence (6), pathogenicity and pathogenesis (7), chemoprophylaxis and treatment (8), vaccines (9–10), then the DNA viruses begin: adenovirus (11), HSV-1/2 (12), VZV (13), EBV (14). The virus topics are in Sketchy and move fast",
+          "est_minutes": 200
+        }
+      ]
+    },
+    {
+      "date": "2026-11-03",
+      "weekday": "Tuesday",
+      "semester_week": 9,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-03-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-03-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III 15–19 + IV 1–6",
+          "detail": "Finish virology: CMV (15), HHV-6/7/8 (16), parvovirus (17), papilloma + polyoma (18), poxviruses (19). Then mycology starts with the general block, kept together because the rest sits on it: structure/classification (1), pathomechanism + risk factors (2), cultivation + diagnosis (3), treatment (4), dermatophytoses (5), superficial and subcutaneous (6). Heaviest day of the week",
+          "est_minutes": 220
+        }
+      ]
+    },
+    {
+      "date": "2026-11-04",
+      "weekday": "Wednesday",
+      "semester_week": 9,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-04-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-04-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro IV 7–11",
+          "detail": "The last five, all organism topics and all in Sketchy: Coccidioides + Histoplasma (7), Blastomyces + Paracoccidioides (8), Cryptococcus + Pneumocystis (9), zygomycoses + Aspergillus + Penicillium (10), Candida (11)",
+          "est_minutes": 100
+        },
+        {
+          "id": "2026-11-04-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Blurt all 30 topics",
+          "detail": "Closed book, 60 seconds each: III 1–19 then IV 1–11. Mark the misses, read only those, then stop",
+          "est_minutes": 50
+        }
+      ]
+    },
+    {
+      "date": "2026-11-05",
+      "weekday": "Thursday",
+      "semester_week": 9,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-05-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only — exam day. No new cards",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-05-02",
+          "subject": "micro",
+          "kind": "exam",
+          "title": "Micro MT2 — mycology + DNA virology",
+          "detail": "IV 1–11 and III 1–19",
+          "est_minutes": 0
+        }
+      ]
+    },
+    {
+      "date": "2026-11-08",
+      "weekday": "Sunday",
+      "semester_week": 9,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-08-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-08-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A10 + A11",
+          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "est_minutes": 110
+        },
+        {
+          "id": "2026-11-08-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.1–2",
+          "detail": "Staphylococcus aureus, coagulase-negative staphylococci. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
+          "est_minutes": 50
+        }
+      ]
+    },
+    {
+      "date": "2026-11-09",
+      "weekday": "Monday",
+      "semester_week": 10,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-09-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-09-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A12 + A13",
+          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "est_minutes": 110
+        },
+        {
+          "id": "2026-11-09-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.3–4",
+          "detail": "S. pneumoniae + oral streptococci + anaerobic cocci, S. pyogenes. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
+          "est_minutes": 50
+        }
+      ]
+    },
+    {
+      "date": "2026-11-10",
+      "weekday": "Tuesday",
+      "semester_week": 10,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-10-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-10-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A14 + A15",
+          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "est_minutes": 110
+        },
+        {
+          "id": "2026-11-10-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.5–6",
+          "detail": "S. agalactiae + Enterococcus, anaerobic Gram-negative rods. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
+          "est_minutes": 50
+        },
+        {
+          "id": "2026-11-10-04",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho slides ×3",
+          "detail": "About 20 minutes",
+          "est_minutes": 20
+        }
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "weekday": "Wednesday",
+      "semester_week": 10,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-11-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-11-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A16 + A17",
+          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "est_minutes": 110
+        },
+        {
+          "id": "2026-11-11-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.7–8",
+          "detail": "N. meningitidis, N. gonorrhoeae + Moraxella. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
+          "est_minutes": 50
+        }
+      ]
+    },
+    {
+      "date": "2026-11-12",
+      "weekday": "Thursday",
+      "semester_week": 10,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-12-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-12-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A18 + A19 + A20",
+          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "est_minutes": 150
+        },
+        {
+          "id": "2026-11-12-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.9–10",
+          "detail": "Salmonella (gastroenteritis), S. typhi + paratyphi. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
+          "est_minutes": 50
+        }
+      ]
+    },
+    {
+      "date": "2026-11-13",
+      "weekday": "Friday",
+      "semester_week": 10,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-13-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-13-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A21 + A22",
+          "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
+          "est_minutes": 110
+        },
+        {
+          "id": "2026-11-13-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro I.16–19 — recall",
+          "detail": "Penicillins + cephalosporins, monobactam/carbapenem/bacitracin, aminoglycosides + tetracyclines, chloramphenicol/macrolides/lincosamides. You covered these for last semester’s semifinal, so this is retrieval, not reading: blurt all four closed-book FIRST, then read only what did not come. If more than half is gone, say so and this block gets its full hour back",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-13-04",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho slides ×3",
+          "detail": "About 20 minutes",
+          "est_minutes": 20
+        }
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "weekday": "Saturday",
+      "semester_week": 10,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-14-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-14-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro I.20–23 — recall",
+          "detail": "Nucleic acid synthesis inhibitors, glycopeptides + membrane agents, antituberculotics, resistance mechanisms. Same rule — closed book first. Resistance mechanisms is the one to be honest about: it is the most examined of the four and the easiest to think you remember",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-14-03",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm recall: A10–A16",
+          "detail": "Closed book first, then fill the gaps",
+          "est_minutes": 90
+        },
+        {
+          "id": "2026-11-14-04",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: organ descriptions",
+          "detail": "First proper pass — the practical is 11 days away",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-15",
+      "weekday": "Sunday",
+      "semester_week": 10,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-15-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-15-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm recall: A17–A22",
+          "detail": "Pass level — closed book first, then fill the gaps",
+          "est_minutes": 90
+        },
+        {
+          "id": "2026-11-15-03",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm: say A10–A22 out loud",
+          "detail": "The exam is oral. One minute per topic, out loud, from the class pattern. Read only what you stalled on",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-15-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.1",
+          "detail": "Staphylococcus aureus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        }
+      ]
+    },
+    {
+      "date": "2026-11-16",
+      "weekday": "Monday",
+      "semester_week": 11,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-16-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Light — exam this morning",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-16-02",
+          "subject": "pharm",
+          "kind": "exam",
+          "title": "Pharm MT2 — A10–A22",
+          "detail": "Oral. Target: pass",
+          "est_minutes": 0
+        },
+        {
+          "id": "2026-11-16-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.2",
+          "detail": "Coagulase-negative staphylococci. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        }
+      ]
+    },
+    {
+      "date": "2026-11-17",
+      "weekday": "Tuesday",
+      "semester_week": 11,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-17-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: organ descriptions + slides",
+          "detail": "",
+          "est_minutes": 75
+        },
+        {
+          "id": "2026-11-17-02",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-17-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.3",
+          "detail": "S. pneumoniae, oral streptococci + cariogenesis, anaerobic cocci. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-17-04",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A1",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-18",
+      "weekday": "Wednesday",
+      "semester_week": 11,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-18-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho slides ×4",
+          "detail": "",
+          "est_minutes": 40
+        },
+        {
+          "id": "2026-11-18-02",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho definitions",
+          "detail": "Moved off Saturday — the meet is that day",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-18-03",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-18-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.4",
+          "detail": "Streptococcus pyogenes. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-18-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A2",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-19",
+      "weekday": "Thursday",
+      "semester_week": 11,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-19-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho definitions",
+          "detail": "The list, written out by hand",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-19-02",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho histology",
+          "detail": "Slides under the microscope view — recognition, not reading",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-19-03",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-19-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.5",
+          "detail": "S. agalactiae, Enterococcus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-19-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A3",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-20",
+      "weekday": "Friday",
+      "semester_week": 11,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-20-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: slides + organ descriptions",
+          "detail": "",
+          "est_minutes": 75
+        },
+        {
+          "id": "2026-11-20-02",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho histology",
+          "detail": "",
+          "est_minutes": 40
+        },
+        {
+          "id": "2026-11-20-03",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-20-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.6",
+          "detail": "Anaerobic Gram-negative rods (Bacteroides, Fusobacterium, Prevotella, Porphyromonas). Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-20-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A4",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-21",
+      "weekday": "Saturday",
+      "semester_week": 11,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-21-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho slides, light",
+          "detail": "MEFOB today — 50 free, 100 free, 50 fly. This is the only study task and it is an evening one. If you are wrecked, skip it: the practical is four days out and you have Sunday",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-11-21-02",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only — race day",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-21-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.7",
+          "detail": "N. meningitidis, apathogenic Neisseria. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        }
+      ]
+    },
+    {
+      "date": "2026-11-22",
+      "weekday": "Sunday",
+      "semester_week": 11,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-22-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: organ descriptions",
+          "detail": "",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-22-02",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho histology",
+          "detail": "Picks up what Saturday did not do",
+          "est_minutes": 75
+        },
+        {
+          "id": "2026-11-22-03",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-22-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.8",
+          "detail": "N. gonorrhoeae, Moraxella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-22-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A5",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-23",
+      "weekday": "Monday",
+      "semester_week": 12,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-23-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: full run — slides, organ descriptions, definitions",
+          "detail": "Everything once, as if it were the practical",
+          "est_minutes": 120
+        },
+        {
+          "id": "2026-11-23-02",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-23-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.9",
+          "detail": "Salmonella genus, Salmonellae causing gastroenteritis. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-23-04",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A6",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-24",
+      "weekday": "Tuesday",
+      "semester_week": 12,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-24-01",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: histology + definitions",
+          "detail": "",
+          "est_minutes": 100
+        },
+        {
+          "id": "2026-11-24-02",
+          "subject": "patho",
+          "kind": "study",
+          "title": "Patho: weak spots only",
+          "detail": "Whatever yesterday's full run exposed. Nothing new",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-11-24-03",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-24-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.10",
+          "detail": "S. typhi and paratyphi A, B, C. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-24-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A7",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-25",
+      "weekday": "Wednesday",
+      "semester_week": 12,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-25-01",
+          "subject": "patho",
+          "kind": "exam",
+          "title": "Pathology practical",
+          "detail": "Needed for the signature",
+          "est_minutes": 0
+        },
+        {
+          "id": "2026-11-25-02",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Light — practical this morning",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-25-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.11",
+          "detail": "Escherichia coli. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-25-04",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A8",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        }
+      ]
+    },
+    {
+      "date": "2026-11-26",
+      "weekday": "Thursday",
+      "semester_week": 12,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-26-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-26-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.12",
+          "detail": "Shigella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-26-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.20",
+          "detail": "Arenaviruses (LCM, Lassa, Machupo). RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-26-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.13",
+          "detail": "Klebsiella, Enterobacter, Proteus, Serratia. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-26-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A9",
+          "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
+          "est_minutes": 40
+        },
+        {
+          "id": "2026-11-26-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C1",
+          "detail": "Disinfectants and antiseptics. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-11-26-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC1",
+          "detail": "Core concepts 1–3: Drug development stages, types of clinical trials, history of the Hungarian pharmaceutical industry. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-11-27",
+      "weekday": "Friday",
+      "semester_week": 12,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-27-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-27-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.14",
+          "detail": "Yersinia (Y. pestis, yersiniosis). Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-27-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.21",
+          "detail": "Bunyaviruses (Hanta, Crimean-Congo HF). RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-27-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.15",
+          "detail": "Vibrio cholerae. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-27-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A10",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-27-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C2",
+          "detail": "Antimycobacterial drugs. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.22: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-11-27-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC2",
+          "detail": "Core concepts 4–6: Molecular targets, receptor theory (agonist, partial agonist, antagonist, inverse agonist), efficacy vs potency. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        },
+        {
+          "id": "2026-11-27-08",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro: TB + M. leprae (II.34)",
+          "detail": "Tuberculosis, M. leprae — pulled out of the series to sit with Pharm C2 (antimycobacterials): learn the organism and its drugs together. Sketchy + notes, then close them and blurt it. Very high yield.",
+          "est_minutes": 35
+        }
+      ]
+    },
+    {
+      "date": "2026-11-28",
+      "weekday": "Saturday",
+      "semester_week": 12,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-28-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-28-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.16",
+          "detail": "V. parahaemolyticus, V. vulnificus, Aeromonas, Plesiomonas. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-28-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.22",
+          "detail": "Corona- and filoviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-28-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.17",
+          "detail": "Campylobacter, Helicobacter pylori. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-28-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A11",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-28-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C3",
+          "detail": "Antiprotozoal and antihelminthic drugs. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-11-28-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC3",
+          "detail": "Core concepts 7–10: Population dose-effect, adverse drug reactions, therapeutic index, tolerance/tachyphylaxis/dependence. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-11-29",
+      "weekday": "Sunday",
+      "semester_week": 12,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-29-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-29-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.18",
+          "detail": "Haemophilus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-29-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.23",
+          "detail": "Flavivirus: yellow fever, Dengue. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-29-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.19",
+          "detail": "Pseudomonas group, Acinetobacter, Burkholderia, Stenotrophomonas. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-29-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A12",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-29-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C4",
+          "detail": "Antifungal agents. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps mycology: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-11-29-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC4",
+          "detail": "Core concepts 11–14: Absorption, membrane transport, distribution, bioavailability. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-11-30",
+      "weekday": "Monday",
+      "semester_week": 13,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-11-30-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-30-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.20",
+          "detail": "Bordetella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-30-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.24",
+          "detail": "Flavivirus: TBE, West Nile, Zika. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-30-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.21",
+          "detail": "Legionella pneumophila. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-11-30-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A13",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-11-30-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C5",
+          "detail": "Anti-HSV/VZV/CMV, anti-influenza, anti-corona and other antivirals. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps virology: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-11-30-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC5",
+          "detail": "Core concepts 15–18: Volume of distribution, biotransformation phases, excretion, linear vs non-linear kinetics. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-01",
+      "weekday": "Tuesday",
+      "semester_week": 13,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-01-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-01-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.22",
+          "detail": "Brucella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-01-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.25",
+          "detail": "Rota-, calici-, astroviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-01-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.23",
+          "detail": "Pasteurella multocida, Francisella tularensis, Bartonella. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-01-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A14",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-01-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C6",
+          "detail": "Antiretroviral agents. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro III.32: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-01-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC6",
+          "detail": "Core concepts 19–22: Clearance, half-life, loading and maintenance dose, accumulation and cumulation. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        },
+        {
+          "id": "2026-12-01-08",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro: Chlamydia (II.36)",
+          "detail": "Chlamydia — pulled out of the series so it has a place before the final. Sketchy + notes, then close them and blurt it. High yield for Section V (STIs, pneumonia, eye).",
+          "est_minutes": 35
+        }
+      ]
+    },
+    {
+      "date": "2026-12-02",
+      "weekday": "Wednesday",
+      "semester_week": 13,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-02-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-02-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.24",
+          "detail": "Bacillus anthracis and other Bacillus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-02-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.26",
+          "detail": "Orthomyxoviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-02-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.25",
+          "detail": "Gas-gangrene clostridia. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-02-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A15",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-02-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C7",
+          "detail": "Agents against hepatitis viruses. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro III.34–35: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-02-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC7",
+          "detail": "Core concepts 23–26: Enzyme inducers, enzyme inhibitors, PD synergism, PD antagonism. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-03",
+      "weekday": "Thursday",
+      "semester_week": 13,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-03-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-03-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.26",
+          "detail": "Clostridium tetani. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-03-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.27",
+          "detail": "Paramyxoviruses: mumps, measles. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-03-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.27",
+          "detail": "C. botulinum, C. difficile. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-03-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A16",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-03-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C8",
+          "detail": "Penicillins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.16: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-03-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC8",
+          "detail": "Core concepts 27–30: PK interactions at absorption, distribution, metabolism, elimination. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-04",
+      "weekday": "Friday",
+      "semester_week": 13,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-04-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-04-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.28",
+          "detail": "Listeria, Erysipelothrix, Lactobacillus, Bifidobacterium, pre- and probiotics. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-04-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.28",
+          "detail": "Paramyxoviruses: RSV, parainfluenza. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-04-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.29",
+          "detail": "Treponema. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-04-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A17",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-04-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C9",
+          "detail": "Cephalosporins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.16: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-04-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC9",
+          "detail": "Core concepts 31–36: Biologics, orphan drugs, ATMPs and vaccines, supplements, herbal substances, medical devices. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-05",
+      "weekday": "Saturday",
+      "semester_week": 13,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-05-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-05-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.30",
+          "detail": "Borrelia. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-05-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.29",
+          "detail": "Picornaviruses: polio. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-05-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.31",
+          "detail": "Leptospira. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-05-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A18",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-05-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C10",
+          "detail": "Carbapenems, monobactams, beta-lactamase inhibitors. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.17: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-05-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC10",
+          "detail": "Core concepts 37–41: Antimicrobial principles: selective toxicity, empirical/targeted/prophylactic, cidal/static and combinations, time/concentration dependence, spectrum. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-06",
+      "weekday": "Sunday",
+      "semester_week": 13,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-06-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-06-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.32",
+          "detail": "C. diphtheriae, diphtheroids, Propionibacterium. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-06-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.30",
+          "detail": "Picornaviruses: rhino, Coxsackie, echo, enteroviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-06-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.33",
+          "detail": "Actinomyces, Nocardia, atypical + apathogenic mycobacteria. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35,
+          "absorbed": true,
+          "absorbed_into": "the compressed block on 8 Dec"
+        },
+        {
+          "id": "2026-12-06-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A19",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-06-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C11",
+          "detail": "Chloramphenicol, polymyxins, antifolates. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-06-07",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm CC11",
+          "detail": "Core concepts 42–46: Antibiotic choice in pregnancy/childhood, by compartment, by comorbidity; classification by structure; the SmPC. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-07",
+      "weekday": "Monday",
+      "semester_week": 14,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-07-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-07-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.34",
+          "detail": "Tuberculosis, M. leprae. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35,
+          "absorbed": true,
+          "absorbed_into": "Micro: TB + M. leprae (II.34) on 27 Nov"
+        },
+        {
+          "id": "2026-12-07-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.31",
+          "detail": "Rhabdoviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-07-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.35",
+          "detail": "Rickettsia, Orientia, Coxiella. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35,
+          "absorbed": true,
+          "absorbed_into": "the compressed block on 8 Dec"
+        },
+        {
+          "id": "2026-12-07-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A20",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20,
+          "absorbed": true,
+          "absorbed_into": "Pharm: A12–A22 out loud on 16 Dec"
+        },
+        {
+          "id": "2026-12-07-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C12",
+          "detail": "Tetracyclines and glycylcyclines. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.18: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        }
+      ]
+    },
+    {
+      "date": "2026-12-08",
+      "weekday": "Tuesday",
+      "semester_week": 14,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-08-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-08-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.36",
+          "detail": "Chlamydia. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
+          "est_minutes": 35,
+          "absorbed": true,
+          "absorbed_into": "Micro: Chlamydia (II.36) on 1 Dec"
+        },
+        {
+          "id": "2026-12-08-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.32",
+          "detail": "Retroviruses and AIDS. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-08-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro II.37",
+          "detail": "Mycoplasma, Ureaplasma. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
+          "est_minutes": 35,
+          "absorbed": true,
+          "absorbed_into": "the compressed block on 8 Dec"
+        },
+        {
+          "id": "2026-12-08-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A21",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20,
+          "absorbed": true,
+          "absorbed_into": "Pharm: A12–A22 out loud on 16 Dec"
+        },
+        {
+          "id": "2026-12-08-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C13",
+          "detail": "Aminoglycosides. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.18: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-08-07",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro: II.33 + II.35 + II.37 compressed",
+          "detail": "Actinomyces, Nocardia, atypical mycobacteria · Rickettsia, Orientia, Coxiella · Mycoplasma, Ureaplasma. One compressed pass: disease, transmission, diagnosis, treatment for each. The 11 Dec section II blurt catches what did not stick.",
+          "est_minutes": 60
+        }
+      ]
+    },
+    {
+      "date": "2026-12-09",
+      "weekday": "Wednesday",
+      "semester_week": 14,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-09-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-09-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.33",
+          "detail": "Togaviruses (alpha, rubi). RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-09-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.34",
+          "detail": "Hepatitis A, E. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-09-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.35",
+          "detail": "Hepatitis B, C, D, G. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-09-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm A22",
+          "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
+          "est_minutes": 20,
+          "absorbed": true,
+          "absorbed_into": "Pharm: A12–A22 out loud on 16 Dec"
+        },
+        {
+          "id": "2026-12-09-06",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C14",
+          "detail": "Quinolones and fluoroquinolones. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        },
+        {
+          "id": "2026-12-09-07",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro V.1–12 — blurt",
+          "detail": "Skin + wound, abdominal, ophthalmic, airborne URT, oral, GI flora, faecal-oral, urinary, arthropod-borne bacteria, food poisoning, zoonoses, meningitis. Section V is synthesis: answer from I–IV out loud, look up only where you stall",
+          "est_minutes": 60
+        }
+      ]
+    },
+    {
+      "date": "2026-12-10",
+      "weekday": "Thursday",
+      "semester_week": 14,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-10-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-10-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.36",
+          "detail": "Conventional and non-conventional slow virus infections. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-10-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro III.37",
+          "detail": "Serology in the diagnosis of viral diseases. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
+          "est_minutes": 35
+        },
+        {
+          "id": "2026-12-10-04",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro V.13–24 — blurt",
+          "detail": "Lower RT, exotoxin diseases, sepsis/endocarditis, anaerobes, parasites, airborne + enteral + arthropod-borne viruses, viral/fungal meningitis, lung infections, perinatal infections. Same rule: from memory first",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-12-10-05",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C15",
+          "detail": "Macrolides, pleuromutilins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.19: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        }
+      ]
+    },
+    {
+      "date": "2026-12-11",
+      "weekday": "Friday",
+      "semester_week": 14,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-11-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-11-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro V.25–37 — blurt",
+          "detail": "Exanthemas, STDs, HIV screening + AIDS opportunists, hepatitis, specimens, bioterrorism, typing, molecular methods, atypical pneumonia, diarrhoea, serology, eye parasites. Same rule: from memory first",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-12-11-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro: blurt section II",
+          "detail": "All 37 topics, 60 seconds each, closed book. Mark every miss",
+          "est_minutes": 90
+        },
+        {
+          "id": "2026-12-11-04",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C16",
+          "detail": "Clindamycin, streptogramins, oxazolidinones, fusidans. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.19: learn it once for both exams. FLOOR",
+          "est_minutes": 30
+        }
+      ]
+    },
+    {
+      "date": "2026-12-12",
+      "weekday": "Saturday",
+      "semester_week": 14,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-12-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-12-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro I.1–15 — cram",
+          "detail": "History, cells, cell wall, taxonomy, metabolism, genetics, sterilization, disinfection, selective toxicity, chemoprophylaxis, combinations, side effects. Deferred on purpose: most of it came with the organisms. Read fast, blurt, card only what did not come",
+          "est_minutes": 75
+        },
+        {
+          "id": "2026-12-12-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro I.16–23 — recall",
+          "detail": "The antibiotic classes and resistance. You did these last semester: blurt first, read only the gaps",
+          "est_minutes": 45
+        },
+        {
+          "id": "2026-12-12-04",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C17",
+          "detail": "Glycopeptides, lipopeptides, bacitracin, mupirocin. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.21: learn it once for both exams. FLOOR",
+          "est_minutes": 25
+        },
+        {
+          "id": "2026-12-12-05",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro: blurt section III + IV",
+          "detail": "III.1–19 and IV are midterm material Anki has kept alive; III.20–37 is new this month and will be slower",
+          "est_minutes": 60
+        }
+      ]
+    },
+    {
+      "date": "2026-12-13",
+      "weekday": "Sunday",
+      "semester_week": 14,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-13-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-13-02",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro I.24–37 — cram",
+          "detail": "Pathogenicity, infection, toxins, virulence factors, host, vaccines, passive immunisation, mimicry, nosocomial infections, sepsis, normal flora. Much of it you met through the organisms",
+          "est_minutes": 75
+        },
+        {
+          "id": "2026-12-13-03",
+          "subject": "micro",
+          "kind": "study",
+          "title": "Micro: weak spots only",
+          "detail": "Everything the blurts marked. Nothing new. Stop at a reasonable hour",
+          "est_minutes": 75
+        },
+        {
+          "id": "2026-12-13-04",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm C18",
+          "detail": "Metronidazole, fidaxomicin, rifaximin, nitrofurantoin, fosfomycin. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
+          "est_minutes": 25
+        }
+      ]
+    },
+    {
+      "date": "2026-12-14",
+      "weekday": "Monday",
+      "semester_week": 15,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-14-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Light — exam today",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-14-02",
+          "subject": "micro",
+          "kind": "exam",
+          "title": "Microbiology final — all 185 questions",
+          "detail": "Sections I–V",
+          "est_minutes": 0
+        }
+      ]
+    },
+    {
+      "date": "2026-12-15",
+      "weekday": "Tuesday",
+      "semester_week": 15,
+      "tags": [
+        "swim",
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-15-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-15-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm: core concepts out loud",
+          "detail": "All 46, two or three sentences each. One is guaranteed, and a blank one fails the exam",
+          "est_minutes": 60
+        },
+        {
+          "id": "2026-12-15-03",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm: A1–A11 out loud",
+          "detail": "Oral outline for each, out loud, 3–5 minutes. Then read only what you stalled on",
+          "est_minutes": 100
+        }
+      ]
+    },
+    {
+      "date": "2026-12-16",
+      "weekday": "Wednesday",
+      "semester_week": 15,
+      "tags": [
+        "swim"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-16-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-16-02",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm: A12–A22 out loud",
+          "detail": "Same as yesterday. A20, A21 and A22 are folded in here (no separate pass): do those three first, blurt-first, then the rest out loud.",
+          "est_minutes": 80
+        },
+        {
+          "id": "2026-12-16-03",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm: C1–C18 out loud",
+          "detail": "Same again. If the exam is on the 18th, tomorrow becomes a full mock: one core concept, one A, one C, random, out loud, no notes",
+          "est_minutes": 80
+        }
+      ]
+    },
+    {
+      "date": "2026-12-17",
+      "weekday": "Thursday",
+      "semester_week": 15,
+      "tags": [
+        "gym"
+      ],
+      "tasks": [
+        {
+          "id": "2026-12-17-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Light — exam today",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-17-02",
+          "subject": "pharm",
+          "kind": "exam",
+          "title": "Pharmacology semifinal",
+          "detail": "Oral. Drug recognition is WAIVED (19+ on both midterms). One core concept, one topic from A, one from C. A blank on any one fails it. On the 18th instead if that slot opens",
+          "est_minutes": 0
+        }
+      ]
     }
-   ]
-  },
-  {
-   "date": "2026-11-03",
-   "weekday": "Tuesday",
-   "semester_week": 9,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-03-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-03-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III 15–19 + IV 1–6",
-     "detail": "Finish virology: CMV (15), HHV-6/7/8 (16), parvovirus (17), papilloma + polyoma (18), poxviruses (19). Then mycology starts with the general block, kept together because the rest sits on it: structure/classification (1), pathomechanism + risk factors (2), cultivation + diagnosis (3), treatment (4), dermatophytoses (5), superficial and subcutaneous (6). Heaviest day of the week",
-     "est_minutes": 220
-    }
-   ]
-  },
-  {
-   "date": "2026-11-04",
-   "weekday": "Wednesday",
-   "semester_week": 9,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-04-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, then make cards from yesterday's topics. No bacteria cards until after Thursday — suspend the section I + II backlog if it floods the queue",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-04-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro IV 7–11",
-     "detail": "The last five, all organism topics and all in Sketchy: Coccidioides + Histoplasma (7), Blastomyces + Paracoccidioides (8), Cryptococcus + Pneumocystis (9), zygomycoses + Aspergillus + Penicillium (10), Candida (11)",
-     "est_minutes": 100
-    },
-    {
-     "id": "2026-11-04-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Blurt all 30 topics",
-     "detail": "Closed book, 60 seconds each: III 1–19 then IV 1–11. Mark the misses, read only those, then stop",
-     "est_minutes": 50
-    }
-   ]
-  },
-  {
-   "date": "2026-11-05",
-   "weekday": "Thursday",
-   "semester_week": 9,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-05-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only — exam day. No new cards",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-05-02",
-     "subject": "micro",
-     "kind": "exam",
-     "title": "Micro MT2 — mycology + DNA virology",
-     "detail": "IV 1–11 and III 1–19",
-     "est_minutes": 0
-    }
-   ]
-  },
-  {
-   "date": "2026-11-08",
-   "weekday": "Sunday",
-   "semester_week": 9,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-08-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-08-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A10 + A11",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 110
-    },
-    {
-     "id": "2026-11-08-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.1–2",
-     "detail": "Staphylococcus aureus, coagulase-negative staphylococci. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
-     "est_minutes": 50
-    }
-   ]
-  },
-  {
-   "date": "2026-11-09",
-   "weekday": "Monday",
-   "semester_week": 10,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-09-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-09-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A12 + A13",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 110
-    },
-    {
-     "id": "2026-11-09-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.3–4",
-     "detail": "S. pneumoniae + oral streptococci + anaerobic cocci, S. pyogenes. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
-     "est_minutes": 50
-    }
-   ]
-  },
-  {
-   "date": "2026-11-10",
-   "weekday": "Tuesday",
-   "semester_week": 10,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-10-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-10-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A14 + A15",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 110
-    },
-    {
-     "id": "2026-11-10-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.5–6",
-     "detail": "S. agalactiae + Enterococcus, anaerobic Gram-negative rods. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
-     "est_minutes": 50
-    },
-    {
-     "id": "2026-11-10-04",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    }
-   ]
-  },
-  {
-   "date": "2026-11-11",
-   "weekday": "Wednesday",
-   "semester_week": 10,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-11-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-11-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A16 + A17",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 110
-    },
-    {
-     "id": "2026-11-11-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.7–8",
-     "detail": "N. meningitidis, N. gonorrhoeae + Moraxella. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
-     "est_minutes": 50
-    }
-   ]
-  },
-  {
-   "date": "2026-11-12",
-   "weekday": "Thursday",
-   "semester_week": 10,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-12-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-12-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A18 + A19 + A20",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 150
-    },
-    {
-     "id": "2026-11-12-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.9–10",
-     "detail": "Salmonella (gastroenteritis), S. typhi + paratyphi. Background track — small and daily, never skipped. Sketchy + notes, then close them and blurt each topic before moving on",
-     "est_minutes": 50
-    }
-   ]
-  },
-  {
-   "date": "2026-11-13",
-   "weekday": "Friday",
-   "semester_week": 10,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-13-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-13-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A21 + A22",
-     "detail": "Sketchy → your notes for the EU-only drugs → cards in the Pharma project → import",
-     "est_minutes": 110
-    },
-    {
-     "id": "2026-11-13-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro I.16–19 — recall",
-     "detail": "Penicillins + cephalosporins, monobactam/carbapenem/bacitracin, aminoglycosides + tetracyclines, chloramphenicol/macrolides/lincosamides. You covered these for last semester’s semifinal, so this is retrieval, not reading: blurt all four closed-book FIRST, then read only what did not come. If more than half is gone, say so and this block gets its full hour back",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-13-04",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×3",
-     "detail": "About 20 minutes",
-     "est_minutes": 20
-    }
-   ]
-  },
-  {
-   "date": "2026-11-14",
-   "weekday": "Saturday",
-   "semester_week": 10,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-14-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Micro section I + II cards, pharm, patho definitions. First thing, before anything else",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-14-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro I.20–23 — recall",
-     "detail": "Nucleic acid synthesis inhibitors, glycopeptides + membrane agents, antituberculotics, resistance mechanisms. Same rule — closed book first. Resistance mechanisms is the one to be honest about: it is the most examined of the four and the easiest to think you remember",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-14-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm recall: A10–A16",
-     "detail": "Closed book first, then fill the gaps",
-     "est_minutes": 90
-    },
-    {
-     "id": "2026-11-14-04",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: organ descriptions",
-     "detail": "First proper pass — the practical is 11 days away",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-15",
-   "weekday": "Sunday",
-   "semester_week": 10,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-15-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-15-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm recall: A17–A22",
-     "detail": "Pass level — closed book first, then fill the gaps",
-     "est_minutes": 90
-    },
-    {
-     "id": "2026-11-15-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm: say A10–A22 out loud",
-     "detail": "The exam is oral. One minute per topic, out loud, from the class pattern. Read only what you stalled on",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-15-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.1",
-     "detail": "Staphylococcus aureus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    }
-   ]
-  },
-  {
-   "date": "2026-11-16",
-   "weekday": "Monday",
-   "semester_week": 11,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-16-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Light — exam this morning",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-16-02",
-     "subject": "pharm",
-     "kind": "exam",
-     "title": "Pharm MT2 — A10–A22",
-     "detail": "Oral. Target: pass",
-     "est_minutes": 0
-    },
-    {
-     "id": "2026-11-16-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.2",
-     "detail": "Coagulase-negative staphylococci. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    }
-   ]
-  },
-  {
-   "date": "2026-11-17",
-   "weekday": "Tuesday",
-   "semester_week": 11,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-17-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: organ descriptions + slides",
-     "detail": "",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-11-17-02",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-17-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.3",
-     "detail": "S. pneumoniae, oral streptococci + cariogenesis, anaerobic cocci. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-17-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A1",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-18",
-   "weekday": "Wednesday",
-   "semester_week": 11,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-18-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides ×4",
-     "detail": "",
-     "est_minutes": 40
-    },
-    {
-     "id": "2026-11-18-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho definitions",
-     "detail": "Moved off Saturday — the meet is that day",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-18-03",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-18-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.4",
-     "detail": "Streptococcus pyogenes. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-18-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A2",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-19",
-   "weekday": "Thursday",
-   "semester_week": 11,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-19-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho definitions",
-     "detail": "The list, written out by hand",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-19-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho histology",
-     "detail": "Slides under the microscope view — recognition, not reading",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-19-03",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-19-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.5",
-     "detail": "S. agalactiae, Enterococcus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-19-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A3",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-20",
-   "weekday": "Friday",
-   "semester_week": 11,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-20-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: slides + organ descriptions",
-     "detail": "",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-11-20-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho histology",
-     "detail": "",
-     "est_minutes": 40
-    },
-    {
-     "id": "2026-11-20-03",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-20-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.6",
-     "detail": "Anaerobic Gram-negative rods (Bacteroides, Fusobacterium, Prevotella, Porphyromonas). Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-20-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A4",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-21",
-   "weekday": "Saturday",
-   "semester_week": 11,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-21-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho slides, light",
-     "detail": "MEFOB today — 50 free, 100 free, 50 fly. This is the only study task and it is an evening one. If you are wrecked, skip it: the practical is four days out and you have Sunday",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-11-21-02",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only — race day",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-21-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.7",
-     "detail": "N. meningitidis, apathogenic Neisseria. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    }
-   ]
-  },
-  {
-   "date": "2026-11-22",
-   "weekday": "Sunday",
-   "semester_week": 11,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-22-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: organ descriptions",
-     "detail": "",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-22-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho histology",
-     "detail": "Picks up what Saturday did not do",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-11-22-03",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-22-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.8",
-     "detail": "N. gonorrhoeae, Moraxella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-22-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A5",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-23",
-   "weekday": "Monday",
-   "semester_week": 12,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-23-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: full run — slides, organ descriptions, definitions",
-     "detail": "Everything once, as if it were the practical",
-     "est_minutes": 120
-    },
-    {
-     "id": "2026-11-23-02",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-23-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.9",
-     "detail": "Salmonella genus, Salmonellae causing gastroenteritis. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-23-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A6",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-24",
-   "weekday": "Tuesday",
-   "semester_week": 12,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-24-01",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: histology + definitions",
-     "detail": "",
-     "est_minutes": 100
-    },
-    {
-     "id": "2026-11-24-02",
-     "subject": "patho",
-     "kind": "study",
-     "title": "Patho: weak spots only",
-     "detail": "Whatever yesterday's full run exposed. Nothing new",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-11-24-03",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-24-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.10",
-     "detail": "S. typhi and paratyphi A, B, C. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-24-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A7",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-25",
-   "weekday": "Wednesday",
-   "semester_week": 12,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-25-01",
-     "subject": "patho",
-     "kind": "exam",
-     "title": "Pathology practical",
-     "detail": "Needed for the signature",
-     "est_minutes": 0
-    },
-    {
-     "id": "2026-11-25-02",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Light — practical this morning",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-25-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.11",
-     "detail": "Escherichia coli. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-25-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A8",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    }
-   ]
-  },
-  {
-   "date": "2026-11-26",
-   "weekday": "Thursday",
-   "semester_week": 12,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-26-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-26-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.12",
-     "detail": "Shigella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-26-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.20",
-     "detail": "Arenaviruses (LCM, Lassa, Machupo). RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-26-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.13",
-     "detail": "Klebsiella, Enterobacter, Proteus, Serratia. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-26-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A9",
-     "detail": "MT1 material — you got 50% here, so this is the weakest list and gets the most time. Class boxes (prototype, mechanism, uses, side effects, contraindications), then the oral outline out loud. Every drug in the topic gets at least mechanism + one key side effect. FLOOR",
-     "est_minutes": 40
-    },
-    {
-     "id": "2026-11-26-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C1",
-     "detail": "Disinfectants and antiseptics. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-11-26-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC1",
-     "detail": "Core concepts 1–3: Drug development stages, types of clinical trials, history of the Hungarian pharmaceutical industry. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-11-27",
-   "weekday": "Friday",
-   "semester_week": 12,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-27-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-27-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.14",
-     "detail": "Yersinia (Y. pestis, yersiniosis). Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-27-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.21",
-     "detail": "Bunyaviruses (Hanta, Crimean-Congo HF). RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-27-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.15",
-     "detail": "Vibrio cholerae. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-27-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A10",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-27-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C2",
-     "detail": "Antimycobacterial drugs. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.22: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-11-27-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC2",
-     "detail": "Core concepts 4–6: Molecular targets, receptor theory (agonist, partial agonist, antagonist, inverse agonist), efficacy vs potency. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-11-28",
-   "weekday": "Saturday",
-   "semester_week": 12,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-28-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-28-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.16",
-     "detail": "V. parahaemolyticus, V. vulnificus, Aeromonas, Plesiomonas. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-28-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.22",
-     "detail": "Corona- and filoviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-28-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.17",
-     "detail": "Campylobacter, Helicobacter pylori. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-28-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A11",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-28-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C3",
-     "detail": "Antiprotozoal and antihelminthic drugs. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-11-28-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC3",
-     "detail": "Core concepts 7–10: Population dose-effect, adverse drug reactions, therapeutic index, tolerance/tachyphylaxis/dependence. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-11-29",
-   "weekday": "Sunday",
-   "semester_week": 12,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-29-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-29-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.18",
-     "detail": "Haemophilus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-29-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.23",
-     "detail": "Flavivirus: yellow fever, Dengue. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-29-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.19",
-     "detail": "Pseudomonas group, Acinetobacter, Burkholderia, Stenotrophomonas. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-29-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A12",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-29-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C4",
-     "detail": "Antifungal agents. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps mycology: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-11-29-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC4",
-     "detail": "Core concepts 11–14: Absorption, membrane transport, distribution, bioavailability. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-11-30",
-   "weekday": "Monday",
-   "semester_week": 13,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-11-30-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-30-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.20",
-     "detail": "Bordetella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-30-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.24",
-     "detail": "Flavivirus: TBE, West Nile, Zika. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-30-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.21",
-     "detail": "Legionella pneumophila. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-11-30-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A13",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-11-30-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C5",
-     "detail": "Anti-HSV/VZV/CMV, anti-influenza, anti-corona and other antivirals. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps virology: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-11-30-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC5",
-     "detail": "Core concepts 15–18: Volume of distribution, biotransformation phases, excretion, linear vs non-linear kinetics. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-01",
-   "weekday": "Tuesday",
-   "semester_week": 13,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-01-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-01-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.22",
-     "detail": "Brucella. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-01-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.25",
-     "detail": "Rota-, calici-, astroviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-01-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.23",
-     "detail": "Pasteurella multocida, Francisella tularensis, Bartonella. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-01-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A14",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-01-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C6",
-     "detail": "Antiretroviral agents. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro III.32: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-01-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC6",
-     "detail": "Core concepts 19–22: Clearance, half-life, loading and maintenance dose, accumulation and cumulation. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-02",
-   "weekday": "Wednesday",
-   "semester_week": 13,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-02-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-02-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.24",
-     "detail": "Bacillus anthracis and other Bacillus. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-02-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.26",
-     "detail": "Orthomyxoviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-02-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.25",
-     "detail": "Gas-gangrene clostridia. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-02-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A15",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-02-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C7",
-     "detail": "Agents against hepatitis viruses. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro III.34–35: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-02-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC7",
-     "detail": "Core concepts 23–26: Enzyme inducers, enzyme inhibitors, PD synergism, PD antagonism. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-03",
-   "weekday": "Thursday",
-   "semester_week": 13,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-03-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-03-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.26",
-     "detail": "Clostridium tetani. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-03-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.27",
-     "detail": "Paramyxoviruses: mumps, measles. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-03-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.27",
-     "detail": "C. botulinum, C. difficile. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-03-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A16",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-03-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C8",
-     "detail": "Penicillins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.16: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-03-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC8",
-     "detail": "Core concepts 27–30: PK interactions at absorption, distribution, metabolism, elimination. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-04",
-   "weekday": "Friday",
-   "semester_week": 13,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-04-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-04-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.28",
-     "detail": "Listeria, Erysipelothrix, Lactobacillus, Bifidobacterium, pre- and probiotics. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-04-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.28",
-     "detail": "Paramyxoviruses: RSV, parainfluenza. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-04-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.29",
-     "detail": "Treponema. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-04-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A17",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-04-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C9",
-     "detail": "Cephalosporins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.16: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-04-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC9",
-     "detail": "Core concepts 31–36: Biologics, orphan drugs, ATMPs and vaccines, supplements, herbal substances, medical devices. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-05",
-   "weekday": "Saturday",
-   "semester_week": 13,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-05-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-05-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.30",
-     "detail": "Borrelia. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-05-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.29",
-     "detail": "Picornaviruses: polio. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-05-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.31",
-     "detail": "Leptospira. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-05-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A18",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-05-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C10",
-     "detail": "Carbapenems, monobactams, beta-lactamase inhibitors. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.17: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-05-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC10",
-     "detail": "Core concepts 37–41: Antimicrobial principles: selective toxicity, empirical/targeted/prophylactic, cidal/static and combinations, time/concentration dependence, spectrum. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-06",
-   "weekday": "Sunday",
-   "semester_week": 13,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-06-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-06-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.32",
-     "detail": "C. diphtheriae, diphtheroids, Propionibacterium. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-06-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.30",
-     "detail": "Picornaviruses: rhino, Coxsackie, echo, enteroviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-06-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.33",
-     "detail": "Actinomyces, Nocardia, atypical + apathogenic mycobacteria. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-06-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A19",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-06-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C11",
-     "detail": "Chloramphenicol, polymyxins, antifolates. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-06-07",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm CC11",
-     "detail": "Core concepts 42–46: Antibiotic choice in pregnancy/childhood, by compartment, by comorbidity; classification by structure; the SmPC. One is guaranteed on the exam and a blank one fails it — two or three sentences each, out loud. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-07",
-   "weekday": "Monday",
-   "semester_week": 14,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-07-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-07-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.34",
-     "detail": "Tuberculosis, M. leprae. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-07-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.31",
-     "detail": "Rhabdoviruses. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-07-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.35",
-     "detail": "Rickettsia, Orientia, Coxiella. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-07-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A20",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-07-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C12",
-     "detail": "Tetracyclines and glycylcyclines. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.18: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    }
-   ]
-  },
-  {
-   "date": "2026-12-08",
-   "weekday": "Tuesday",
-   "semester_week": 14,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-08-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-08-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.36",
-     "detail": "Chlamydia. Sketchy + notes, then close them and blurt it before moving on. FLOOR — the one micro topic that happens even on a bad day",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-08-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.32",
-     "detail": "Retroviruses and AIDS. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-08-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro II.37",
-     "detail": "Mycoplasma, Ureaplasma. Sketchy + notes, then close them and blurt it before moving on. Second topic — the TARGET, not the floor. Skipped? It slides to the next good day; never do three to catch up",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-08-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A21",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-08-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C13",
-     "detail": "Aminoglycosides. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.18: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    }
-   ]
-  },
-  {
-   "date": "2026-12-09",
-   "weekday": "Wednesday",
-   "semester_week": 14,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-09-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-09-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.33",
-     "detail": "Togaviruses (alpha, rubi). RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-09-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.34",
-     "detail": "Hepatitis A, E. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-09-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.35",
-     "detail": "Hepatitis B, C, D, G. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-09-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm A22",
-     "detail": "You scored 80% on this two weeks ago. Blurt the oral outline out loud FIRST, then read only where you stalled. FLOOR",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-09-06",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C14",
-     "detail": "Quinolones and fluoroquinolones. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    },
-    {
-     "id": "2026-12-09-07",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro V.1–12 — blurt",
-     "detail": "Skin + wound, abdominal, ophthalmic, airborne URT, oral, GI flora, faecal-oral, urinary, arthropod-borne bacteria, food poisoning, zoonoses, meningitis. Section V is synthesis: answer from I–IV out loud, look up only where you stall",
-     "est_minutes": 60
-    }
-   ]
-  },
-  {
-   "date": "2026-12-10",
-   "weekday": "Thursday",
-   "semester_week": 14,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-10-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-10-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.36",
-     "detail": "Conventional and non-conventional slow virus infections. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-10-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro III.37",
-     "detail": "Serology in the diagnosis of viral diseases. RNA virus — Sketchy + notes, then close them and blurt it before moving on. FLOOR from 26 Nov",
-     "est_minutes": 35
-    },
-    {
-     "id": "2026-12-10-04",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro V.13–24 — blurt",
-     "detail": "Lower RT, exotoxin diseases, sepsis/endocarditis, anaerobes, parasites, airborne + enteral + arthropod-borne viruses, viral/fungal meningitis, lung infections, perinatal infections. Same rule: from memory first",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-12-10-05",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C15",
-     "detail": "Macrolides, pleuromutilins. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.19: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    }
-   ]
-  },
-  {
-   "date": "2026-12-11",
-   "weekday": "Friday",
-   "semester_week": 14,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-11-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-11-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro V.25–37 — blurt",
-     "detail": "Exanthemas, STDs, HIV screening + AIDS opportunists, hepatitis, specimens, bioterrorism, typing, molecular methods, atypical pneumonia, diarrhoea, serology, eye parasites. Same rule: from memory first",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-12-11-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro: blurt section II",
-     "detail": "All 37 topics, 60 seconds each, closed book. Mark every miss",
-     "est_minutes": 90
-    },
-    {
-     "id": "2026-12-11-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C16",
-     "detail": "Clindamycin, streptogramins, oxazolidinones, fusidans. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.19: learn it once for both exams. FLOOR",
-     "est_minutes": 30
-    }
-   ]
-  },
-  {
-   "date": "2026-12-12",
-   "weekday": "Saturday",
-   "semester_week": 14,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-12-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-12-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro I.1–15 — cram",
-     "detail": "History, cells, cell wall, taxonomy, metabolism, genetics, sterilization, disinfection, selective toxicity, chemoprophylaxis, combinations, side effects. Deferred on purpose: most of it came with the organisms. Read fast, blurt, card only what did not come",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-12-12-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro I.16–23 — recall",
-     "detail": "The antibiotic classes and resistance. You did these last semester: blurt first, read only the gaps",
-     "est_minutes": 45
-    },
-    {
-     "id": "2026-12-12-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C17",
-     "detail": "Glycopeptides, lipopeptides, bacitracin, mupirocin. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.21: learn it once for both exams. FLOOR",
-     "est_minutes": 25
-    },
-    {
-     "id": "2026-12-12-05",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro: blurt section III + IV",
-     "detail": "III.1–19 and IV are midterm material Anki has kept alive; III.20–37 is new this month and will be slower",
-     "est_minutes": 60
-    }
-   ]
-  },
-  {
-   "date": "2026-12-13",
-   "weekday": "Sunday",
-   "semester_week": 14,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-13-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-13-02",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro I.24–37 — cram",
-     "detail": "Pathogenicity, infection, toxins, virulence factors, host, vaccines, passive immunisation, mimicry, nosocomial infections, sepsis, normal flora. Much of it you met through the organisms",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-12-13-03",
-     "subject": "micro",
-     "kind": "study",
-     "title": "Micro: weak spots only",
-     "detail": "Everything the blurts marked. Nothing new. Stop at a reasonable hour",
-     "est_minutes": 75
-    },
-    {
-     "id": "2026-12-13-04",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm C18",
-     "detail": "Metronidazole, fidaxomicin, rifaximin, nitrofurantoin, fosfomycin. Topic list C. You have the lectures behind you — class boxes, then the oral outline out loud. Overlaps micro I.20: learn it once for both exams. FLOOR",
-     "est_minutes": 25
-    }
-   ]
-  },
-  {
-   "date": "2026-12-14",
-   "weekday": "Monday",
-   "semester_week": 15,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-14-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Light — exam today",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-14-02",
-     "subject": "micro",
-     "kind": "exam",
-     "title": "Microbiology final — all 185 questions",
-     "detail": "Sections I–V",
-     "est_minutes": 0
-    }
-   ]
-  },
-  {
-   "date": "2026-12-15",
-   "weekday": "Tuesday",
-   "semester_week": 15,
-   "tags": [
-    "swim",
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-15-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-15-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm: core concepts out loud",
-     "detail": "All 46, two or three sentences each. One is guaranteed, and a blank one fails the exam",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-12-15-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm: A1–A11 out loud",
-     "detail": "Oral outline for each, out loud, 3–5 minutes. Then read only what you stalled on",
-     "est_minutes": 100
-    }
-   ]
-  },
-  {
-   "date": "2026-12-16",
-   "weekday": "Wednesday",
-   "semester_week": 15,
-   "tags": [
-    "swim"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-16-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Due reviews only, all decks — this is what stops the midterm material fading. Virology and mycology first if the queue is big",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-16-02",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm: A12–A22 out loud",
-     "detail": "Same as yesterday",
-     "est_minutes": 60
-    },
-    {
-     "id": "2026-12-16-03",
-     "subject": "pharm",
-     "kind": "study",
-     "title": "Pharm: C1–C18 out loud",
-     "detail": "Same again. If the exam is on the 18th, tomorrow becomes a full mock: one core concept, one A, one C, random, out loud, no notes",
-     "est_minutes": 80
-    }
-   ]
-  },
-  {
-   "date": "2026-12-17",
-   "weekday": "Thursday",
-   "semester_week": 15,
-   "tags": [
-    "gym"
-   ],
-   "tasks": [
-    {
-     "id": "2026-12-17-01",
-     "subject": "anki",
-     "kind": "study",
-     "title": "Anki",
-     "detail": "Light — exam today",
-     "est_minutes": 20
-    },
-    {
-     "id": "2026-12-17-02",
-     "subject": "pharm",
-     "kind": "exam",
-     "title": "Pharmacology semifinal",
-     "detail": "Oral. Drug recognition is WAIVED (19+ on both midterms). One core concept, one topic from A, one from C. A blank on any one fails it. On the 18th instead if that slot opens",
-     "est_minutes": 0
-    }
-   ]
-  }
- ]
+  ]
 }
