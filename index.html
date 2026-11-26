@@ -3475,7 +3475,7 @@ function cardioToSets(minutes){
 // The spare solo swim went to Wednesday, not Thursday: Thursday has an 08:00 lecture
 // on odd weeks, so a 06:00 swim cannot work there. That frees Tue and Thu for lifting,
 // which are the only two days in the week with no swim in them.
-const POOL_MORNINGS_ONLY=true;
+const POOL_MORNINGS_ONLY=false;   // Mon/Fri 06:15 club ended, Tue/Thu 18:30 club back (26 Nov 2026). Flip in api/calendar.js too.
 const WORKOUT_WEEK_NORMAL=[
   {abbr:'Mon',label:'Monday',   sub:'Swim · morning, solo',   kind:'required'},
   {abbr:'Tue',label:'Tuesday',  sub:'Swim · club',            kind:'required'},
