@@ -12465,9 +12465,13 @@ async function garminInspect(){
 // text: "Nx" opens a repeat, "- 50mtr cue" is a distance step ("m" alone would mean
 // minutes), "- 20s rest" a rest step. intervals.icu forwards it to Garmin Connect.
 // Cues lose their digits and the word "pace" so nothing in them is read as a target.
+const V2_NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
 function v2Cue(t){
-  return String(t||'').replace(/\d+(\.\d+)?/g,'').replace(/\bpace\b/gi,'tempo').replace(/[×·—]/g,' ')
-    .replace(/\s+,/g,',').replace(/\s{2,}/g,' ').replace(/^[\s,]+|[\s,]+$/g,'').slice(0,48);
+  // Numbers become words (a digit could be read as a target), cut at a whole word.
+  let c=String(t||'').replace(/\d+(\.\d+)?/g,function(n){return V2_NUM_WORDS[+n]||'';}).replace(/\bpace\b/gi,'tempo').replace(/[×·—]/g,' ')
+    .replace(/\s+,/g,',').replace(/\s{2,}/g,' ').replace(/^[\s,]+|[\s,]+$/g,'');
+  if(c.length>64){c=c.slice(0,64);c=c.slice(0,c.lastIndexOf(' ')).replace(/[\s,]+$/,'');}
+  return c;
 }
 function v2WorkoutText(tag,ds){
   const se=v2Session(tag,ds);
@@ -12519,7 +12523,7 @@ async function watchSendWeek(quiet){
   if(!ev.length)return {ok:true,n:0};
   let r;
   try{
-    r=await (await fetch('/api/intervals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({events:ev})})).json();
+    r=await (await fetch('/api/intervals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({events:ev,replace:{from:localToday(),to:v2AddDays(localToday(),6)}})})).json();
   }catch(e){r={ok:false,error:e.message};}
   if(r&&r.ok){try{localStorage.setItem('grind_watch_sent',localToday());}catch(_){}}
   if(!quiet&&typeof showToast==='function')showToast(r&&r.ok?'Sent '+ev.length+' swims to the watch':'Watch sync failed: '+((r&&r.error)||'no answer'));
