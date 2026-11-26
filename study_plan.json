@@ -38,9 +38,9 @@
       "target": "Pass"
     },
     {
-      "date": "2026-12-17",
+      "date": "2026-12-18",
       "subject": "pharm",
-      "title": "Pharmacology semifinal — oral: core concept + one A + one C (drug recognition waived; 18th if a slot opens)",
+      "title": "Pharmacology semifinal — oral: core concept + one A + one C (drug recognition waived)",
       "target": "Pass"
     },
     {
@@ -2179,14 +2179,6 @@
           "title": "Pharm: A12–A22 out loud",
           "detail": "Same as yesterday. A20, A21 and A22 are folded in here (no separate pass): do those three first, blurt-first, then the rest out loud.",
           "est_minutes": 80
-        },
-        {
-          "id": "2026-12-16-03",
-          "subject": "pharm",
-          "kind": "study",
-          "title": "Pharm: C1–C18 out loud",
-          "detail": "Same again. If the exam is on the 18th, tomorrow becomes a full mock: one core concept, one A, one C, random, out loud, no notes",
-          "est_minutes": 80
         }
       ]
     },
@@ -2207,11 +2199,35 @@
           "est_minutes": 20
         },
         {
-          "id": "2026-12-17-02",
+          "id": "2026-12-17-03",
+          "subject": "pharm",
+          "kind": "study",
+          "title": "Pharm: C1–C18 out loud",
+          "detail": "Same again. If the exam is on the 18th, tomorrow becomes a full mock: one core concept, one A, one C, random, out loud, no notes",
+          "est_minutes": 80
+        }
+      ]
+    },
+    {
+      "date": "2026-12-18",
+      "weekday": "Friday",
+      "semester_week": 15,
+      "tags": [],
+      "tasks": [
+        {
+          "id": "2026-12-18-01",
+          "subject": "anki",
+          "kind": "study",
+          "title": "Anki",
+          "detail": "Light — exam today",
+          "est_minutes": 20
+        },
+        {
+          "id": "2026-12-18-02",
           "subject": "pharm",
           "kind": "exam",
           "title": "Pharmacology semifinal",
-          "detail": "Oral. Drug recognition is WAIVED (19+ on both midterms). One core concept, one topic from A, one from C. A blank on any one fails it. On the 18th instead if that slot opens",
+          "detail": "Oral. Drug recognition is WAIVED (19+ on both midterms). One core concept, one topic from A, one from C. A blank on any one fails it.",
           "est_minutes": 0
         }
       ]
