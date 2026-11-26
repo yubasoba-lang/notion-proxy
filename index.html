@@ -9864,10 +9864,10 @@ if(TRAIN_V2){
 // 30 km a week is his stated long-term figure; it is the far end of this table, not
 // something the first year reaches. Phase edges are Mondays; exam weeks sit in Base.
 const SEASON=[
-  {k:'base', label:'Base',   from:'2026-11-22',to:'2027-02-07',km:[10,18],lactate:false},   // faster ramp, his choice 26 Nov 2026 (was 10→15)
+  {k:'base', label:'Base',   from:'2026-11-22',to:'2027-02-07',km:[14,20],lactate:false},   // raised again 26 Nov 2026: he swims 2–3 km a session and wants more (was 10→18, before that 10→15)
   // The spring meet moved to Sat 17 Apr 2027 (was planned as 9 May), so build is seven
   // weeks and the race phase ends on the meet weekend.
-  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-03-28',km:[18,22],lactate:true},    // was 15→20 before 26 Nov 2026
+  {k:'build',label:'Build',  from:'2027-02-08',to:'2027-03-28',km:[20,24],lactate:true},    // was 18→22, before that 15→20
   {k:'race', label:'Race',   from:'2027-03-29',to:'2027-04-18',km:[15,10],lactate:true,taper:true},
   {k:'base', label:'Base 2', from:'2027-04-19',to:'2027-08-01',km:[16,22],lactate:false},
   // Held at 22 into MEFOB 2027: "22 km of quality. More only if you swim 4 km per
@@ -9890,7 +9890,7 @@ const SEASON=[
 // the target climbs back 2.5 km a week instead of jumping to where the ramp had got to.
 // The 2027 dates are an estimate of the summer exam period — move them when it is known.
 const EXAM_HOLDS=[
-  {from:'2026-11-22',to:'2026-12-20',km:11,why:'December exams'},
+  {from:'2026-11-22',to:'2026-12-20',km:14,why:'December exams'},   // was 11; raised with the ramp 26 Nov 2026 — same pool time, less wall time
   {from:'2027-05-24',to:'2027-07-11',km:15,why:'summer exams'},
 ];
 const EXAM_HOLD_BACK_KM=2.5;
@@ -10295,7 +10295,7 @@ const SOLO_V2=[
 // 90 minutes, so that is the ceiling however large the week's target gets.
 const V2_FLOOR={v2speed:1500,v2aer:1400,v2pace:1300,v2base:1800};
 const V2_SHARE={v2speed:0.10,v2aer:0.30,v2pace:0.20,v2base:0.40};
-const V2_CLUB_M=2000;
+const V2_CLUB_M=2500;   // his figure for a club practice, 26 Nov 2026 (was 2000)
 function v2Budget(tag,ds){
   const s=seasonWeek(ds);
   let floorSum=0;
@@ -10318,7 +10318,31 @@ function v2Budget(tag,ds){
   // A deload or taper week goes under the floor on purpose: the warm-up and the easy
   // swimming shrink, the main set does not.
   const ease=(s.deload||s.taper)?0.85:1;
-  return Math.min(3400,Math.round((V2_FLOOR[tag]+extra*V2_SHARE[tag])*ease*mult/50)*50);
+  return Math.min(v2TagMax(tag),Math.round(v2Shared(extra)[tag]*ease*mult/50)*50);
+}
+// 3400 m is what fits in 90 minutes. A session that would go past it hands what it
+// cannot hold to the sessions still under it, in their shares (until 26 Nov 2026 the
+// overflow was simply lost, so the week topped out near 16.6 km whatever the target).
+const V2_SESSION_MAX=3400;
+// The speed day stays short whatever the week holds: sprints are trained fresh.
+const V2_TAG_MAX={v2speed:2000};
+function v2TagMax(k){return V2_TAG_MAX[k]||V2_SESSION_MAX;}
+function v2Shared(extra){
+  const out={},open={};
+  Object.keys(V2_FLOOR).forEach(function(k){out[k]=V2_FLOOR[k];open[k]=true;});
+  let left=extra;
+  for(let pass=0;pass<5&&left>0.5;pass++){
+    let sh=0;Object.keys(open).forEach(function(k){sh+=V2_SHARE[k];});
+    if(!sh)break;
+    let spill=0;
+    Object.keys(open).forEach(function(k){
+      out[k]+=left*V2_SHARE[k]/sh;
+      const mx=v2TagMax(k);
+      if(out[k]>=mx){spill+=out[k]-mx;out[k]=mx;delete open[k];}
+    });
+    left=spill;
+  }
+  return out;
 }
 function v2Clock(sec){
   const s=Math.round(sec);
