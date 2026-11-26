@@ -1,17 +1,55 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/notion.js",  "use": "@vercel/node" },
-    { "src": "api/claude.js",  "use": "@vercel/node" },
-    { "src": "api/calendar.js","use": "@vercel/node" },
-    { "src": "api/gates.js",   "use": "@vercel/node" },
-    { "src": "**/*.{png,webp,jpg,svg,html,json}", "use": "@vercel/static" }
+    {
+      "src": "api/notion.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/claude.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/calendar.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/gates.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/intervals.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "**/*.{png,webp,jpg,svg,html,json}",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "/api/notion", "dest": "/api/notion.js" },
-    { "src": "/api/claude", "dest": "/api/claude.js" },
-    { "src": "/api/calendar(\\.ics)?", "dest": "/api/calendar.js" },
-    { "src": "/api/gates",  "dest": "/api/gates.js" },
-    { "src": "/(.*)",       "dest": "/$1" }
+    {
+      "src": "/api/notion",
+      "dest": "/api/notion.js"
+    },
+    {
+      "src": "/api/claude",
+      "dest": "/api/claude.js"
+    },
+    {
+      "src": "/api/calendar(\\.ics)?",
+      "dest": "/api/calendar.js"
+    },
+    {
+      "src": "/api/gates",
+      "dest": "/api/gates.js"
+    },
+    {
+      "src": "/api/intervals",
+      "dest": "/api/intervals.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ]
 }
