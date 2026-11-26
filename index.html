@@ -5470,7 +5470,7 @@ async function refresh(force=true){
     if(!skip)await Promise.all([loadSwimPractices(),loadPRs(),loadSessions()].map(x=>Promise.resolve(x).catch(e=>warn('hinaLoad',e))));
     _markTabLoaded('hina');renderHina();
   }
-  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();adaptBoot();}
+  if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();adaptBoot();if(!skip)watchAutoSync();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
   if(!skip&&currentTab!=='home')saveTabSnapshot(currentTab);   // next launch opens this tab instantly
@@ -10565,6 +10565,8 @@ function renderSoloSetsV2(){
       '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;letter-spacing:0.06em;color:var(--text-hi);line-height:1;margin-top:12px">SOLO SESSIONS</div>'+
       '<div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);margin-top:5px">33.3 m pool · 60 to 90 min</div>'+
       '<div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">'+esc(mode)+'</div>'+
+      '<button class="wec-log-btn" style="width:100%;margin-top:14px" onclick="watchSendWeek(false)">Send this week to the watch</button>'+
+      '<div style="font-size:10px;color:var(--text-faint);margin-top:6px;line-height:1.6">Goes to Garmin Connect through intervals.icu. It also re-sends by itself once a day when you open Workout.</div>'+
       '<div style="margin-top:18px">'+adaptEasyHTML()+body+adaptLogHTML()+'</div>';
     return;
   }
@@ -12435,22 +12437,77 @@ async function garminInspect(){
   console.log(acts[0],fit);
   return fit;
 }
-// The solo session as a planned workout for the watch. intervals.icu forwards planned
-// swims to Garmin Connect only if the description names the pool length.
+// The solo session as a planned workout for the watch, in intervals.icu's workout
+// text: "Nx" opens a repeat, "- 50mtr cue" is a distance step ("m" alone would mean
+// minutes), "- 20s rest" a rest step. intervals.icu forwards it to Garmin Connect.
+// Cues lose their digits and the word "pace" so nothing in them is read as a target.
+function v2Cue(t){
+  return String(t||'').replace(/\d+(\.\d+)?/g,'').replace(/\bpace\b/gi,'tempo').replace(/[×·—]/g,' ')
+    .replace(/\s+,/g,',').replace(/\s{2,}/g,' ').replace(/^[\s,]+|[\s,]+$/g,'').slice(0,48);
+}
 function v2WorkoutText(tag,ds){
   const se=v2Session(tag,ds);
   const out=[];
-  se.lines.forEach(function(l){if(!l.cut)out.push('- '+l.t);});
-  out.push('');
-  out.push('pool length: '+SOLO_POOL_M+'m');
-  return {name:se.x.t,description:out.join('\n'),metres:se.full};
+  const block=function(lines){if(out.length)out.push('');lines.forEach(function(l){out.push(l);});};
+  v2Spec(tag,ds).forEach(function(it){
+    if(it.cut){block(['60 min mark - stop here if you started late']);return;}
+    if(it.raw){
+      if(it.m>0)block(['- '+it.m+'mtr '+v2Cue(it.raw)]);
+      return;
+    }
+    const n=it.n||1,cue=v2Cue(it.what);
+    if(!it.d){                                   // timed, e.g. 4 × 20 s vertical kick
+      const sec=parseInt((it.head||'').replace(/^\d+\s*×\s*/,''))||20;
+      block([n+'x','- '+sec+'s '+cue,'- '+(it.rest||20)+'s rest']);
+      return;
+    }
+    if(n>1)block([n+'x','- '+it.d+'mtr '+cue,'- '+(it.rest||15)+'s rest']);
+    else block(['- '+it.d+'mtr '+cue]);
+  });
+  block(['pool length: '+SOLO_POOL_M+'m']);
+  return {name:'GRIND · '+se.x.t,description:out.join('\n'),metres:se.full};
 }
-async function garminPushPlan(tag,ds){
-  if(!HAS_WATCH)return {skipped:'HAS_WATCH is off'};
-  const w=v2WorkoutText(tag,ds);
-  const r=await fetch('/api/intervals?op=plan',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({date:ds||localToday(),name:w.name,description:w.description})});
-  return r.json();
+// The next seven days' solo sessions, as intervals.icu events (one per solo day,
+// replaced in place each time, so a level change or a deload reaches the watch).
+function watchWeekEvents(from){
+  const ev=[];
+  let d=from||localToday();
+  for(let k=0;k<7;k++){
+    if(d>=TRAINING_V2_START){
+      const tag=SOLO_DAY_ROLE[WEEK_ABBR[new Date(d+'T12:00:00').getDay()]];
+      if(tag){
+        const w=v2WorkoutText(tag,d);
+        ev.push({external_id:'grind-swim-'+d,date:d,time:'07:00',type:'Swim',name:w.name,description:w.description});
+      }
+    }
+    d=v2AddDays(d,1);
+  }
+  return ev;
+}
+async function watchSendWeek(quiet){
+  // The sessions depend on levels, the fly stage and the adaptive checks: load them
+  // fresh so the watch never gets a week built from defaults.
+  await Promise.all([loadFlyStage(),loadSoloLevels(),state.swimPractices?null:loadSwimPractices(),ADAPT_ON?loadTrainChecks():null]
+    .map(function(j){return Promise.resolve(j).catch(function(e){warn('watchSendWeek',e);});}));
+  if(ADAPT_ON&&typeof adaptBump==='function')adaptBump();
+  let ev;
+  try{ev=watchWeekEvents();}catch(e){if(!quiet)showToast('Watch sync failed: '+e.message);return {ok:false,error:e.message};}
+  if(!ev.length)return {ok:true,n:0};
+  let r;
+  try{
+    r=await (await fetch('/api/intervals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({events:ev})})).json();
+  }catch(e){r={ok:false,error:e.message};}
+  if(r&&r.ok){try{localStorage.setItem('grind_watch_sent',localToday());}catch(_){}}
+  if(!quiet&&typeof showToast==='function')showToast(r&&r.ok?'Sent '+ev.length+' swims to the watch':'Watch sync failed: '+((r&&r.error)||'no answer'));
+  return r;
+}
+// Once a day, on opening the app, the week is sent again so the watch always holds
+// the sessions as they stand today. A failure is silent and is tried next time.
+function watchAutoSync(){
+  let last='';
+  try{last=localStorage.getItem('grind_watch_sent')||'';}catch(_){}
+  if(last===localToday())return;
+  watchSendWeek(true);
 }
 // ══════════════════════════════════════════════════════════════════════════════
 
