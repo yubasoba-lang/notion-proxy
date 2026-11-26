@@ -12480,7 +12480,16 @@ function v2WorkoutText(tag,ds){
   v2Spec(tag,ds).forEach(function(it){
     if(it.cut){block(['60 min mark - stop here if you started late']);return;}
     if(it.raw){
-      if(it.m>0)block(['- '+it.m+'mtr '+v2Cue(it.raw)]);
+      // The fly ladder is written as text: "FINS ON · 6 × 33 body dolphin, …, 12 breaths
+      // rest" or "4 × 20s vertical kick". Each line becomes its own repeat; a breath of
+      // rest is counted as 3 seconds, as everywhere else in the app.
+      const m=/^(.*?)(\d+)\s*×\s*(\d+)(s?)\s+(.*?)(?:,\s*(\d+)\s*breaths rest)?$/.exec(it.raw.split(' — ')[0]);
+      if(!m)return;                            // the "FLY · stage n" heading
+      const kit=m[1].replace(/·/g,'').trim(),n=+m[2],d=+m[3],timed=!!m[4];
+      const br=/(\d+)\s*breaths rest/.exec(it.raw);
+      const rest=br?(+br[1])*3:20;
+      const cue=v2Cue((kit?kit.toLowerCase()+', ':'')+m[5]);
+      block([n+'x','- '+d+(timed?'s ':'mtr ')+cue,'- '+rest+'s rest']);
       return;
     }
     const n=it.n||1,cue=v2Cue(it.what);
