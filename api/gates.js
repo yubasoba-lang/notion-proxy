@@ -119,11 +119,29 @@ export async function loadFacts(date, q = notion) {
     try { return JSON.parse(text(rows[0].properties.Value)); } catch (_) { return null; }
   };
   return {
-    sleep: row("sleep_log") || {},
+    sleep: await withWatchSleep(row("sleep_log") || {}, date),
     protein: row("protein_log") || {},
     snapshot: row("widget_snapshot"),
     trainedToday: (sw.results || []).length > 0 || (wo.results || []).length > 0,
   };
+}
+
+// If last night's sleep is not logged by hand, the watch's figure counts (via
+// intervals.icu). Any failure here just means "not logged" — it never opens the gate.
+async function withWatchSleep(sleep, date) {
+  if (Number(sleep[date]) > 0) return sleep;
+  try {
+    const key = process.env.INTERVALS_API_KEY;
+    if (!key) return sleep;
+    const r = await fetch("https://intervals.icu/api/v1/athlete/i818191/wellness/" + date, {
+      headers: { Authorization: "Basic " + Buffer.from("API_KEY:" + key).toString("base64") },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) return sleep;
+    const w = await r.json();
+    if (w && w.sleepSecs > 0) return { ...sleep, [date]: Math.round(w.sleepSecs / 360) / 10 };
+  } catch (_) {}
+  return sleep;
 }
 
 export default async function handler(req, res) {
