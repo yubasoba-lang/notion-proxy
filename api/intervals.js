@@ -22,6 +22,20 @@ async function iv(path, opt = {}) {
 }
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+// Sleep and recovery from the watch, as intervals.icu holds them (Garmin sends them
+// with "download wellness data"). The date is the morning you woke up, which is how
+// GRIND's sleep_log is keyed too.
+export async function wellness(from, to) {
+  const rows = await iv("/wellness?oldest=" + from + "&newest=" + to);
+  return (rows || []).map(w => ({
+    date: w.id,
+    sleepH: w.sleepSecs ? Math.round(w.sleepSecs / 360) / 10 : null,
+    score: w.sleepScore ?? null,
+    hrv: w.hrv ?? null,
+    rhr: w.restingHR ?? null,
+  }));
+}
+
 export function cleanEvent(e) {
   if (!e || typeof e !== "object") throw new Error("bad event");
   if (!/^grind-[\w-]{1,60}$/.test(e.external_id || "")) throw new Error("external_id must start with grind-");
@@ -47,6 +61,10 @@ export default async function handler(req, res) {
     if (req.method === "GET" && q.a === "ping") {
       const a = await iv("");
       return res.status(200).json({ ok: true, name: a && a.name ? a.name : null });
+    }
+    if (req.method === "GET" && q.a === "wellness") {
+      if (!DAY.test(q.from || "") || !DAY.test(q.to || "")) throw new Error("from/to needed");
+      return res.status(200).json(await wellness(q.from, q.to));
     }
     if (req.method === "GET" && q.a === "list") {
       if (!DAY.test(q.from || "") || !DAY.test(q.to || "")) throw new Error("from/to needed");
