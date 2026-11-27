@@ -5416,7 +5416,7 @@ async function refresh(force=true){
   // waiting on Notion; the loads below then redraw it with fresh data.
   if(!skip&&currentTab!=='home')paintTabNow(currentTab);
   // Nutrition is read on Home and from the card, so it cannot be tab-gated.
-  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn(),loadSleepLog(),loadRestLog(),loadHina()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
+  if(!skip)await Promise.all([loadProteinLog(),loadWeightLog(),loadCueOwn(),loadSleepLog().then(watchSleepFill),loadRestLog(),loadHina()].map(x=>Promise.resolve(x).catch(e=>warn('nutriLoad',e))));
   if(currentTab==='home'){
     if(!skip){
       const isFirst=!_hasLoaded;
@@ -14111,6 +14111,25 @@ function saveDayLog(cfg,key,field,pageField){
       state[pageField]=await appConfigUpsert(cfg,state[pageField],JSON.stringify(state[field]||{}));
     }catch(e){warn('save'+cfg,e);showToast('Save failed — will retry');}
   },900);
+}
+// Sleep from the watch (Garmin → intervals.icu → /api/intervals?a=wellness). It only
+// fills nights with nothing logged: a number typed by hand always wins.
+async function watchSleepFill(){
+  try{
+    const to=localToday(),d=new Date(to+'T12:00:00');d.setDate(d.getDate()-6);
+    const r=await fetch('/api/intervals?a=wellness&from='+localDay(d)+'&to='+to);
+    const rows=await r.json();
+    if(!Array.isArray(rows))return;
+    if(!state.sleepLog)state.sleepLog={};
+    let n=0;
+    rows.forEach(function(w){
+      if(w&&w.sleepH>0&&!(Number(state.sleepLog[w.date])>0)){state.sleepLog[w.date]=w.sleepH;n++;}
+    });
+    if(n){
+      saveDayLog(SLEEP_CFG,SLEEP_KEY,'sleepLog','sleepLogPageId');
+      if(typeof renderBody==='function'&&currentTab==='body')renderBody();
+    }
+  }catch(e){warn('watchSleepFill',e);}
 }
 let _sleepDay=null;
 function sleepDay(){return _sleepDay||localToday();}
