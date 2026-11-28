@@ -5473,6 +5473,7 @@ async function refresh(force=true){
   if(currentTab==='workout'){if(!skip)await Promise.all([loadBodyStats(),loadExercises(),loadSwimPractices()]);if(!skip)await loadPRs();_markTabLoaded('workout');renderWorkout();adaptBoot();if(!skip)watchAutoSync();}
   if(currentTab==='exams'){if(!skip){await loadExams();await loadTopicProgress();await loadLectures();syncLectureRows();}else if(!Object.keys(state.topicProgress).length){loadTopicProgress().then(()=>renderExams());}  _markTabLoaded('exams');renderExams();}
   if(currentTab==='study'){if(!skip)await loadSessions();_markTabLoaded('study');renderStudyLog();}
+  if(!skip)watchImportSwims().catch(function(e){warn('watchImportSwims',e);});
   if(!skip&&currentTab!=='home')saveTabSnapshot(currentTab);   // next launch opens this tab instantly
   setSyncBusy(false);
 }
@@ -12410,67 +12411,72 @@ async function garminFetch(qs){
   if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
   return j;
 }
-// Lengths → one Swim Practices row. Garmin counts the strokes of the watch arm only,
-// so its count is doubled to match the both-arms count he logs by hand.
-function garminSwimRow(act,fit){
-  const active=(fit.lengths||[]).filter(function(l){return l.active&&l.seconds>0;});
-  const poolM=fit.poolLength||SOLO_POOL_M;
-  const free=active.filter(function(l){return l.stroke===0&&l.strokes>0;}).map(function(l){return l.strokes*2;}).sort(function(a,b){return a-b;});
-  const fly=active.filter(function(l){return l.stroke===3&&l.strokes>0;}).map(function(l){return l.strokes;}).sort(function(a,b){return a-b;});
-  const median=function(a){return a.length?a[Math.floor(a.length/2)]:0;};
-  const date=String(act.start_date_local||'').slice(0,10);
-  const metres=Math.round(active.length*poolM);
-  const minutes=Math.round((fit.elapsed||act.elapsed_time||0)/60);
+// ── Swims from the watch → GRIND (built 28 Nov 2026 from his first real file) ──
+// /api/intervals?a=swim reads the FIT: lengths, and laps tagged with the planned step,
+// plus the kick sets the watch cannot see (credited at their planned distance). One
+// swim becomes the same two records a hand-logged one does: a Swim Practices row (速,
+// the solo levels, the gate) and the Swimming exercise in the Workout Log (streak).
+// A day already logged by hand is left alone, and each activity is imported once.
+const WATCH_IMPORT_KEY='grind_watch_import';
+function watchSwimProps(sum,act){
+  const x=SOLO_V2.find(function(v){return sum.planned==='GRIND · '+v.t;});
+  const metres=sum.metres||sum.watchM||0;
+  const set=x?'Solo · '+x.t+' · '+metres+'m':'Watch swim · '+metres+'m';
+  const pool=sum.pool||SOLO_POOL_M;
+  // Garmin counts the watch arm only; his hand counts are both arms, so it is doubled.
+  const free=(sum.lengths||[]).filter(function(l){return l.active&&l.stroke==='freestyle'&&l.strokes>0;}).map(function(l){return l.strokes*2;}).sort(function(a,b){return a-b;});
+  const hundreds=(sum.laps||[]).filter(function(l){return Math.abs(l.m-100)<1;}).map(function(l){return l.s;});
   const props={
-    Name:{title:[{text:{content:date+' practice'}}]},
-    Date:{date:{start:date}},
-    Minutes:{number:minutes},
-    Remembered:{checkbox:false},
+    Name:{title:[{text:{content:sum.date+' practice'}}]},
+    Date:{date:{start:sum.date}},
+    Minutes:{number:Math.round((sum.elapsedS||0)/60)},
+    Remembered:{checkbox:true},
+    'Main Set':{rich_text:richChunks(set)},
     Source:{select:{name:'Garmin'}},
     'Garmin Id':{rich_text:richChunks(String(act.id))},
-    Course:{select:{name:Math.abs(poolM-25)<0.5?'25 m':(Math.abs(poolM-50)<0.5?'50 m':'33 m')}},
-    Notes:{rich_text:richChunks('Imported from the watch · '+metres+' m in '+active.length+' lengths')},
-    Splits:{rich_text:richChunks(Math.round(poolM)+': '+active.slice(0,120).map(function(l){return l.seconds.toFixed(1);}).join(' '))},
+    Course:{select:{name:Math.abs(pool-25)<0.5?'25 m':(Math.abs(pool-50)<0.5?'50 m':'33 m')}},
+    Notes:{rich_text:richChunks('From the watch · '+(sum.watchM||0)+' m in '+(sum.activeLengths||0)+' lengths'+(sum.kickM?' + '+sum.kickM+' m of kick it cannot see':'')+(sum.swolf?' · SWOLF '+sum.swolf:''))},
   };
-  if(median(free))props.Strokes={number:median(free)};
-  if(median(fly))props['Fly Strokes']={number:median(fly)};
-  return {props:props,metres:metres,minutes:minutes,date:date};
+  if(free.length)props.Strokes={number:free[Math.floor(free.length/2)]};
+  if(hundreds.length)props.Splits={rich_text:richChunks('100: '+hundreds.join(' '))};
+  return {props:props,metres:metres,minutes:props.Minutes.number};
 }
-async function garminSync(){
-  if(!HAS_WATCH)return {skipped:'HAS_WATCH is off'};
+async function watchImportSwims(force){
+  let mem={};
+  try{mem=JSON.parse(localStorage.getItem(WATCH_IMPORT_KEY)||'{}')||{};}catch(_){}
+  if(!force&&mem.at&&Date.now()-mem.at<20*60*1000)return {skipped:'recent'};
+  mem.at=Date.now();mem.done=mem.done||{};
+  try{localStorage.setItem(WATCH_IMPORT_KEY,JSON.stringify(mem));}catch(_){}
+  if(!state.swimPractices)await loadSwimPractices();
   const seen=new Set((state.swimPractices||[]).map(function(p){return p.garminId;}).filter(Boolean));
-  const acts=await garminFetch('op=list&oldest='+hinaDaysBack(14));
-  const out={swims:0,strength:[],unmapped:[]};
+  const byHand=new Set((state.swimPractices||[]).filter(function(p){return !p.garminId;}).map(function(p){return p.date;}));
+  const to=localToday(),d0=new Date(to+'T12:00:00');d0.setDate(d0.getDate()-3);
+  const acts=await (await fetch('/api/intervals?a=acts&from='+localDay(d0)+'&to='+to)).json();
+  if(!Array.isArray(acts))return {error:(acts&&acts.error)||'no list'};
+  let n=0;
   for(const act of acts){
-    if(act.type==='Swim'){
-      if(seen.has(String(act.id)))continue;
-      const fit=await garminFetch('op=fit&id='+encodeURIComponent(act.id));
-      const row=garminSwimRow(act,fit);
-      const page=await nCreate(SWIM_PRACTICES_DB,row.props);
-      state.swimPractices=[toSwimPractice(page)].concat(state.swimPractices||[]);
-      out.swims++;
-    }else if(act.type==='WeightTraining'){
-      const fit=await garminFetch('op=fit&id='+encodeURIComponent(act.id));
-      (fit.sets||[]).filter(function(s){return s.active;}).forEach(function(s){
-        const name=GARMIN_EXERCISE_MAP[s.category+':'+s.subtype];
-        if(name)out.strength.push({name:name,reps:s.reps,weight:s.weight,date:String(act.start_date_local||'').slice(0,10)});
-        else out.unmapped.push(s.category+':'+s.subtype);
-      });
-    }
+    if(act.type!=='Swim'||seen.has(String(act.id))||mem.done[act.id])continue;
+    const date=String(act.start||'').slice(0,10);
+    if(byHand.has(date)){mem.done[act.id]='by hand';continue;}
+    const sum=await (await fetch('/api/intervals?a=swim&id='+encodeURIComponent(act.id))).json();
+    if(!sum||!sum.ok)continue;
+    sum.date=sum.date||date;
+    const row=watchSwimProps(sum,act);
+    const page=await nCreate(SWIM_PRACTICES_DB,row.props);
+    state.swimPractices=[toSwimPractice(page)].concat(state.swimPractices||[]);
+    try{
+      if(!state.exercises?.length)await loadExercises();
+      const ex=(state.exercises||[]).find(function(e){return e.name==='Swimming';});
+      const names=(state.workoutNamesByDay||{})[sum.date];
+      if(ex&&!(names&&names.has&&names.has('Swimming'))){const c=cardioToSets(row.minutes||60);await _logExercise(ex,c.sets,c.reps,c.weight,sum.date);}
+    }catch(e){warn('watchImportSwims log',e);}
+    mem.done[act.id]=sum.date;n++;
+    showToast('Swim from the watch · '+row.metres+' m',3000);
   }
-  // Strength sets are returned for review, not written: until GARMIN_EXERCISE_MAP has
-  // been filled from a real file there is nothing safe to log them as.
-  state.garminLast=out;
-  return out;
-}
-// First step once the watch exists: garminInspect() in the console prints what the
-// newest activity's FIT file really contains, before anything is imported.
-async function garminInspect(){
-  const acts=await garminFetch('op=list&oldest='+hinaDaysBack(7));
-  if(!acts.length)return 'no activities in the last week';
-  const fit=await garminFetch('op=fit&id='+encodeURIComponent(acts[0].id)+'&raw=1');
-  console.log(acts[0],fit);
-  return fit;
+  try{localStorage.setItem(WATCH_IMPORT_KEY,JSON.stringify(mem));}catch(_){}
+  if(n&&typeof adaptBump==='function')adaptBump();
+  if(n&&currentTab==='workout')renderWorkout();
+  return {imported:n};
 }
 // The solo session as a planned workout for the watch, in intervals.icu's workout
 // text: "Nx" opens a repeat, "- 50mtr cue" is a distance step ("m" alone would mean
@@ -12504,20 +12510,22 @@ function v2WorkoutText(tag,ds){
       const br=/(\d+)\s*breaths rest/.exec(it.raw);
       const rest=br?(+br[1])*3:20;
       const cue=v2Cue((kit?kit.toLowerCase()+', ':'')+m[5]);
-      block([n+'x','- '+(!timed&&v2IsKick(m[5])?'Press lap ':'')+d+(timed?'s ':'mtr ')+cue,'- '+rest+'s rest']);
+      block([n+'x','- '+(!timed&&v2IsKick(m[5])?'Press lap ':'')+cue+' '+d+(timed?'s':'mtr'),'- '+rest+'s rest']);
       return;
     }
     const n=it.n||1,cue=v2Cue(it.what);
     if(!it.d){                                   // timed, e.g. 4 × 20 s vertical kick
       const sec=parseInt((it.head||'').replace(/^\d+\s*×\s*/,''))||20;
-      block([n+'x','- '+sec+'s '+cue,'- '+(it.rest||20)+'s rest']);
+      block([n+'x','- '+cue+' '+sec+'s','- '+(it.rest||20)+'s rest']);
       return;
     }
     // Kick lengths have no arm strokes, so the watch never sees the length end
     // (first watch swim, 28 Nov 2026): those steps end on the LAP button instead.
     const lap=v2IsKick(it.what)?'Press lap ':'';
-    if(n>1)block([n+'x','- '+lap+it.d+'mtr '+cue,'- '+(it.rest||15)+'s rest']);
-    else block(['- '+lap+it.d+'mtr '+cue]);
+    // The cue goes BEFORE the distance: intervals.icu keeps leading text as the step's
+    // name (what the watch shows), and drops what comes after it (28 Nov 2026).
+    if(n>1)block([n+'x','- '+lap+cue+' '+it.d+'mtr','- '+(it.rest||15)+'s rest']);
+    else block(['- '+lap+cue+' '+it.d+'mtr']);
   });
   block(['pool length: '+SOLO_POOL_M+'m']);
   return {name:'GRIND · '+se.x.t,description:out.join('\n'),metres:se.full};
