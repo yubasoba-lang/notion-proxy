@@ -1,0 +1,7 @@
+{
+  "name": "notion-proxy",
+  "private": true,
+  "dependencies": {
+    "fit-file-parser": "6.2.10"
+  }
+}
