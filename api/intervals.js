@@ -66,6 +66,23 @@ export default async function handler(req, res) {
       if (!DAY.test(q.from || "") || !DAY.test(q.to || "")) throw new Error("from/to needed");
       return res.status(200).json(await wellness(q.from, q.to));
     }
+    if (req.method === "GET" && q.a === "acts") {
+      if (!DAY.test(q.from || "") || !DAY.test(q.to || "")) throw new Error("from/to needed");
+      const acts = await iv("/activities?oldest=" + q.from + "&newest=" + q.to);
+      return res.status(200).json((acts || []).map(a => ({
+        id: a.id, type: a.type, start: a.start_date_local, name: a.name,
+        distance: a.distance, moving: a.moving_time, elapsed: a.elapsed_time,
+        pool: a.pool_length || null, lengths: a.lengths || null, source: a.source || null,
+      })));
+    }
+    if (req.method === "GET" && q.a === "file") {
+      // The original FIT file as the watch wrote it (gzip), base64 in JSON.
+      if (!/^[\w-]{1,40}$/.test(q.id || "")) throw new Error("bad id");
+      const r = await fetch("https://intervals.icu/api/v1/activity/" + q.id + "/file", { headers: { Authorization: auth() } });
+      if (!r.ok) throw new Error("intervals.icu " + r.status);
+      const buf = Buffer.from(await r.arrayBuffer());
+      return res.status(200).json({ ok: true, gz: buf.toString("base64") });
+    }
     if (req.method === "GET" && q.a === "list") {
       if (!DAY.test(q.from || "") || !DAY.test(q.to || "")) throw new Error("from/to needed");
       const ev = await iv("/events?oldest=" + q.from + "&newest=" + q.to);
